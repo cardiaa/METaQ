@@ -16,6 +16,6 @@ Main Programs:
 - load_and_quantize.py: Loads the trained network from train.py, quantizes, and compresses it.
 - complexity.py: Runs multiple simulations of the knapsack_specialized algorithm to evaluate its complexity.
 
-A detailed explanation of the entire implemented quantization process can be found in the report.pdf file.
+A detailed explanation of the entire implemented compression process can be found in the report.pdf file.
 
   
