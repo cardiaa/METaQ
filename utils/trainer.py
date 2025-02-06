@@ -94,7 +94,6 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
         entropies.append(entropy)
         accuracy = test_accuracy(model, testloader, device)
         accuracies.append(accuracy)
-        distinct_weights.append(unique_weights)
         
         print(f"C={C}, lr={lr}, lambda_reg={lambda_reg}, "
               f"alpha={alpha}, subgradient_step={subgradient_step}, w0={w0}, r={r}, "
