@@ -35,40 +35,34 @@ def knapsack_specialized(xi, v, w, C):
     x_plus[b_tensor] = 1
 
     # Determine optimal allocation based on w
-    w_idx = torch.searchsorted(v, w)
-    x_opt = torch.zeros(len(w), C, dtype=torch.float32)
-    lambda_opt = torch.zeros(len(w), dtype=torch.float32)
+    w_idx = torch.searchsorted(v, w) 
+    indices_breakpoints = torch.nonzero(x_plus == 1).squeeze()
 
-    indices_1 = torch.nonzero(x_plus == 1).squeeze()
-    indices_1_sorted = indices_1.sort().values
+    # Creation of masks for extreme cases
+    mask_right = w > v[-1]
+    mask_left = w < v[0]
 
-    left_positions = torch.searchsorted(indices_1_sorted, w_idx, right=False) - 1
-    left_positions = torch.clamp(left_positions, min=0)
+    # Find indices using searchsorted
+    search_idx = torch.searchsorted(indices_breakpoints, w_idx)
 
-    right_positions = torch.searchsorted(indices_1_sorted, w_idx, right=True)
-    right_positions = torch.clamp(right_positions, max=indices_1_sorted.size(0) - 1)
+    # Ensure that the indices are valid
+    search_idx = torch.clamp(search_idx, 1, len(indices_breakpoints) - 1)
 
-    idx_left = torch.where(x_plus[w_idx] == 1, w_idx, indices_1_sorted[left_positions])
-    idx_right = torch.where(x_plus[w_idx] == 1, w_idx, indices_1_sorted[right_positions])
+    # Initialize idx_right and idx_left with the result of the search
+    idx_right = indices_breakpoints[search_idx]
+    idx_left = indices_breakpoints[search_idx - 1]
 
-    # Handle cases where idx_left == idx_right
-    mask_idx_equal = idx_left == idx_right
-    not_c_minus_1_mask = (idx_left != (C - 1)) & mask_idx_equal
-    is_c_minus_1_mask = (idx_left == (C - 1)) & mask_idx_equal
+    # Correct the indices for extreme cases
+    idx_right = torch.where(mask_right, indices_breakpoints[-1], idx_right)
+    idx_left = torch.where(mask_right, indices_breakpoints[-1], idx_left)
 
-    if torch.any(not_c_minus_1_mask):
-        idx_right[not_c_minus_1_mask] = indices_1_sorted[
-            torch.searchsorted(indices_1_sorted, idx_left[not_c_minus_1_mask], right=True)
-        ]
-
-    if torch.any(is_c_minus_1_mask):
-        idx_left[is_c_minus_1_mask] = indices_1_sorted[
-            torch.searchsorted(indices_1_sorted, idx_right[is_c_minus_1_mask], right=False) - 1
-        ]
+    # Correct the indices for the case when w < v[0]
+    idx_right = torch.where(mask_left, indices_breakpoints[0], idx_right)
+    idx_left = torch.where(mask_left, indices_breakpoints[0], idx_left)
 
     # Compute convex combination for optimal solution
-    x1 = torch.zeros(len(w), C, dtype=torch.float32)
-    x2 = torch.zeros(len(w), C, dtype=torch.float32)
+    x1, x2 = torch.zeros(2, len(w), C, dtype=torch.float32)
+
     x1[torch.arange(len(w)), idx_left] = 1
     x2[torch.arange(len(w)), idx_right] = 1
 
