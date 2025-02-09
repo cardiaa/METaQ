@@ -61,17 +61,19 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
             loss = criterion(outputs, labels)
             
             w = torch.cat([param.data.view(-1) for param in model.parameters()])
-            unique_weights = torch.unique(w).numel() 
-            indices = torch.searchsorted(v, w, right=True) - 1
-            indices = torch.clamp(indices, min=0)
-            w_quantized = v[indices]
+            #unique_weights = torch.unique(w).numel() 
+            #indices = torch.searchsorted(v, w, right=True) - 1
+            #indices = torch.clamp(indices, min=0)
+            #w_quantized = v[indices]
 
             zeta *= 1 + l
             l = l / 1.5
             if(entropy_optimizer == 'F'):
-                xi, beta_tensor, x_star, phi = FISTA(xi, v, w_quantized, C, subgradient_step, max_iterations=15) 
+                #xi, beta_tensor, x_star, phi = FISTA(xi, v, w_quantized, C, subgradient_step, max_iterations=15) 
+                xi, beta_tensor, x_star, phi = FISTA(xi, v, w, C, subgradient_step, max_iterations=15) 
             elif(entropy_optimizer == 'PM'):
-                xi, beta_tensor, x_star, phi = ProximalBM(xi, v, w_quantized, C, zeta, subgradient_step, max_iterations=15)      
+                #xi, beta_tensor, x_star, phi = ProximalBM(xi, v, w_quantized, C, zeta, subgradient_step, max_iterations=15) 
+                xi, beta_tensor, x_star, phi = ProximalBM(xi, v, w, C, zeta, subgradient_step, max_iterations=15)       
             
             # Update of ∇ɸ
             idx = 0
