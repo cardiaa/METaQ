@@ -123,7 +123,7 @@ def ProximalBM(xi, v, w, C, zeta, subgradient_step, max_iterations):
         subproblem_objective = model_phi + proximal_term
 
         # Determine the next xi by minimizing the subproblem objective
-        best_idx = torch.argmin(subproblem_objective)
+        best_idx = torch.argmax(subproblem_objective)
         xi_next = bundle_points[best_idx] + (1 / zeta) * bundle_gradients[best_idx]
 
         # Clip xi to enforce constraints
