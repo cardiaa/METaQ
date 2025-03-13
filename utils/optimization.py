@@ -2,7 +2,7 @@ import torch
 from torch.linalg import norm  
 from .knapsack import knapsack_specialized  
 
-def FISTA(xi, v, w, C, subgradient_step, max_iterations, device):
+def FISTA(xi, v, w, C, subgradient_step, device, max_iterations):
     """
     Implements the Fast Iterative Shrinking-Thresholding Algorithm (FISTA) 
     for optimizing a constrained objective function.
@@ -62,7 +62,7 @@ def FISTA(xi, v, w, C, subgradient_step, max_iterations, device):
     return xi, lambda_plus, x_i_star, phi
 
 
-def ProximalBM(xi, v, w, C, zeta, subgradient_step, max_iterations, device):
+def ProximalBM(xi, v, w, C, zeta, subgradient_step, device, max_iterations):
     """
     Implements the Proximal Bundle Method (PBM) for solving constrained 
     optimization problems using bundle techniques.
