@@ -2,7 +2,6 @@ torch
 torchvision
 numpy
 matplotlib
-json
 heapq
 decimal
 gzip
