@@ -23,7 +23,7 @@ def FISTA(xi, v, w, C, subgradient_step, device, max_iterations):
     upper_c = w.size(0)  # Define an upper bound for constraints
     
     # Initialize previous values for FISTA acceleration
-    xi_prev = xi.clone()
+    xi_prev = xi.clone().to(device)
     t_prev = torch.tensor(1.0, device=device)
 
     for iteration in range(1, max_iterations + 1):
@@ -32,14 +32,14 @@ def FISTA(xi, v, w, C, subgradient_step, device, max_iterations):
         sum_x_star = torch.sum(x_i_star, dim=0)
 
         # Compute the optimal c values c_star
-        c_star = torch.exp(torch.log(torch.tensor(2)) * xi - 1)
+        c_star = torch.exp(torch.log(torch.tensor(2.0, device=device)) * xi - 1)
         c_star = torch.clamp(c_star, min=0, max=upper_c)
 
         # Compute the super-gradient
         g = -(c_star - sum_x_star)
-        
-        # Compute the 3 pieces of the objective function value phi and put them together
-        phi1 = torch.sum(c_star * torch.log(c_star) / torch.log(torch.tensor(2)))
+
+        # Compute the objective function value phi
+        phi1 = torch.sum(c_star * torch.log(c_star) / torch.log(torch.tensor(2.0, device=device)))
         phi2 = -torch.sum(xi * c_star)
         phi3 = torch.sum(xi * sum_x_star)
         phi = phi1 + phi2 + phi3
@@ -82,11 +82,11 @@ def ProximalBM(xi, v, w, C, zeta, subgradient_step, device, max_iterations):
     """
     
     upper_c = w.size(0)  # Define an upper bound for constraints
-
+    
     # Parameters for the bundle method
     epsilon = 1e-5  # Convergence tolerance
     bundle_size = 5  # Maximum bundle size
-    bundle = []  # Initialize the bundle (list of points, phi values, and gradients)
+    bundle = []  # Initialize the bundle
 
     for iteration in range(1, max_iterations + 1):
         # Solve the knapsack problem for the current xi
@@ -94,27 +94,27 @@ def ProximalBM(xi, v, w, C, zeta, subgradient_step, device, max_iterations):
         sum_x_star = torch.sum(x_i_star, dim=0)
 
         # Compute the optimal c values c_star
-        c_star = torch.exp(torch.log(torch.tensor(2)) * xi - 1)
+        c_star = torch.exp(torch.log(torch.tensor(2.0, device=device)) * xi - 1)
         c_star = torch.clamp(c_star, min=0, max=upper_c)
 
         # Compute the super-gradient
         g = -(c_star - sum_x_star)
 
         # Compute the objective function value phi
-        phi1 = torch.sum(c_star * torch.log(c_star) / torch.log(torch.tensor(2)))
+        phi1 = torch.sum(c_star * torch.log(c_star) / torch.log(torch.tensor(2.0, device=device)))
         phi2 = -torch.sum(xi * c_star)
         phi3 = torch.sum(xi * sum_x_star)
         phi = phi1 + phi2 + phi3
 
         # Add the current point to the bundle
-        bundle.append((xi.clone(), phi, g.clone()))
+        bundle.append((xi.clone().to(device), phi, g.clone().to(device)))
         if len(bundle) > bundle_size:
-            bundle.pop(0)  # Remove the oldest point if the bundle exceeds max size
+            bundle.pop(0)
 
         # Solve the quadratic regularization subproblem
-        bundle_points = torch.stack([item[0] for item in bundle])  # Bundle points
-        bundle_phis = torch.tensor([item[1] for item in bundle])  # Phi values
-        bundle_gradients = torch.stack([item[2] for item in bundle])  # Gradient values
+        bundle_points = torch.stack([item[0] for item in bundle])
+        bundle_phis = torch.tensor([item[1] for item in bundle], device=device)
+        bundle_gradients = torch.stack([item[2] for item in bundle])
 
         # Construct the quadratic approximation model
         diff = xi - bundle_points
@@ -134,6 +134,6 @@ def ProximalBM(xi, v, w, C, zeta, subgradient_step, device, max_iterations):
             break
 
         # Update xi for the next iteration
-        xi = xi_next.clone()
-        
+        xi = xi_next.clone().to(device)
+
     return xi, lambda_plus, x_i_star, phi

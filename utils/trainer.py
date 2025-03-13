@@ -43,7 +43,7 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
     min_w, max_w = w0 - r, w0 + r
     v = torch.linspace(min_w, max_w - (max_w - min_w)/C, steps=C, device=device)
     initialize_weights(model, min_w, max_w)    
-    w = torch.cat([param.data.view(-1) for param in model.parameters()])
+    w = torch.cat([param.data.view(-1) for param in model.parameters()]).to(device)
     upper_c, lower_c = w.size(0), 1e-2
     xi = min_xi + (max_xi - min_xi) * torch.rand(C, device=device)    
     xi = torch.sort(xi)[0]   
@@ -82,7 +82,7 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
                 if param.grad is not None:
                     param_grad = param.grad.view(-1)
                 else:
-                    param_grad = torch.zeros_like(param.data.view(-1))
+                    param_grad = torch.zeros_like(param.data.view(-1)).to(device)
                 param_grad += (1 - alpha) * lambda_reg * beta_tensor[idx:idx + numel]
                 param.grad = param_grad.view(param.size())
                 idx += numel
@@ -90,7 +90,7 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
             loss.backward()
             optimizer.step()
 
-        w = torch.cat([param.data.view(-1) for param in model.parameters()])
+        w = torch.cat([param.data.view(-1) for param in model.parameters()]).to(device)
         
         entropy = round(compute_entropy(w.tolist())) + 1
         entropies.append(entropy)
