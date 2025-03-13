@@ -41,7 +41,7 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
     
     # Parameters initialization
     min_w, max_w = w0 - r, w0 + r
-    v = torch.linspace(min_w, max_w - (max_w - min_w)/C, steps=C)
+    v = torch.linspace(min_w, max_w - (max_w - min_w)/C, steps=C, device=device)
     initialize_weights(model, min_w, max_w)    
     w = torch.cat([param.data.view(-1) for param in model.parameters()])
     upper_c, lower_c = w.size(0), 1e-2
@@ -70,10 +70,10 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
             l = l / 1.5
             if(entropy_optimizer == 'F'):
                 #xi, beta_tensor, x_star, phi = FISTA(xi, v, w_quantized, C, subgradient_step, max_iterations=15) 
-                xi, beta_tensor, x_star, phi = FISTA(xi, v, w, C, subgradient_step, max_iterations=15) 
+                xi, beta_tensor, x_star, phi = FISTA(xi, v, w, C, subgradient_step, device, max_iterations=15) 
             elif(entropy_optimizer == 'PM'):
                 #xi, beta_tensor, x_star, phi = ProximalBM(xi, v, w_quantized, C, zeta, subgradient_step, max_iterations=15) 
-                xi, beta_tensor, x_star, phi = ProximalBM(xi, v, w, C, zeta, subgradient_step, max_iterations=15)       
+                xi, beta_tensor, x_star, phi = ProximalBM(xi, v, w, C, zeta, subgradient_step, device, max_iterations=15)       
             
             # Update of ∇ɸ
             idx = 0
