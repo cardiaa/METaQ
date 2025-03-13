@@ -9,7 +9,7 @@ from utils.trainer import train_and_evaluate
 if __name__ == "__main__":
 
     # Select the computing device: use GPU if available, otherwise fallback to CPU
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     # Define a transformation: convert images to tensors
     transform = transforms.Compose([transforms.ToTensor()])
     # Load the MNIST training dataset with the defined transformation

@@ -1,7 +1,7 @@
 import torch  
 import numpy as np  
 
-def knapsack_specialized(xi, v, w, C):
+def knapsack_specialized(xi, v, w, C, device):
     """
     Solves a specialized knapsack problem using a specialized method in a vectorized way
 
@@ -30,8 +30,8 @@ def knapsack_specialized(xi, v, w, C):
         if b + 1 > C - 1:
             break
     b_list.append(C - 1)
-    x_plus = torch.zeros(C, dtype=torch.int32)
-    b_tensor = torch.tensor(b_list, dtype=torch.int32)
+    x_plus = torch.zeros(C, dtype=torch.int32, device=device)
+    b_tensor = torch.tensor(b_list, dtype=torch.int32, device=device)
     x_plus[b_tensor] = 1
 
     # Determine optimal allocation based on w
