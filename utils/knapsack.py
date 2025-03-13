@@ -61,7 +61,7 @@ def knapsack_specialized(xi, v, w, C, device):
     idx_left = torch.where(mask_left, indices_breakpoints[0], idx_left)
 
     # Compute convex combination for optimal solution
-    x1, x2 = torch.zeros(2, len(w), C, dtype=torch.float32)
+    x1, x2 = torch.zeros(2, len(w), C, dtype=torch.float32, device=device)
 
     x1[torch.arange(len(w)), idx_left] = 1
     x2[torch.arange(len(w)), idx_right] = 1
