@@ -1,6 +1,7 @@
 import torch  
 import time
 import numpy as np
+import os
 from torchvision import datasets, transforms  
 from itertools import product
 from utils.trainer import train_and_evaluate  
@@ -43,6 +44,10 @@ if __name__ == "__main__":
         "trainloader": [trainloader],  # Training data loader
         "testloader": [testloader] # Test data loader
     }
+
+    torch.set_num_threads(384)
+    print(f"Thread set for PyTorch: {torch.get_num_threads()}")
+    print(f"Number of core available on the machine: {os.cpu_count()}")
 
     combination = 0
 
