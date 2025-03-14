@@ -58,7 +58,7 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
 
         for i, data in enumerate(trainloader, 0):
             if(i % 10 == 0):
-                clear_output(wait=True)
+                #clear_output(wait=True)
                 print(i) 
 
             inputs, labels = data[0].to(device), data[1].to(device)
@@ -156,7 +156,7 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
         with open(log_filename, "a") as f:
             f.write(f"Time taken for a epoch: {training_time:.2f} seconds\n")
               
-        clear_output(wait=True)
+        #clear_output(wait=True)
         print(f"Epoch: {epoch}, Entropia minima: {min(entropies)}, C: {C}, r: {r}, epoch time: {training_time:.2f}s")
 
     return accuracy, entropy, target_acc, target_entr
