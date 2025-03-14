@@ -45,7 +45,7 @@ def train_model(args):
 
 
 if __name__ == "__main__":
-    torch.set_num_threads(384)
+    torch.set_num_threads(1)
     print(f"Thread set for PyTorch: {torch.get_num_threads()}")
     print(f"Number of core available on the machine: {os.cpu_count()}")
 
