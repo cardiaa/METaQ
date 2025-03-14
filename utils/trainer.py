@@ -34,7 +34,7 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
     
     model = LeNet5().to(device)
     criterion = nn.CrossEntropyLoss()
-
+    print("aaa")
     if(train_optimizer == 'A'):
         optimizer = optim.Adam(model.parameters(), lr=lr, betas=(0.9, 0.999), eps=1e-08, weight_decay=lambda_reg * alpha)
     elif(train_optimizer == 'S'):
@@ -115,7 +115,7 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
             f.write("\nMax Accuracy:", max(accuracies))
             f.write("Min entropy:", min(entropies))
 
-        print("Entropia minima:", min(entropies))
+        print(f"Entropia minima: {min(entropies)}, C: {C}, r: {r}")
 
         # Saving a better model
         if(accuracy >= target_acc and entropy <= target_entr):
