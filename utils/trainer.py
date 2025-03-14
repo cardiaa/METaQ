@@ -4,13 +4,14 @@ import numpy as np
 import os
 import torch.nn as nn
 import torch.optim as optim
-from torch.utils.data import DataLoader
 from torch.optim import Adam, SGD
+from torch.utils.data import DataLoader
 from torchvision import datasets, transforms
 from utils.networks import LeNet5
 from utils.quantize_and_compress import compute_entropy
 from utils.optimization import FISTA, ProximalBM
 from utils.weight_utils import initialize_weights
+from IPython.display import clear_output
 
 def test_accuracy(model, dataloader, device):
     """
@@ -115,9 +116,6 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
             f.write("\nMax Accuracy:", max(accuracies))
             f.write("Min entropy:", min(entropies))
 
-        print(f"Entropia minima: {min(entropies)}, C: {C}, r: {r}")
-        print("-"*60)
-
         # Saving a better model
         if(accuracy >= target_acc and entropy <= target_entr):
             with open(log_filename, "a") as f:
@@ -154,4 +152,7 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
         with open(log_filename, "a") as f:
             f.write(f"Time taken for a epoch: {training_time:.2f} seconds\n")
               
+        clear_output(wait=True)
+        print(f"Epoch: {epoch}, Entropia minima: {min(entropies)}, C: {C}, r: {r}, epoch time: {training_time:.2f}s")
+
     return accuracy, entropy, target_acc, target_entr
