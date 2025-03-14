@@ -35,7 +35,7 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
     
     model = LeNet5().to(device)
     criterion = nn.CrossEntropyLoss()
-    print("aaa")
+    
     if(train_optimizer == 'A'):
         optimizer = optim.Adam(model.parameters(), lr=lr, betas=(0.9, 0.999), eps=1e-08, weight_decay=lambda_reg * alpha)
     elif(train_optimizer == 'S'):
@@ -57,6 +57,7 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
         start_time = time.time()
 
         for i, data in enumerate(trainloader, 0):
+            print("aaa")
             if(i % 10 == 0):
                 clear_output(wait=True)
                 print(i) 
