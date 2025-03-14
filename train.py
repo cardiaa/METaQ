@@ -45,9 +45,9 @@ def train_model(args):
 
 
 if __name__ == "__main__":
-    torch.set_num_threads(9)
-    print(f"Thread set for PyTorch: {torch.get_num_threads()}")
-    print(f"Number of core available on the machine: {os.cpu_count()}")
+    #torch.set_num_threads(9)
+    #print(f"Thread set for PyTorch: {torch.get_num_threads()}")
+    #print(f"Number of core available on the machine: {os.cpu_count()}")
 
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     transform = transforms.Compose([transforms.ToTensor()])
