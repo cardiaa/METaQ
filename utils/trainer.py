@@ -92,7 +92,7 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
             
             loss.backward()
             optimizer.step()
-
+        print("💥💥💥💥💥💥💥💥💥💥💥💥💥💥💥💥💥💥💥")
         w = torch.cat([param.data.view(-1) for param in model.parameters()]).to(device)
         
         entropy = round(compute_entropy(w.tolist())) + 1
