@@ -56,8 +56,6 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
     for epoch in range(n_epochs):
         start_time = time.time()
         for i, data in enumerate(trainloader, 0):
-            if(i % 10 == 0):
-                print(i)
             inputs, labels = data[0].to(device), data[1].to(device)
             optimizer.zero_grad()
             outputs = model(inputs)
@@ -127,6 +125,7 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
             #    f.write("Entropy is not decreasing enough! (A)")
             print("Entropy is not decreasing enough! (A)")
             return accuracy, entropy, target_acc, target_entr
+        
         if(epoch > 50):
             if(entropies[-1] > 200000 and entropies[-2] > 200000 and entropies[-3] > 200000 and entropies[-4] > 200000):
                 #with open(log_filename, "a") as f:
@@ -139,7 +138,8 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
             #with open(log_filename, "a") as f:
             #    f.write("Accuracy is too low! (C)")
             print("Accuracy is too low! (C)")
-            return accuracy, entropy, target_acc, target_entr                    
+            return accuracy, entropy, target_acc, target_entr  
+                          
         if(epoch > 10):
             if(accuracies[-1] < 90 and accuracies[-2] < 90 and accuracies[-3] < 90 and accuracies[-4] < 90):
                 #with open(log_filename, "a") as f:
