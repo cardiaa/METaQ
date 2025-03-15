@@ -105,7 +105,7 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
         os.makedirs(output_dir, exist_ok=True)
         log_filename = f"{output_dir}/log_C_{C}_r_{r}_proc_{os.getpid()}.txt"
         
-        with open(log_filename, "a") as f:
+        with open(log_filename, "w") as f:
             f.write(f"C={C}, lr={lr}, lambda_reg={lambda_reg}, "
                 f"alpha={alpha}, subgradient_step={subgradient_step}, w0={w0}, r={r}, "
                 f"target_acc={target_acc}, target_entr={target_entr}, "
@@ -116,7 +116,7 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
             f.write("\nEntropies:", entropies)
             f.write("\nMax Accuracy:", max(accuracies))
             f.write("Min entropy:", min(entropies))
-        
+        print("💥💥💥💥💥💥💥💥💥💥💥💥💥💥")
         # Saving a better model
         if(accuracy >= target_acc and entropy <= target_entr):
             with open(log_filename, "a") as f:
@@ -127,7 +127,7 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
         
         # Entropy exit conditions
         if(epoch > 20 and entropy > 600000):
-            with open(log_filename, "a") as f:
+            with open(log_filename, "w") as f:
                 f.write("Entropy is not decreasing enough! (A)")
             return accuracy, entropy, target_acc, target_entr
         if(epoch > 50):
@@ -138,22 +138,21 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
             
         # Accuracy exit condition
         if(epoch == 1 and accuracies[-1] < 70):
-            with open(log_filename, "a") as f:
+            with open(log_filename, "w") as f:
                 f.write("Accuracy is too low! (C)")
             return accuracy, entropy, target_acc, target_entr                    
         if(epoch > 10):
             if(accuracies[-1] < 90 and accuracies[-2] < 90 and accuracies[-3] < 90 and accuracies[-4] < 90):
-                with open(log_filename, "a") as f:
+                with open(log_filename, "w") as f:
                     f.write("Accuracy is too low! (D)")
                 return accuracy, entropy, target_acc, target_entr     
         
         # ... ADD OTHER EXIT CONDITIONS ...      
         
         training_time = time.time() - start_time
-        with open(log_filename, "a") as f:
+        with open(log_filename, "w") as f:
             f.write(f"Time taken for a epoch: {training_time:.2f} seconds\n")
               
-        clear_output(wait=True)
         print(f"Epoch: {epoch}, Entropia minima: {min(entropies)}, C: {C}, r: {r}, epoch time: {training_time:.2f}s")
 
     return accuracy, entropy, target_acc, target_entr
