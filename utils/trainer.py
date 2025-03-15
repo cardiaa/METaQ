@@ -106,11 +106,6 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
         log_filename = f"{output_dir}/log_C_{C}_r_{r}_proc_{os.getpid()}.txt"
         print(f"💥💥💥💥💥💥💥{os.getpid()}💥💥💥💥💥💥💥")
         with open(log_filename, "a") as f:
-            f.write(f"C={C}, lr={lr}, lambda_reg={lambda_reg}, "
-                f"alpha={alpha}, subgradient_step={subgradient_step}, w0={w0}, r={r}, "
-                f"target_acc={target_acc}, target_entr={target_entr}, "
-                f"min_xi={min_xi}, max_xi={max_xi}, n_epochs={n_epochs}, train_optimizer={train_optimizer} "
-                f"entropy_optimizer={entropy_optimizer}")
             f.write("\nEpoch:", epoch+1)
             f.write("\nAccuracies:", accuracies)
             f.write("\nEntropies:", entropies)
