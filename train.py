@@ -55,7 +55,7 @@ def train_model(args):
 
 if __name__ == "__main__":
     torch.set_num_threads(9)
-    multiprocessing.set_start_method('spawn')
+    #multiprocessing.set_start_method('spawn')
     print(f"Thread set for PyTorch: {torch.get_num_threads()}")
     print(f"Number of core available on the machine: {os.cpu_count()}")
 
