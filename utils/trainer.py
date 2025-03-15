@@ -153,6 +153,6 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
         #with open(log_filename, "a") as f:
         #    f.write(f"Time taken for a epoch: {training_time:.2f} seconds\n")
               
-        print(f"Epoch: {epoch}, Entropia minima: {min(entropies)}, Accuracy massima: {max(accuracies)}, C: {C}, r: {r}, epoch time: {training_time:.2f}s")
+        print(f"PID: {os.getpid()}, Epoch: {epoch}, Entropia minima: {min(entropies)}, Accuracy massima: {max(accuracies)}, C: {C}, r: {r}, epoch time: {training_time:.2f}s")
 
     return accuracy, entropy, target_acc, target_entr
