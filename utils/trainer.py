@@ -99,12 +99,12 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
         entropies.append(entropy)
         accuracy = test_accuracy(model, testloader, device)
         accuracies.append(accuracy)
-        print("💥💥💥💥💥💥💥💥💥💥💥💥💥💥💥💥💥💥💥")
+        
             # Creiamo un file di log per ogni combinazione
         output_dir = "training_logs"
         os.makedirs(output_dir, exist_ok=True)
         log_filename = f"{output_dir}/log_C_{C}_r_{r}.txt"
-
+        print("💥💥💥💥💥💥💥💥💥💥💥💥💥💥💥💥💥💥💥")
         with open(log_filename, "a") as f:
             f.write(f"C={C}, lr={lr}, lambda_reg={lambda_reg}, "
                 f"alpha={alpha}, subgradient_step={subgradient_step}, w0={w0}, r={r}, "
