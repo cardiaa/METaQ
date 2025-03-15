@@ -123,28 +123,28 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
         if(epoch > 20 and entropy > 600000):
             #with open(log_filename, "a") as f:
             #    f.write("Entropy is not decreasing enough! (A)")
-            print("Entropy is not decreasing enough! (A)")
+            print("Entropy is not decreasing enough! (A), PID: {os.getpid()}, Epoch: {epoch}, Entropia minima: {min(entropies)}, Accuracy massima: {max(accuracies)}, C: {C}, r: {r}, epoch time: {training_time:.2f}s")
             return accuracy, entropy, target_acc, target_entr
         
         if(epoch > 50):
             if(entropies[-1] > 200000 and entropies[-2] > 200000 and entropies[-3] > 200000 and entropies[-4] > 200000):
                 #with open(log_filename, "a") as f:
                 #    f.write("Entropy is not decreasing enough! (B)")
-                print("Entropy is not decreasing enough! (B)")
+                print("Entropy is not decreasing enough! (B), PID: {os.getpid()}, Epoch: {epoch}, Entropia minima: {min(entropies)}, Accuracy massima: {max(accuracies)}, C: {C}, r: {r}, epoch time: {training_time:.2f}s")
                 return accuracy, entropy, target_acc, target_entr           
             
         # Accuracy exit condition
         if(epoch == 1 and accuracies[-1] < 70):
             #with open(log_filename, "a") as f:
             #    f.write("Accuracy is too low! (C)")
-            print("Accuracy is too low! (C)")
+            print("Accuracy is too low! (C), PID: {os.getpid()}, Epoch: {epoch}, Entropia minima: {min(entropies)}, Accuracy massima: {max(accuracies)}, C: {C}, r: {r}, epoch time: {training_time:.2f}s")
             return accuracy, entropy, target_acc, target_entr  
                           
         if(epoch > 10):
             if(accuracies[-1] < 90 and accuracies[-2] < 90 and accuracies[-3] < 90 and accuracies[-4] < 90):
                 #with open(log_filename, "a") as f:
                 #    f.write("Accuracy is too low! (D)")
-                print("Accuracy is too low! (D)")
+                print("Accuracy is too low! (D), PID: {os.getpid()}, Epoch: {epoch}, Entropia minima: {min(entropies)}, Accuracy massima: {max(accuracies)}, C: {C}, r: {r}, epoch time: {training_time:.2f}s")
                 return accuracy, entropy, target_acc, target_entr     
         
         # ... ADD OTHER EXIT CONDITIONS ...      
