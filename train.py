@@ -12,8 +12,14 @@ def train_model(args):
     # Unpack arguments
     (C, lr, lambda_reg, alpha, subgradient_step, w0, r,
      target_acc, target_entr, min_xi, max_xi, n_epochs,
-     device, train_optimizer, entropy_optimizer, trainloader,
-     testloader) = args
+     device, train_optimizer, entropy_optimizer) = args
+
+    # Crea i DataLoader all'interno del processo figlio
+    transform = transforms.Compose([transforms.ToTensor()])
+    trainset = datasets.MNIST(root='./data', train=True, download=True, transform=transform)
+    trainloader = torch.utils.data.DataLoader(trainset, batch_size=64, shuffle=True, num_workers=0)
+    testset = datasets.MNIST(root='./data', train=False, download=True, transform=transform)
+    testloader = torch.utils.data.DataLoader(testset, batch_size=1000, shuffle=False, num_workers=0)
 
     # Inizia il training
     start_time = time.time()
@@ -42,6 +48,7 @@ def train_model(args):
         f.write(f"Training Time: {training_time:.2f} seconds\n")
 
     return (C, r, training_time)
+
 
 
 if __name__ == "__main__":
@@ -76,8 +83,6 @@ if __name__ == "__main__":
         "device": [device],
         "train_optimizer": ['A'],
         "entropy_optimizer": ['F'],
-        "trainloader": [trainloader],
-        "testloader": [testloader]
     }
 
     # Creazione della lista di combinazioni di parametri
@@ -87,9 +92,9 @@ if __name__ == "__main__":
         param_grid["r"], param_grid["target_acc"], param_grid["target_entr"],
         param_grid["min_xi"], param_grid["max_xi"], param_grid["n_epochs"],
         param_grid["device"], param_grid["train_optimizer"],
-        param_grid["entropy_optimizer"], param_grid["trainloader"],
-        param_grid["testloader"]
+        param_grid["entropy_optimizer"]
     ))
+
 
     # Numero di processi da lanciare in parallelo
     num_processes = min(384, len(param_combinations))  # Non ha senso lanciare più processi delle combinazioni
