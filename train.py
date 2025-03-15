@@ -9,6 +9,9 @@ import multiprocessing
 
 
 def train_model(args):
+
+    torch.set_num_threads(1)
+
     # Unpack arguments
     (C, lr, lambda_reg, alpha, subgradient_step, w0, r,
      target_acc, target_entr, min_xi, max_xi, n_epochs,
@@ -54,8 +57,15 @@ def train_model(args):
 
 
 if __name__ == "__main__":
-    torch.set_num_threads(9)
-    #multiprocessing.set_start_method('spawn')
+    num_processes = 40
+    num_total_cores = os.cpu_count()  # Numero totale di core disponibili
+    torch_threads_per_process = max(1, num_total_cores // num_processes)  # Thread per processo
+
+    print(f"Numero totale di core: {num_total_cores}")
+    print(f"Numero di processi: {num_processes}")
+    print(f"Thread per processo: {torch_threads_per_process}")
+
+    multiprocessing.set_start_method('spawn', force=True)
     print(f"Thread set for PyTorch: {torch.get_num_threads()}")
     print(f"Number of core available on the machine: {os.cpu_count()}")
 
