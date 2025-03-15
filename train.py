@@ -30,16 +30,16 @@ def train_model(args):
     start_time = time.time()
         
     # Creiamo un file di log per ogni combinazione
-    output_dir = "training_logs"
-    os.makedirs(output_dir, exist_ok=True)
-    log_filename = f"{output_dir}/log_C_{C}_r_{r}_proc_{os.getpid()}.txt"
+    #output_dir = "training_logs"
+    #os.makedirs(output_dir, exist_ok=True)
+    #log_filename = f"{output_dir}/log_C_{C}_r_{r}_proc_{os.getpid()}.txt"
     
-    with open(log_filename, "w") as f:
-        f.write(f"C={C}, lr={lr}, lambda_reg={lambda_reg}, "
-            f"alpha={alpha}, subgradient_step={subgradient_step}, w0={w0}, r={r}, "
-            f"target_acc={target_acc}, target_entr={target_entr}, "
-            f"min_xi={min_xi}, max_xi={max_xi}, n_epochs={n_epochs}, train_optimizer={train_optimizer} "
-            f"entropy_optimizer={entropy_optimizer}")
+    #with open(log_filename, "w") as f:
+    #    f.write(f"C={C}, lr={lr}, lambda_reg={lambda_reg}, "
+    #        f"alpha={alpha}, subgradient_step={subgradient_step}, w0={w0}, r={r}, "
+    #        f"target_acc={target_acc}, target_entr={target_entr}, "
+    #        f"min_xi={min_xi}, max_xi={max_xi}, n_epochs={n_epochs}, train_optimizer={train_optimizer} "
+    #        f"entropy_optimizer={entropy_optimizer}")
     
     accuracy, entropy, target_acc, target_entr = train_and_evaluate(
         C=C, lr=lr, lambda_reg=lambda_reg, alpha=alpha, subgradient_step=subgradient_step,
@@ -52,13 +52,13 @@ def train_model(args):
     
     training_time = time.time() - start_time
 
-    with open(log_filename, "a") as f:
-        f.write(f"Training completed for C={C}, r={r}\n")
-        f.write(f"Accuracy: {accuracy}\n")
-        f.write(f"Entropy: {entropy}\n")
-        f.write(f"Target Accuracy: {target_acc}\n")
-        f.write(f"Target Entropy: {target_entr}\n")
-        f.write(f"Training Time: {training_time:.2f} seconds\n")
+    #with open(log_filename, "a") as f:
+    #    f.write(f"Training completed for C={C}, r={r}\n")
+    #    f.write(f"Accuracy: {accuracy}\n")
+    #    f.write(f"Entropy: {entropy}\n")
+    #    f.write(f"Target Accuracy: {target_acc}\n")
+    #    f.write(f"Target Entropy: {target_entr}\n")
+    #    f.write(f"Training Time: {training_time:.2f} seconds\n")
 
     return (C, r, training_time)
 

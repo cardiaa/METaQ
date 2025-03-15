@@ -100,54 +100,59 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
         accuracy = test_accuracy(model, testloader, device)
         accuracies.append(accuracy)
         
-            # Creiamo un file di log per ogni combinazione
-        output_dir = "training_logs"
-        os.makedirs(output_dir, exist_ok=True)
-        log_filename = f"{output_dir}/log_C_{C}_r_{r}_proc_{os.getpid()}.txt"
-        print(f"💥💥💥💥💥💥💥{os.getpid()}💥💥💥💥💥💥💥")
-        with open(log_filename, "a") as f:
-            f.write("\nEpoch:", epoch+1)
-            #f.write("\nAccuracies:", accuracies)
-            #f.write("\nEntropies:", entropies)
-            #f.write("\nMax Accuracy:", max(accuracies))
-            #f.write("Min entropy:", min(entropies))
-        print("💥💥💥💥💥💥💥💥💥💥💥💥💥💥")
+        # Creo un file di log per ogni combinazione
+        #output_dir = "training_logs"
+        #os.makedirs(output_dir, exist_ok=True)
+        #log_filename = f"{output_dir}/log_C_{C}_r_{r}_proc_{os.getpid()}.txt"
+
+        #with open(log_filename, "a") as f:
+        #    f.write("\nEpoch:", epoch+1)
+        #    f.write("\nAccuracies:", accuracies)
+        #    f.write("\nEntropies:", entropies)
+        #    f.write("\nMax Accuracy:", max(accuracies))
+        #    f.write("Min entropy:", min(entropies))
+
         # Saving a better model
         if(accuracy >= target_acc and entropy <= target_entr):
-            with open(log_filename, "a") as f:
-                f.write("💥💥💥💥💥💥💥\n💥ATTENTION!💥\n💥💥💥💥💥💥💥")
+            #with open(log_filename, "a") as f:
+            #    f.write("💥💥💥💥💥💥💥\n💥ATTENTION!💥\n💥💥💥💥💥💥💥")
+            print("💥💥💥💥💥💥💥\n💥ATTENTION!💥\n💥💥💥💥💥💥💥")
             torch.save(model.state_dict(), f"BestModelsBeforeQuantization/C{C}_r{round(r*1000)}.pth")
             target_acc = accuracy
             target_entr = entropy
         
         # Entropy exit conditions
         if(epoch > 20 and entropy > 600000):
-            with open(log_filename, "a") as f:
-                f.write("Entropy is not decreasing enough! (A)")
+            #with open(log_filename, "a") as f:
+            #    f.write("Entropy is not decreasing enough! (A)")
+            print("Entropy is not decreasing enough! (A)")
             return accuracy, entropy, target_acc, target_entr
         if(epoch > 50):
             if(entropies[-1] > 200000 and entropies[-2] > 200000 and entropies[-3] > 200000 and entropies[-4] > 200000):
-                with open(log_filename, "a") as f:
-                    f.write("Entropy is not decreasing enough! (B)")
+                #with open(log_filename, "a") as f:
+                #    f.write("Entropy is not decreasing enough! (B)")
+                print("Entropy is not decreasing enough! (B)")
                 return accuracy, entropy, target_acc, target_entr           
             
         # Accuracy exit condition
         if(epoch == 1 and accuracies[-1] < 70):
-            with open(log_filename, "a") as f:
-                f.write("Accuracy is too low! (C)")
+            #with open(log_filename, "a") as f:
+            #    f.write("Accuracy is too low! (C)")
+            print("Accuracy is too low! (C)")
             return accuracy, entropy, target_acc, target_entr                    
         if(epoch > 10):
             if(accuracies[-1] < 90 and accuracies[-2] < 90 and accuracies[-3] < 90 and accuracies[-4] < 90):
-                with open(log_filename, "a") as f:
-                    f.write("Accuracy is too low! (D)")
+                #with open(log_filename, "a") as f:
+                #    f.write("Accuracy is too low! (D)")
+                print("Accuracy is too low! (D)")
                 return accuracy, entropy, target_acc, target_entr     
         
         # ... ADD OTHER EXIT CONDITIONS ...      
         
         training_time = time.time() - start_time
-        with open(log_filename, "a") as f:
-            f.write(f"Time taken for a epoch: {training_time:.2f} seconds\n")
+        #with open(log_filename, "a") as f:
+        #    f.write(f"Time taken for a epoch: {training_time:.2f} seconds\n")
               
-        print(f"Epoch: {epoch}, Entropia minima: {min(entropies)}, C: {C}, r: {r}, epoch time: {training_time:.2f}s")
+        print(f"Epoch: {epoch}, Entropia minima: {min(entropies)}, Accuracy massima: {max(accuracies)}, C: {C}, r: {r}, epoch time: {training_time:.2f}s")
 
     return accuracy, entropy, target_acc, target_entr
