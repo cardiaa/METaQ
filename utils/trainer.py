@@ -92,14 +92,14 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
             
             loss.backward()
             optimizer.step()
-        print("💥💥💥💥💥💥💥💥💥💥💥💥💥💥💥💥💥💥💥")
+        
         w = torch.cat([param.data.view(-1) for param in model.parameters()]).to(device)
         
         entropy = round(compute_entropy(w.tolist())) + 1
         entropies.append(entropy)
         accuracy = test_accuracy(model, testloader, device)
         accuracies.append(accuracy)
-
+        print("💥💥💥💥💥💥💥💥💥💥💥💥💥💥💥💥💥💥💥")
             # Creiamo un file di log per ogni combinazione
         output_dir = "training_logs"
         os.makedirs(output_dir, exist_ok=True)
