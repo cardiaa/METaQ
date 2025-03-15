@@ -36,10 +36,10 @@ def train_model(args):
     
     with open(log_filename, "w") as f:
         f.write(f"C={C}, lr={lr}, lambda_reg={lambda_reg}, "
-        f"alpha={alpha}, subgradient_step={subgradient_step}, w0={w0}, r={r}, "
-        f"target_acc={target_acc}, target_entr={target_entr}, "
-        f"min_xi={min_xi}, max_xi={max_xi}, n_epochs={n_epochs}, train_optimizer={train_optimizer} "
-        f"entropy_optimizer={entropy_optimizer}")
+            f"alpha={alpha}, subgradient_step={subgradient_step}, w0={w0}, r={r}, "
+            f"target_acc={target_acc}, target_entr={target_entr}, "
+            f"min_xi={min_xi}, max_xi={max_xi}, n_epochs={n_epochs}, train_optimizer={train_optimizer} "
+            f"entropy_optimizer={entropy_optimizer}")
     
     accuracy, entropy, target_acc, target_entr = train_and_evaluate(
         C=C, lr=lr, lambda_reg=lambda_reg, alpha=alpha, subgradient_step=subgradient_step,

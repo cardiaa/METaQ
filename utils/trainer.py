@@ -107,10 +107,10 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
         print(f"💥💥💥💥💥💥💥{os.getpid()}💥💥💥💥💥💥💥")
         with open(log_filename, "a") as f:
             f.write("\nEpoch:", epoch+1)
-            f.write("\nAccuracies:", accuracies)
-            f.write("\nEntropies:", entropies)
-            f.write("\nMax Accuracy:", max(accuracies))
-            f.write("Min entropy:", min(entropies))
+            #f.write("\nAccuracies:", accuracies)
+            #f.write("\nEntropies:", entropies)
+            #f.write("\nMax Accuracy:", max(accuracies))
+            #f.write("Min entropy:", min(entropies))
         print("💥💥💥💥💥💥💥💥💥💥💥💥💥💥")
         # Saving a better model
         if(accuracy >= target_acc and entropy <= target_entr):
