@@ -24,7 +24,7 @@ def train_model(args):
     testset = datasets.MNIST(root='./data', train=False, download=True, transform=transform)
     testloader = torch.utils.data.DataLoader(testset, batch_size=1000, shuffle=False, num_workers=0)
     
-    print("Dati caricati")
+    print("Dati caricati", flush=True)
 
     # Inizia il training
     start_time = time.time()
@@ -69,7 +69,6 @@ if __name__ == "__main__":
     num_total_cores = os.cpu_count()  # Numero totale di core disponibili
     torch_threads_per_process = max(1, num_total_cores // num_processes)  # Thread per processo
 
-    print(f"Numero totale di core: {num_total_cores}")
     print(f"Numero di processi: {num_processes}")
     print(f"Thread per processo: {torch_threads_per_process}")
 
