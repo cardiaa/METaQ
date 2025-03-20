@@ -6,9 +6,18 @@ from torchvision import datasets, transforms
 from itertools import product
 from utils.trainer import train_and_evaluate  
 import multiprocessing
+import psutil
+
+def check_cpu_affinity():
+    pid = os.getpid()
+    p = psutil.Process(pid)
+    affinity = p.cpu_affinity()
+    print(f"Process {pid} running on cores: {affinity}", flush=True)
 
 
 def train_model(args):
+    
+    check_cpu_affinity()
 
     torch.set_num_threads(1)
 
