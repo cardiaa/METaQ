@@ -1,0 +1,47 @@
+nohup: ignoring input
+Numero di processi: 40
+Thread per processo: 9
+Thread set for PyTorch: 192
+Number of core available on the machine: 384
+Dati caricati
+Dati caricati
+Dati caricati
+Dati caricati
+Dati caricati
+Dati caricati
+Dati caricati
+Dati caricati
+Dati caricati
+Dati caricati
+Dati caricati
+Dati caricati
+Dati caricati
+Dati caricati
+Dati caricati
+Dati caricati
+Dati caricati
+Dati caricati
+Dati caricati
+Dati caricati
+Dati caricati
+Dati caricati
+Dati caricati
+Dati caricati
+Dati caricati
+Dati caricati
+Dati caricati
+Dati caricati
+Dati caricati
+Dati caricati
+Dati caricati
+Dati caricati
+Dati caricati
+Dati caricati
+Dati caricati
+Dati caricati
+Dati caricati
+Dati caricati
+Dati caricati
+Dati caricati
+/usr/lib/python3.10/multiprocessing/resource_tracker.py:224: UserWarning: resource_tracker: There appear to be 6 leaked semaphore objects to clean up at shutdown
+  warnings.warn('resource_tracker: There appear to be %d '
