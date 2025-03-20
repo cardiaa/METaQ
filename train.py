@@ -7,40 +7,29 @@ from itertools import product
 from utils.trainer import train_and_evaluate  
 import multiprocessing
 
-def set_affinity(process_index, num_processes):
-    num_total_cores = os.cpu_count()  # Numero totale di core logici (es. 384)
-    num_physical_cores = num_total_cores // 2  # Numero stimato di core fisici (es. 192)
-    
-    cores_per_process = max(1, num_physical_cores // num_processes)  
-    start_core = process_index * cores_per_process
-    end_core = start_core + cores_per_process
 
-    physical_cores = list(range(0, num_total_cores, 2))  # Prendi solo gli indici pari (core fisici)
-    selected_cores = physical_cores[start_core:min(end_core, len(physical_cores))]
-    
-    os.sched_setaffinity(0, selected_cores)
+def load_data():
+    transform = transforms.Compose([transforms.ToTensor()])
+    trainset = datasets.MNIST(root='./data', train=True, download=True, transform=transform)
+    testset = datasets.MNIST(root='./data', train=False, download=True, transform=transform)
+    return trainset, testset
 
 
 def train_model(args):
+    process_index = args[-2]
+    num_processes = args[-1]
 
-    process_index = args[-2]  # Penultimo argomento è l'indice del processo
-    num_processes = args[-1]  # Ultimo argomento è il numero totale di processi
+    # torch.set_num_threads(1)  # Limitiamo ogni processo a un solo thread per il training
 
-    # Affinità ai core fisici
-    #set_affinity(process_index, num_processes)
-    torch.set_num_threads(1)
-
-    # Imposta GPU visibile solo per questo processo
-    if torch.cuda.is_available():
-        os.environ["CUDA_VISIBLE_DEVICES"] = str(process_index % torch.cuda.device_count())
-    
     (C, lr, lambda_reg, alpha, subgradient_step, w0, r,
      target_acc, target_entr, min_xi, max_xi, n_epochs,
-     device, train_optimizer, entropy_optimizer,
-     trainloader, testloader) = args[:-2]
+     device, train_optimizer, entropy_optimizer) = args[:-2]
+
+    # Usa i DataLoader globali per evitare conflitti di caricamento
+    trainloader = torch.utils.data.DataLoader(trainset, batch_size=64, shuffle=True, num_workers=0)
+    testloader = torch.utils.data.DataLoader(testset, batch_size=1000, shuffle=False, num_workers=0)
 
     print(f"Process {process_index}: Dati caricati", flush=True)
-    
     start_time = time.time()
 
     accuracy, entropy, target_acc, target_entr = train_and_evaluate(
@@ -51,10 +40,12 @@ def train_model(args):
         entropy_optimizer=entropy_optimizer,
         trainloader=trainloader, testloader=testloader
     )
-    
+
     training_time = time.time() - start_time
     print(f"Process {process_index}: Training completato in {training_time:.2f} secondi", flush=True)
+
     return (C, r, training_time)
+
 
 if __name__ == "__main__":
     num_processes = 12
@@ -67,13 +58,8 @@ if __name__ == "__main__":
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     np.set_printoptions(precision=6)
 
-    # Caricamento dei dati UNA VOLTA e condivisione tra i processi
-    transform = transforms.Compose([transforms.ToTensor()])
-    trainset = datasets.MNIST(root='./data', train=True, download=True, transform=transform)
-    testset = datasets.MNIST(root='./data', train=False, download=True, transform=transform)
-
-    trainloader = torch.utils.data.DataLoader(trainset, batch_size=64, shuffle=True, num_workers=0)
-    testloader = torch.utils.data.DataLoader(testset, batch_size=1000, shuffle=False, num_workers=0)
+    # Caricamento unico dei dati
+    trainset, testset = load_data()
 
     param_grid = {
         "C": [6],
@@ -93,7 +79,7 @@ if __name__ == "__main__":
         "entropy_optimizer": ['F'],
     }
 
-    param_combinations = [(params + (trainloader, testloader, i, num_processes)) for i, params in enumerate(product(
+    param_combinations = [(params + (i, num_processes)) for i, params in enumerate(product(
         param_grid["C"], param_grid["lr"], param_grid["lambda_reg"],
         param_grid["alpha"], param_grid["subgradient_step"], param_grid["w0"],
         param_grid["r"], param_grid["target_acc"], param_grid["target_entr"],
@@ -102,12 +88,7 @@ if __name__ == "__main__":
         param_grid["entropy_optimizer"]
     ))]
 
-    results = []
-    group_size = 6  # Numero di processi da lanciare per volta
-
-    for i in range(0, len(param_combinations), group_size):
-        group = param_combinations[i:i + group_size]
-        with multiprocessing.Pool(processes=len(group)) as pool:
-            results.extend(pool.map(train_model, group))
+    with multiprocessing.Pool(processes=num_processes) as pool:
+        results = pool.map(train_model, param_combinations)
 
     print("Tutti i processi completati.")
