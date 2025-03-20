@@ -25,22 +25,22 @@ def train_model(args):
 
     process_index = args[-2]  # Penultimo argomento è l'indice del processo
     num_processes = args[-1]  # Ultimo argomento è il numero totale di processi
-    set_affinity(process_index, num_processes)
 
+    # Affinità ai core fisici
+    set_affinity(process_index, num_processes)
     torch.set_num_threads(1)
 
+    # Imposta GPU visibile solo per questo processo
+    if torch.cuda.is_available():
+        os.environ["CUDA_VISIBLE_DEVICES"] = str(process_index % torch.cuda.device_count())
+    
     (C, lr, lambda_reg, alpha, subgradient_step, w0, r,
      target_acc, target_entr, min_xi, max_xi, n_epochs,
-     device, train_optimizer, entropy_optimizer) = args[:-2]
+     device, train_optimizer, entropy_optimizer,
+     trainloader, testloader) = args[:-2]
 
-    transform = transforms.Compose([transforms.ToTensor()])
-    trainset = datasets.MNIST(root='./data', train=True, download=True, transform=transform)
-    trainloader = torch.utils.data.DataLoader(trainset, batch_size=64, shuffle=True, num_workers=0)
-    testset = datasets.MNIST(root='./data', train=False, download=True, transform=transform)
-    testloader = torch.utils.data.DataLoader(testset, batch_size=1000, shuffle=False, num_workers=0)
-    
     print(f"Process {process_index}: Dati caricati", flush=True)
-
+    
     start_time = time.time()
 
     accuracy, entropy, target_acc, target_entr = train_and_evaluate(
@@ -53,11 +53,8 @@ def train_model(args):
     )
     
     training_time = time.time() - start_time
-    
     print(f"Process {process_index}: Training completato in {training_time:.2f} secondi", flush=True)
-
     return (C, r, training_time)
-
 
 if __name__ == "__main__":
     num_processes = 12
@@ -69,6 +66,14 @@ if __name__ == "__main__":
     multiprocessing.set_start_method('spawn', force=True)
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     np.set_printoptions(precision=6)
+
+    # Caricamento dei dati UNA VOLTA e condivisione tra i processi
+    transform = transforms.Compose([transforms.ToTensor()])
+    trainset = datasets.MNIST(root='./data', train=True, download=True, transform=transform)
+    testset = datasets.MNIST(root='./data', train=False, download=True, transform=transform)
+
+    trainloader = torch.utils.data.DataLoader(trainset, batch_size=64, shuffle=True, num_workers=0)
+    testloader = torch.utils.data.DataLoader(testset, batch_size=1000, shuffle=False, num_workers=0)
 
     param_grid = {
         "C": [6],
@@ -88,7 +93,7 @@ if __name__ == "__main__":
         "entropy_optimizer": ['F'],
     }
 
-    param_combinations = [(params + (i, num_processes)) for i, params in enumerate(product(
+    param_combinations = [(params + (trainloader, testloader, i, num_processes)) for i, params in enumerate(product(
         param_grid["C"], param_grid["lr"], param_grid["lambda_reg"],
         param_grid["alpha"], param_grid["subgradient_step"], param_grid["w0"],
         param_grid["r"], param_grid["target_acc"], param_grid["target_entr"],
