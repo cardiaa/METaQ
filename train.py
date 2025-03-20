@@ -66,7 +66,7 @@ def train_model(args):
 
 if __name__ == "__main__":
     num_processes = 20
-    num_total_cores = os.cpu_count()  # Numero totale di core disponibili
+    num_total_cores = torch.get_num_threads() # Numero totale di core disponibili
     torch_threads_per_process = max(1, num_total_cores // num_processes)  # Thread per processo
 
     print(f"Numero di processi: {num_processes}")
@@ -74,7 +74,7 @@ if __name__ == "__main__":
 
     multiprocessing.set_start_method('spawn', force=True)
     print(f"Thread set for PyTorch: {torch.get_num_threads()}")
-    print(f"Number of core available on the machine: {num_total_cores}")
+    print(f"Number of core available on the machine: {os.cpu_count()}")
 
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
