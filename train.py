@@ -9,7 +9,7 @@ import multiprocessing
 
 def train_model(args):
 
-    torch.set_num_threads(19)
+    torch.set_num_threads(1)
 
     # Unpack arguments
     (C, lr, lambda_reg, alpha, subgradient_step, w0, r,
