@@ -56,7 +56,7 @@ def train_model(args):
 
 
 if __name__ == "__main__":
-    num_processes = 96
+    num_processes = 12
     num_total_cores = os.cpu_count()  
 
     print(f"Numero di processi: {num_processes}")
@@ -73,7 +73,7 @@ if __name__ == "__main__":
         "alpha": [0.533],
         "subgradient_step": [1e5],
         "w0": [-0.11],
-        "r": [round(1.1 + i * 0.002, 3) for i in range(20)],
+        "r": [round(1.1 + i * 0.002, 3) for i in range(12)],
         "target_acc": [98.99],
         "target_entr": [0.99602e6],
         "min_xi": [0],
