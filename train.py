@@ -66,7 +66,7 @@ def train_model(args):
 if __name__ == "__main__":
     num_processes = 12
     num_total_cores = os.cpu_count() # Numero totale di core disponibili
-    torch_threads_per_process = max(1, num_total_cores // num_processes)  # Thread per processo
+    torch_threads_per_process = 1 # Thread per processo
 
     print(f"Numero di processi: {num_processes}")
     print(f"Thread per processo: {torch_threads_per_process}")
