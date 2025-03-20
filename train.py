@@ -7,67 +7,75 @@ from itertools import product
 from utils.trainer import train_and_evaluate  
 import multiprocessing
 
-
 def set_affinity(process_index, num_processes):
-    num_total_cores = os.cpu_count() // 2
+    num_total_cores = os.cpu_count()  # Cambia con os.cpu_count() // 2 per fare ulteriori test
     cores_per_process = max(1, num_total_cores // num_processes)  
     start_core = process_index * cores_per_process
     end_core = start_core + cores_per_process
-    os.sched_setaffinity(0, range(start_core, min(end_core, num_total_cores)))
-
-
-def load_data():
-    transform = transforms.Compose([transforms.ToTensor()])
-    trainset = datasets.MNIST(root='./data', train=True, download=True, transform=transform)
-    testset = datasets.MNIST(root='./data', train=False, download=True, transform=transform)
-    return trainset, testset
-
-
+    assigned_cores = list(range(start_core, min(end_core, num_total_cores)))
+    
+    os.sched_setaffinity(0, assigned_cores)
+    print(f"Process {process_index}: Affinità impostata su core {assigned_cores}", flush=True)
+    
 def train_model(args):
+    process_index = args[-2]
+    num_processes = args[-1]
+    
+    # Impostiamo l'affinità del processo
+    set_affinity(process_index, num_processes)
 
-    process_index = args[-2]  # Penultimo argomento è l'indice del processo
-    num_processes = args[-1]  # Ultimo argomento è il numero totale di processi
-
-    set_affinity(process_index, num_processes)  # Commentata per ora
-
+    # Limitiamo PyTorch a usare solo un thread
     torch.set_num_threads(1)
-    trainset, testset = load_data()  # Carichiamo i dati localmente
-    trainloader = torch.utils.data.DataLoader(trainset, batch_size=64, shuffle=True, num_workers=0)
-    testloader = torch.utils.data.DataLoader(testset, batch_size=1000, shuffle=False, num_workers=0)
 
     (C, lr, lambda_reg, alpha, subgradient_step, w0, r,
      target_acc, target_entr, min_xi, max_xi, n_epochs,
      device, train_optimizer, entropy_optimizer) = args[:-2]
 
-    print(f"Process {process_index}: Dati caricati", flush=True)
+    try:
+        print(f"Process {process_index}: Caricamento dei dati...", flush=True)
+        transform = transforms.Compose([transforms.ToTensor()])
+        trainset = datasets.MNIST(root='./data', train=True, download=True, transform=transform)
+        trainloader = torch.utils.data.DataLoader(trainset, batch_size=64, shuffle=True, num_workers=0)
+        testset = datasets.MNIST(root='./data', train=False, download=True, transform=transform)
+        testloader = torch.utils.data.DataLoader(testset, batch_size=1000, shuffle=False, num_workers=0)
+        print(f"Process {process_index}: Dati caricati con successo.", flush=True)
+    except Exception as e:
+        print(f"Process {process_index}: Errore nel caricamento dei dati: {e}", flush=True)
+        return None
 
     start_time = time.time()
-
-    accuracy, entropy, target_acc, target_entr = train_and_evaluate(
-        C=C, lr=lr, lambda_reg=lambda_reg, alpha=alpha, subgradient_step=subgradient_step,
-        w0=w0, r=r, target_acc=target_acc, target_entr=target_entr,
-        min_xi=min_xi, max_xi=max_xi, n_epochs=n_epochs,
-        device=device, train_optimizer=train_optimizer,
-        entropy_optimizer=entropy_optimizer,
-        trainloader=trainloader, testloader=testloader
-    )
-
-    training_time = time.time() - start_time
-
-    print(f"Process {process_index}: Training completato in {training_time:.2f} secondi", flush=True)
-
-    return (C, r, training_time)
+    
+    try:
+        accuracy, entropy, target_acc, target_entr = train_and_evaluate(
+            C=C, lr=lr, lambda_reg=lambda_reg, alpha=alpha, subgradient_step=subgradient_step,
+            w0=w0, r=r, target_acc=target_acc, target_entr=target_entr,
+            min_xi=min_xi, max_xi=max_xi, n_epochs=n_epochs,
+            device=device, train_optimizer=train_optimizer,
+            entropy_optimizer=entropy_optimizer,
+            trainloader=trainloader, testloader=testloader
+        )
+        
+        training_time = time.time() - start_time
+        print(f"Process {process_index}: Training completato in {training_time:.2f} secondi", flush=True)
+        return (C, r, training_time)
+    
+    except Exception as e:
+        print(f"Process {process_index}: Errore durante il training: {e}", flush=True)
+        return None
 
 
 if __name__ == "__main__":
     num_processes = 12
-    num_total_cores = os.cpu_count()  
+    num_total_cores = os.cpu_count()
 
     print(f"Numero di processi: {num_processes}")
     print(f"Numero totale di core logici disponibili: {num_total_cores}")
 
     multiprocessing.set_start_method('spawn', force=True)
+    
+    # Prova anche con device = "cpu" per escludere problemi con la GPU
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    
     np.set_printoptions(precision=6)
 
     param_grid = {
@@ -77,7 +85,7 @@ if __name__ == "__main__":
         "alpha": [0.533],
         "subgradient_step": [1e5],
         "w0": [-0.11],
-        "r": [round(1.1 + i * 0.002, 3) for i in range(num_processes)],
+        "r": [round(1.1 + i * 0.002, 3) for i in range(12)],
         "target_acc": [98.99],
         "target_entr": [0.99602e6],
         "min_xi": [0],
