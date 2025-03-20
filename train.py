@@ -60,8 +60,9 @@ def train_model(args):
 
 
 if __name__ == "__main__":
-    num_processes = 8
+    num_processes = 6
     num_total_cores = os.cpu_count()  
+
 
     print(f"Numero di processi: {num_processes}")
     print(f"Numero totale di core logici disponibili: {num_total_cores}")
