@@ -27,7 +27,7 @@ def train_model(args):
     num_processes = args[-1]  # Ultimo argomento è il numero totale di processi
 
     # Affinità ai core fisici
-    set_affinity(process_index, num_processes)
+    #set_affinity(process_index, num_processes)
     torch.set_num_threads(1)
 
     # Imposta GPU visibile solo per questo processo
