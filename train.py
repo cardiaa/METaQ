@@ -9,7 +9,7 @@ import multiprocessing
 
 
 def set_affinity(process_index, num_processes):
-    num_total_cores = os.cpu_count()  
+    num_total_cores = os.cpu_count() * 2
     cores_per_process = max(1, num_total_cores // num_processes)  
     start_core = process_index * cores_per_process
     end_core = start_core + cores_per_process
