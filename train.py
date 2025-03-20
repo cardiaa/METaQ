@@ -60,9 +60,8 @@ def train_model(args):
 
 
 if __name__ == "__main__":
-    num_processes = 2
+    num_processes = 8  # Imposta il numero di processi desiderato
     num_total_cores = os.cpu_count()  
-
 
     print(f"Numero di processi: {num_processes}")
     print(f"Numero totale di core logici disponibili: {num_total_cores}")
@@ -98,7 +97,16 @@ if __name__ == "__main__":
         param_grid["entropy_optimizer"]
     ))]
 
-    with multiprocessing.Pool(processes=num_processes) as pool:
-        results = pool.map(train_model, param_combinations)
+    # Usa multiprocessing.Process per avviare i processi in parallelo
+    processes = []
+
+    for i in range(num_processes):
+        p = multiprocessing.Process(target=train_model, args=(param_combinations[i],))  # Passa l'argomento giusto
+        processes.append(p)
+        p.start()  # Avvia il processo
+
+    # Aspetta che ogni processo finisca
+    for p in processes:
+        p.join()
 
     print("Tutti i processi completati.")
