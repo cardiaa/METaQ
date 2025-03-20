@@ -81,13 +81,13 @@ if __name__ == "__main__":
     np.set_printoptions(precision=6)
 
     param_grid = {
-        "C": [6, 12, 24, 48],
+        "C": [6],
         "lr": [0.0007],
         "lambda_reg": [0.0015],
         "alpha": [0.533],
         "subgradient_step": [1e5],
         "w0": [-0.11],
-        "r": [round(1.1 + i * 0.002, 3) for i in range(10)],
+        "r": [round(1.1 + i * 0.002, 3) for i in range(40)],
         "target_acc": [98.99],
         "target_entr": [0.99602e6],
         "min_xi": [0],
