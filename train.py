@@ -19,14 +19,15 @@ def set_affinity(process_index, num_processes):
 
 def train_model(args):
 
-    process_index = args[-1]  # Ultimo argomento è l'indice del processo
+    process_index = args[-2]  # Penultimo argomento è l'indice del processo
+    num_processes = args[-1]  # Ultimo argomento è il numero totale di processi
     set_affinity(process_index, num_processes)
 
     torch.set_num_threads(1)
 
     (C, lr, lambda_reg, alpha, subgradient_step, w0, r,
      target_acc, target_entr, min_xi, max_xi, n_epochs,
-     device, train_optimizer, entropy_optimizer) = args[:-1]
+     device, train_optimizer, entropy_optimizer) = args[:-2]
 
     transform = transforms.Compose([transforms.ToTensor()])
     trainset = datasets.MNIST(root='./data', train=True, download=True, transform=transform)
@@ -72,7 +73,7 @@ if __name__ == "__main__":
         "alpha": [0.533],
         "subgradient_step": [1e5],
         "w0": [-0.11],
-        "r": [round(1.1 + i * 0.002, 3) for i in range(96)],
+        "r": [round(1.1 + i * 0.002, 3) for i in range(20)],
         "target_acc": [98.99],
         "target_entr": [0.99602e6],
         "min_xi": [0],
@@ -83,7 +84,7 @@ if __name__ == "__main__":
         "entropy_optimizer": ['F'],
     }
 
-    param_combinations = [(params + (i,)) for i, params in enumerate(product(
+    param_combinations = [(params + (i, num_processes)) for i, params in enumerate(product(
         param_grid["C"], param_grid["lr"], param_grid["lambda_reg"],
         param_grid["alpha"], param_grid["subgradient_step"], param_grid["w0"],
         param_grid["r"], param_grid["target_acc"], param_grid["target_entr"],
