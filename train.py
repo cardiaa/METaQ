@@ -9,12 +9,17 @@ import multiprocessing
 
 def set_affinity(process_index, num_processes):
     num_total_cores = os.cpu_count()  # Numero totale di core logici (es. 384)
+    num_physical_cores = num_total_cores // 2  # Numero stimato di core fisici (es. 192)
     
-    cores_per_process = max(1, num_total_cores // num_processes)  
+    cores_per_process = max(1, num_physical_cores // num_processes)  
     start_core = process_index * cores_per_process
     end_core = start_core + cores_per_process
 
-    os.sched_setaffinity(0, range(start_core, min(end_core, num_total_cores)))
+    physical_cores = list(range(0, num_total_cores, 2))  # Prendi solo gli indici pari (core fisici)
+    selected_cores = physical_cores[start_core:min(end_core, len(physical_cores))]
+    
+    os.sched_setaffinity(0, selected_cores)
+
 
 def train_model(args):
 
