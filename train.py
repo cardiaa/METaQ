@@ -74,7 +74,7 @@ if __name__ == "__main__":
     multiprocessing.set_start_method('spawn', force=True)
     
     # Prova anche con device = "cpu" per escludere problemi con la GPU
-    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    device = torch.device("cpu")
     
     np.set_printoptions(precision=6)
 
