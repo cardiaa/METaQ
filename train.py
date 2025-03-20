@@ -102,7 +102,12 @@ if __name__ == "__main__":
         param_grid["entropy_optimizer"]
     ))]
 
-    with multiprocessing.Pool(processes=num_processes) as pool:
-        results = pool.map(train_model, param_combinations)
+    results = []
+    group_size = 6  # Numero di processi da lanciare per volta
+
+    for i in range(0, len(param_combinations), group_size):
+        group = param_combinations[i:i + group_size]
+        with multiprocessing.Pool(processes=len(group)) as pool:
+            results.extend(pool.map(train_model, group))
 
     print("Tutti i processi completati.")
