@@ -63,14 +63,14 @@ def train_model(args):
     return (C, r, training_time)
 
 if __name__ == "__main__":
-    num_processes = 20  # Imposta il numero di processi desiderato
+    num_processes = 6  # Imposta il numero di processi desiderato
     num_total_cores = os.cpu_count()  # Numero di core logici disponibili
 
     print(f"Numero di processi: {num_processes}")
     print(f"Numero totale di core logici disponibili: {num_total_cores}")
 
     # Imposta il metodo di avvio dei processi (esempio su Unix-like)
-    multiprocessing.set_start_method('fork', force=True)
+    multiprocessing.set_start_method('spawn', force=True)
     
     # Definisci il dispositivo (GPU se disponibile)
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
