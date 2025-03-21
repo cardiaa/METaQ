@@ -69,11 +69,12 @@ def train_in_batches(param_combinations, batch_size):
     """
     for i in range(0, len(param_combinations), batch_size):
         batch = param_combinations[i:i + batch_size]
+        print(f"Avvio batch {i // batch_size + 1} con {len(batch)} processi")
         with ProcessPoolExecutor(max_workers=batch_size) as executor:
             # Ora chiamiamo direttamente la funzione train_process
             results = list(executor.map(train_process, batch))
-            print(f"Batch {i // batch_size + 1} completato")
-        time.sleep(2)  # Una piccola pausa per evitare sovraccarichi
+            print(f"Batch {i // batch_size + 1} completato con {len(results)} risultati")
+        # Non c'è più bisogno di time.sleep(2)
 
 
 if __name__ == "__main__":
