@@ -66,8 +66,10 @@ if __name__ == "__main__":
     print(f"Numero di gpu: {torch.cuda.device_count()}")
 
     multiprocessing.set_start_method('spawn', force=True)
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     print(f"Dispositivo selezionato: {device}")
+
     np.set_printoptions(precision=6)
 
     param_grid = {
