@@ -58,6 +58,11 @@ def train_model(args):
     return (C, r, training_time)
 
 
+def train_process(args):
+    """ Funzione separata per evitare l'errore di pickle su funzioni locali. """
+    return train_model(args)
+
+
 def train_in_batches(param_combinations, batch_size):
     """
     Funzione che divide i processi in batch più piccoli.
@@ -65,7 +70,8 @@ def train_in_batches(param_combinations, batch_size):
     for i in range(0, len(param_combinations), batch_size):
         batch = param_combinations[i:i + batch_size]
         with ProcessPoolExecutor(max_workers=batch_size) as executor:
-            results = list(executor.map(train_model, batch))
+            # Ora chiamiamo direttamente la funzione train_process
+            results = list(executor.map(train_process, batch))
             print(f"Batch {i // batch_size + 1} completato")
         time.sleep(2)  # Una piccola pausa per evitare sovraccarichi
 
