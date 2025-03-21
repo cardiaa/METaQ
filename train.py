@@ -70,7 +70,7 @@ if __name__ == "__main__":
     print(f"Numero totale di core logici disponibili: {num_total_cores}")
 
     # Imposta il metodo di avvio dei processi (esempio su Unix-like)
-    multiprocessing.set_start_method('spawn', force=True)
+    multiprocessing.set_start_method('fork', force=True)
     
     # Definisci il dispositivo (GPU se disponibile)
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
