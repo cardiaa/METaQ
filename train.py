@@ -58,7 +58,7 @@ def train_model(args):
 
 
 if __name__ == "__main__":
-    num_processes = 12  # Imposta il numero di processi desiderato
+    num_processes = 4  # Imposta il numero di processi desiderato
     num_total_cores = os.cpu_count()  
 
     print(f"Numero di processi: {num_processes}")
@@ -66,7 +66,7 @@ if __name__ == "__main__":
     print(f"Numero di gpu: {torch.cuda.device_count()}")
 
     multiprocessing.set_start_method('spawn', force=True)
-    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"Dispositivo selezionato: {device}")
     np.set_printoptions(precision=6)
 
