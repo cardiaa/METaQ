@@ -67,8 +67,8 @@ if __name__ == "__main__":
     print(f"Numero totale di core logici disponibili: {num_total_cores}")
 
     multiprocessing.set_start_method('spawn', force=True)
-    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    #device = torch.device("cpu")
+    #device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    device = torch.device("cpu")
     print(device)
     np.set_printoptions(precision=6)
 
