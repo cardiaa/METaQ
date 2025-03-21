@@ -29,7 +29,11 @@ def train_model(args):
 
     # Assicura che ogni processo selezioni correttamente la propria GPU
     num_gpus = torch.cuda.device_count()
-    device = torch.device(f"cuda:{process_index % num_gpus}" if num_gpus > 0 else "cpu")
+
+    device_selected = "tmp"
+    while(device_selected != "cpu" or device_selected != "gpu"):
+        device_selected = input("Select cpu o gpu: ")
+    device = torch.device(f"cuda:{process_index % num_gpus}" if device_selected == "gpu" else "cpu")
 
     print(f"Process {process_index}: Dati caricati su {device}", flush=True)
 
