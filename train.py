@@ -58,6 +58,7 @@ def train_model(args):
 
     return (C, r, training_time)
 
+
 if __name__ == "__main__":
     num_processes = 6 # Imposta il numero di processi desiderato
     num_total_cores = os.cpu_count()  
