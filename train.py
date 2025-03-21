@@ -7,6 +7,11 @@ from itertools import product
 from utils.trainer import train_and_evaluate  
 import multiprocessing
 
+def set_affinity(process_index):
+    # Imposta l'affinità del processo su core fisici
+    core_list = list(range(0, 192, 2))  # Prendiamo i core fisici (escludendo i logici)
+    os.sched_setaffinity(0, core_list)  # Associa il processo corrente ai core fisici
+
 def load_data():
     transform = transforms.Compose([transforms.ToTensor()])
     trainset = datasets.MNIST(root='./data', train=True, download=True, transform=transform)
@@ -14,9 +19,11 @@ def load_data():
     return trainset, testset
 
 def train_model(args):
-
+    
     process_index = args[-2]  # Penultimo argomento è l'indice del processo
     num_processes = args[-1]  # Ultimo argomento è il numero totale di processi
+
+    set_affinity(process_index)  # Imposta l'affinità prima di iniziare l'addestramento
 
     torch.set_num_threads(1)
     trainset, testset = load_data()  # Carichiamo i dati localmente
