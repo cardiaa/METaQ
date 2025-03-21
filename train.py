@@ -5,7 +5,16 @@ import os
 from torchvision import datasets, transforms  
 from itertools import product
 from utils.trainer import train_and_evaluate  
-import concurrent.futures
+from concurrent.futures import ProcessPoolExecutor
+
+
+def set_affinity(process_index, num_processes):
+    num_total_cores = os.cpu_count()
+    cores_per_process = max(1, num_total_cores // num_processes)  
+    start_core = process_index * cores_per_process
+    end_core = start_core + cores_per_process
+    os.sched_setaffinity(0, range(start_core, min(end_core, num_total_cores)))
+
 
 def load_data():
     transform = transforms.Compose([transforms.ToTensor()])
@@ -13,9 +22,12 @@ def load_data():
     testset = datasets.MNIST(root='./data', train=False, download=True, transform=transform)
     return trainset, testset
 
+
 def train_model(args):
     process_index = args[-2]  # Penultimo argomento è l'indice del processo
     num_processes = args[-1]  # Ultimo argomento è il numero totale di processi
+
+    #set_affinity(process_index, num_processes)  # Commentata per ora
 
     torch.set_num_threads(1)
     trainset, testset = load_data()  # Carichiamo i dati localmente
@@ -46,8 +58,21 @@ def train_model(args):
     return (C, r, training_time)
 
 
+def train_in_batches(param_combinations, batch_size):
+    """
+    Funzione che divide i processi in batch più piccoli.
+    """
+    for i in range(0, len(param_combinations), batch_size):
+        batch = param_combinations[i:i + batch_size]
+        with ProcessPoolExecutor(max_workers=batch_size) as executor:
+            # Ogni processo riceve la propria combinazione di parametri
+            results = list(executor.map(lambda args: train_model(args), batch))
+            print(f"Batch {i // batch_size + 1} completato")
+        time.sleep(2)  # Una piccola pausa per evitare sovraccarichi
+
+
 if __name__ == "__main__":
-    num_processes = 6  # Imposta il numero di processi desiderato
+    num_processes = 12  # Imposta il numero di processi desiderato
     num_total_cores = os.cpu_count()  
 
     print(f"Numero di processi: {num_processes}")
@@ -83,8 +108,7 @@ if __name__ == "__main__":
         param_grid["entropy_optimizer"]
     ))]
 
-    # Usa concurrent.futures.ProcessPoolExecutor per avviare i processi in parallelo
-    with concurrent.futures.ProcessPoolExecutor(max_workers=num_processes) as executor:
-        results = list(executor.map(train_model, param_combinations))
+    # Avvia i processi in batch
+    train_in_batches(param_combinations, batch_size=6)  # Esegui in batch più piccoli
 
     print("Tutti i processi completati.")
