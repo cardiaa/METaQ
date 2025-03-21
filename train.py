@@ -5,7 +5,7 @@ import os
 from torchvision import datasets, transforms  
 from itertools import product
 from utils.trainer import train_and_evaluate  
-from concurrent.futures import ProcessPoolExecutor
+import multiprocessing
 
 
 def set_affinity(process_index, num_processes):
@@ -24,6 +24,7 @@ def load_data():
 
 
 def train_model(args):
+
     process_index = args[-2]  # Penultimo argomento è l'indice del processo
     num_processes = args[-1]  # Ultimo argomento è il numero totale di processi
 
@@ -57,33 +58,14 @@ def train_model(args):
 
     return (C, r, training_time)
 
-
-def train_process(args):
-    """ Funzione separata per evitare l'errore di pickle su funzioni locali. """
-    return train_model(args)
-
-
-def train_in_batches(param_combinations, batch_size):
-    """
-    Funzione che divide i processi in batch più piccoli.
-    """
-    for i in range(0, len(param_combinations), batch_size):
-        batch = param_combinations[i:i + batch_size]
-        print(f"Avvio batch {i // batch_size + 1} con {len(batch)} processi")
-        with ProcessPoolExecutor(max_workers=batch_size) as executor:
-            # Ora chiamiamo direttamente la funzione train_process
-            results = list(executor.map(train_process, batch))
-            print(f"Batch {i // batch_size + 1} completato con {len(results)} risultati")
-        # Non c'è più bisogno di time.sleep(2)
-
-
 if __name__ == "__main__":
-    num_processes = 12  # Imposta il numero di processi desiderato
+    num_processes = 6 # Imposta il numero di processi desiderato
     num_total_cores = os.cpu_count()  
 
     print(f"Numero di processi: {num_processes}")
     print(f"Numero totale di core logici disponibili: {num_total_cores}")
 
+    multiprocessing.set_start_method('spawn', force=True)
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     np.set_printoptions(precision=6)
 
@@ -114,7 +96,16 @@ if __name__ == "__main__":
         param_grid["entropy_optimizer"]
     ))]
 
-    # Avvia i processi in batch
-    train_in_batches(param_combinations, batch_size=6)  # Esegui in batch più piccoli
+    # Usa multiprocessing.Process per avviare i processi in parallelo
+    processes = []
+
+    for i in range(num_processes):
+        p = multiprocessing.Process(target=train_model, args=(param_combinations[i],))  # Passa l'argomento giusto
+        processes.append(p)
+        p.start()  # Avvia il processo
+
+    # Aspetta che ogni processo finisca
+    for p in processes:
+        p.join()
 
     print("Tutti i processi completati.")
