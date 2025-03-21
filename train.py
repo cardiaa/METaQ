@@ -5,16 +5,7 @@ import os
 from torchvision import datasets, transforms  
 from itertools import product
 from utils.trainer import train_and_evaluate  
-import multiprocessing
-
-
-def set_affinity(process_index, num_processes):
-    num_total_cores = os.cpu_count()
-    cores_per_process = max(1, num_total_cores // num_processes)  
-    start_core = process_index * cores_per_process
-    end_core = start_core + cores_per_process
-    os.sched_setaffinity(0, range(start_core, min(end_core, num_total_cores)))
-
+import concurrent.futures
 
 def load_data():
     transform = transforms.Compose([transforms.ToTensor()])
@@ -22,13 +13,9 @@ def load_data():
     testset = datasets.MNIST(root='./data', train=False, download=True, transform=transform)
     return trainset, testset
 
-
 def train_model(args):
-
     process_index = args[-2]  # Penultimo argomento è l'indice del processo
     num_processes = args[-1]  # Ultimo argomento è il numero totale di processi
-
-    #set_affinity(process_index, num_processes)  # Commentata per ora
 
     torch.set_num_threads(1)
     trainset, testset = load_data()  # Carichiamo i dati localmente
@@ -58,14 +45,14 @@ def train_model(args):
 
     return (C, r, training_time)
 
+
 if __name__ == "__main__":
-    num_processes = 12 # Imposta il numero di processi desiderato
+    num_processes = 12  # Imposta il numero di processi desiderato
     num_total_cores = os.cpu_count()  
 
     print(f"Numero di processi: {num_processes}")
     print(f"Numero totale di core logici disponibili: {num_total_cores}")
 
-    multiprocessing.set_start_method('spawn', force=True)
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     np.set_printoptions(precision=6)
 
@@ -96,16 +83,8 @@ if __name__ == "__main__":
         param_grid["entropy_optimizer"]
     ))]
 
-    # Usa multiprocessing.Process per avviare i processi in parallelo
-    processes = []
-
-    for i in range(num_processes):
-        p = multiprocessing.Process(target=train_model, args=(param_combinations[i],))  # Passa l'argomento giusto
-        processes.append(p)
-        p.start()  # Avvia il processo
-
-    # Aspetta che ogni processo finisca
-    for p in processes:
-        p.join()
+    # Usa concurrent.futures.ProcessPoolExecutor per avviare i processi in parallelo
+    with concurrent.futures.ProcessPoolExecutor(max_workers=num_processes) as executor:
+        results = list(executor.map(train_model, param_combinations))
 
     print("Tutti i processi completati.")
