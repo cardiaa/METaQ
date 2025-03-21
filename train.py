@@ -7,7 +7,7 @@ from itertools import product
 from utils.trainer import train_and_evaluate  
 import multiprocessing
 
-# Funzione per impostare l'affinità dei processi su core fisici (opzionale)
+
 def set_affinity(process_index, num_processes):
     num_total_cores = os.cpu_count()
     cores_per_process = max(1, num_total_cores // num_processes)  
@@ -15,30 +15,32 @@ def set_affinity(process_index, num_processes):
     end_core = start_core + cores_per_process
     os.sched_setaffinity(0, range(start_core, min(end_core, num_total_cores)))
 
+
 def load_data():
     transform = transforms.Compose([transforms.ToTensor()])
     trainset = datasets.MNIST(root='./data', train=True, download=True, transform=transform)
     testset = datasets.MNIST(root='./data', train=False, download=True, transform=transform)
     return trainset, testset
 
+
 def train_model(args):
     process_index = args[-2]  # Penultimo argomento è l'indice del processo
     num_processes = args[-1]  # Ultimo argomento è il numero totale di processi
 
-    # Assicurati che ci siano GPU disponibili
+    # Assicura che ogni processo selezioni correttamente la propria GPU
     num_gpus = torch.cuda.device_count()
     device = torch.device(f"cuda:{process_index % num_gpus}" if num_gpus > 0 else "cpu")
 
     print(f"Process {process_index}: Dati caricati su {device}", flush=True)
-    
+
     torch.set_num_threads(1)
-    trainset, testset = load_data()  # Carichiamo i dati localmente
+    trainset, testset = load_data()
     trainloader = torch.utils.data.DataLoader(trainset, batch_size=64, shuffle=True, num_workers=0)
     testloader = torch.utils.data.DataLoader(testset, batch_size=1000, shuffle=False, num_workers=0)
 
     (C, lr, lambda_reg, alpha, subgradient_step, w0, r,
      target_acc, target_entr, min_xi, max_xi, n_epochs,
-     device, train_optimizer, entropy_optimizer) = args[:-2]
+     train_optimizer, entropy_optimizer) = args[:-2]
 
     start_time = time.time()
 
@@ -58,7 +60,7 @@ def train_model(args):
 
 
 if __name__ == "__main__":
-    num_processes = 4  # Imposta il numero di processi desiderato
+    num_processes = 4
     num_total_cores = os.cpu_count()  
 
     print(f"Numero di processi: {num_processes}")
@@ -66,10 +68,6 @@ if __name__ == "__main__":
     print(f"Numero di gpu: {torch.cuda.device_count()}")
 
     multiprocessing.set_start_method('spawn', force=True)
-    
-    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    print(f"Dispositivo selezionato: {device}")
-
     np.set_printoptions(precision=6)
 
     param_grid = {
@@ -85,7 +83,6 @@ if __name__ == "__main__":
         "min_xi": [0],
         "max_xi": [1],
         "n_epochs": [100],
-        "device": [device],
         "train_optimizer": ['A'],
         "entropy_optimizer": ['F'],
     }
@@ -95,18 +92,16 @@ if __name__ == "__main__":
         param_grid["alpha"], param_grid["subgradient_step"], param_grid["w0"],
         param_grid["r"], param_grid["target_acc"], param_grid["target_entr"],
         param_grid["min_xi"], param_grid["max_xi"], param_grid["n_epochs"],
-        param_grid["device"], param_grid["train_optimizer"],
-        param_grid["entropy_optimizer"]
+        param_grid["train_optimizer"], param_grid["entropy_optimizer"]
     ))]
 
     processes = []
 
     for i in range(num_processes):
-        p = multiprocessing.Process(target=train_model, args=(param_combinations[i],))  # Passa l'argomento giusto
+        p = multiprocessing.Process(target=train_model, args=(param_combinations[i],))
         processes.append(p)
-        p.start()  # Avvia il processo
+        p.start()
 
-    # Aspetta che ogni processo finisca
     for p in processes:
         p.join()
 
