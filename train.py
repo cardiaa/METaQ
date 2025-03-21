@@ -62,11 +62,15 @@ def train_in_batches(param_combinations, batch_size):
     """
     Funzione che divide i processi in batch più piccoli.
     """
+    def train_process(args):
+        # Funzione per chiamare train_model, così possiamo evitare l'errore di pickle sulla lambda
+        return train_model(args)
+    
     for i in range(0, len(param_combinations), batch_size):
         batch = param_combinations[i:i + batch_size]
         with ProcessPoolExecutor(max_workers=batch_size) as executor:
-            # Ogni processo riceve la propria combinazione di parametri
-            results = list(executor.map(lambda args: train_model(args), batch))
+            # Ora chiamiamo direttamente la funzione train_process
+            results = list(executor.map(train_process, batch))
             print(f"Batch {i // batch_size + 1} completato")
         time.sleep(2)  # Una piccola pausa per evitare sovraccarichi
 
