@@ -7,6 +7,7 @@ from itertools import product
 from utils.trainer import train_and_evaluate  
 import multiprocessing
 
+
 def set_affinity(process_index, num_processes):
     num_total_cores = os.cpu_count()
     cores_per_process = max(1, num_total_cores // num_processes)  
@@ -22,26 +23,29 @@ def load_data():
     testset = datasets.MNIST(root='./data', train=False, download=True, transform=transform)
     return trainset, testset
 
+
 def train_model(args):
 
     process_index = args[-2]  # Penultimo argomento è l'indice del processo
     num_processes = args[-1]  # Ultimo argomento è il numero totale di processi
 
-    set_affinity(process_index, num_processes)  # Attivo affinità sui core
+    set_affinity(process_index, num_processes)  # Commentata per ora
 
-    torch.set_num_threads(1)  # Limito ogni processo a un singolo thread
+    torch.set_num_threads(1)
     
-    # Stampa per verifica dell'affinità
-    print(f"Process {process_index}: torch.get_num_threads() = {torch.get_num_threads()}")
-    print(f"Process {process_index}: Affinity = {os.sched_getaffinity(0)}", flush=True)
     
-    trainset, testset = load_data()  # Caricamento locale dei dati
+    #print(f"Process {process_index}: torch.get_num_threads() = {torch.get_num_threads()}")
+    #print(f"Process {process_index}: Affinity = {os.sched_getaffinity(0)}", flush=True)
+
+    trainset, testset = load_data()  # Carichiamo i dati localmente
     trainloader = torch.utils.data.DataLoader(trainset, batch_size=64, shuffle=True, num_workers=0)
     testloader = torch.utils.data.DataLoader(testset, batch_size=1000, shuffle=False, num_workers=0)
 
     (C, lr, lambda_reg, alpha, subgradient_step, w0, r,
      target_acc, target_entr, min_xi, max_xi, n_epochs,
      device, train_optimizer, entropy_optimizer) = args[:-2]
+
+    print(f"Process {process_index}: Dati caricati", flush=True)
 
     start_time = time.time()
 
@@ -62,21 +66,46 @@ def train_model(args):
 
 
 if __name__ == "__main__":
-    C_list = [0.1, 1, 10]
-    r_list = [0.5, 1.0]
+    num_processes = 12  # Numero desiderato di processi
+    num_total_cores = os.cpu_count()  
 
-    num_processes = min(len(C_list) * len(r_list), os.cpu_count())
+    print(f"Numero di processi: {num_processes}")
+    print(f"Numero totale di core logici disponibili: {num_total_cores}")
 
-    combinations = list(product(C_list, r_list))
+    multiprocessing.set_start_method('spawn', force=True)
+    device = torch.device("cpu")
+    print(device)
+    np.set_printoptions(precision=6)
 
-    pool = multiprocessing.Pool(processes=num_processes)
+    param_grid = {
+        "C": [6],
+        "lr": [0.0007],
+        "lambda_reg": [0.0015],
+        "alpha": [0.533],
+        "subgradient_step": [1e5],
+        "w0": [-0.11],
+        "r": [round(1.1 + i * 0.002, 3) for i in range(num_processes)],
+        "target_acc": [98.99],
+        "target_entr": [0.99602e6],
+        "min_xi": [0],
+        "max_xi": [1],
+        "n_epochs": [100],
+        "device": [device],
+        "train_optimizer": ['A'],
+        "entropy_optimizer": ['F'],
+    }
 
-    results = pool.map(train_model, [(C, 0.001, 0.01, 0.1, 0.01, 0, r, 0.95, 0.01, 0, 1, 5, 'cpu', 'SGD', 'Adam', idx, num_processes) 
-                                     for idx, (C, r) in enumerate(combinations)])
+    param_combinations = [(params + (i, num_processes)) for i, params in enumerate(product(
+        param_grid["C"], param_grid["lr"], param_grid["lambda_reg"],
+        param_grid["alpha"], param_grid["subgradient_step"], param_grid["w0"],
+        param_grid["r"], param_grid["target_acc"], param_grid["target_entr"],
+        param_grid["min_xi"], param_grid["max_xi"], param_grid["n_epochs"],
+        param_grid["device"], param_grid["train_optimizer"],
+        param_grid["entropy_optimizer"]
+    ))]
 
-    pool.close()
-    pool.join()
-
-    print("\nRisultati finali:")
-    for result in results:
-        print(f"C: {result[0]}, r: {result[1]}, Tempo di allenamento: {result[2]:.2f} secondi")
+    # Usa multiprocessing.Pool per il parallelismo
+    with multiprocessing.Pool(processes=num_processes, maxtasksperchild=1) as pool:
+        results = pool.map(train_model, param_combinations)
+    
+    print("Tutti i processi completati.")
