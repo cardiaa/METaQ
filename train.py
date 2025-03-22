@@ -60,14 +60,13 @@ def train_model(args):
 
 
 if __name__ == "__main__":
-    num_processes = 6 # Imposta il numero di processi desiderato
+    num_processes = 6  # Numero desiderato di processi
     num_total_cores = os.cpu_count()  
 
     print(f"Numero di processi: {num_processes}")
     print(f"Numero totale di core logici disponibili: {num_total_cores}")
 
     multiprocessing.set_start_method('spawn', force=True)
-    #device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     device = torch.device("cpu")
     print(device)
     np.set_printoptions(precision=6)
@@ -99,16 +98,8 @@ if __name__ == "__main__":
         param_grid["entropy_optimizer"]
     ))]
 
-    # Usa multiprocessing.Process per avviare i processi in parallelo
-    processes = []
-
-    for i in range(num_processes):
-        p = multiprocessing.Process(target=train_model, args=(param_combinations[i],))  # Passa l'argomento giusto
-        processes.append(p)
-        p.start()  # Avvia il processo
-
-    # Aspetta che ogni processo finisca
-    for p in processes:
-        p.join()
-
+    # Usa multiprocessing.Pool per il parallelismo
+    with multiprocessing.Pool(processes=num_processes, maxtasksperchild=1) as pool:
+        results = pool.map(train_model, param_combinations)
+    
     print("Tutti i processi completati.")
