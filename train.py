@@ -32,6 +32,7 @@ def train_model(args):
     set_affinity(process_index, num_processes)  # Commentata per ora
 
     torch.set_num_threads(1)
+    time.sleep(0.5)
     
     #print(f"Process {process_index}: torch.get_num_threads() = {torch.get_num_threads()}")
     #print(f"Process {process_index}: Affinity = {os.sched_getaffinity(0)}", flush=True)
