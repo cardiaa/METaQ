@@ -77,7 +77,7 @@ if __name__ == "__main__":
     np.set_printoptions(precision=6)
 
     param_grid = {
-        "C": [2],
+        "C": [6],
         "lr": [0.0007],
         "lambda_reg": [0.0015],
         "alpha": [0.533],
