@@ -31,6 +31,10 @@ def train_model(args):
     set_affinity(process_index, num_processes)  # Commentata per ora
 
     torch.set_num_threads(1)
+    
+    print(f"Process {process_index}: torch.get_num_threads() = {torch.get_num_threads()}")
+    print(f"Process {process_index}: Affinity = {os.sched_getaffinity(0)}", flush=True)
+
     trainset, testset = load_data()  # Carichiamo i dati localmente
     trainloader = torch.utils.data.DataLoader(trainset, batch_size=64, shuffle=True, num_workers=0)
     testloader = torch.utils.data.DataLoader(testset, batch_size=1000, shuffle=False, num_workers=0)
