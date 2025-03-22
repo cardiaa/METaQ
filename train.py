@@ -10,10 +10,11 @@ import multiprocessing
 
 def set_affinity(process_index, num_processes):
     num_total_cores = os.cpu_count()
-    cores = list(range(num_total_cores))
-    assigned_cores = [cores[i] for i in range(process_index, len(cores), num_processes)]
-    os.sched_setaffinity(0, assigned_cores)
-
+    cores_per_process = max(1, num_total_cores // num_processes)  
+    
+    # Distribuzione più distanziata dei core
+    core_indices = [i for i in range(num_total_cores) if i % num_processes == process_index]
+    os.sched_setaffinity(0, core_indices)
 
 
 def load_data():
