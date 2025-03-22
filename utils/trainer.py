@@ -33,6 +33,8 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
                        target_acc, target_entr, min_xi, max_xi, n_epochs, device, 
                        train_optimizer, entropy_optimizer, trainloader, testloader):
     
+    torch.set_num_threads(1)
+    
     model = LeNet5().to(device)
     criterion = nn.CrossEntropyLoss()
     
