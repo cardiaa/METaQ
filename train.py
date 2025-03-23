@@ -107,3 +107,4 @@ if __name__ == "__main__":
         results = pool.map(train_model, param_combinations)
 
     print("Tutti i processi completati.")
+    
