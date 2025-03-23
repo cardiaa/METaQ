@@ -122,6 +122,7 @@ if __name__ == "__main__":
         start_times = [result[1] for result in results]
         
         # Verifica se sono sincronizzati
+        print("bbbbbb")
         sync_done = sync_processes(start_times)
 
         if not sync_done:
