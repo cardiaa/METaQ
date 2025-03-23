@@ -31,7 +31,7 @@ def test_accuracy(model, dataloader, device):
 
 def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r, 
                        target_acc, target_entr, min_xi, max_xi, n_epochs, device, 
-                       train_optimizer, entropy_optimizer, trainloader, testloader, time_queue):
+                       train_optimizer, entropy_optimizer, trainloader, testloader):
     
     torch.set_num_threads(1)
 
@@ -60,9 +60,6 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
     time.sleep(1)
     print("Sto per iniziare...")
 
-    # Variabile per raccogliere i tempi di arrivo alla stampa
-    time_at_print = None
-
     # Ciclo di allenamento
     for epoch in range(n_epochs):
         start_time = time.time()
@@ -79,15 +76,9 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
             loss.backward()
             optimizer.step()
 
-            if i == 50 and epoch == 0:
+            if i == 10 and epoch == 0:
                 # Aggiungi la stampa dei core utilizzati dal processo (o qualsiasi altro dato di debug)
                 print(f"XXXXXXXXXX")
-
-                # Salva il tempo corrente quando viene raggiunta la stampa
-                time_at_print = time.time()
-
-                # Invia il tempo alla coda
-                time_queue.put(time_at_print)
 
             inputs, labels = data[0].to(device), data[1].to(device)
             optimizer.zero_grad()
