@@ -8,23 +8,16 @@ from utils.trainer import train_and_evaluate
 import multiprocessing
 
 
-def initialize(time_queue):
-    global queue
-    queue = time_queue  # Rendiamo la coda globale per l'accesso ai processi figli
-
-
 def set_affinity(process_index, num_processes):
-    # Controlla che num_processes sia effettivamente un intero
-    assert isinstance(num_processes, int), f"num_processes deve essere un intero, ma è di tipo {type(num_processes)}"
-    
     num_total_cores = os.cpu_count()
-    cores_per_process = max(1, num_total_cores // num_processes)  # Calcola i core per processo
+    cores_per_process = max(1, num_total_cores // num_processes)  
+    
+    # Distribuzione più distanziata dei core
     core_indices = [i for i in range(num_total_cores) if i % num_processes == process_index]
     os.sched_setaffinity(0, core_indices)
 
 
 def load_data():
-    from torchvision import datasets, transforms
     transform = transforms.Compose([transforms.ToTensor()])
     trainset = datasets.MNIST(root='./data', train=True, download=True, transform=transform)
     testset = datasets.MNIST(root='./data', train=False, download=True, transform=transform)
@@ -32,18 +25,16 @@ def load_data():
 
 
 def train_model(args):
+
     process_index = args[-3]  # Terzultimo argomento è l'indice del processo
     num_processes = args[-2]  # Penultimo argomento è il numero totale di processi
     datasets = args[-1]  # Ultimo argomento è il tuple (trainset, testset)
-    time_queue = args[-4]  # Aggiungiamo la coda per passare il tempo
 
-    # Assicurati che num_processes sia un intero
-    assert isinstance(num_processes, int), f"num_processes deve essere un intero, ma è di tipo {type(num_processes)}"
-    
-    set_affinity(process_index, num_processes)
+    set_affinity(process_index, num_processes)  # Commentata per ora
+
     torch.set_num_threads(1)
 
-    trainset, testset = datasets
+    trainset, testset = datasets  # Dati caricati dal processo principale
     trainloader = torch.utils.data.DataLoader(trainset, batch_size=64, shuffle=True, num_workers=0)
     testloader = torch.utils.data.DataLoader(testset, batch_size=1000, shuffle=False, num_workers=0)
 
@@ -51,22 +42,24 @@ def train_model(args):
      target_acc, target_entr, min_xi, max_xi, n_epochs,
      device, train_optimizer, entropy_optimizer) = args[:-3]
 
+    print(f"Process {process_index}: Dati caricati", flush=True)
+
     start_time = time.time()
 
-    train_and_evaluate(
+    accuracy, entropy, target_acc, target_entr = train_and_evaluate(
         C=C, lr=lr, lambda_reg=lambda_reg, alpha=alpha, subgradient_step=subgradient_step,
         w0=w0, r=r, target_acc=target_acc, target_entr=target_entr,
         min_xi=min_xi, max_xi=max_xi, n_epochs=n_epochs,
         device=device, train_optimizer=train_optimizer,
         entropy_optimizer=entropy_optimizer,
-        trainloader=trainloader, testloader=testloader,
-        time_queue=time_queue
+        trainloader=trainloader, testloader=testloader
     )
 
     training_time = time.time() - start_time
 
-    return (C, r, training_time, start_time)
+    print(f"Process {process_index}: Training completato in {training_time:.2f} secondi", flush=True)
 
+    return (C, r, training_time)
 
 
 if __name__ == "__main__":
@@ -76,12 +69,13 @@ if __name__ == "__main__":
     print(f"Numero di processi: {num_processes}")
     print(f"Numero totale di core logici disponibili: {num_total_cores}")
 
+    multiprocessing.set_start_method('fork', force=True)
     multiprocessing.set_start_method('spawn', force=True)
     device = torch.device("cpu")
     print(device)
     np.set_printoptions(precision=6)
 
-    trainset, testset = load_data()  
+    trainset, testset = load_data()  # Caricamento unico dei dati
 
     param_grid = {
         "C": [6],
@@ -101,37 +95,16 @@ if __name__ == "__main__":
         "entropy_optimizer": ['F'],
     }
 
-    while True:
-        # Usare un Manager per creare una coda condivisa tra i processi
-        with multiprocessing.Manager() as manager:
-            time_queue = manager.Queue()
+    param_combinations = [(params + (i, num_processes, (trainset, testset))) for i, params in enumerate(product(
+        param_grid["C"], param_grid["lr"], param_grid["lambda_reg"],
+        param_grid["alpha"], param_grid["subgradient_step"], param_grid["w0"],
+        param_grid["r"], param_grid["target_acc"], param_grid["target_entr"],
+        param_grid["min_xi"], param_grid["max_xi"], param_grid["n_epochs"],
+        param_grid["device"], param_grid["train_optimizer"],
+        param_grid["entropy_optimizer"]
+    ))]
 
-            param_combinations = [
-                (*params, i, num_processes, (trainset, testset), time_queue)
-                for i, params in enumerate(product(
-                    param_grid["C"], param_grid["lr"], param_grid["lambda_reg"],
-                    param_grid["alpha"], param_grid["subgradient_step"], param_grid["w0"],
-                    param_grid["r"], param_grid["target_acc"], param_grid["target_entr"],
-                    param_grid["min_xi"], param_grid["max_xi"], param_grid["n_epochs"],
-                    param_grid["device"], param_grid["train_optimizer"],
-                    param_grid["entropy_optimizer"]
-                ))
-            ]
+    with multiprocessing.Pool(processes=num_processes, maxtasksperchild=1) as pool:
+        results = pool.map(train_model, param_combinations)
 
-            with multiprocessing.Pool(processes=num_processes, maxtasksperchild=1, initializer=initialize, initargs=(time_queue,)) as pool:
-                # Eseguiamo i processi
-                results = pool.map(train_model, param_combinations)
-                
-                # Raccogliamo i tempi da tutti i processi
-                times_at_print = [time_queue.get() for _ in range(num_processes)]
-
-                max_time = max(times_at_print)
-                min_time = min(times_at_print)
-                max_start_time_diff = max_time - min_time
-
-                if max_start_time_diff <= 0.5:  
-                    break  
-                else:
-                    print(f"Tentativo fallito. Differenza massima nei tempi di avvio: {max_start_time_diff:.4f} secondi. Riprovo...", flush=True)
-
-    print("Tutti i processi completati correttamente entro il limite di tempo richiesto.")
+    print("Tutti i processi completati.")
