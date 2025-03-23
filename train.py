@@ -35,7 +35,10 @@ def train_model(args):
     if process_index == 0:
         print(f"Tutti i processi stanno caricando i dati...", flush=True)
     
-    trainloader, testloader = load_data()  # Usa il nuovo caricamento dati condiviso
+    # Ogni processo carica i propri DataLoader
+    trainset, testset = load_data()
+    trainloader = torch.utils.data.DataLoader(trainset, batch_size=64, shuffle=True, num_workers=0)
+    testloader = torch.utils.data.DataLoader(testset, batch_size=1000, shuffle=False, num_workers=0)
     
     if process_index == 0:
         print(f"Tutti i processi hanno caricato i dati, sincronizzazione in corso...", flush=True)
@@ -67,8 +70,6 @@ def train_model(args):
     print(f"Process {process_index}: Training completato in {training_time:.2f} secondi", flush=True)
 
     return (C, r, training_time)
-
-
 
 
 if __name__ == "__main__":
