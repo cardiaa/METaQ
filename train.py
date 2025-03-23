@@ -21,6 +21,19 @@ def wait_for_idle_cores(threshold=5, check_interval=1):
             break
         time.sleep(check_interval)
 
+
+def set_affinity(process_index, num_processes):
+    num_total_cores = os.cpu_count()
+    cores_per_process = max(1, num_total_cores // num_processes)  
+
+    # Distribuiamo i core tra i processi senza sovrapposizioni
+    start_core = process_index * cores_per_process
+    end_core = min(start_core + cores_per_process, num_total_cores)
+
+    core_indices = list(range(start_core, end_core))
+    os.sched_setaffinity(0, core_indices)
+
+
 def load_data():
     transform = transforms.Compose([transforms.ToTensor()])
     trainset = datasets.MNIST(root='./data', train=True, download=True, transform=transform)
@@ -31,7 +44,9 @@ def train_model(args):
     process_index = args[-2]  
     num_processes = args[-1]  
 
+    set_affinity(process_index, num_processes)
     torch.set_num_threads(1)
+
     trainset, testset = load_data()  
     trainloader = torch.utils.data.DataLoader(trainset, batch_size=64, shuffle=True, num_workers=0)
     testloader = torch.utils.data.DataLoader(testset, batch_size=1000, shuffle=False, num_workers=0)
