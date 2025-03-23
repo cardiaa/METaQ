@@ -14,8 +14,11 @@ def initialize(time_queue):
 
 
 def set_affinity(process_index, num_processes):
+    # Controlla che num_processes sia effettivamente un intero
+    assert isinstance(num_processes, int), f"num_processes deve essere un intero, ma è di tipo {type(num_processes)}"
+    
     num_total_cores = os.cpu_count()
-    cores_per_process = max(1, num_total_cores // num_processes)  
+    cores_per_process = max(1, num_total_cores // num_processes)  # Calcola i core per processo
     core_indices = [i for i in range(num_total_cores) if i % num_processes == process_index]
     os.sched_setaffinity(0, core_indices)
 
@@ -34,6 +37,9 @@ def train_model(args):
     datasets = args[-1]  # Ultimo argomento è il tuple (trainset, testset)
     time_queue = args[-4]  # Aggiungiamo la coda per passare il tempo
 
+    # Assicurati che num_processes sia un intero
+    assert isinstance(num_processes, int), f"num_processes deve essere un intero, ma è di tipo {type(num_processes)}"
+    
     set_affinity(process_index, num_processes)
     torch.set_num_threads(1)
 
