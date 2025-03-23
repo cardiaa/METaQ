@@ -32,44 +32,60 @@ def test_accuracy(model, dataloader, device):
 def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r, 
                        target_acc, target_entr, min_xi, max_xi, n_epochs, device, 
                        train_optimizer, entropy_optimizer, trainloader, testloader, time_queue):
-
+    
     torch.set_num_threads(1)
 
+    # Inizializzazione del modello, funzione di perdita e ottimizzatore
     model = LeNet5().to(device)
     criterion = nn.CrossEntropyLoss()
     
-    if(train_optimizer == 'A'):
+    # Selezione dell'ottimizzatore in base al tipo scelto
+    if train_optimizer == 'A':
         optimizer = optim.Adam(model.parameters(), lr=lr, betas=(0.9, 0.999), eps=1e-08, weight_decay=lambda_reg * alpha)
-    elif(train_optimizer == 'S'):
+    elif train_optimizer == 'S':
         optimizer = optim.SGD(model.parameters(), lr=lr, momentum=0.9, weight_decay=lambda_reg * alpha)
     
-    # Parameters initialization
+    # Inizializzazione dei pesi
     min_w, max_w = w0 - r, w0 + r
     v = torch.linspace(min_w, max_w - (max_w - min_w)/C, steps=C, device=device)
-    initialize_weights(model, min_w, max_w)    
+    initialize_weights(model, min_w, max_w)
     w = torch.cat([param.data.view(-1) for param in model.parameters()]).to(device)
     upper_c, lower_c = w.size(0), 1e-2
-    xi = min_xi + (max_xi - min_xi) * torch.rand(C, device=device)    
+    xi = min_xi + (max_xi - min_xi) * torch.rand(C, device=device)
     xi = torch.sort(xi)[0]   
     entropy, accuracy = 0, 0
     accuracies, entropies, distinct_weights = [], [], []
     zeta, l = 50000, 0.5
+
     time.sleep(1)
     print("Sto per iniziare...")
 
     # Variabile per raccogliere i tempi di arrivo alla stampa
     time_at_print = None
 
+    # Ciclo di allenamento
     for epoch in range(n_epochs):
         start_time = time.time()
+
         for i, data in enumerate(trainloader, 0):
-            if(i == 50 and epoch == 0):
-                # Aggiungi la stampa dei core utilizzati dal processo
+            inputs, targets = data
+            optimizer.zero_grad()
+
+            # Passaggio attraverso il modello
+            outputs = model(inputs)
+            loss = criterion(outputs, targets)
+
+            # Calcolo e retropropagazione
+            loss.backward()
+            optimizer.step()
+
+            if i == 50 and epoch == 0:
+                # Aggiungi la stampa dei core utilizzati dal processo (o qualsiasi altro dato di debug)
                 print(f"XXXXXXXXXX")
 
                 # Salva il tempo corrente quando viene raggiunta la stampa
                 time_at_print = time.time()
-                
+
                 # Invia il tempo alla coda
                 time_queue.put(time_at_print)
 
