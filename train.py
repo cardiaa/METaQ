@@ -10,7 +10,7 @@ import multiprocessing
 
 def set_affinity(process_index, num_processes):
     num_total_cores = os.cpu_count()
-    cores_per_process = 8  # Numero di core che ogni processo deve utilizzare
+    cores_per_process = 16  # Numero di core che ogni processo deve utilizzare
     required_cores = num_processes * cores_per_process
 
     if required_cores > num_total_cores:
@@ -43,7 +43,7 @@ def train_model(args):
 
     set_affinity(process_index, num_processes)  # Commentata per ora
 
-    torch.set_num_threads(8)
+    torch.set_num_threads(16)
     
     
     #print(f"Process {process_index}: torch.get_num_threads() = {torch.get_num_threads()}")
@@ -80,7 +80,7 @@ def train_model(args):
 if __name__ == "__main__":
     num_processes = 12  
     num_total_cores = os.cpu_count()
-    cores_per_process = 8
+    cores_per_process = 16
 
     if num_processes * cores_per_process > num_total_cores:
         raise ValueError(f"Il numero di core disponibili non è sufficiente per garantire {cores_per_process} core per processo.")
