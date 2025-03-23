@@ -33,7 +33,7 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
                        target_acc, target_entr, min_xi, max_xi, n_epochs, device, 
                        train_optimizer, entropy_optimizer, trainloader, testloader):
 
-    torch.set_num_threads(16)
+    torch.set_num_threads(1)
     time.sleep(3)
 
     model = LeNet5().to(device)
@@ -59,8 +59,8 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
     for epoch in range(n_epochs):
         start_time = time.time()
         for i, data in enumerate(trainloader, 0):
-            #if(i % 10 == 0):
-            #    print(i, device)
+            if(i == 10):
+                print("Sono arrivato a ", i)
             inputs, labels = data[0].to(device), data[1].to(device)
             optimizer.zero_grad()
             outputs = model(inputs)
