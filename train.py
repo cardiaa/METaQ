@@ -6,31 +6,14 @@ from torchvision import datasets, transforms
 from itertools import product
 from utils.trainer import train_and_evaluate  
 import multiprocessing
-import psutil
-
-def wait_for_idle_cores(threshold=5, check_interval=1):
-    """
-    Attende fino a quando tutti i core della CPU hanno un utilizzo inferiore alla soglia specificata.
-    """
-    print("Attesa per il rilascio dei core della CPU...")
-
-    while True:
-        cpu_percentages = psutil.cpu_percent(percpu=True)
-        if all(usage <= threshold for usage in cpu_percentages):
-            print("Tutti i core sono disponibili!")
-            break
-        time.sleep(check_interval)
 
 
 def set_affinity(process_index, num_processes):
     num_total_cores = os.cpu_count()
     cores_per_process = max(1, num_total_cores // num_processes)  
-
-    # Distribuiamo i core tra i processi senza sovrapposizioni
-    start_core = process_index * cores_per_process
-    end_core = min(start_core + cores_per_process, num_total_cores)
-
-    core_indices = list(range(start_core, end_core))
+    
+    # Distribuzione più distanziata dei core
+    core_indices = [i for i in range(num_total_cores) if i % num_processes == process_index]
     os.sched_setaffinity(0, core_indices)
 
 
@@ -40,14 +23,21 @@ def load_data():
     testset = datasets.MNIST(root='./data', train=False, download=True, transform=transform)
     return trainset, testset
 
+
 def train_model(args):
-    process_index = args[-2]  
-    num_processes = args[-1]  
 
-    set_affinity(process_index, num_processes)
+    process_index = args[-2]  # Penultimo argomento è l'indice del processo
+    num_processes = args[-1]  # Ultimo argomento è il numero totale di processi
+
+    set_affinity(process_index, num_processes)  # Commentata per ora
+
     torch.set_num_threads(1)
+    
+    
+    #print(f"Process {process_index}: torch.get_num_threads() = {torch.get_num_threads()}")
+    #print(f"Process {process_index}: Affinity = {os.sched_getaffinity(0)}", flush=True)
 
-    trainset, testset = load_data()  
+    trainset, testset = load_data()  # Carichiamo i dati localmente
     trainloader = torch.utils.data.DataLoader(trainset, batch_size=64, shuffle=True, num_workers=0)
     testloader = torch.utils.data.DataLoader(testset, batch_size=1000, shuffle=False, num_workers=0)
 
@@ -56,6 +46,7 @@ def train_model(args):
      device, train_optimizer, entropy_optimizer) = args[:-2]
 
     print(f"Process {process_index}: Dati caricati", flush=True)
+
     start_time = time.time()
 
     accuracy, entropy, target_acc, target_entr = train_and_evaluate(
@@ -68,22 +59,22 @@ def train_model(args):
     )
 
     training_time = time.time() - start_time
+
     print(f"Process {process_index}: Training completato in {training_time:.2f} secondi", flush=True)
 
     return (C, r, training_time)
 
 
 if __name__ == "__main__":
-    num_processes = 12  
+    num_processes = 12  # Numero desiderato di processi
     num_total_cores = os.cpu_count()  
 
     print(f"Numero di processi: {num_processes}")
     print(f"Numero totale di core logici disponibili: {num_total_cores}")
 
-    wait_for_idle_cores()  
-
     multiprocessing.set_start_method('spawn', force=True)
     device = torch.device("cpu")
+    print(device)
     np.set_printoptions(precision=6)
 
     param_grid = {
@@ -113,7 +104,8 @@ if __name__ == "__main__":
         param_grid["entropy_optimizer"]
     ))]
 
+    # Usa multiprocessing.Pool per il parallelismo
     with multiprocessing.Pool(processes=num_processes, maxtasksperchild=1) as pool:
         results = pool.map(train_model, param_combinations)
-
+    
     print("Tutti i processi completati.")
