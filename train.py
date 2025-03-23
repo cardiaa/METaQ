@@ -43,29 +43,18 @@ def train_model(args):
 
     print(f"Process {process_index}: Dati caricati", flush=True)
 
+    # Sincronizzazione: tempo di inizio
     start_time = time.time()
 
-    accuracy, entropy, target_acc, target_entr = train_and_evaluate(
-        C=C, lr=lr, lambda_reg=lambda_reg, alpha=alpha, subgradient_step=subgradient_step,
-        w0=w0, r=r, target_acc=target_acc, target_entr=target_entr,
-        min_xi=min_xi, max_xi=max_xi, n_epochs=n_epochs,
-        device=device, train_optimizer=train_optimizer,
-        entropy_optimizer=entropy_optimizer,
-        trainloader=trainloader, testloader=testloader
-    )
-
-    training_time = time.time() - start_time
-
-    print(f"Process {process_index}: Training completato in {training_time:.2f} secondi", flush=True)
-
-    return (process_index, start_time, training_time)
+    # Qui non facciamo ancora il training, ma ritorniamo il tempo di inizio
+    return (process_index, start_time)
 
 
-def sync_processes(start_times, time_threshold=0.05):
+def sync_processes(start_times, time_threshold=0.5):
     """ Verifica che tutti i processi siano sincronizzati entro il limite di tempo """
     min_time = min(start_times)
     max_time = max(start_times)
-    print("aaaaa", max_time - min_time)
+    print(f"Tempo minimo: {min_time}, Tempo massimo: {max_time}")  # Debug
     if max_time - min_time > time_threshold:
         return False  # Non sono sincronizzati
     return True
@@ -121,11 +110,15 @@ if __name__ == "__main__":
         # Estrai i tempi di inizio per ogni processo
         start_times = [result[1] for result in results]
         
-        # Verifica se sono sincronizzati
+        # Verifica se sono sincronizzati prima di avviare il training
         print("bbbbbb")
         sync_done = sync_processes(start_times)
 
         if not sync_done:
-            print(f"I processi non sono sincronizzati. Rilancio...")
+            print(f"I processi non sono sincronizzati. Rilanciando...")
+
+    # Ora che sono sincronizzati, avvia il training
+    with multiprocessing.Pool(processes=num_processes, maxtasksperchild=1) as pool:
+        results = pool.map(train_and_evaluate, param_combinations)
 
     print("Tutti i processi completati e sincronizzati.")
