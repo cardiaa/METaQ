@@ -12,7 +12,6 @@ def set_affinity(process_index, num_processes):
     num_total_cores = os.cpu_count()
     cores_per_process = max(1, num_total_cores // num_processes)  
 
-    # Distribuzione più distanziata dei core
     core_indices = [i for i in range(num_total_cores) if i % num_processes == process_index]
     os.sched_setaffinity(0, core_indices)
 
@@ -25,10 +24,10 @@ def load_data():
 
 
 def train_model(args):
-
     process_index = args[-3]  # Terzultimo argomento è l'indice del processo
     num_processes = args[-2]  # Penultimo argomento è il numero totale di processi
     datasets = args[-1]  # Ultimo argomento è il tuple (trainset, testset)
+    start_times = args[-4]  # Lista per registrare i tempi di esecuzione per sincronizzazione
 
     set_affinity(process_index, num_processes)  
 
@@ -40,11 +39,14 @@ def train_model(args):
 
     (C, lr, lambda_reg, alpha, subgradient_step, w0, r,
      target_acc, target_entr, min_xi, max_xi, n_epochs,
-     device, train_optimizer, entropy_optimizer) = args[:-3]
+     device, train_optimizer, entropy_optimizer) = args[:-4]
 
     print(f"Process {process_index}: Dati caricati", flush=True)
 
     start_time = time.time()
+
+    # Raccogliamo il tempo prima della stampa
+    local_start_time = time.time()
 
     accuracy, entropy, target_acc, target_entr = train_and_evaluate(
         C=C, lr=lr, lambda_reg=lambda_reg, alpha=alpha, subgradient_step=subgradient_step,
@@ -54,6 +56,12 @@ def train_model(args):
         entropy_optimizer=entropy_optimizer,
         trainloader=trainloader, testloader=testloader
     )
+
+    # Raccogliamo il tempo dopo la stampa
+    post_print_time = time.time()
+
+    # Registriamo il tempo in cui il processo arriva alla stampa
+    start_times[process_index] = post_print_time - local_start_time
 
     training_time = time.time() - start_time
 
@@ -95,7 +103,9 @@ if __name__ == "__main__":
     }
 
     while True:
-        param_combinations = [(params + (i, num_processes, (trainset, testset))) for i, params in enumerate(product(
+        start_times = [None] * num_processes  # Lista per memorizzare i tempi di esecuzione dei processi
+
+        param_combinations = [(params + (i, num_processes, (trainset, testset), start_times)) for i, params in enumerate(product(
             param_grid["C"], param_grid["lr"], param_grid["lambda_reg"],
             param_grid["alpha"], param_grid["subgradient_step"], param_grid["w0"],
             param_grid["r"], param_grid["target_acc"], param_grid["target_entr"],
@@ -107,7 +117,7 @@ if __name__ == "__main__":
         with multiprocessing.Pool(processes=num_processes, maxtasksperchild=1) as pool:
             results = pool.map(train_model, param_combinations)
 
-        start_times = [result[3] for result in results]  
+        # Calcoliamo la differenza massima tra i tempi di arrivo
         max_start_time_diff = max(start_times) - min(start_times)
 
         if max_start_time_diff <= 0.5:  
