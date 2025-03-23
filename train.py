@@ -25,13 +25,15 @@ def load_data():
 
 
 def train_model(args):
-    process_index = args[-3]  # Terzultimo argomento è l'indice del processo
-    num_processes = args[-2]  # Penultimo argomento è il numero totale di processi
-    barrier = args[-1]  # Ultimo argomento è il Barrier
+    process_index = args[-2]  # Penultimo argomento è l'indice del processo
+    num_processes = args[-1]  # Ultimo argomento è il numero totale di processi
     
     set_affinity(process_index, num_processes)
     torch.set_num_threads(1)
-
+    
+    # Creiamo la barriera all'interno di ogni processo
+    barrier = multiprocessing.Barrier(num_processes)
+    
     if process_index == 0:
         print(f"Tutti i processi stanno caricando i dati...", flush=True)
     
@@ -47,7 +49,7 @@ def train_model(args):
     
     (C, lr, lambda_reg, alpha, subgradient_step, w0, r,
      target_acc, target_entr, min_xi, max_xi, n_epochs,
-     device, train_optimizer, entropy_optimizer) = args[:-3]
+     device, train_optimizer, entropy_optimizer) = args[:-2]
 
     print(f"Process {process_index}: Dati caricati", flush=True)
 
@@ -67,6 +69,7 @@ def train_model(args):
     print(f"Process {process_index}: Training completato in {training_time:.2f} secondi", flush=True)
 
     return (C, r, training_time)
+
 
 
 
