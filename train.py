@@ -37,18 +37,13 @@ def train_model(args):
     testloader = torch.utils.data.DataLoader(testset, batch_size=1000, shuffle=False, num_workers=0)
 
     start_time = time.time()
-
-    while len(process_start_times.keys()) < num_processes:
-        time.sleep(0.01)
+    process_start_times[process_index] = start_time
 
     print(f"Process {process_index}: Dati caricati", flush=True)
 
     for i, data in enumerate(trainloader, 0):
         if i == 10:
             break
-
-    while len(process_start_times.keys()) < num_processes:
-        time.sleep(0.01)
 
     timestamps = list(process_start_times.values())
     timestamps.sort()
