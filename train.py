@@ -10,7 +10,7 @@ import multiprocessing
 
 def set_affinity(process_index, num_processes):
     num_total_cores = os.cpu_count()
-    cores_per_process = 16  # Numero di core che ogni processo deve utilizzare
+    cores_per_process = 8  # Numero di core che ogni processo deve utilizzare
     required_cores = num_processes * cores_per_process
 
     if required_cores > num_total_cores:
@@ -80,7 +80,7 @@ def train_model(args):
 if __name__ == "__main__":
     num_processes = 12  
     num_total_cores = os.cpu_count()
-    cores_per_process = 16
+    cores_per_process = 8
 
     if num_processes * cores_per_process > num_total_cores:
         raise ValueError("Il numero di core disponibili non è sufficiente per garantire 4 core per processo.")
