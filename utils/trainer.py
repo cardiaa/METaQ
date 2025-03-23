@@ -1,110 +1,164 @@
-import torch  
-import time
+import torch
+import time 
 import numpy as np
 import os
-from torchvision import datasets, transforms  
-from itertools import product
-from utils.trainer import train_and_evaluate  
-import multiprocessing
+import torch.nn as nn
+import torch.optim as optim
+from torch.optim import Adam, SGD
+from torch.utils.data import DataLoader
+from torchvision import datasets, transforms
+from utils.networks import LeNet5
+from utils.quantize_and_compress import compute_entropy
+from utils.optimization import FISTA, ProximalBM
+from utils.weight_utils import initialize_weights
+from IPython.display import clear_output
 
-
-def set_affinity(process_index, num_processes):
-    num_total_cores = os.cpu_count()
-    cores_per_process = max(1, num_total_cores // num_processes)  
+def test_accuracy(model, dataloader, device):
+    """
+    Function to calculate the accuracy of a model on a given dataloader.
+    """
+    correct, total = 0, 0
+    with torch.no_grad():  # Disable gradient computation for evaluation
+        for images, labels in dataloader:
+            images, labels = images.to(device), labels.to(device)  # Move data to the appropriate device
+            outputs = model(images)  # Get model predictions
+            _, predicted = torch.max(outputs.data, 1)  # Get the class with the highest probability
+            total += labels.size(0)  # Update total number of samples
+            correct += (predicted == labels).sum().item()  # Count correct predictions
     
-    # Distribuzione più distanziata dei core
-    core_indices = [i for i in range(num_total_cores) if i % num_processes == process_index]
-    os.sched_setaffinity(0, core_indices)
+    accuracy = 100 * correct / total  # Compute accuracy percentage
+    return accuracy
 
-
-def load_data():
-    transform = transforms.Compose([transforms.ToTensor()])
-    trainset = datasets.MNIST(root='./data', train=True, download=True, transform=transform)
-    testset = datasets.MNIST(root='./data', train=False, download=True, transform=transform)
-    return trainset, testset
-
-
-def train_model(args):
-
-    process_index = args[-3]  # Terzultimo argomento è l'indice del processo
-    num_processes = args[-2]  # Penultimo argomento è il numero totale di processi
-    datasets = args[-1]  # Ultimo argomento è il tuple (trainset, testset)
-
-    set_affinity(process_index, num_processes)  # Commentata per ora
+def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r, 
+                       target_acc, target_entr, min_xi, max_xi, n_epochs, device, 
+                       train_optimizer, entropy_optimizer, trainloader, testloader):
 
     torch.set_num_threads(1)
 
-    trainset, testset = datasets  # Dati caricati dal processo principale
-    trainloader = torch.utils.data.DataLoader(trainset, batch_size=64, shuffle=True, num_workers=0)
-    testloader = torch.utils.data.DataLoader(testset, batch_size=1000, shuffle=False, num_workers=0)
+    model = LeNet5().to(device)
+    criterion = nn.CrossEntropyLoss()
+    
+    if(train_optimizer == 'A'):
+        optimizer = optim.Adam(model.parameters(), lr=lr, betas=(0.9, 0.999), eps=1e-08, weight_decay=lambda_reg * alpha)
+    elif(train_optimizer == 'S'):
+        optimizer = optim.SGD(model.parameters(), lr=lr, momentum=0.9, weight_decay=lambda_reg * alpha)
+    
+    # Parameters initialization
+    min_w, max_w = w0 - r, w0 + r
+    v = torch.linspace(min_w, max_w - (max_w - min_w)/C, steps=C, device=device)
+    initialize_weights(model, min_w, max_w)    
+    w = torch.cat([param.data.view(-1) for param in model.parameters()]).to(device)
+    upper_c, lower_c = w.size(0), 1e-2
+    xi = min_xi + (max_xi - min_xi) * torch.rand(C, device=device)    
+    xi = torch.sort(xi)[0]   
+    entropy, accuracy = 0, 0
+    accuracies, entropies, distinct_weights = [], [], []
+    zeta, l = 50000, 0.5
+    print("Sto per iniziare...")
+    for epoch in range(n_epochs):
+        start_time = time.time()
+        for i, data in enumerate(trainloader, 0):
+            if(i == 10 and epoch == 0):
+                # Aggiungi la stampa dei core utilizzati dal processo
+                print(f"Sono arrivato a 10.")
 
-    (C, lr, lambda_reg, alpha, subgradient_step, w0, r,
-     target_acc, target_entr, min_xi, max_xi, n_epochs,
-     device, train_optimizer, entropy_optimizer) = args[:-3]
+            inputs, labels = data[0].to(device), data[1].to(device)
+            optimizer.zero_grad()
+            outputs = model(inputs)
+            loss = criterion(outputs, labels)
+            
+            w = torch.cat([param.data.view(-1) for param in model.parameters()])
+            #unique_weights = torch.unique(w).numel() 
+            #indices = torch.searchsorted(v, w, right=True) - 1
+            #indices = torch.clamp(indices, min=0)
+            #w_quantized = v[indices]
 
-    print(f"Process {process_index}: Dati caricati", flush=True)
+            zeta *= 1 + l
+            l = l / 1.5
+            if(entropy_optimizer == 'F'):
+                #xi, beta_tensor, x_star, phi = FISTA(xi, v, w_quantized, C, subgradient_step, max_iterations=15) 
+                xi, beta_tensor, x_star, phi = FISTA(xi, v, w, C, subgradient_step, device, max_iterations=15) 
+            elif(entropy_optimizer == 'PM'):
+                #xi, beta_tensor, x_star, phi = ProximalBM(xi, v, w_quantized, C, zeta, subgradient_step, max_iterations=15) 
+                xi, beta_tensor, x_star, phi = ProximalBM(xi, v, w, C, zeta, subgradient_step, device, max_iterations=15)       
+            
+            # Update of ∇ɸ
+            idx = 0
+            for param in model.parameters():
+                numel = param.numel()
+                if param.grad is not None:
+                    param_grad = param.grad.view(-1)
+                else:
+                    param_grad = torch.zeros_like(param.data.view(-1)).to(device)
+                param_grad += (1 - alpha) * lambda_reg * beta_tensor[idx:idx + numel]
+                param.grad = param_grad.view(param.size())
+                idx += numel
+            
+            loss.backward()
+            optimizer.step()
+        
+        w = torch.cat([param.data.view(-1) for param in model.parameters()]).to(device)
+        
+        entropy = round(compute_entropy(w.tolist())) + 1
+        entropies.append(entropy)
+        accuracy = test_accuracy(model, testloader, device)
+        accuracies.append(accuracy)
+        
+        # Creo un file di log per ogni combinazione
+        #output_dir = "training_logs"
+        #os.makedirs(output_dir, exist_ok=True)
+        #log_filename = f"{output_dir}/log_C_{C}_r_{r}_proc_{os.getpid()}.txt"
 
-    start_time = time.time()
+        #with open(log_filename, "a") as f:
+        #    f.write("\nEpoch:", epoch+1)
+        #    f.write("\nAccuracies:", accuracies)
+        #    f.write("\nEntropies:", entropies)
+        #    f.write("\nMax Accuracy:", max(accuracies))
+        #    f.write("Min entropy:", min(entropies))
 
-    accuracy, entropy, target_acc, target_entr = train_and_evaluate(
-        C=C, lr=lr, lambda_reg=lambda_reg, alpha=alpha, subgradient_step=subgradient_step,
-        w0=w0, r=r, target_acc=target_acc, target_entr=target_entr,
-        min_xi=min_xi, max_xi=max_xi, n_epochs=n_epochs,
-        device=device, train_optimizer=train_optimizer,
-        entropy_optimizer=entropy_optimizer,
-        trainloader=trainloader, testloader=testloader
-    )
+        # Saving a better model
+        if(accuracy >= target_acc and entropy <= target_entr):
+            #with open(log_filename, "a") as f:
+            #    f.write("💥💥💥💥💥💥💥\n💥ATTENTION!💥\n💥💥💥💥💥💥💥")
+            print("💥💥💥💥💥💥💥\n💥ATTENTION!💥\n💥💥💥💥💥💥💥", flush=True)
+            torch.save(model.state_dict(), f"BestModelsBeforeQuantization/C{C}_r{round(r*1000)}.pth")
+            target_acc = accuracy
+            target_entr = entropy
+        
+        # Entropy exit conditions
+        if(epoch > 20 and entropy > 600000):
+            #with open(log_filename, "a") as f:
+            #    f.write("Entropy is not decreasing enough! (A)")
+            print(f"Entropy is not decreasing enough! (A), PID: {os.getpid()}, Epoch: {epoch}, Entropia minima: {min(entropies)}, Accuracy massima: {max(accuracies)}, C: {C}, r: {r}, epoch time: {training_time:.2f}s", flush=True)
+            return accuracy, entropy, target_acc, target_entr
+        
+        if(epoch > 50):
+            if(entropies[-1] > 200000 and entropies[-2] > 200000 and entropies[-3] > 200000 and entropies[-4] > 200000):
+                #with open(log_filename, "a") as f:
+                #    f.write("Entropy is not decreasing enough! (B)")
+                print(f"Entropy is not decreasing enough! (B), PID: {os.getpid()}, Epoch: {epoch}, Entropia minima: {min(entropies)}, Accuracy massima: {max(accuracies)}, C: {C}, r: {r}, epoch time: {training_time:.2f}s", flush=True)
+                return accuracy, entropy, target_acc, target_entr           
+            
+        # Accuracy exit condition
+        if(epoch == 1 and accuracies[-1] < 70):
+            #with open(log_filename, "a") as f:
+            #    f.write("Accuracy is too low! (C)")
+            print(f"Accuracy is too low! (C), PID: {os.getpid()}, Epoch: {epoch}, Entropia minima: {min(entropies)}, Accuracy massima: {max(accuracies)}, C: {C}, r: {r}, epoch time: {training_time:.2f}s", flush=True)
+            return accuracy, entropy, target_acc, target_entr  
+                          
+        if(epoch > 10):
+            if(accuracies[-1] < 90 and accuracies[-2] < 90 and accuracies[-3] < 90 and accuracies[-4] < 90):
+                #with open(log_filename, "a") as f:
+                #    f.write("Accuracy is too low! (D)")
+                print(f"Accuracy is too low! (D), PID: {os.getpid()}, Epoch: {epoch}, Entropia minima: {min(entropies)}, Accuracy massima: {max(accuracies)}, C: {C}, r: {r}, epoch time: {training_time:.2f}s", flush=True)
+                return accuracy, entropy, target_acc, target_entr     
+        
+        # ... ADD OTHER EXIT CONDITIONS ...      
+        
+        training_time = time.time() - start_time
+        #with open(log_filename, "a") as f:
+        #    f.write(f"Time taken for a epoch: {training_time:.2f} seconds\n")
+              
+        print(f"PID: {os.getpid()}, Epoch: {epoch}, Entropia minima: {min(entropies)}, Accuracy massima: {max(accuracies)}, C: {C}, r: {r}, epoch time: {training_time:.2f}s", flush=True)
 
-    training_time = time.time() - start_time
-
-    print(f"Process {process_index}: Training completato in {training_time:.2f} secondi", flush=True)
-
-    return (C, r, training_time)
-
-
-if __name__ == "__main__":
-    num_processes = 12  
-    num_total_cores = os.cpu_count()  
-
-    print(f"Numero di processi: {num_processes}")
-    print(f"Numero totale di core logici disponibili: {num_total_cores}")
-
-    multiprocessing.set_start_method('fork', force=True)
-    multiprocessing.set_start_method('spawn', force=True)
-    device = torch.device("cpu")
-    print(device)
-    np.set_printoptions(precision=6)
-
-    trainset, testset = load_data()  # Caricamento unico dei dati
-
-    param_grid = {
-        "C": [6],
-        "lr": [0.0007],
-        "lambda_reg": [0.0015],
-        "alpha": [0.533],
-        "subgradient_step": [1e5],
-        "w0": [-0.11],
-        "r": [round(1.1 + i * 0.002, 3) for i in range(num_processes)],
-        "target_acc": [98.99],
-        "target_entr": [0.99602e6],
-        "min_xi": [0],
-        "max_xi": [1],
-        "n_epochs": [100],
-        "device": [device],
-        "train_optimizer": ['A'],
-        "entropy_optimizer": ['F'],
-    }
-
-    param_combinations = [(params + (i, num_processes, (trainset, testset))) for i, params in enumerate(product(
-        param_grid["C"], param_grid["lr"], param_grid["lambda_reg"],
-        param_grid["alpha"], param_grid["subgradient_step"], param_grid["w0"],
-        param_grid["r"], param_grid["target_acc"], param_grid["target_entr"],
-        param_grid["min_xi"], param_grid["max_xi"], param_grid["n_epochs"],
-        param_grid["device"], param_grid["train_optimizer"],
-        param_grid["entropy_optimizer"]
-    ))]
-
-    with multiprocessing.Pool(processes=num_processes, maxtasksperchild=1) as pool:
-        results = pool.map(train_model, param_combinations)
-
-    print("Tutti i processi completati.")
+    return accuracy, entropy, target_acc, target_entr
