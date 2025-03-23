@@ -25,6 +25,7 @@ def load_data():
 
 
 def train_model(args):
+    global process_start_times
     process_index = args[-3]
     num_processes = args[-2]
     datasets = args[-1]
