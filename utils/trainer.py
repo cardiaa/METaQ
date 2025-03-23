@@ -54,6 +54,7 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
     entropy, accuracy = 0, 0
     accuracies, entropies, distinct_weights = [], [], []
     zeta, l = 50000, 0.5
+    time.sleep(1)
     print("Sto per iniziare...")
     for epoch in range(n_epochs):
         start_time = time.time()
