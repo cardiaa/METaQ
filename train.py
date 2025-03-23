@@ -69,7 +69,7 @@ if __name__ == "__main__":
     print(f"Numero di processi: {num_processes}")
     print(f"Numero totale di core logici disponibili: {num_total_cores}")
 
-    multiprocessing.set_start_method('spawn', force=True)
+    multiprocessing.set_start_method('fork', force=True)
     device = torch.device("cpu")
     print(device)
     np.set_printoptions(precision=6)
@@ -107,4 +107,4 @@ if __name__ == "__main__":
         results = pool.map(train_model, param_combinations)
 
     print("Tutti i processi completati.")
-    
+
