@@ -54,10 +54,13 @@ def sync_processes(start_times, time_threshold=0.5):
     """ Verifica che tutti i processi siano sincronizzati entro il limite di tempo """
     min_time = min(start_times)
     max_time = max(start_times)
-    print(f"Tempo minimo: {min_time}, Tempo massimo: {max_time}")  # Debug
     if max_time - min_time > time_threshold:
         return False  # Non sono sincronizzati
     return True
+
+
+def train_wrapper(args):
+    return train_and_evaluate(*args)
 
 
 if __name__ == "__main__":
@@ -111,7 +114,6 @@ if __name__ == "__main__":
         start_times = [result[1] for result in results]
         
         # Verifica se sono sincronizzati prima di avviare il training
-        print("bbbbbb")
         sync_done = sync_processes(start_times)
 
         if not sync_done:
@@ -119,6 +121,6 @@ if __name__ == "__main__":
 
     # Ora che sono sincronizzati, avvia il training
     with multiprocessing.Pool(processes=num_processes, maxtasksperchild=1) as pool:
-        results = pool.map(train_and_evaluate, param_combinations)
+        results = pool.map(train_wrapper, param_combinations)
 
     print("Tutti i processi completati e sincronizzati.")
