@@ -1,37 +1,38 @@
-import torch
+import torch  
 import time
 import numpy as np
 import os
-from torchvision import datasets, transforms
+from torchvision import datasets, transforms  
 from itertools import product
-from utils.trainer import train_and_evaluate
+from utils.trainer import train_and_evaluate  
 import multiprocessing
 
-# Inizializzazione della coda per la comunicazione tra i processi
+
 def initialize(time_queue):
     global queue
     queue = time_queue  # Rendiamo la coda globale per l'accesso ai processi figli
 
-# Funzione per impostare l'affinità dei processi (assegnare core specifici a ciascun processo)
+
 def set_affinity(process_index, num_processes):
     num_total_cores = os.cpu_count()
     cores_per_process = max(1, num_total_cores // num_processes)  
     core_indices = [i for i in range(num_total_cores) if i % num_processes == process_index]
     os.sched_setaffinity(0, core_indices)
 
-# Caricamento dei dati
+
 def load_data():
+    from torchvision import datasets, transforms
     transform = transforms.Compose([transforms.ToTensor()])
     trainset = datasets.MNIST(root='./data', train=True, download=True, transform=transform)
     testset = datasets.MNIST(root='./data', train=False, download=True, transform=transform)
     return trainset, testset
 
-# Funzione di training per ogni modello
+
 def train_model(args):
     process_index = args[-3]  # Terzultimo argomento è l'indice del processo
     num_processes = args[-2]  # Penultimo argomento è il numero totale di processi
     datasets = args[-1]  # Ultimo argomento è il tuple (trainset, testset)
-    time_queue = args[-4]  # La coda per passare il tempo
+    time_queue = args[-4]  # Aggiungiamo la coda per passare il tempo
 
     set_affinity(process_index, num_processes)
     torch.set_num_threads(1)
@@ -59,6 +60,7 @@ def train_model(args):
     training_time = time.time() - start_time
 
     return (C, r, training_time, start_time)
+
 
 if __name__ == "__main__":
     num_processes = 12  
@@ -93,31 +95,33 @@ if __name__ == "__main__":
     }
 
     while True:
-        time_queue = multiprocessing.Queue()
+        # Usare un Manager per creare una coda condivisa tra i processi
+        with multiprocessing.Manager() as manager:
+            time_queue = manager.Queue()
 
-        param_combinations = [(params + (i, num_processes, (trainset, testset), time_queue)) for i, params in enumerate(product(
-            param_grid["C"], param_grid["lr"], param_grid["lambda_reg"],
-            param_grid["alpha"], param_grid["subgradient_step"], param_grid["w0"],
-            param_grid["r"], param_grid["target_acc"], param_grid["target_entr"],
-            param_grid["min_xi"], param_grid["max_xi"], param_grid["n_epochs"],
-            param_grid["device"], param_grid["train_optimizer"],
-            param_grid["entropy_optimizer"]
-        ))]
+            param_combinations = [(params + (i, num_processes, (trainset, testset), time_queue)) for i, params in enumerate(product(
+                param_grid["C"], param_grid["lr"], param_grid["lambda_reg"],
+                param_grid["alpha"], param_grid["subgradient_step"], param_grid["w0"],
+                param_grid["r"], param_grid["target_acc"], param_grid["target_entr"],
+                param_grid["min_xi"], param_grid["max_xi"], param_grid["n_epochs"],
+                param_grid["device"], param_grid["train_optimizer"],
+                param_grid["entropy_optimizer"]
+            ))]
 
-        with multiprocessing.Pool(processes=num_processes, maxtasksperchild=1, initializer=initialize, initargs=(time_queue,)) as pool:
-            # Eseguiamo i processi
-            results = pool.map(train_model, param_combinations)
-            
-            # Raccogliamo i tempi da tutti i processi
-            times_at_print = [time_queue.get() for _ in range(num_processes)]
+            with multiprocessing.Pool(processes=num_processes, maxtasksperchild=1, initializer=initialize, initargs=(time_queue,)) as pool:
+                # Eseguiamo i processi
+                results = pool.map(train_model, param_combinations)
+                
+                # Raccogliamo i tempi da tutti i processi
+                times_at_print = [time_queue.get() for _ in range(num_processes)]
 
-            max_time = max(times_at_print)
-            min_time = min(times_at_print)
-            max_start_time_diff = max_time - min_time
+                max_time = max(times_at_print)
+                min_time = min(times_at_print)
+                max_start_time_diff = max_time - min_time
 
-            if max_start_time_diff <= 0.5:  
-                break  
-            else:
-                print(f"Tentativo fallito. Differenza massima nei tempi di avvio: {max_start_time_diff:.4f} secondi. Riprovo...", flush=True)
+                if max_start_time_diff <= 0.5:  
+                    break  
+                else:
+                    print(f"Tentativo fallito. Differenza massima nei tempi di avvio: {max_start_time_diff:.4f} secondi. Riprovo...", flush=True)
 
     print("Tutti i processi completati correttamente entro il limite di tempo richiesto.")
