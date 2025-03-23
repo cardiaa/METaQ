@@ -65,7 +65,7 @@ def sync_processes(start_times, time_threshold=0.05):
     """ Verifica che tutti i processi siano sincronizzati entro il limite di tempo """
     min_time = min(start_times)
     max_time = max(start_times)
-    print(max_time - min_time)
+    print("aaaaa", max_time - min_time)
     if max_time - min_time > time_threshold:
         return False  # Non sono sincronizzati
     return True
