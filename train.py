@@ -25,7 +25,6 @@ def load_data():
 
 
 def train_model(args):
-
     process_index = args[-3]  # Terzultimo argomento è l'indice del processo
     num_processes = args[-2]  # Penultimo argomento è il numero totale di processi
     datasets = args[-1]  # Ultimo argomento è il tuple (trainset, testset)
@@ -59,7 +58,16 @@ def train_model(args):
 
     print(f"Process {process_index}: Training completato in {training_time:.2f} secondi", flush=True)
 
-    return (C, r, training_time)
+    return (process_index, start_time, training_time)
+
+
+def sync_processes(start_times, time_threshold=0.5):
+    """ Verifica che tutti i processi siano sincronizzati entro il limite di tempo """
+    min_time = min(start_times)
+    max_time = max(start_times)
+    if max_time - min_time > time_threshold:
+        return False  # Non sono sincronizzati
+    return True
 
 
 if __name__ == "__main__":
@@ -103,8 +111,19 @@ if __name__ == "__main__":
         param_grid["entropy_optimizer"]
     ))]
 
-    with multiprocessing.Pool(processes=num_processes, maxtasksperchild=1) as pool:
-        results = pool.map(train_model, param_combinations)
+    # Ciclo per rilanciare i processi se non sono sincronizzati
+    sync_done = False
+    while not sync_done:
+        with multiprocessing.Pool(processes=num_processes, maxtasksperchild=1) as pool:
+            results = pool.map(train_model, param_combinations)
 
-    print("Tutti i processi completati.")
-    
+        # Estrai i tempi di inizio per ogni processo
+        start_times = [result[1] for result in results]
+        
+        # Verifica se sono sincronizzati
+        sync_done = sync_processes(start_times)
+
+        if not sync_done:
+            print(f"I processi non sono sincronizzati. Rilanciando...")
+
+    print("Tutti i processi completati e sincronizzati.")
