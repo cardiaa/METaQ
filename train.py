@@ -29,11 +29,10 @@ def train_model(args):
     num_processes = args[-2]  # Penultimo argomento è il numero totale di processi
     datasets = args[-1]  # Ultimo argomento è il tuple (trainset, testset)
 
-    set_affinity(process_index, num_processes)  # Commentata per ora
-
+    set_affinity(process_index, num_processes)
     torch.set_num_threads(1)
 
-    trainset, testset = datasets  # Dati caricati dal processo principale
+    trainset, testset = datasets  
     trainloader = torch.utils.data.DataLoader(trainset, batch_size=64, shuffle=True, num_workers=0)
     testloader = torch.utils.data.DataLoader(testset, batch_size=1000, shuffle=False, num_workers=0)
 
@@ -46,8 +45,11 @@ def train_model(args):
     # Sincronizzazione: tempo di inizio
     start_time = time.time()
 
-    # Qui non facciamo ancora il training, ma ritorniamo il tempo di inizio
-    return (process_index, start_time)
+    # Ritorna i dati necessari per il training
+    return (C, lr, lambda_reg, alpha, subgradient_step, w0, r,
+            target_acc, target_entr, min_xi, max_xi, n_epochs,
+            device, train_optimizer, entropy_optimizer, trainloader, testloader, start_time)
+
 
 
 def sync_processes(start_times, time_threshold=0.5):
@@ -60,8 +62,7 @@ def sync_processes(start_times, time_threshold=0.5):
 
 
 def train_wrapper(args):
-    # Prende solo i primi 17 argomenti, scartando gli ultimi 3
-    return train_and_evaluate(*args[:-3])
+    return train_and_evaluate(*args[:-1])
 
 
 if __name__ == "__main__":
