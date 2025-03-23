@@ -25,7 +25,6 @@ def load_data():
 
 
 def train_model(args):
-    global process_start_times
     process_index = args[-3]
     num_processes = args[-2]
     datasets = args[-1]
@@ -38,7 +37,6 @@ def train_model(args):
     testloader = torch.utils.data.DataLoader(testset, batch_size=1000, shuffle=False, num_workers=0)
 
     start_time = time.time()
-    process_start_times[process_index] = start_time
 
     while len(process_start_times.keys()) < num_processes:
         time.sleep(0.01)
@@ -47,7 +45,6 @@ def train_model(args):
 
     for i, data in enumerate(trainloader, 0):
         if i == 10:
-            process_start_times[process_index] = time.time()
             break
 
     while len(process_start_times.keys()) < num_processes:
