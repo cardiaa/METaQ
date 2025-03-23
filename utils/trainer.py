@@ -33,7 +33,7 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
                        target_acc, target_entr, min_xi, max_xi, n_epochs, device, 
                        train_optimizer, entropy_optimizer, trainloader, testloader):
 
-    torch.set_num_threads(16)
+    torch.set_num_threads(8)
     time.sleep(3)
 
     model = LeNet5().to(device)
