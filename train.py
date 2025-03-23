@@ -10,14 +10,22 @@ import multiprocessing
 
 def set_affinity(process_index, num_processes):
     num_total_cores = os.cpu_count()
-    if num_processes > num_total_cores:
-        raise ValueError("Il numero di processi non può superare il numero totale di core disponibili.")
+    cores_per_process = 16  # Numero di core che ogni processo deve utilizzare
+    required_cores = num_processes * cores_per_process
 
-    # Un core per processo, assegnato in sequenza
-    core_index = process_index % num_total_cores  # Assicura che l'indice non vada fuori dai limiti
-    os.sched_setaffinity(0, {core_index})
+    if required_cores > num_total_cores:
+        raise ValueError(f"Non ci sono abbastanza core per assegnare {cores_per_process} core per processo. "
+                         f"Richiesti: {required_cores}, Disponibili: {num_total_cores}")
 
-    print(f"Processo {process_index}: Affinità impostata su core {core_index}", flush=True)
+    # Determina quali core assegnare a questo processo
+    start_index = process_index * cores_per_process
+    core_indices = list(range(start_index, start_index + cores_per_process))
+    
+    # Imposta l'affinità per il processo
+    os.sched_setaffinity(0, set(core_indices))
+
+    print(f"Processo {process_index}: Affinità impostata su core {core_indices}", flush=True)
+
 
 
 
@@ -35,7 +43,7 @@ def train_model(args):
 
     set_affinity(process_index, num_processes)  # Commentata per ora
 
-    torch.set_num_threads(1)
+    torch.set_num_threads(16)
     
     
     #print(f"Process {process_index}: torch.get_num_threads() = {torch.get_num_threads()}")
@@ -70,11 +78,12 @@ def train_model(args):
 
 
 if __name__ == "__main__":
-    num_processes = 12  # Deve essere <= os.cpu_count()
-    num_total_cores = os.cpu_count()  
+    num_processes = 12  
+    num_total_cores = os.cpu_count()
+    cores_per_process = 16
 
-    if num_processes > num_total_cores:
-        raise ValueError("Il numero di processi deve essere inferiore o uguale al numero di core totali.")
+    if num_processes * cores_per_process > num_total_cores:
+        raise ValueError("Il numero di core disponibili non è sufficiente per garantire 4 core per processo.")
 
     print(f"Numero di processi: {num_processes}")
     print(f"Numero totale di core logici disponibili: {num_total_cores}")
@@ -117,3 +126,4 @@ if __name__ == "__main__":
         results = pool.map(train_model, param_combinations)
     
     print("Tutti i processi completati.")
+
