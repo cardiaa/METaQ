@@ -25,14 +25,16 @@ def load_data():
 
 
 def train_model(args):
+
     process_index = args[-3]  # Terzultimo argomento è l'indice del processo
     num_processes = args[-2]  # Penultimo argomento è il numero totale di processi
     datasets = args[-1]  # Ultimo argomento è il tuple (trainset, testset)
 
-    set_affinity(process_index, num_processes)
+    set_affinity(process_index, num_processes)  # Commentata per ora
+
     torch.set_num_threads(1)
 
-    trainset, testset = datasets  
+    trainset, testset = datasets  # Dati caricati dal processo principale
     trainloader = torch.utils.data.DataLoader(trainset, batch_size=64, shuffle=True, num_workers=0)
     testloader = torch.utils.data.DataLoader(testset, batch_size=1000, shuffle=False, num_workers=0)
 
@@ -42,27 +44,22 @@ def train_model(args):
 
     print(f"Process {process_index}: Dati caricati", flush=True)
 
-    # Sincronizzazione: tempo di inizio
     start_time = time.time()
 
-    # Ritorna i dati necessari per il training
-    return (C, lr, lambda_reg, alpha, subgradient_step, w0, r,
-            target_acc, target_entr, min_xi, max_xi, n_epochs,
-            device, train_optimizer, entropy_optimizer, trainloader, testloader, start_time)
+    accuracy, entropy, target_acc, target_entr = train_and_evaluate(
+        C=C, lr=lr, lambda_reg=lambda_reg, alpha=alpha, subgradient_step=subgradient_step,
+        w0=w0, r=r, target_acc=target_acc, target_entr=target_entr,
+        min_xi=min_xi, max_xi=max_xi, n_epochs=n_epochs,
+        device=device, train_optimizer=train_optimizer,
+        entropy_optimizer=entropy_optimizer,
+        trainloader=trainloader, testloader=testloader
+    )
 
+    training_time = time.time() - start_time
 
+    print(f"Process {process_index}: Training completato in {training_time:.2f} secondi", flush=True)
 
-def sync_processes(start_times, time_threshold=0.5):
-    """ Verifica che tutti i processi siano sincronizzati entro il limite di tempo """
-    min_time = min(start_times)
-    max_time = max(start_times)
-    if max_time - min_time > time_threshold:
-        return False  # Non sono sincronizzati
-    return True
-
-
-def train_wrapper(args):
-    return train_and_evaluate(*args[:-1])
+    return (C, r, training_time)
 
 
 if __name__ == "__main__":
@@ -72,6 +69,7 @@ if __name__ == "__main__":
     print(f"Numero di processi: {num_processes}")
     print(f"Numero totale di core logici disponibili: {num_total_cores}")
 
+    multiprocessing.set_start_method('fork', force=True)
     multiprocessing.set_start_method('spawn', force=True)
     device = torch.device("cpu")
     print(device)
@@ -106,23 +104,7 @@ if __name__ == "__main__":
         param_grid["entropy_optimizer"]
     ))]
 
-    # Ciclo per rilanciare i processi se non sono sincronizzati
-    sync_done = False
-    while not sync_done:
-        with multiprocessing.Pool(processes=num_processes, maxtasksperchild=1) as pool:
-            results = pool.map(train_model, param_combinations)
-
-        # Estrai i tempi di inizio per ogni processo
-        start_times = [result[1] for result in results]
-        
-        # Verifica se sono sincronizzati prima di avviare il training
-        sync_done = sync_processes(start_times)
-
-        if not sync_done:
-            print(f"I processi non sono sincronizzati. Rilanciando...")
-
-    # Ora che sono sincronizzati, avvia il training
     with multiprocessing.Pool(processes=num_processes, maxtasksperchild=1) as pool:
-        results = pool.map(train_wrapper, param_combinations)
+        results = pool.map(train_model, param_combinations)
 
-    print("Tutti i processi completati e sincronizzati.")
+    print("Tutti i processi completati.")
