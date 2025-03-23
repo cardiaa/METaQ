@@ -13,7 +13,6 @@ def set_affinity(process_index, num_processes):
     num_total_cores = os.cpu_count()
     cores_per_process = max(1, num_total_cores // num_processes)  
 
-    # Distribuzione più distanziata dei core
     core_indices = [i for i in range(num_total_cores) if i % num_processes == process_index]
     os.sched_setaffinity(0, core_indices)
 
@@ -25,17 +24,12 @@ def load_data():
     return trainset, testset
 
 
-process_start_times = multiprocessing.Manager().dict()
-
-
 def train_model(args):
-
-    process_index = args[-3]  # Terzultimo argomento è l'indice del processo
-    num_processes = args[-2]  # Penultimo argomento è il numero totale di processi
-    datasets = args[-1]  # Ultimo argomento è il tuple (trainset, testset)
+    process_index = args[-3]
+    num_processes = args[-2]
+    datasets = args[-1]
 
     set_affinity(process_index, num_processes)  
-
     torch.set_num_threads(1)
 
     trainset, testset = datasets  
@@ -45,19 +39,16 @@ def train_model(args):
     start_time = time.time()
     process_start_times[process_index] = start_time
 
-    # Attendi tutti i processi prima di procedere
     while len(process_start_times.keys()) < num_processes:
         time.sleep(0.01)
 
     print(f"Process {process_index}: Dati caricati", flush=True)
 
-    # Sincronizzazione per il controllo "Sono arrivato a 10."
     for i, data in enumerate(trainloader, 0):
         if i == 10:
             process_start_times[process_index] = time.time()
             break
 
-    # Aspetta che tutti i processi raggiungano l'indice 10
     while len(process_start_times.keys()) < num_processes:
         time.sleep(0.01)
 
@@ -65,10 +56,10 @@ def train_model(args):
     timestamps.sort()
     if timestamps[-1] - timestamps[0] > 0.1:
         print("I processi non sono sincronizzati! Riavvio il programma...", flush=True)
-        os._exit(1)  # Terminazione immediata dell'intero programma
+        os._exit(1)
 
     print(f"Sono arrivato a 10.", flush=True)
-    return process_index  # Restituisci l'indice del processo per completare correttamente il pool
+    return process_index
 
 
 if __name__ == "__main__":
@@ -79,6 +70,9 @@ if __name__ == "__main__":
 
     multiprocessing.set_start_method('spawn', force=True)
 
+    process_manager = multiprocessing.Manager()
+    process_start_times = process_manager.dict()
+
     trainset, testset = load_data()  
 
     param_combinations = [(0, 0.0007, 0.0015, 0.533, 1e5, -0.11,
@@ -87,13 +81,13 @@ if __name__ == "__main__":
                            i, num_processes, (trainset, testset))
                           for i in range(num_processes)]
 
-    while True:  # Continua a riavviare finché non è sincronizzato
-        process_start_times = multiprocessing.Manager().dict()
+    while True:
+        process_start_times = process_manager.dict()
 
         with multiprocessing.Pool(processes=num_processes, maxtasksperchild=1) as pool:
             results = pool.map(train_model, param_combinations)
 
-        if len(results) == num_processes:  # Tutti i processi sono stati completati correttamente
+        if len(results) == num_processes:
             break  
 
     print("Tutti i processi completati correttamente.")
