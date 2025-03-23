@@ -105,14 +105,17 @@ if __name__ == "__main__":
         with multiprocessing.Manager() as manager:
             time_queue = manager.Queue()
 
-            param_combinations = [(params + (i, num_processes, (trainset, testset), time_queue)) for i, params in enumerate(product(
-                param_grid["C"], param_grid["lr"], param_grid["lambda_reg"],
-                param_grid["alpha"], param_grid["subgradient_step"], param_grid["w0"],
-                param_grid["r"], param_grid["target_acc"], param_grid["target_entr"],
-                param_grid["min_xi"], param_grid["max_xi"], param_grid["n_epochs"],
-                param_grid["device"], param_grid["train_optimizer"],
-                param_grid["entropy_optimizer"]
-            ))]
+            param_combinations = [
+                (*params, i, num_processes, (trainset, testset), time_queue)
+                for i, params in enumerate(product(
+                    param_grid["C"], param_grid["lr"], param_grid["lambda_reg"],
+                    param_grid["alpha"], param_grid["subgradient_step"], param_grid["w0"],
+                    param_grid["r"], param_grid["target_acc"], param_grid["target_entr"],
+                    param_grid["min_xi"], param_grid["max_xi"], param_grid["n_epochs"],
+                    param_grid["device"], param_grid["train_optimizer"],
+                    param_grid["entropy_optimizer"]
+                ))
+            ]
 
             with multiprocessing.Pool(processes=num_processes, maxtasksperchild=1, initializer=initialize, initargs=(time_queue,)) as pool:
                 # Eseguiamo i processi
