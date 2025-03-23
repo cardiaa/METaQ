@@ -60,7 +60,8 @@ def sync_processes(start_times, time_threshold=0.5):
 
 
 def train_wrapper(args):
-    return train_and_evaluate(*args)
+    # Prende solo i primi 17 argomenti, scartando gli ultimi 3
+    return train_and_evaluate(*args[:-3])
 
 
 if __name__ == "__main__":
