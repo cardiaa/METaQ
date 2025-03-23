@@ -25,15 +25,13 @@ def load_data():
 
 
 def train_model(args):
-    process_index = args[-2]  # Penultimo argomento è l'indice del processo
-    num_processes = args[-1]  # Ultimo argomento è il numero totale di processi
+    process_index = args[-3]  # Terzultimo argomento è l'indice del processo
+    num_processes = args[-2]  # Penultimo argomento è il numero totale di processi
+    barrier = args[-1]  # Ultimo argomento è il Barrier
     
     set_affinity(process_index, num_processes)
     torch.set_num_threads(1)
-    
-    # Creiamo la barriera all'interno di ogni processo
-    barrier = multiprocessing.Barrier(num_processes)
-    
+
     if process_index == 0:
         print(f"Tutti i processi stanno caricando i dati...", flush=True)
     
@@ -49,7 +47,7 @@ def train_model(args):
     
     (C, lr, lambda_reg, alpha, subgradient_step, w0, r,
      target_acc, target_entr, min_xi, max_xi, n_epochs,
-     device, train_optimizer, entropy_optimizer) = args[:-2]
+     device, train_optimizer, entropy_optimizer) = args[:-3]
 
     print(f"Process {process_index}: Dati caricati", flush=True)
 
@@ -73,7 +71,6 @@ def train_model(args):
 
 
 
-
 if __name__ == "__main__":
     num_processes = 12  # Numero desiderato di processi
     num_total_cores = os.cpu_count()  
@@ -86,43 +83,45 @@ if __name__ == "__main__":
     print(device)
     np.set_printoptions(precision=6)
 
-    # Carichiamo i dati una volta sola e creiamo i DataLoader
-    trainset, testset = load_data()
-    trainloader = torch.utils.data.DataLoader(trainset, batch_size=64, shuffle=True, num_workers=0)
-    testloader = torch.utils.data.DataLoader(testset, batch_size=1000, shuffle=False, num_workers=0)
+    # Creazione di un Manager per gli oggetti condivisi
+    with multiprocessing.Manager() as manager:
+        # Creazione della barriera tramite il manager
+        barrier = manager.Barrier(num_processes)
 
-    # Creazione della barriera per sincronizzare tutti i processi
-    barrier = multiprocessing.Barrier(num_processes)
+        # Carichiamo i dati una volta sola e creiamo i DataLoader
+        trainset, testset = load_data()
+        trainloader = torch.utils.data.DataLoader(trainset, batch_size=64, shuffle=True, num_workers=0)
+        testloader = torch.utils.data.DataLoader(testset, batch_size=1000, shuffle=False, num_workers=0)
 
-    param_grid = {
-        "C": [6],
-        "lr": [0.0007],
-        "lambda_reg": [0.0015],
-        "alpha": [0.533],
-        "subgradient_step": [1e5],
-        "w0": [-0.11],
-        "r": [round(1.1 + i * 0.002, 3) for i in range(num_processes)],
-        "target_acc": [98.99],
-        "target_entr": [0.99602e6],
-        "min_xi": [0],
-        "max_xi": [1],
-        "n_epochs": [100],
-        "device": [device],
-        "train_optimizer": ['A'],
-        "entropy_optimizer": ['F'],
-    }
+        param_grid = {
+            "C": [6],
+            "lr": [0.0007],
+            "lambda_reg": [0.0015],
+            "alpha": [0.533],
+            "subgradient_step": [1e5],
+            "w0": [-0.11],
+            "r": [round(1.1 + i * 0.002, 3) for i in range(num_processes)],
+            "target_acc": [98.99],
+            "target_entr": [0.99602e6],
+            "min_xi": [0],
+            "max_xi": [1],
+            "n_epochs": [100],
+            "device": [device],
+            "train_optimizer": ['A'],
+            "entropy_optimizer": ['F'],
+        }
 
-    param_combinations = [(params + (i, num_processes, barrier)) for i, params in enumerate(product(
-        param_grid["C"], param_grid["lr"], param_grid["lambda_reg"],
-        param_grid["alpha"], param_grid["subgradient_step"], param_grid["w0"],
-        param_grid["r"], param_grid["target_acc"], param_grid["target_entr"],
-        param_grid["min_xi"], param_grid["max_xi"], param_grid["n_epochs"],
-        param_grid["device"], param_grid["train_optimizer"],
-        param_grid["entropy_optimizer"]
-    ))]
+        param_combinations = [(params + (i, num_processes, barrier)) for i, params in enumerate(product(
+            param_grid["C"], param_grid["lr"], param_grid["lambda_reg"],
+            param_grid["alpha"], param_grid["subgradient_step"], param_grid["w0"],
+            param_grid["r"], param_grid["target_acc"], param_grid["target_entr"],
+            param_grid["min_xi"], param_grid["max_xi"], param_grid["n_epochs"],
+            param_grid["device"], param_grid["train_optimizer"],
+            param_grid["entropy_optimizer"]
+        ))]
 
-    # Usa multiprocessing.Pool per il parallelismo
-    with multiprocessing.Pool(processes=num_processes, maxtasksperchild=1) as pool:
-        results = pool.map(train_model, param_combinations)
-    
-    print("Tutti i processi completati.")
+        # Usa multiprocessing.Pool per il parallelismo
+        with multiprocessing.Pool(processes=num_processes, maxtasksperchild=1) as pool:
+            results = pool.map(train_model, param_combinations)
+
+        print("Tutti i processi completati.")
