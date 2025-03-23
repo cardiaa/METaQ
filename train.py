@@ -25,10 +25,10 @@ def load_data():
 
 
 def train_model(args):
+
     process_index = args[-3]  # Terzultimo argomento è l'indice del processo
     num_processes = args[-2]  # Penultimo argomento è il numero totale di processi
     datasets = args[-1]  # Ultimo argomento è il tuple (trainset, testset)
-    barrier = args[-4]  # Il quarto argomento è il barrier per la sincronizzazione dei processi
 
     set_affinity(process_index, num_processes)  
 
@@ -40,12 +40,9 @@ def train_model(args):
 
     (C, lr, lambda_reg, alpha, subgradient_step, w0, r,
      target_acc, target_entr, min_xi, max_xi, n_epochs,
-     device, train_optimizer, entropy_optimizer) = args[:-4]
+     device, train_optimizer, entropy_optimizer) = args[:-3]
 
     print(f"Process {process_index}: Dati caricati", flush=True)
-
-    # Sincronizzazione dei processi: aspetta che tutti siano pronti
-    barrier.wait()
 
     start_time = time.time()
 
@@ -97,11 +94,8 @@ if __name__ == "__main__":
         "entropy_optimizer": ['F'],
     }
 
-    # Crea la barriera prima di generare le combinazioni di parametri
-    barrier = multiprocessing.Barrier(num_processes)
-
     while True:
-        param_combinations = [(params + (i, num_processes, (trainset, testset), barrier)) for i, params in enumerate(product(
+        param_combinations = [(params + (i, num_processes, (trainset, testset))) for i, params in enumerate(product(
             param_grid["C"], param_grid["lr"], param_grid["lambda_reg"],
             param_grid["alpha"], param_grid["subgradient_step"], param_grid["w0"],
             param_grid["r"], param_grid["target_acc"], param_grid["target_entr"],
