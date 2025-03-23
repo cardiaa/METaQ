@@ -97,6 +97,9 @@ if __name__ == "__main__":
         "entropy_optimizer": ['F'],
     }
 
+    # Crea la barriera prima di generare le combinazioni di parametri
+    barrier = multiprocessing.Barrier(num_processes)
+
     while True:
         param_combinations = [(params + (i, num_processes, (trainset, testset), barrier)) for i, params in enumerate(product(
             param_grid["C"], param_grid["lr"], param_grid["lambda_reg"],
@@ -106,9 +109,6 @@ if __name__ == "__main__":
             param_grid["device"], param_grid["train_optimizer"],
             param_grid["entropy_optimizer"]
         ))]
-
-        # Crea una barriera di sincronizzazione per i processi
-        barrier = multiprocessing.Barrier(num_processes)
 
         with multiprocessing.Pool(processes=num_processes, maxtasksperchild=1) as pool:
             results = pool.map(train_model, param_combinations)
