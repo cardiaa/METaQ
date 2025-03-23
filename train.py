@@ -10,11 +10,17 @@ import multiprocessing
 
 def set_affinity(process_index, num_processes):
     num_total_cores = os.cpu_count()
-    cores_per_process = max(1, num_total_cores // num_processes)  
+    cores_per_process = num_total_cores // num_processes  
     
-    # Distribuzione più distanziata dei core
-    core_indices = [i for i in range(num_total_cores) if i % num_processes == process_index]
+    # Ottieni l'intervallo di core per ogni processo
+    start_core = process_index * cores_per_process
+    end_core = start_core + cores_per_process
+
+    # Limitiamo l'intervallo ai core disponibili
+    core_indices = list(range(start_core, min(end_core, num_total_cores)))
+    
     os.sched_setaffinity(0, core_indices)
+
 
 
 def load_data():
