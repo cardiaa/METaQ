@@ -8,11 +8,17 @@ from utils.trainer import train_and_evaluate
 import multiprocessing
 
 
+def initialize(time_queue):
+    global queue
+    queue = time_queue  # Rendiamo la coda globale per l'accesso ai processi figli
+
+
 def set_affinity(process_index, num_processes):
     num_total_cores = os.cpu_count()
     cores_per_process = max(1, num_total_cores // num_processes)  
     core_indices = [i for i in range(num_total_cores) if i % num_processes == process_index]
     os.sched_setaffinity(0, core_indices)
+
 
 def load_data():
     from torchvision import datasets, transforms
@@ -20,6 +26,7 @@ def load_data():
     trainset = datasets.MNIST(root='./data', train=True, download=True, transform=transform)
     testset = datasets.MNIST(root='./data', train=False, download=True, transform=transform)
     return trainset, testset
+
 
 def train_model(args):
     process_index = args[-3]  # Terzultimo argomento è l'indice del processo
@@ -53,6 +60,7 @@ def train_model(args):
     training_time = time.time() - start_time
 
     return (C, r, training_time, start_time)
+
 
 if __name__ == "__main__":
     num_processes = 12  
@@ -98,7 +106,7 @@ if __name__ == "__main__":
             param_grid["entropy_optimizer"]
         ))]
 
-        with multiprocessing.Pool(processes=num_processes, maxtasksperchild=1) as pool:
+        with multiprocessing.Pool(processes=num_processes, maxtasksperchild=1, initializer=initialize, initargs=(time_queue,)) as pool:
             # Eseguiamo i processi
             results = pool.map(train_model, param_combinations)
             
