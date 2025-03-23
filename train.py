@@ -8,12 +8,12 @@ from utils.trainer import train_and_evaluate
 import multiprocessing
 
 
-def set_affinity(process_index, num_processes):
+def set_affinity(process_index, num_processes, num_cores_per_process):
     num_total_cores = os.cpu_count()
-    cores_per_process = max(1, num_total_cores // num_processes)  
     
-    # Distribuzione più distanziata dei core
-    core_indices = [i for i in range(num_total_cores) if i % num_processes == process_index]
+    # Distribuire i core tra i processi
+    core_indices = [i for i in range(num_total_cores) if i % num_cores_per_process == process_index]
+    
     os.sched_setaffinity(0, core_indices)
 
 
@@ -25,25 +25,21 @@ def load_data():
 
 
 def train_model(args):
+    process_index = args[-3]  # L'indice del processo
+    num_processes = args[-2]  # Numero totale di processi
+    num_cores_per_process = args[-1]  # Numero di core per processo
 
-    process_index = args[-2]  # Penultimo argomento è l'indice del processo
-    num_processes = args[-1]  # Ultimo argomento è il numero totale di processi
-
-    set_affinity(process_index, num_processes)  # Commentata per ora
+    set_affinity(process_index, num_processes, num_cores_per_process)  # Assegna i core al processo
 
     torch.set_num_threads(1)
     
-    
-    #print(f"Process {process_index}: torch.get_num_threads() = {torch.get_num_threads()}")
-    #print(f"Process {process_index}: Affinity = {os.sched_getaffinity(0)}", flush=True)
-
-    trainset, testset = load_data()  # Carichiamo i dati localmente
+    trainset, testset = load_data()  # Carica i dati localmente
     trainloader = torch.utils.data.DataLoader(trainset, batch_size=64, shuffle=True, num_workers=0)
     testloader = torch.utils.data.DataLoader(testset, batch_size=1000, shuffle=False, num_workers=0)
 
     (C, lr, lambda_reg, alpha, subgradient_step, w0, r,
      target_acc, target_entr, min_xi, max_xi, n_epochs,
-     device, train_optimizer, entropy_optimizer) = args[:-2]
+     device, train_optimizer, entropy_optimizer) = args[:-3]
 
     print(f"Process {process_index}: Dati caricati", flush=True)
 
@@ -66,11 +62,17 @@ def train_model(args):
 
 
 if __name__ == "__main__":
-    num_processes = 12  # Numero desiderato di processi
     num_total_cores = os.cpu_count()  
+    reserved_cores = 40  # Riserviamo 40 core per il sistema operativo
+    num_processes = 12  # Numero di processi per la grid search
+
+    # Calcoliamo i core per processo (distribuito equamente tra i 12 processi)
+    num_cores_per_process = (num_total_cores - reserved_cores) // num_processes
+    print(f"Numero di core per processo: {num_cores_per_process}")
 
     print(f"Numero di processi: {num_processes}")
     print(f"Numero totale di core logici disponibili: {num_total_cores}")
+    print(f"Core riservati al sistema operativo: {reserved_cores}")
 
     multiprocessing.set_start_method('spawn', force=True)
     device = torch.device("cpu")
@@ -95,7 +97,7 @@ if __name__ == "__main__":
         "entropy_optimizer": ['F'],
     }
 
-    param_combinations = [(params + (i, num_processes)) for i, params in enumerate(product(
+    param_combinations = [(params + (i, num_processes, num_cores_per_process)) for i, params in enumerate(product(
         param_grid["C"], param_grid["lr"], param_grid["lambda_reg"],
         param_grid["alpha"], param_grid["subgradient_step"], param_grid["w0"],
         param_grid["r"], param_grid["target_acc"], param_grid["target_entr"],
