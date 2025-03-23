@@ -61,7 +61,7 @@ def train_model(args):
     return (process_index, start_time, training_time)
 
 
-def sync_processes(start_times, time_threshold=0.5):
+def sync_processes(start_times, time_threshold=0.05):
     """ Verifica che tutti i processi siano sincronizzati entro il limite di tempo """
     min_time = min(start_times)
     max_time = max(start_times)
@@ -124,6 +124,6 @@ if __name__ == "__main__":
         sync_done = sync_processes(start_times)
 
         if not sync_done:
-            print(f"I processi non sono sincronizzati. Rilanciando...")
+            print(f"I processi non sono sincronizzati. Rilancio...")
 
     print("Tutti i processi completati e sincronizzati.")
