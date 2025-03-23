@@ -43,7 +43,7 @@ def train_model(args):
 
     set_affinity(process_index, num_processes)  # Commentata per ora
 
-    torch.set_num_threads(16)
+    torch.set_num_threads(8)
     
     
     #print(f"Process {process_index}: torch.get_num_threads() = {torch.get_num_threads()}")
@@ -83,7 +83,7 @@ if __name__ == "__main__":
     cores_per_process = 8
 
     if num_processes * cores_per_process > num_total_cores:
-        raise ValueError("Il numero di core disponibili non è sufficiente per garantire 4 core per processo.")
+        raise ValueError(f"Il numero di core disponibili non è sufficiente per garantire {cores_per_process} core per processo.")
 
     print(f"Numero di processi: {num_processes}")
     print(f"Numero totale di core logici disponibili: {num_total_cores}")
