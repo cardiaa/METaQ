@@ -54,13 +54,13 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
     entropy, accuracy = 0, 0
     accuracies, entropies, distinct_weights = [], [], []
     zeta, l = 50000, 0.5
-    
+    print("Sto per iniziare...")
     for epoch in range(n_epochs):
         start_time = time.time()
         for i, data in enumerate(trainloader, 0):
-            if(i == 10 and epoch == 0):
+            #if(i == 10 and epoch == 0):
                 # Aggiungi la stampa dei core utilizzati dal processo
-                print(f"Sono arrivato a 10.")
+                #print(f"Sono arrivato a 10.")
 
             inputs, labels = data[0].to(device), data[1].to(device)
             optimizer.zero_grad()
