@@ -10,11 +10,15 @@ import multiprocessing
 
 def set_affinity(process_index, num_processes):
     num_total_cores = os.cpu_count()
-    cores_per_process = max(1, num_total_cores // num_processes)  
-    
-    # Distribuzione più distanziata dei core
-    core_indices = [i for i in range(num_total_cores) if i % num_processes == process_index]
-    os.sched_setaffinity(0, core_indices)
+    if num_processes > num_total_cores:
+        raise ValueError("Il numero di processi non può superare il numero totale di core disponibili.")
+
+    # Un core per processo, assegnato in sequenza
+    core_index = process_index % num_total_cores  # Assicura che l'indice non vada fuori dai limiti
+    os.sched_setaffinity(0, {core_index})
+
+    print(f"Processo {process_index}: Affinità impostata su core {core_index}", flush=True)
+
 
 
 def load_data():
@@ -66,16 +70,21 @@ def train_model(args):
 
 
 if __name__ == "__main__":
-    num_processes = 12  # Numero desiderato di processi
+    num_processes = 12  # Deve essere <= os.cpu_count()
     num_total_cores = os.cpu_count()  
+
+    if num_processes > num_total_cores:
+        raise ValueError("Il numero di processi deve essere inferiore o uguale al numero di core totali.")
 
     print(f"Numero di processi: {num_processes}")
     print(f"Numero totale di core logici disponibili: {num_total_cores}")
 
     multiprocessing.set_start_method('spawn', force=True)
     device = torch.device("cpu")
-    print(device)
     np.set_printoptions(precision=6)
+
+    # Caricamento dei dati globale per ridurre l'I/O
+    global_trainloader, global_testloader = load_data()
 
     param_grid = {
         "C": [6],
@@ -104,7 +113,6 @@ if __name__ == "__main__":
         param_grid["entropy_optimizer"]
     ))]
 
-    # Usa multiprocessing.Pool per il parallelismo
     with multiprocessing.Pool(processes=num_processes, maxtasksperchild=1) as pool:
         results = pool.map(train_model, param_combinations)
     
