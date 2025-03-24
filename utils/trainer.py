@@ -77,9 +77,9 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
             loss.backward()
             optimizer.step()
 
-            if i == 10 and epoch == 0:
+            #if i == 10 and epoch == 0:
                 # Aggiungi la stampa dei core utilizzati dal processo (o qualsiasi altro dato di debug)
-                print(f"XXXXXXXXXX")
+            #    print(f"XXXXXXXXXX")
 
             inputs, labels = data[0].to(device), data[1].to(device)
             optimizer.zero_grad()
