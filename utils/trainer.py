@@ -37,9 +37,10 @@ def load_data():
     return trainset, testset
 
 
-def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r, 
-                       target_acc, target_entr, min_xi, max_xi, n_epochs, device, 
-                       train_optimizer, entropy_optimizer, semaphore, release_times, process_id):
+def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
+                        target_acc, target_entr, min_xi, max_xi, n_epochs,
+                        device, train_optimizer, entropy_optimizer, 
+                        trainloader, testloader, semaphore, release_times, process_id):
     
     torch.set_num_threads(1)
     trainset, testset = load_data()  # Carichiamo i dati localmente
