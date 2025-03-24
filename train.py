@@ -32,15 +32,9 @@ def train_model(args):
 
     torch.set_num_threads(1)
 
-    trainset, testset = load_data()  # Carichiamo i dati localmente
-    trainloader = torch.utils.data.DataLoader(trainset, batch_size=64, shuffle=True, num_workers=0)
-    testloader = torch.utils.data.DataLoader(testset, batch_size=1000, shuffle=False, num_workers=0)
-
     (C, lr, lambda_reg, alpha, subgradient_step, w0, r,
      target_acc, target_entr, min_xi, max_xi, n_epochs,
      device, train_optimizer, entropy_optimizer) = args[:-2]
-
-    print(f"Process {process_index}: Dati caricati", flush=True)
 
     start_time = time.time()
 
@@ -79,16 +73,21 @@ def run_in_parallel(param_combinations, num_processes, max_wait_time=0.5):
     # Controlliamo che tutti i processi siano partiti entro max_wait_time
     start_time = time.time()
     for _ in param_combinations:
-        # Aspetta che ogni processo parta
-        semaphore.acquire()  # Aspetta che il semaforo venga rilasciato
-
+        print("aaaa")
+        if not semaphore.acquire(timeout=max_wait_time):  # Acquisiamo con timeout
+            print("Attenzione! Un processo non è partito entro il tempo massimo.")
+            # Termina i processi ancora in esecuzione
+            for p in processes:
+                if p.is_alive():
+                    p.terminate()
+                    p.join()
+            return None  # Indica al main che i processi devono essere riavviati
+        print("bbbb")
+    
     elapsed_time = time.time() - start_time
-    if elapsed_time > max_wait_time:
-        print(f"Attenzione! Non tutti i processi sono partiti in {max_wait_time} secondi. Tempo trascorso: {elapsed_time:.2f} secondi.")
-    else:
-        print(f"Tutti i processi sono partiti in {elapsed_time:.2f} secondi.")
+    print(f"Tutti i processi sono partiti in {elapsed_time:.2f} secondi.")
 
-    # Attendere il completamento di tutti i processi
+    # Aspetta il completamento di tutti i processi
     for p in processes:
         p.join()  # Unisci ogni processo per completare l'esecuzione
 
@@ -134,7 +133,10 @@ if __name__ == "__main__":
         param_grid["entropy_optimizer"]
     ))]
 
-    # Avvia i processi in parallelo
-    results = run_in_parallel(param_combinations, num_processes)
-    
+    while True:
+        results = run_in_parallel(param_combinations, num_processes)
+        if results is not None:  # Se i processi sono partiti correttamente
+            break
+        print("Riprovo ad avviare tutti i processi...")
+
     print("Tutti i processi completati.")
