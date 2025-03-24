@@ -30,11 +30,22 @@ def test_accuracy(model, dataloader, device):
     return accuracy
 
 
+def load_data():
+    transform = transforms.Compose([transforms.ToTensor()])
+    trainset = datasets.MNIST(root='./data', train=True, download=True, transform=transform)
+    testset = datasets.MNIST(root='./data', train=False, download=True, transform=transform)
+    return trainset, testset
+
+
 def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r, 
                        target_acc, target_entr, min_xi, max_xi, n_epochs, device, 
-                       train_optimizer, entropy_optimizer, trainloader, testloader):
+                       train_optimizer, entropy_optimizer):
     
     torch.set_num_threads(1)
+
+    trainset, testset = load_data()  # Carichiamo i dati localmente
+    trainloader = torch.utils.data.DataLoader(trainset, batch_size=64, shuffle=True, num_workers=0)
+    testloader = torch.utils.data.DataLoader(testset, batch_size=1000, shuffle=False, num_workers=0)
 
     # Inizializzazione del modello, funzione di perdita e ottimizzatore
     model = LeNet5().to(device)

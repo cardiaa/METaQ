@@ -54,8 +54,7 @@ def train_model(args):
         w0=w0, r=r, target_acc=target_acc, target_entr=target_entr,
         min_xi=min_xi, max_xi=max_xi, n_epochs=n_epochs,
         device=device, train_optimizer=train_optimizer,
-        entropy_optimizer=entropy_optimizer,
-        trainloader=trainloader, testloader=testloader
+        entropy_optimizer=entropy_optimizer
     )
 
     training_time = time.time() - start_time
