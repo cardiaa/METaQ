@@ -59,7 +59,7 @@ def worker(semaphore, args):
     return train_model(args)
 
 
-def run_in_parallel(param_combinations, num_processes, max_wait_time=0.5):
+def run_in_parallel(param_combinations, num_processes, max_wait_time=1):
     semaphore = multiprocessing.Semaphore(0)  # Semaforo inizializzato a 0
     processes = []
     results = []
@@ -73,7 +73,6 @@ def run_in_parallel(param_combinations, num_processes, max_wait_time=0.5):
     # Controlliamo che tutti i processi siano partiti entro max_wait_time
     start_time = time.time()
     for _ in param_combinations:
-        print("aaaa")
         if not semaphore.acquire(timeout=max_wait_time):  # Acquisiamo con timeout
             print("Attenzione! Un processo non è partito entro il tempo massimo.")
             # Termina i processi ancora in esecuzione
@@ -82,7 +81,6 @@ def run_in_parallel(param_combinations, num_processes, max_wait_time=0.5):
                     p.terminate()
                     p.join()
             return None  # Indica al main che i processi devono essere riavviati
-        print("bbbb")
     
     elapsed_time = time.time() - start_time
     print(f"Tutti i processi sono partiti in {elapsed_time:.2f} secondi.")
