@@ -2,10 +2,25 @@ import torch
 import time
 import numpy as np
 import os
+import gc
+import psutil
 from torchvision import datasets, transforms  
 from itertools import product
 from utils.trainer import train_and_evaluate  
 import multiprocessing
+
+
+def clear_resources():
+    # Pulisci eventuali processi zombie
+    gc.collect()  # Raccoglie la memoria inutilizzata
+    torch.cuda.empty_cache()  # Se stai usando GPU, libera memoria (opzionale nel tuo caso)
+    
+    # Chiude eventuali processi zombie
+    current_process = psutil.Process()
+    for child in current_process.children(recursive=True):  # Trova tutti i processi figli
+        if child.is_running():
+            child.terminate()  # Termina il processo
+            child.wait()  # Attende il completamento della terminazione
 
 
 def train_model(args, semaphore, release_times, process_id):
@@ -57,7 +72,7 @@ def run_in_parallel(param_combinations, num_processes, max_wait_time=2.5):
         # Controllo se il tempo trascorso tra il primo e l'ultimo rilascio è maggiore del timeout
         elapsed_time = time.time() - start_time
         if elapsed_time > max_wait_time:
-            print(f"Attenzione! I processi non hanno rilasciato i semafori in tempo. [{len([t for t in release_times if t > 0])}/12]")
+            print(f"Attenzione! I processi non hanno rilasciato i semafori in tempo. [{len([t for t in release_times if t > 0])}/{num_processes}]")
             for p in processes:
                 if p.is_alive():
                     p.terminate()
@@ -115,7 +130,8 @@ if __name__ == "__main__":
     ))]
 
     while True:
-        time.sleep(3)
+        time.sleep(5)
+        clear_resources()  # Libera tutte le risorse prima di rilanciare i processi
         results = run_in_parallel(param_combinations, num_processes)
         if results is not None:  # Se i processi sono partiti correttamente
             break
