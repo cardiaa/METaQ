@@ -53,9 +53,10 @@ def train_model(args):
         entropy_optimizer=entropy_optimizer,
         trainloader=trainloader, testloader=testloader,
         process_index=process_index, num_processes=num_processes,
-        arrival_times=arrival_times, sync_lock=arrival_times.get_lock(), 
-        sync_failed=sync_failed  # Aggiungi anche questo flag
+        arrival_times=arrival_times, sync_lock=sync_lock,
+        sync_failed=sync_failed
     )
+
 
 
     with arrival_times.get_lock():
@@ -125,8 +126,9 @@ if __name__ == "__main__":
         with multiprocessing.Manager() as manager:
             arrival_times = manager.list([-1] * num_processes) 
             sync_failed = manager.Value('b', False)
+            sync_lock = manager.Lock()  
             
-            enhanced_combinations = [params + (arrival_times, sync_failed) for params in param_combinations]
+            enhanced_combinations = [params + (arrival_times, sync_lock, sync_failed) for params in param_combinations]
             
             pool = multiprocessing.Pool(processes=num_processes, maxtasksperchild=1)
             try:
