@@ -12,6 +12,7 @@ def set_affinity(process_index, num_processes):
     num_total_cores = os.cpu_count()
     cores_per_process = max(1, num_total_cores // num_processes)  
     
+    # Distribuzione più distanziata dei core
     core_indices = [i for i in range(num_total_cores) if i % num_processes == process_index]
     os.sched_setaffinity(0, core_indices)
 
@@ -25,20 +26,27 @@ def load_data():
 
 def train_model(args):
 
-    (C, lr, lambda_reg, alpha, subgradient_step, w0, r,
-    target_acc, target_entr, min_xi, max_xi, n_epochs,
-    device, train_optimizer, entropy_optimizer, process_index,
-    num_processes, datasets, arrival_times, sync_failed, 
-    sync_lock, synced) = args
+    process_index = args[-2]  # Penultimo argomento è l'indice del processo
+    num_processes = args[-1]  # Ultimo argomento è il numero totale di processi
 
-    set_affinity(process_index, num_processes)  
+    set_affinity(process_index, num_processes)  # Commentata per ora
+
     torch.set_num_threads(1)
+    
+    
+    #print(f"Process {process_index}: torch.get_num_threads() = {torch.get_num_threads()}")
+    #print(f"Process {process_index}: Affinity = {os.sched_getaffinity(0)}", flush=True)
 
-    trainset, testset = datasets
+    trainset, testset = load_data()  # Carichiamo i dati localmente
     trainloader = torch.utils.data.DataLoader(trainset, batch_size=64, shuffle=True, num_workers=0)
     testloader = torch.utils.data.DataLoader(testset, batch_size=1000, shuffle=False, num_workers=0)
 
+    (C, lr, lambda_reg, alpha, subgradient_step, w0, r,
+     target_acc, target_entr, min_xi, max_xi, n_epochs,
+     device, train_optimizer, entropy_optimizer) = args[:-2]
+
     print(f"Process {process_index}: Dati caricati", flush=True)
+
     start_time = time.time()
 
     accuracy, entropy, target_acc, target_entr = train_and_evaluate(
@@ -47,19 +55,18 @@ def train_model(args):
         min_xi=min_xi, max_xi=max_xi, n_epochs=n_epochs,
         device=device, train_optimizer=train_optimizer,
         entropy_optimizer=entropy_optimizer,
-        trainloader=trainloader, testloader=testloader, ##
-        process_index=process_index, num_processes=num_processes, 
-        arrival_times=arrival_times, sync_lock=sync_lock, sync_failed=sync_failed,
-        synced=synced  # Passa 'synced' qui
+        trainloader=trainloader, testloader=testloader
     )
 
     training_time = time.time() - start_time
+
     print(f"Process {process_index}: Training completato in {training_time:.2f} secondi", flush=True)
+
     return (C, r, training_time)
 
 
 if __name__ == "__main__":
-    num_processes = 12  
+    num_processes = 12  # Numero desiderato di processi
     num_total_cores = os.cpu_count()  
 
     print(f"Numero di processi: {num_processes}")
@@ -69,8 +76,6 @@ if __name__ == "__main__":
     device = torch.device("cpu")
     print(device)
     np.set_printoptions(precision=6)
-
-    trainset, testset = load_data() 
 
     param_grid = {
         "C": [6],
@@ -90,43 +95,17 @@ if __name__ == "__main__":
         "entropy_optimizer": ['F'],
     }
 
-    param_combinations = [(params + (i, num_processes, (trainset, testset)))
-                          for i, params in enumerate(product(
-                              param_grid["C"], param_grid["lr"], param_grid["lambda_reg"],
-                              param_grid["alpha"], param_grid["subgradient_step"], param_grid["w0"],
-                              param_grid["r"], param_grid["target_acc"], param_grid["target_entr"],
-                              param_grid["min_xi"], param_grid["max_xi"], param_grid["n_epochs"],
-                              param_grid["device"], param_grid["train_optimizer"],
-                              param_grid["entropy_optimizer"]
-                          ))]
+    param_combinations = [(params + (i, num_processes)) for i, params in enumerate(product(
+        param_grid["C"], param_grid["lr"], param_grid["lambda_reg"],
+        param_grid["alpha"], param_grid["subgradient_step"], param_grid["w0"],
+        param_grid["r"], param_grid["target_acc"], param_grid["target_entr"],
+        param_grid["min_xi"], param_grid["max_xi"], param_grid["n_epochs"],
+        param_grid["device"], param_grid["train_optimizer"],
+        param_grid["entropy_optimizer"]
+    ))]
 
-    while True:  # Ciclo principale
-        with multiprocessing.Manager() as manager:
-            arrival_times = manager.list([-1] * num_processes) 
-            sync_failed = manager.Value('b', False)
-            sync_lock = manager.Lock()  # Aggiungo il lock
-            synced = manager.Value('b', False)  # Inizializza 'synced'
-            
-            enhanced_combinations = [
-                params + (arrival_times, sync_failed, sync_lock, synced)  # Passa solo questi tre
-                for params in param_combinations
-            ]
-
-            pool = multiprocessing.Pool(processes=num_processes, maxtasksperchild=1)
-            try:
-                results = pool.map(train_model, enhanced_combinations)
-            except Exception as e:
-                print(f"Errore durante l'esecuzione del pool: {e}")
-                pool.terminate()
-                pool.join()
-                continue
-            
-            pool.close()
-            pool.join()
-            
-            if sync_failed.value:
-                print("❌ Riprova: I processi non sono stati sincronizzati correttamente. Rilancio di tutti i processi...\n")
-            else:
-                print("✅ Tutti i processi completati e sincronizzati correttamente.")
-                break
-
+    # Usa multiprocessing.Pool per il parallelismo
+    with multiprocessing.Pool(processes=num_processes, maxtasksperchild=1) as pool:
+        results = pool.map(train_model, param_combinations)
+    
+    print("Tutti i processi completati.")
