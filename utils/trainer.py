@@ -33,7 +33,7 @@ def test_accuracy(model, dataloader, device):
 def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r, 
                        target_acc, target_entr, min_xi, max_xi, n_epochs, device, 
                        train_optimizer, entropy_optimizer, trainloader, testloader, 
-                       process_index, num_processes, arrival_times, sync_lock, sync_failed):
+                       process_index, num_processes, arrival_times, sync_lock, sync_failed, synced):
     
     torch.set_num_threads(1)
 
@@ -82,9 +82,17 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
                 # Aggiungi la stampa dei core utilizzati dal processo (o qualsiasi altro dato di debug)
                 print(f"XXXXXXXXXX")
     
-            with sync_lock:
-                arrival_times[process_index] = time.time()
+            if sync_failed.value:
+                    print(f"Process {process_index}: Sincronizzazione fallita, interrompo l'esecuzione.", flush=True)
+                    return
 
+            with sync_lock:
+                if synced.value:
+                    print(f"Process {process_index}: Già sincronizzato con successo, proseguo l'esecuzione.", flush=True)
+                    return
+
+                arrival_times[process_index] = time.time()
+            
             time.sleep(0.1)  # Piccolo ritardo per garantire che tutti i processi scrivano il proprio timestamp
 
             with sync_lock:
@@ -93,10 +101,13 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
                 difference = last_arrival - first_arrival
 
                 if difference > 0.5:
-                    print(f"Processi non sincronizzati: {difference:.2f} secondi di differenza")
-                    sync_failed.value = True  # Notifica al main() che la sincronizzazione è fallita
+                    print(f"Process {process_index}: Processi non sincronizzati ({difference:.2f} secondi di differenza).", flush=True)
+                    sync_failed.value = True
                 else:
-                    print(f"Sincronizzazione riuscita con differenza di {difference:.2f} secondi")
+                    if all(arrival != -1 for arrival in arrival_times):  # Verifica che tutti i processi abbiano aggiornato il timestamp
+                        synced.value = True  # Tutti i processi sono sincronizzati correttamente
+                    print(f"Process {process_index}: Sincronizzazione riuscita con differenza di {difference:.2f} secondi.", flush=True)
+
 
 
             inputs, labels = data[0].to(device), data[1].to(device)
