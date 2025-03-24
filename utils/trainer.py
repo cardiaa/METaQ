@@ -83,6 +83,7 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
                 semaphore.release()  # Rilascia il semaforo quando arrivo fin qua
                 # Registra il tempo di rilascio del semaforo
                 release_times[process_id] = time.time()
+                print(f"process_id: {process_id}, time.time(): {time.time()}")
 
             inputs, labels = data[0].to(device), data[1].to(device)
             optimizer.zero_grad()
