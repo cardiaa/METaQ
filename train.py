@@ -10,7 +10,6 @@ import multiprocessing
 
 def set_affinity(process_index, num_processes):
     num_total_cores = os.cpu_count()
-    print(num_processes)
     cores_per_process = max(1, num_total_cores // num_processes)  
     
     core_indices = [i for i in range(num_total_cores) if i % num_processes == process_index]
@@ -36,7 +35,7 @@ def train_model(args):
 
     set_affinity(process_index, num_processes)  
     torch.set_num_threads(1)
-
+    print(datasets)
     trainset, testset = datasets
     trainloader = torch.utils.data.DataLoader(trainset, batch_size=64, shuffle=True, num_workers=0)
     testloader = torch.utils.data.DataLoader(testset, batch_size=1000, shuffle=False, num_workers=0)
