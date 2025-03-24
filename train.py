@@ -47,17 +47,22 @@ def run_in_parallel(param_combinations, num_processes, max_wait_time=5):
         processes.append(p)
         p.start()
 
-    # Controlliamo che tutti i processi siano partiti entro max_wait_time
     start_time = time.time()
-    for _ in range(num_processes):
-        if not semaphore.acquire(timeout=max_wait_time):  # Acquisiamo con timeout
+    releases_count = 0
+
+    while releases_count < num_processes:
+        elapsed_time = time.time() - start_time
+        if elapsed_time > max_wait_time:
             print("Attenzione! Un processo non è partito entro il tempo massimo.")
-            # Termina i processi ancora in esecuzione
             for p in processes:
                 if p.is_alive():
                     p.terminate()
                     p.join()
             return None  # Indica al main che i processi devono essere riavviati
+    
+        if semaphore.acquire(timeout=max_wait_time - elapsed_time):
+            releases_count += 1
+
     
     elapsed_time = time.time() - start_time
     print(f"Tutti i processi sono partiti in {elapsed_time:.2f} secondi.")
