@@ -8,7 +8,7 @@ from utils.trainer import train_and_evaluate
 import multiprocessing
 
 
-def train_model(args, semaphore, release_times, process_id):
+def train_model(args, semaphore, release_times, process_id, trainset, testset):
 
     torch.set_num_threads(1)
 
@@ -18,13 +18,20 @@ def train_model(args, semaphore, release_times, process_id):
 
     start_time = time.time()
 
+    trainloader = torch.utils.data.DataLoader(trainset, batch_size=64, shuffle=True, num_workers=0)
+    testloader = torch.utils.data.DataLoader(testset, batch_size=1000, shuffle=False, num_workers=0)
+
     accuracy, entropy, target_acc, target_entr = train_and_evaluate(
         C=C, lr=lr, lambda_reg=lambda_reg, alpha=alpha, subgradient_step=subgradient_step,
         w0=w0, r=r, target_acc=target_acc, target_entr=target_entr,
         min_xi=min_xi, max_xi=max_xi, n_epochs=n_epochs,
         device=device, train_optimizer=train_optimizer,
-        entropy_optimizer=entropy_optimizer, semaphore=semaphore,
-        release_times=release_times, process_id=args[-2]
+        entropy_optimizer=entropy_optimizer,
+        trainloader=trainloader,
+        testloader=testloader,
+        semaphore=semaphore,
+        release_times=release_times,
+        process_id=args[-2]
     )
 
     training_time = time.time() - start_time
@@ -32,17 +39,20 @@ def train_model(args, semaphore, release_times, process_id):
     return (C, r, training_time)
 
 
-def run_in_parallel(param_combinations, num_processes, max_wait_time=2):
+
+def run_in_parallel(param_combinations, num_processes, trainset, testset, max_wait_time=2):
     semaphore = multiprocessing.Semaphore(0)  # Semaforo inizializzato a 0
-    processes = []
-    release_times = multiprocessing.Array('d', num_processes)  # Array condiviso per i tempi di rilascio
+    manager = multiprocessing.Manager()
+    release_times = manager.Array('d', num_processes)  # Array condiviso per i tempi di rilascio
     results = []
 
     # Avviamo tutti i processi asincroni
+    processes = []
     for i, param in enumerate(param_combinations):
-        p = multiprocessing.Process(target=train_model, args=(param, semaphore, release_times, i))
+        p = multiprocessing.Process(target=train_model, args=(param, semaphore, release_times, i, trainset, testset))
         processes.append(p)
         p.start()
+
 
     start_time = None  # Inizializzo una variabile per il tempo di inizio del primo rilascio
 
@@ -72,7 +82,7 @@ def run_in_parallel(param_combinations, num_processes, max_wait_time=2):
 
 
 if __name__ == "__main__":
-    num_processes = 12  # Numero desiderato di processi
+    num_processes = 12  
     num_total_cores = os.cpu_count()  
 
     print(f"Numero di processi: {num_processes}")
@@ -82,6 +92,11 @@ if __name__ == "__main__":
     device = torch.device("cpu")
     print(device)
     np.set_printoptions(precision=6)
+
+    # Caricare i dati una volta sola
+    transform = transforms.Compose([transforms.ToTensor()])
+    trainset = datasets.MNIST(root='./data', train=True, download=True, transform=transform)
+    testset = datasets.MNIST(root='./data', train=False, download=True, transform=transform)
 
     param_grid = {
         "C": [6],
@@ -111,9 +126,8 @@ if __name__ == "__main__":
     ))]
 
     while True:
-        #time.sleep(3)
-        results = run_in_parallel(param_combinations, num_processes)
-        if results is not None:  # Se i processi sono partiti correttamente
+        results = run_in_parallel(param_combinations, num_processes, trainset, testset)
+        if results is not None:
             break
         print("Riprovo ad avviare tutti i processi...")
 
