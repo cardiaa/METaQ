@@ -32,12 +32,8 @@ def train_model(args, semaphore, release_times, process_id):
     return (C, r, training_time)
 
 
-
 def worker(semaphore, args, release_times, process_id):
-    print(f"Process {args[-2]}: Avvio worker")  # Messaggio di debug per confermare l'avvio
     return train_model(args, semaphore, release_times, process_id)
-
-
 
 
 def run_in_parallel(param_combinations, num_processes, max_wait_time=0.8):
