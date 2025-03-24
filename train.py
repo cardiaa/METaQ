@@ -72,6 +72,8 @@ def run_in_parallel(param_combinations, num_processes, trainset, testset, max_wa
     # Ora possiamo calcolare il tempo totale dall'inizio del primo rilascio fino all'ultimo rilascio
     elapsed_time = max(release_times) - start_time  # L'ultimo rilascio e il tempo trascorso
     print("release_times:", release_times)
+    print("max(release_times):", max(release_times))
+    print("start_time:", start_time)
     print(f"Tutti i processi hanno rilasciato il semaforo in {elapsed_time:.2f} secondi.")
 
     # Aspetta il completamento di tutti i processi
