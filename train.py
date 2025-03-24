@@ -37,7 +37,7 @@ def train_model(args):
      device, train_optimizer, entropy_optimizer) = args[:-2]
 
     start_time = time.time()
-    print("Sto per far partire train_and_evaluate()")
+
     accuracy, entropy, target_acc, target_entr = train_and_evaluate(
         C=C, lr=lr, lambda_reg=lambda_reg, alpha=alpha, subgradient_step=subgradient_step,
         w0=w0, r=r, target_acc=target_acc, target_entr=target_entr,
@@ -66,7 +66,6 @@ def run_in_parallel(param_combinations, num_processes, max_wait_time=1.5):
 
     # Avviamo tutti i processi asincroni
     for i, param in enumerate(param_combinations):
-        print("Sto lanciando multiprocessing.Process")
         p = multiprocessing.Process(target=worker, args=(semaphore, param))
         processes.append(p)
         p.start()
