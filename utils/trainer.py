@@ -33,7 +33,7 @@ def test_accuracy(model, dataloader, device):
 def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r, 
                        target_acc, target_entr, min_xi, max_xi, n_epochs, device, 
                        train_optimizer, entropy_optimizer, trainloader, testloader, 
-                       process_index, num_processes, arrival_times, sync_lock):
+                       process_index, num_processes, arrival_times, sync_lock, sync_failed):
     
     torch.set_num_threads(1)
 
@@ -84,21 +84,19 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
     
                 with sync_lock:
                     arrival_times[process_index] = time.time()
-                    
-                    # Controlla se tutti i processi hanno raggiunto questo punto
-                    if all(t != -1 for t in arrival_times):
-                        first_arrival = min(arrival_times)
-                        last_arrival = max(arrival_times)
-                        if last_arrival - first_arrival <= 0.5:
-                            print(f"Tutti i processi sincronizzati correttamente in {last_arrival - first_arrival:.2f} secondi")
-                        else:
-                            print(f"Processi non sincronizzati: {last_arrival - first_arrival:.2f} secondi di differenza")
-                            
-                        # Reset degli arrivi per il prossimo tentativo di sincronizzazione
-                        for i in range(num_processes):
-                            arrival_times[i] = -1
+                
+                time.sleep(0.1)  # Piccolo ritardo per garantire che tutti i processi scrivano il proprio timestamp
 
+                with sync_lock:
+                    first_arrival = min(arrival_times)
+                    last_arrival = max(arrival_times)
+                    difference = last_arrival - first_arrival
 
+                    if difference > 0.5:
+                        print(f"Processi non sincronizzati: {difference:.2f} secondi di differenza")
+                        sync_failed.value = True  # Notifica al main() che la sincronizzazione è fallita
+                    else:
+                        print(f"Sincronizzazione riuscita con differenza di {difference:.2f} secondi")
 
             inputs, labels = data[0].to(device), data[1].to(device)
             optimizer.zero_grad()
