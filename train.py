@@ -61,14 +61,12 @@ def run_in_parallel(param_combinations, num_processes, max_wait_time=0.8):
         # Controllo se il tempo trascorso tra il primo e l'ultimo rilascio è maggiore del timeout
         elapsed_time = time.time() - start_time
         if elapsed_time > max_wait_time:
-            print(f"Attenzione! I processi non hanno rilasciato i semafori in tempo. [{len(release_times)}/12]")
+            print(f"Attenzione! I processi non hanno rilasciato i semafori in tempo. [{len([t for t in release_times if t > 0])}/12]")
             for p in processes:
                 if p.is_alive():
                     p.terminate()
                     p.join()
             return None  # Indica al main che i processi devono essere riavviati
-
-        time.sleep(0.1)  # Faccio una piccola pausa per non caricare la CPU
 
     # Ora possiamo calcolare il tempo totale dall'inizio del primo rilascio fino all'ultimo rilascio
     elapsed_time = max(release_times) - start_time  # L'ultimo rilascio e il tempo trascorso
