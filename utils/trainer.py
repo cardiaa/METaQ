@@ -86,9 +86,6 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
                 with sync_lock:  # Sincronizza l'accesso a 'arrival_times'
                     arrival_times[process_index] = time.time()
                 
-                print("arrival_times:", arrival_times)
-                time.sleep(3)
-                
                 # Aggiorna il valore di `synced` se tutti i processi sono arrivati
                 with sync_lock:
                     # Verifica se tutti i processi sono arrivati, ossia se i tempi di arrivo sono stati registrati
