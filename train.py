@@ -8,7 +8,7 @@ from utils.trainer import train_and_evaluate
 import multiprocessing
 
 
-def train_model(args):
+def train_model(args, semaphore):
 
     torch.set_num_threads(1)
 
@@ -23,7 +23,7 @@ def train_model(args):
         w0=w0, r=r, target_acc=target_acc, target_entr=target_entr,
         min_xi=min_xi, max_xi=max_xi, n_epochs=n_epochs,
         device=device, train_optimizer=train_optimizer,
-        entropy_optimizer=entropy_optimizer
+        entropy_optimizer=entropy_optimizer, semaphore=semaphore
     )
 
     training_time = time.time() - start_time
@@ -33,8 +33,7 @@ def train_model(args):
 
 def worker(semaphore, args):
     print(f"Process {args[-2]}: Avvio worker")  # Messaggio di debug per confermare l'avvio
-    semaphore.release()  # Rilascia il semaforo quando il processo è partito
-    return train_model(args)
+    return train_model(args, semaphore)
 
 
 def run_in_parallel(param_combinations, num_processes, max_wait_time=2):
@@ -118,4 +117,3 @@ if __name__ == "__main__":
 
     print("Tutti i processi completati.")
 
-    

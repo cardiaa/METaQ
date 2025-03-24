@@ -39,7 +39,7 @@ def load_data():
 
 def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r, 
                        target_acc, target_entr, min_xi, max_xi, n_epochs, device, 
-                       train_optimizer, entropy_optimizer):
+                       train_optimizer, entropy_optimizer, semaphore):
     
     torch.set_num_threads(1)
     trainset, testset = load_data()  # Carichiamo i dati localmente
@@ -88,7 +88,7 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
             optimizer.step()
 
             if i == 10 and epoch == 0:
-                # Aggiungi la stampa dei core utilizzati dal processo (o qualsiasi altro dato di debug)
+                semaphore.release()  # Rilascia il semaforo quando arrivo fin qua
                 print(f"XXXXXXXXXX")
 
             inputs, labels = data[0].to(device), data[1].to(device)
