@@ -85,6 +85,9 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
                 release_times[process_id] = time.time()
                 print(f"process_id: {process_id}, time.time(): {time.time()}")
 
+            if(i % 100 == 0):
+                print(f"process_id: {process_id}")
+
             inputs, labels = data[0].to(device), data[1].to(device)
             optimizer.zero_grad()
             outputs = model(inputs)
