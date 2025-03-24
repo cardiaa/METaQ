@@ -52,6 +52,7 @@ def run_in_parallel(param_combinations, num_processes, max_wait_time=2):
     start_time = None  # Inizializzo una variabile per il tempo di inizio del primo rilascio
 
     while len(release_times) < num_processes:
+        print("start_time:", start_time)
         if len(release_times) == 0:
             start_time = time.time()  # Inizializzo il tempo appena il primo rilascio avviene
 
