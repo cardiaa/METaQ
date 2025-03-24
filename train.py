@@ -35,7 +35,7 @@ def train_model(args):
 
     set_affinity(process_index, num_processes)  
     torch.set_num_threads(1)
-    print(len(datasets))
+
     trainset, testset = datasets
     trainloader = torch.utils.data.DataLoader(trainset, batch_size=64, shuffle=True, num_workers=0)
     testloader = torch.utils.data.DataLoader(testset, batch_size=1000, shuffle=False, num_workers=0)
@@ -43,7 +43,8 @@ def train_model(args):
     (C, lr, lambda_reg, alpha, subgradient_step, w0, r,
     target_acc, target_entr, min_xi, max_xi, n_epochs,
     device, train_optimizer, entropy_optimizer, process_index,
-    num_processes, datasets, arrival_times, sync_failed, sync_lock) = args
+    num_processes, datasets, arrival_times, sync_failed, sync_lock, 
+    sync_failed, synced) = args
 
 
     print(f"Process {process_index}: Dati caricati", flush=True)
