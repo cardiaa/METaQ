@@ -100,7 +100,7 @@ if __name__ == "__main__":
                               param_grid["entropy_optimizer"]
                           ))]
 
-    while True:  
+    while True:  # Ciclo principale
         with multiprocessing.Manager() as manager:
             arrival_times = manager.list([-1] * num_processes) 
             sync_failed = manager.Value('b', False)
@@ -112,7 +112,6 @@ if __name__ == "__main__":
                 for params in param_combinations
             ]
 
-            
             pool = multiprocessing.Pool(processes=num_processes, maxtasksperchild=1)
             try:
                 results = pool.map(train_model, enhanced_combinations)
@@ -130,3 +129,4 @@ if __name__ == "__main__":
             else:
                 print("✅ Tutti i processi completati e sincronizzati correttamente.")
                 break
+
