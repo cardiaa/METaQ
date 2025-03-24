@@ -66,6 +66,7 @@ def run_in_parallel(param_combinations, num_processes, max_wait_time=1):
 
     # Avviamo tutti i processi asincroni
     for i, param in enumerate(param_combinations):
+        print("Sto lanciando multiprocessing.Process")
         p = multiprocessing.Process(target=worker, args=(semaphore, param))
         processes.append(p)
         p.start()
