@@ -83,7 +83,7 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
                 print(f"XXXXXXXXXX")
                 
                 # Rilevamento dei tempi di arrivo
-                with arrival_times.get_lock():
+                with sync_lock:  # Sincronizza l'accesso a 'arrival_times'
                     arrival_times[process_index] = time.time()
                 
                 print("arrival_times:", arrival_times)
@@ -103,6 +103,7 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
                     else:
                         print(f"Sincronizzazione riuscita con differenza di {difference:.2f} secondi")
                         synced.value = True  # Imposta `synced` come True, i processi sono sincronizzati
+
 
 
 
