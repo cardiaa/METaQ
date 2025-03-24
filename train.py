@@ -25,13 +25,11 @@ def load_data():
 
 def train_model(args):
 
-    process_index = args[-7]  # Indice del processo
-    num_processes = args[-6]  # Numero di processi
-    datasets = args[-5]  # Tuple di dataset
-    arrival_times = args[-4]  # Lista dei tempi di arrivo
-    sync_failed = args[-3]  # Variabile di sincronizzazione
-    sync_lock = args[-2]  # Lock di sincronizzazione
-    synced = args[-1]  # Variabile per indicare sincronizzazione riuscita
+    (C, lr, lambda_reg, alpha, subgradient_step, w0, r,
+    target_acc, target_entr, min_xi, max_xi, n_epochs,
+    device, train_optimizer, entropy_optimizer, process_index,
+    num_processes, datasets, arrival_times, sync_failed, 
+    sync_lock, synced) = args
 
     set_affinity(process_index, num_processes)  
     torch.set_num_threads(1)
@@ -39,13 +37,6 @@ def train_model(args):
     trainset, testset = datasets
     trainloader = torch.utils.data.DataLoader(trainset, batch_size=64, shuffle=True, num_workers=0)
     testloader = torch.utils.data.DataLoader(testset, batch_size=1000, shuffle=False, num_workers=0)
-
-    (C, lr, lambda_reg, alpha, subgradient_step, w0, r,
-    target_acc, target_entr, min_xi, max_xi, n_epochs,
-    device, train_optimizer, entropy_optimizer, process_index,
-    num_processes, datasets, arrival_times, sync_failed, sync_lock, 
-    sync_failed, synced) = args
-
 
     print(f"Process {process_index}: Dati caricati", flush=True)
     start_time = time.time()
@@ -56,7 +47,7 @@ def train_model(args):
         min_xi=min_xi, max_xi=max_xi, n_epochs=n_epochs,
         device=device, train_optimizer=train_optimizer,
         entropy_optimizer=entropy_optimizer,
-        trainloader=trainloader, testloader=testloader,
+        trainloader=trainloader, testloader=testloader, ##
         process_index=process_index, num_processes=num_processes, 
         arrival_times=arrival_times, sync_lock=sync_lock, sync_failed=sync_failed,
         synced=synced  # Passa 'synced' qui
