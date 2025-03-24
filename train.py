@@ -25,7 +25,6 @@ def load_data():
 
 
 def train_model(args):
-
     process_index = args[-2]  # Penultimo argomento è l'indice del processo
     num_processes = args[-1]  # Ultimo argomento è il numero totale di processi
 
@@ -62,6 +61,37 @@ def train_model(args):
     print(f"Process {process_index}: Training completato in {training_time:.2f} secondi", flush=True)
 
     return (C, r, training_time)
+
+
+def worker(semaphore, args):
+    # Ogni processo segnala di essere partito
+    semaphore.release()
+    return train_model(args)
+
+
+def run_in_parallel(param_combinations, num_processes, max_wait_time=0.5):
+    semaphore = multiprocessing.Semaphore(0)  # Semaforo inizializzato a 0
+
+    with multiprocessing.Pool(processes=num_processes) as pool:
+        # Avviamo tutti i processi asincroni
+        async_results = [pool.apply_async(worker, (semaphore, param)) for param in param_combinations]
+
+        # Controlliamo che tutti i processi siano partiti entro max_wait_time
+        start_time = time.time()
+        for _ in param_combinations:
+            # Aspetta che ogni processo parta
+            semaphore.acquire()
+        
+        elapsed_time = time.time() - start_time
+        if elapsed_time > max_wait_time:
+            print(f"Attenzione! Non tutti i processi sono partiti in {max_wait_time} secondi. Tempo trascorso: {elapsed_time:.2f} secondi.")
+        else:
+            print(f"Tutti i processi sono partiti in {elapsed_time:.2f} secondi.")
+
+        # Attendere il completamento dei risultati
+        results = [result.get() for result in async_results]
+    
+    return results
 
 
 if __name__ == "__main__":
@@ -103,8 +133,7 @@ if __name__ == "__main__":
         param_grid["entropy_optimizer"]
     ))]
 
-    # Usa multiprocessing.Pool per il parallelismo
-    with multiprocessing.Pool(processes=num_processes, maxtasksperchild=1) as pool:
-        results = pool.map(train_model, param_combinations)
+    # Avvia i processi in parallelo
+    results = run_in_parallel(param_combinations, num_processes)
     
     print("Tutti i processi completati.")
