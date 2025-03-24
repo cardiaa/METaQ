@@ -106,24 +106,37 @@ if __name__ == "__main__":
                               param_grid["entropy_optimizer"]
                           ))]
     
-    with multiprocessing.Manager() as manager:
-        while True:  # Ciclo principale che rilancia i processi se la sincronizzazione fallisce
+    while True:  # Ciclo principale che rilancia i processi se la sincronizzazione fallisce
+        with multiprocessing.Manager() as manager:
             arrival_times = manager.list([-1] * num_processes)  # Inizializza con -1 per tutti i processi
             sync_lock = manager.Lock()
-
             enhanced_combinations = [params + (arrival_times, sync_lock) for params in param_combinations]
-
-            with multiprocessing.Pool(processes=num_processes, maxtasksperchild=1) as pool:
+            
+            # Creiamo un pool di processi
+            pool = multiprocessing.Pool(processes=num_processes, maxtasksperchild=1)
+            try:
                 results = pool.map(train_model, enhanced_combinations)
+            except Exception as e:
+                print(f"Errore durante l'esecuzione del pool: {e}")
+                pool.terminate()
+                pool.join()
+                continue
             
             # Calcolo del tempo di arrivo di tutti i processi
             first_arrival = min(arrival_times)
             last_arrival = max(arrival_times)
             difference = last_arrival - first_arrival
-            
+
             if difference <= 0.5:
                 print(f"Tutti i processi completati e sincronizzati correttamente in {difference:.2f} secondi.")
+                pool.close()  # Termina correttamente il pool
+                pool.join()
                 break  # Esci dal ciclo principale se la sincronizzazione è riuscita
             else:
                 print(f"Riprova: i processi non sono stati sincronizzati correttamente ({difference:.2f} secondi di differenza).")
                 print("Rilancio di tutti i processi...\n")
+                
+                # Terminare e ripulire correttamente il pool prima di rilanciarlo
+                pool.terminate()
+                pool.join()
+
