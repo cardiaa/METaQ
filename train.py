@@ -71,9 +71,10 @@ def worker(semaphore, args):
 
 def run_in_parallel(param_combinations, num_processes, max_wait_time=0.5):
     semaphore = multiprocessing.Semaphore(0)  # Semaforo inizializzato a 0
-
+    print("aaaa")
     with multiprocessing.Pool(processes=num_processes) as pool:
         # Avviamo tutti i processi asincroni
+        print("bbbb")
         async_results = [pool.apply_async(worker, (semaphore, param)) for param in param_combinations]
 
         # Controlliamo che tutti i processi siano partiti entro max_wait_time
