@@ -82,21 +82,22 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
                 # Aggiungi la stampa dei core utilizzati dal processo (o qualsiasi altro dato di debug)
                 print(f"XXXXXXXXXX")
     
-                with sync_lock:
-                    arrival_times[process_index] = time.time()
-                
-                time.sleep(0.1)  # Piccolo ritardo per garantire che tutti i processi scrivano il proprio timestamp
+            with sync_lock:
+                arrival_times[process_index] = time.time()
 
-                with sync_lock:
-                    first_arrival = min(arrival_times)
-                    last_arrival = max(arrival_times)
-                    difference = last_arrival - first_arrival
+            time.sleep(0.1)  # Piccolo ritardo per garantire che tutti i processi scrivano il proprio timestamp
 
-                    if difference > 0.5:
-                        print(f"Processi non sincronizzati: {difference:.2f} secondi di differenza")
-                        sync_failed.value = True  # Notifica al main() che la sincronizzazione è fallita
-                    else:
-                        print(f"Sincronizzazione riuscita con differenza di {difference:.2f} secondi")
+            with sync_lock:
+                first_arrival = min(arrival_times)
+                last_arrival = max(arrival_times)
+                difference = last_arrival - first_arrival
+
+                if difference > 0.5:
+                    print(f"Processi non sincronizzati: {difference:.2f} secondi di differenza")
+                    sync_failed.value = True  # Notifica al main() che la sincronizzazione è fallita
+                else:
+                    print(f"Sincronizzazione riuscita con differenza di {difference:.2f} secondi")
+
 
             inputs, labels = data[0].to(device), data[1].to(device)
             optimizer.zero_grad()
