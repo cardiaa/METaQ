@@ -31,47 +31,52 @@ def train_model(args, semaphore):
     return (C, r, training_time)
 
 
-def worker(semaphore, args):
+def worker(semaphore, args, release_times):
     print(f"Process {args[-2]}: Avvio worker")  # Messaggio di debug per confermare l'avvio
-    return train_model(args, semaphore)
+    train_model(args, semaphore)
+    release_times.append(time.time())  # Registra il tempo di rilascio
+    semaphore.release()  # Rilascia il semaforo
+
 
 
 def run_in_parallel(param_combinations, num_processes, max_wait_time=5):
     semaphore = multiprocessing.Semaphore(0)  # Semaforo inizializzato a 0
     processes = []
     results = []
+    release_times = []  # Lista per memorizzare i tempi di rilascio
 
     # Avviamo tutti i processi asincroni
     for i, param in enumerate(param_combinations):
-        p = multiprocessing.Process(target=worker, args=(semaphore, param))
+        p = multiprocessing.Process(target=worker, args=(semaphore, param, release_times))
         processes.append(p)
         p.start()
 
-    start_time = time.time()
-    releases_count = 0
+    start_time = None  # Inizializzo una variabile per il tempo di inizio del primo rilascio
 
-    while releases_count < num_processes:
+    while len(release_times) < num_processes:
+        if len(release_times) == 0:
+            start_time = time.time()  # Inizializzo il tempo appena il primo rilascio avviene
+
+        # Controllo se il tempo trascorso tra il primo e l'ultimo rilascio è maggiore del timeout
         elapsed_time = time.time() - start_time
         if elapsed_time > max_wait_time:
-            print("Attenzione! Un processo non è partito entro il tempo massimo.")
+            print("Attenzione! I processi non hanno rilasciato i semafori in tempo.")
             for p in processes:
                 if p.is_alive():
                     p.terminate()
                     p.join()
             return None  # Indica al main che i processi devono essere riavviati
-    
-        if semaphore.acquire(timeout=max_wait_time - elapsed_time):
-            releases_count += 1
 
-    
-    elapsed_time = time.time() - start_time
-    print(f"Tutti i processi sono partiti in {elapsed_time:.2f} secondi.")
+        time.sleep(0.1)  # Faccio una piccola pausa per non caricare la CPU
+
+    print(f"Tutti i processi hanno rilasciato il semaforo in {elapsed_time:.2f} secondi.")
 
     # Aspetta il completamento di tutti i processi
     for p in processes:
         p.join()  # Unisci ogni processo per completare l'esecuzione
 
     return results
+
 
 
 if __name__ == "__main__":
