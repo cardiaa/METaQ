@@ -9,7 +9,7 @@ import multiprocessing
 
 
 def train_model(args, semaphore, release_times, process_id):
-    
+
     torch.set_num_threads(1)
 
     (C, lr, lambda_reg, alpha, subgradient_step, w0, r,
@@ -40,7 +40,7 @@ def worker(semaphore, args, release_times, process_id):
 
 
 
-def run_in_parallel(param_combinations, num_processes, max_wait_time=5):
+def run_in_parallel(param_combinations, num_processes, max_wait_time=1):
     semaphore = multiprocessing.Semaphore(0)  # Semaforo inizializzato a 0
     processes = []
     release_times = multiprocessing.Array('d', num_processes)  # Array condiviso per i tempi di rilascio
