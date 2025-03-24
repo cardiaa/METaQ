@@ -29,9 +29,11 @@ def test_accuracy(model, dataloader, device):
     accuracy = 100 * correct / total  # Compute accuracy percentage
     return accuracy
 
+
 def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r, 
                        target_acc, target_entr, min_xi, max_xi, n_epochs, device, 
-                       train_optimizer, entropy_optimizer, trainloader, testloader):
+                       train_optimizer, entropy_optimizer, trainloader, testloader, 
+                       process_index, num_processes, arrival_times, sync_lock):
     
     torch.set_num_threads(1)
 
@@ -79,6 +81,24 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
             if i == 10 and epoch == 0:
                 # Aggiungi la stampa dei core utilizzati dal processo (o qualsiasi altro dato di debug)
                 print(f"XXXXXXXXXX")
+    
+                with sync_lock:
+                    arrival_times[process_index] = time.time()
+                    
+                    # Controlla se tutti i processi hanno raggiunto questo punto
+                    if all(t != -1 for t in arrival_times):
+                        first_arrival = min(arrival_times)
+                        last_arrival = max(arrival_times)
+                        if last_arrival - first_arrival <= 0.5:
+                            print(f"Tutti i processi sincronizzati correttamente in {last_arrival - first_arrival:.2f} secondi")
+                        else:
+                            print(f"Processi non sincronizzati: {last_arrival - first_arrival:.2f} secondi di differenza")
+                            
+                        # Reset degli arrivi per il prossimo tentativo di sincronizzazione
+                        for i in range(num_processes):
+                            arrival_times[i] = -1
+
+
 
             inputs, labels = data[0].to(device), data[1].to(device)
             optimizer.zero_grad()
