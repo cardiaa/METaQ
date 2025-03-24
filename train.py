@@ -40,8 +40,10 @@ def train_model(args):
     testloader = torch.utils.data.DataLoader(testset, batch_size=1000, shuffle=False, num_workers=0)
 
     (C, lr, lambda_reg, alpha, subgradient_step, w0, r,
-     target_acc, target_entr, min_xi, max_xi, n_epochs,
-     device, train_optimizer, entropy_optimizer) = args[:-5]
+    target_acc, target_entr, min_xi, max_xi, n_epochs,
+    device, train_optimizer, entropy_optimizer, process_index,
+    num_processes, datasets, arrival_times, sync_failed, sync_lock) = args
+
 
     print(f"Process {process_index}: Dati caricati", flush=True)
     start_time = time.time()
