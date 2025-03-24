@@ -53,61 +53,44 @@ def train_model(args):
     return (C, r, training_time)
 
 
-def worker(semaphore, args, queue):
-    try:
-        process_index = args[-2]
-        print(f"Process {process_index}: Avvio worker")  # Messaggio di debug
-        semaphore.release()  # Segnala al processo principale che il worker è partito
-        result = train_model(args)  # Esegui il training e raccogli i risultati
-        queue.put(result)  # Inserisci il risultato nella coda
-    except Exception as e:
-        print(f"Process {args[-2]}: Errore durante l'esecuzione - {e}")
-        queue.put(None)
-
+def worker(semaphore, args):
+    print(f"Process {args[-2]}: Avvio worker")  # Messaggio di debug per confermare l'avvio
+    semaphore.release()  # Rilascia il semaforo quando il processo è partito
+    return train_model(args)
 
 
 def run_in_parallel(param_combinations, num_processes, max_wait_time=1):
     semaphore = multiprocessing.Semaphore(0)  # Semaforo inizializzato a 0
-    queue = multiprocessing.Queue()  # Coda per raccogliere i risultati
     processes = []
+    results = []
 
+    # Avviamo tutti i processi asincroni
     for i, param in enumerate(param_combinations):
         print("Sto lanciando multiprocessing.Process")
-        p = multiprocessing.Process(target=worker, args=(semaphore, param, queue))
+        p = multiprocessing.Process(target=worker, args=(semaphore, param))
         processes.append(p)
         p.start()
 
-    # Aspettiamo che tutti i processi siano avviati entro max_wait_time
+    # Controlliamo che tutti i processi siano partiti entro max_wait_time
     start_time = time.time()
     for _ in range(num_processes):
-        if not semaphore.acquire(timeout=max_wait_time):  # Aspetta ogni processo con timeout
+        if not semaphore.acquire(timeout=max_wait_time):  # Acquisiamo con timeout
             print("Attenzione! Un processo non è partito entro il tempo massimo.")
-            # Termina tutti i processi rimanenti
+            # Termina i processi ancora in esecuzione
             for p in processes:
                 if p.is_alive():
                     p.terminate()
                     p.join()
-            return None
-
+            return None  # Indica al main che i processi devono essere riavviati
+    
     elapsed_time = time.time() - start_time
     print(f"Tutti i processi sono partiti in {elapsed_time:.2f} secondi.")
 
-    # Raccolta dei risultati
-    results = []
-    for _ in range(num_processes):
-        try:
-            result = queue.get(timeout=10)  # Attendi il risultato con un timeout di 10 secondi
-            if result is not None:
-                results.append(result)
-        except:
-            print("Errore nel recupero dei risultati.")
-
-    # Assicuriamoci che tutti i processi siano terminati
+    # Aspetta il completamento di tutti i processi
     for p in processes:
-        p.join()
+        p.join()  # Unisci ogni processo per completare l'esecuzione
 
     return results
-
 
 
 if __name__ == "__main__":
@@ -151,8 +134,8 @@ if __name__ == "__main__":
 
     while True:
         results = run_in_parallel(param_combinations, num_processes)
-        if results is not None:
+        if results is not None:  # Se i processi sono partiti correttamente
             break
         print("Riprovo ad avviare tutti i processi...")
-    
+
     print("Tutti i processi completati.")
