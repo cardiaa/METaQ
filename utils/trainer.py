@@ -87,7 +87,7 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
             loss.backward()
             optimizer.step()
 
-            if i == 30 and epoch == 0:
+            if i == 10 and epoch == 0:
                 semaphore.release()  # Rilascia il semaforo quando arrivo fin qua
                 print(f"XXXXXXXXXX")
 
