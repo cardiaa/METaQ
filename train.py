@@ -59,7 +59,7 @@ def worker(semaphore, args):
     return train_model(args)
 
 
-def run_in_parallel(param_combinations, num_processes, max_wait_time=1.9):
+def run_in_parallel(param_combinations, num_processes, max_wait_time=2):
     semaphore = multiprocessing.Semaphore(0)  # Semaforo inizializzato a 0
     processes = []
     results = []
