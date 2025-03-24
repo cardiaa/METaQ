@@ -31,15 +31,13 @@ def train_model(args, semaphore):
     return (C, r, training_time)
 
 
-def worker(semaphore, args, release_times):
+def worker(semaphore, args):
     print(f"Process {args[-2]}: Avvio worker")  # Messaggio di debug per confermare l'avvio
-    train_model(args, semaphore)
-    release_times.append(time.time())  # Registra il tempo di rilascio
-    semaphore.release()  # Rilascia il semaforo
+    return train_model(args, semaphore)  # La funzione che avvia il training
 
 
 
-def run_in_parallel(param_combinations, num_processes, max_wait_time=1):
+def run_in_parallel(param_combinations, num_processes, max_wait_time=5):
     semaphore = multiprocessing.Semaphore(0)  # Semaforo inizializzato a 0
     processes = []
     results = []
@@ -47,7 +45,7 @@ def run_in_parallel(param_combinations, num_processes, max_wait_time=1):
 
     # Avviamo tutti i processi asincroni
     for i, param in enumerate(param_combinations):
-        p = multiprocessing.Process(target=worker, args=(semaphore, param, release_times))
+        p = multiprocessing.Process(target=worker, args=(semaphore, param))
         processes.append(p)
         p.start()
 
@@ -76,7 +74,6 @@ def run_in_parallel(param_combinations, num_processes, max_wait_time=1):
         p.join()  # Unisci ogni processo per completare l'esecuzione
 
     return results
-
 
 
 if __name__ == "__main__":
