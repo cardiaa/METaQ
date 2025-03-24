@@ -1,4 +1,4 @@
-import torch  
+import torch
 import time
 import numpy as np
 import os
@@ -31,10 +31,6 @@ def train_model(args):
     set_affinity(process_index, num_processes)  # Commentata per ora
 
     torch.set_num_threads(1)
-    
-    
-    #print(f"Process {process_index}: torch.get_num_threads() = {torch.get_num_threads()}")
-    #print(f"Process {process_index}: Affinity = {os.sched_getaffinity(0)}", flush=True)
 
     trainset, testset = load_data()  # Carichiamo i dati localmente
     trainloader = torch.utils.data.DataLoader(trainset, batch_size=64, shuffle=True, num_workers=0)
@@ -71,28 +67,33 @@ def worker(semaphore, args):
 
 def run_in_parallel(param_combinations, num_processes, max_wait_time=0.5):
     semaphore = multiprocessing.Semaphore(0)  # Semaforo inizializzato a 0
+    processes = []
+    results = []
 
-    with multiprocessing.Pool(processes=num_processes) as pool:
-        # Avviamo tutti i processi asincroni
-        async_results = [pool.apply_async(worker, (semaphore, param)) for param in param_combinations]
+    # Avviamo tutti i processi asincroni
+    for i, param in enumerate(param_combinations):
+        p = multiprocessing.Process(target=worker, args=(semaphore, param))
+        processes.append(p)
+        p.start()
 
-        # Controlliamo che tutti i processi siano partiti entro max_wait_time
-        start_time = time.time()
-        for _ in param_combinations:
-            print("aaaa")  # Messaggio di debug per vedere se il ciclo funziona
-            # Aspetta che ogni processo parta
-            semaphore.acquire()  # Aspetta che il semaforo venga rilasciato
-            print("bbbb")  # Questo verrà stampato solo dopo che il semaforo è stato rilasciato
+    # Controlliamo che tutti i processi siano partiti entro max_wait_time
+    start_time = time.time()
+    for _ in param_combinations:
+        print("aaaa")  # Messaggio di debug per vedere se il ciclo funziona
+        # Aspetta che ogni processo parta
+        semaphore.acquire()  # Aspetta che il semaforo venga rilasciato
+        print("bbbb")  # Questo verrà stampato solo dopo che il semaforo è stato rilasciato
 
-        elapsed_time = time.time() - start_time
-        if elapsed_time > max_wait_time:
-            print(f"Attenzione! Non tutti i processi sono partiti in {max_wait_time} secondi. Tempo trascorso: {elapsed_time:.2f} secondi.")
-        else:
-            print(f"Tutti i processi sono partiti in {elapsed_time:.2f} secondi.")
+    elapsed_time = time.time() - start_time
+    if elapsed_time > max_wait_time:
+        print(f"Attenzione! Non tutti i processi sono partiti in {max_wait_time} secondi. Tempo trascorso: {elapsed_time:.2f} secondi.")
+    else:
+        print(f"Tutti i processi sono partiti in {elapsed_time:.2f} secondi.")
 
-        # Attendere il completamento dei risultati
-        results = [result.get() for result in async_results]
-    
+    # Attendere il completamento di tutti i processi
+    for p in processes:
+        p.join()  # Unisci ogni processo per completare l'esecuzione
+
     return results
 
 
