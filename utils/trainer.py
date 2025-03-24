@@ -32,8 +32,7 @@ def test_accuracy(model, dataloader, device):
 
 def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r, 
                        target_acc, target_entr, min_xi, max_xi, n_epochs, device, 
-                       train_optimizer, entropy_optimizer, trainloader, testloader, 
-                       process_index, num_processes, arrival_times, sync_lock, sync_failed, synced):
+                       train_optimizer, entropy_optimizer, trainloader, testloader):
     
     torch.set_num_threads(1)
 
