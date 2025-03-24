@@ -191,3 +191,4 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
         print(f"PID: {os.getpid()}, Epoch: {epoch}, Entropia minima: {min(entropies)}, Accuracy massima: {max(accuracies)}, C: {C}, r: {r}, epoch time: {training_time:.2f}s", flush=True)
 
     return accuracy, entropy, target_acc, target_entr
+
