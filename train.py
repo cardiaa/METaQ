@@ -25,11 +25,12 @@ def load_data():
 
 def train_model(args):
 
-    process_index = args[-5]  # Indice del processo
-    num_processes = args[-4]  # Numero di processi
-    datasets = args[-3]  # Tuple di dataset
-    arrival_times = args[-2]  # Lista dei tempi di arrivo
-    sync_failed = args[-1]  # Variabile di sincronizzazione
+    process_index = args[-6]  # Indice del processo
+    num_processes = args[-5]  # Numero di processi
+    datasets = args[-4]  # Tuple di dataset
+    arrival_times = args[-3]  # Lista dei tempi di arrivo
+    sync_failed = args[-2]  # Variabile di sincronizzazione
+    sync_lock = args[-1]  # Lock di sincronizzazione
 
     set_affinity(process_index, num_processes)  
     torch.set_num_threads(1)
@@ -53,8 +54,9 @@ def train_model(args):
         entropy_optimizer=entropy_optimizer,
         trainloader=trainloader, testloader=testloader,
         process_index=process_index, num_processes=num_processes, 
-        arrival_times=arrival_times, sync_lock=None, sync_failed=sync_failed
+        arrival_times=arrival_times, sync_lock=sync_lock, sync_failed=sync_failed
     )
+
 
     # Rilevamento dei tempi di arrivo
     with arrival_times.get_lock():
@@ -124,8 +126,9 @@ if __name__ == "__main__":
         with multiprocessing.Manager() as manager:
             arrival_times = manager.list([-1] * num_processes) 
             sync_failed = manager.Value('b', False)
+            sync_lock = manager.Lock()  # Aggiungo il lock
             
-            enhanced_combinations = [params + (arrival_times, sync_failed) for params in param_combinations]
+            enhanced_combinations = [params + (arrival_times, sync_failed, sync_lock) for params in param_combinations]
             
             pool = multiprocessing.Pool(processes=num_processes, maxtasksperchild=1)
             try:
