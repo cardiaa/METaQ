@@ -52,8 +52,11 @@ def train_model(args):
         device=device, train_optimizer=train_optimizer,
         entropy_optimizer=entropy_optimizer,
         trainloader=trainloader, testloader=testloader,
-        sync_failed=sync_failed  # Passa il flag di sincronizzazione
+        process_index=process_index, num_processes=num_processes,
+        arrival_times=arrival_times, sync_lock=arrival_times.get_lock(), 
+        sync_failed=sync_failed  # Aggiungi anche questo flag
     )
+
 
     with arrival_times.get_lock():
         arrival_times[process_index] = time.time()
