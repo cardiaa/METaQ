@@ -23,9 +23,14 @@ def load_data():
 
 
 def train_model(args):
-    process_index, num_processes, datasets, arrival_times, sync_lock, sync_failed = args[-6:]
+    process_index = args[-5]
+    num_processes = args[-4]
+    datasets = args[-3]
+    arrival_times = args[-2]
+    sync_lock = args[-1]
+    sync_failed = args[-1]  # Aggiunto direttamente come argomento
 
-    set_affinity(process_index, num_processes)  
+    set_affinity(process_index, num_processes)
     torch.set_num_threads(1)
 
     trainset, testset = datasets
@@ -34,9 +39,8 @@ def train_model(args):
 
     (C, lr, lambda_reg, alpha, subgradient_step, w0, r,
      target_acc, target_entr, min_xi, max_xi, n_epochs,
-     device, train_optimizer, entropy_optimizer) = args[:-6]
+     device, train_optimizer, entropy_optimizer) = args[:-5]
 
-    print(f"Process {process_index}: Dati caricati", flush=True)
     start_time = time.time()
 
     accuracy, entropy, target_acc, target_entr = train_and_evaluate(
@@ -47,14 +51,14 @@ def train_model(args):
         entropy_optimizer=entropy_optimizer,
         trainloader=trainloader, testloader=testloader,
         process_index=process_index, num_processes=num_processes,
-        arrival_times=arrival_times, sync_lock=sync_lock,
-        sync_failed=sync_failed
+        arrival_times=arrival_times, sync_lock=sync_lock, sync_failed=sync_failed
     )
 
-    with sync_lock:  
+    # Rilevamento dei tempi di arrivo
+    with sync_lock:
         arrival_times[process_index] = time.time()
-
-    time.sleep(0.1)  
+    
+    time.sleep(0.1)  # Piccolo ritardo per garantire che tutti i processi scrivano il proprio timestamp
 
     with sync_lock:
         first_arrival = min(arrival_times)
@@ -63,27 +67,27 @@ def train_model(args):
 
         if difference > 0.5:
             print(f"Processi non sincronizzati: {difference:.2f} secondi di differenza")
-            sync_failed.value = True  
+            sync_failed.value = True  # Notifica al main() che la sincronizzazione è fallita
         else:
-            print(f"Processo {process_index}: Sincronizzazione riuscita")
+            print(f"Sincronizzazione riuscita con differenza di {difference:.2f} secondi")
 
     training_time = time.time() - start_time
-    print(f"Process {process_index}: Training completato in {training_time:.2f} secondi", flush=True)
+    print(f"Processo {process_index}: Training completato in {training_time:.2f} secondi", flush=True)
     return (C, r, training_time)
 
 
 if __name__ == "__main__":
     num_processes = 12  
     num_total_cores = os.cpu_count()  
-
     print(f"Numero di processi: {num_processes}")
     print(f"Numero totale di core logici disponibili: {num_total_cores}")
 
     multiprocessing.set_start_method('spawn', force=True)
     device = torch.device("cpu")
+    print(device)
     np.set_printoptions(precision=6)
 
-    trainset, testset = load_data()  
+    trainset, testset = load_data()
 
     param_grid = {
         "C": [6],
@@ -113,11 +117,11 @@ if __name__ == "__main__":
                               param_grid["entropy_optimizer"]
                           ))]
 
-    while True:  
+    while True:  # Loop che tenta di lanciare i processi finché non vengono sincronizzati correttamente
         with multiprocessing.Manager() as manager:
-            arrival_times = manager.list([-1] * num_processes)  
+            arrival_times = manager.list([-1] * num_processes)
             sync_failed = manager.Value('b', False)
-            sync_lock = manager.Lock()  
+            sync_lock = manager.Lock()  # Creiamo il lock qui
 
             enhanced_combinations = [params + (arrival_times, sync_lock, sync_failed) for params in param_combinations]
 
