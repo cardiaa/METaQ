@@ -11,6 +11,7 @@ import multiprocessing
 def set_affinity(process_index, num_processes):
     num_total_cores = os.cpu_count()
     cores_per_process = max(1, num_total_cores // num_processes)  
+    
     core_indices = [i for i in range(num_total_cores) if i % num_processes == process_index]
     os.sched_setaffinity(0, core_indices)
 
@@ -23,14 +24,14 @@ def load_data():
 
 
 def train_model(args):
-    process_index = args[-5]
-    num_processes = args[-4]
-    datasets = args[-3]
-    arrival_times = args[-2]
-    sync_lock = args[-1]
-    sync_failed = args[-1]  # Aggiunto direttamente come argomento
 
-    set_affinity(process_index, num_processes)
+    process_index = args[-5]  # Indice del processo
+    num_processes = args[-4]  # Numero di processi
+    datasets = args[-3]  # Tuple di dataset
+    arrival_times = args[-2]  # Lista dei tempi di arrivo
+    sync_failed = args[-1]  # Variabile di sincronizzazione
+
+    set_affinity(process_index, num_processes)  
     torch.set_num_threads(1)
 
     trainset, testset = datasets
@@ -41,6 +42,7 @@ def train_model(args):
      target_acc, target_entr, min_xi, max_xi, n_epochs,
      device, train_optimizer, entropy_optimizer) = args[:-5]
 
+    print(f"Process {process_index}: Dati caricati", flush=True)
     start_time = time.time()
 
     accuracy, entropy, target_acc, target_entr = train_and_evaluate(
@@ -50,17 +52,17 @@ def train_model(args):
         device=device, train_optimizer=train_optimizer,
         entropy_optimizer=entropy_optimizer,
         trainloader=trainloader, testloader=testloader,
-        process_index=process_index, num_processes=num_processes,
-        arrival_times=arrival_times, sync_lock=sync_lock, sync_failed=sync_failed
+        process_index=process_index, num_processes=num_processes, 
+        arrival_times=arrival_times, sync_lock=None, sync_failed=sync_failed
     )
 
     # Rilevamento dei tempi di arrivo
-    with sync_lock:
+    with arrival_times.get_lock():
         arrival_times[process_index] = time.time()
     
-    time.sleep(0.1)  # Piccolo ritardo per garantire che tutti i processi scrivano il proprio timestamp
+    time.sleep(0.1)  # Ritardo per garantire che tutti i processi scrivano il proprio timestamp
 
-    with sync_lock:
+    with arrival_times.get_lock():
         first_arrival = min(arrival_times)
         last_arrival = max(arrival_times)
         difference = last_arrival - first_arrival
@@ -72,13 +74,14 @@ def train_model(args):
             print(f"Sincronizzazione riuscita con differenza di {difference:.2f} secondi")
 
     training_time = time.time() - start_time
-    print(f"Processo {process_index}: Training completato in {training_time:.2f} secondi", flush=True)
+    print(f"Process {process_index}: Training completato in {training_time:.2f} secondi", flush=True)
     return (C, r, training_time)
 
 
 if __name__ == "__main__":
     num_processes = 12  
     num_total_cores = os.cpu_count()  
+
     print(f"Numero di processi: {num_processes}")
     print(f"Numero totale di core logici disponibili: {num_total_cores}")
 
@@ -87,7 +90,7 @@ if __name__ == "__main__":
     print(device)
     np.set_printoptions(precision=6)
 
-    trainset, testset = load_data()
+    trainset, testset = load_data() 
 
     param_grid = {
         "C": [6],
@@ -117,14 +120,13 @@ if __name__ == "__main__":
                               param_grid["entropy_optimizer"]
                           ))]
 
-    while True:  # Loop che tenta di lanciare i processi finché non vengono sincronizzati correttamente
+    while True:  
         with multiprocessing.Manager() as manager:
-            arrival_times = manager.list([-1] * num_processes)
+            arrival_times = manager.list([-1] * num_processes) 
             sync_failed = manager.Value('b', False)
-            sync_lock = manager.Lock()  # Creiamo il lock qui
-
-            enhanced_combinations = [params + (arrival_times, sync_lock, sync_failed) for params in param_combinations]
-
+            
+            enhanced_combinations = [params + (arrival_times, sync_failed) for params in param_combinations]
+            
             pool = multiprocessing.Pool(processes=num_processes, maxtasksperchild=1)
             try:
                 results = pool.map(train_model, enhanced_combinations)
@@ -133,10 +135,10 @@ if __name__ == "__main__":
                 pool.terminate()
                 pool.join()
                 continue
-
+            
             pool.close()
             pool.join()
-
+            
             if sync_failed.value:
                 print("❌ Riprova: I processi non sono stati sincronizzati correttamente. Rilancio di tutti i processi...\n")
             else:
