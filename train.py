@@ -130,8 +130,8 @@ if __name__ == "__main__":
     ))]
 
     while True:
-        time.sleep(5)
         clear_resources()  # Libera tutte le risorse prima di rilanciare i processi
+        time.sleep(5)
         results = run_in_parallel(param_combinations, num_processes)
         if results is not None:  # Se i processi sono partiti correttamente
             break
