@@ -36,27 +36,17 @@ def load_data():
     testset = datasets.MNIST(root='./data', train=False, download=True, transform=transform)
     return trainset, testset
 
-def load_all_data(trainloader, testloader):
-    # Carica tutti i dati nel trainloader
-    for _ in trainloader:
-        pass
-    # Carica tutti i dati nel testloader
-    for _ in testloader:
-        pass
 
 def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r, 
                        target_acc, target_entr, min_xi, max_xi, n_epochs, device, 
                        train_optimizer, entropy_optimizer):
     
     torch.set_num_threads(1)
-
+    print("Inizio caricamento...")
     trainset, testset = load_data()  # Carichiamo i dati localmente
     trainloader = torch.utils.data.DataLoader(trainset, batch_size=64, shuffle=True, num_workers=0)
     testloader = torch.utils.data.DataLoader(testset, batch_size=1000, shuffle=False, num_workers=0)
-    
-    # Forza il caricamento dei dati in memoria
-    load_all_data(trainloader, testloader)
-
+    print("Finito caricamento!")
     # Inizializzazione del modello, funzione di perdita e ottimizzatore
     model = LeNet5().to(device)
     criterion = nn.CrossEntropyLoss()
