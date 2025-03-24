@@ -11,7 +11,7 @@ from utils.networks import LeNet5
 from utils.quantize_and_compress import compute_entropy
 from utils.optimization import FISTA, ProximalBM
 from utils.weight_utils import initialize_weights
-from IPython.display import clear_output
+
 
 def test_accuracy(model, dataloader, device):
     """
@@ -28,13 +28,6 @@ def test_accuracy(model, dataloader, device):
     
     accuracy = 100 * correct / total  # Compute accuracy percentage
     return accuracy
-
-
-def load_data():
-    transform = transforms.Compose([transforms.ToTensor()])
-    trainset = datasets.MNIST(root='./data', train=True, download=True, transform=transform)
-    testset = datasets.MNIST(root='./data', train=False, download=True, transform=transform)
-    return trainset, testset
 
 
 def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
@@ -191,3 +184,4 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
         print(f"PID: {os.getpid()}, Epoch: {epoch}, Entropia minima: {min(entropies)}, Accuracy massima: {max(accuracies)}, C: {C}, r: {r}, epoch time: {training_time:.2f}s", flush=True)
 
     return accuracy, entropy, target_acc, target_entr
+
