@@ -69,8 +69,8 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
     accuracies, entropies, distinct_weights = [], [], []
     zeta, l = 50000, 0.5
 
-    time.sleep(1)
-    print("Sto per iniziare...")
+    #time.sleep(1)
+    #print("Sto per iniziare...")
 
     # Ciclo di allenamento
     for epoch in range(n_epochs):
@@ -88,9 +88,9 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
             loss.backward()
             optimizer.step()
 
-            #if i == 10 and epoch == 0:
+            if i == 10 and epoch == 0:
                 # Aggiungi la stampa dei core utilizzati dal processo (o qualsiasi altro dato di debug)
-            #    print(f"XXXXXXXXXX")
+                print(f"XXXXXXXXXX")
 
             inputs, labels = data[0].to(device), data[1].to(device)
             optimizer.zero_grad()
