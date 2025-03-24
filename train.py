@@ -39,7 +39,6 @@ def train_model(args, semaphore, release_times, process_id, trainset, testset):
     return (C, r, training_time)
 
 
-
 def run_in_parallel(param_combinations, num_processes, trainset, testset, max_wait_time=2):
     semaphore = multiprocessing.Semaphore(0)  # Semaforo inizializzato a 0
     manager = multiprocessing.Manager()
@@ -132,3 +131,4 @@ if __name__ == "__main__":
         print("Riprovo ad avviare tutti i processi...")
 
     print("Tutti i processi completati.")
+    
