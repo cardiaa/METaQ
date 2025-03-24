@@ -79,10 +79,8 @@ def run_in_parallel(param_combinations, num_processes, max_wait_time=0.5):
     # Controlliamo che tutti i processi siano partiti entro max_wait_time
     start_time = time.time()
     for _ in param_combinations:
-        print("aaaa")  # Messaggio di debug per vedere se il ciclo funziona
         # Aspetta che ogni processo parta
         semaphore.acquire()  # Aspetta che il semaforo venga rilasciato
-        print("bbbb")  # Questo verrà stampato solo dopo che il semaforo è stato rilasciato
 
     elapsed_time = time.time() - start_time
     if elapsed_time > max_wait_time:
