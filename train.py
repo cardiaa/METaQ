@@ -76,7 +76,7 @@ def run_in_parallel(param_combinations, num_processes, max_wait_time=2.5):
 
 
 if __name__ == "__main__":
-    num_processes = 12  # Numero desiderato di processi
+    num_processes = 24  # Numero desiderato di processi
     num_total_cores = os.cpu_count()  
 
     print(f"Numero di processi: {num_processes}")
