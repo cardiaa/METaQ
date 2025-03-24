@@ -135,7 +135,7 @@ if __name__ == "__main__":
             synced = manager.Value('b', False)  # Inizializza 'synced'
             
             enhanced_combinations = [
-                params + (arrival_times, sync_failed, sync_lock)  # Passa solo questi tre
+                params + (arrival_times, sync_failed, sync_lock, synced)  # Passa solo questi tre
                 for params in param_combinations
             ]
 
