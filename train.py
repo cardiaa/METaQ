@@ -40,7 +40,7 @@ def worker(semaphore, args, release_times, process_id):
 
 
 
-def run_in_parallel(param_combinations, num_processes, max_wait_time=1):
+def run_in_parallel(param_combinations, num_processes, max_wait_time=0.8):
     semaphore = multiprocessing.Semaphore(0)  # Semaforo inizializzato a 0
     processes = []
     release_times = multiprocessing.Array('d', num_processes)  # Array condiviso per i tempi di rilascio
