@@ -53,24 +53,6 @@ def train_model(args):
         synced=synced  # Passa 'synced' qui
     )
 
-
-    # Rilevamento dei tempi di arrivo
-    with arrival_times.get_lock():
-        arrival_times[process_index] = time.time()
-    
-    time.sleep(0.1)  # Ritardo per garantire che tutti i processi scrivano il proprio timestamp
-
-    with arrival_times.get_lock():
-        first_arrival = min(arrival_times)
-        last_arrival = max(arrival_times)
-        difference = last_arrival - first_arrival
-
-        if difference > 0.5:
-            print(f"Processi non sincronizzati: {difference:.2f} secondi di differenza")
-            sync_failed.value = True  # Notifica al main() che la sincronizzazione è fallita
-        else:
-            print(f"Sincronizzazione riuscita con differenza di {difference:.2f} secondi")
-
     training_time = time.time() - start_time
     print(f"Process {process_index}: Training completato in {training_time:.2f} secondi", flush=True)
     return (C, r, training_time)

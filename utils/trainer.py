@@ -81,8 +81,14 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
             if i == 10 and epoch == 0:
                 # Aggiungi la stampa dei core utilizzati dal processo (o qualsiasi altro dato di debug)
                 print(f"XXXXXXXXXX")
+                
+                # Rilevamento dei tempi di arrivo
+                with arrival_times.get_lock():
+                    arrival_times[process_index] = time.time()
+                
                 print("arrival_times:", arrival_times)
                 time.sleep(3)
+                
                 # Aggiorna il valore di `synced` se tutti i processi sono arrivati
                 with sync_lock:
                     # Verifica se tutti i processi sono arrivati, ossia se i tempi di arrivo sono stati registrati
