@@ -64,8 +64,8 @@ def train_model(args):
 
 
 def worker(semaphore, args):
-    # Ogni processo segnala di essere partito
-    semaphore.release()
+    print(f"Process {args[-2]}: Avvio worker")  # Messaggio di debug per confermare l'avvio
+    semaphore.release()  # Rilascia il semaforo quando il processo è partito
     return train_model(args)
 
 
@@ -75,15 +75,15 @@ def run_in_parallel(param_combinations, num_processes, max_wait_time=0.5):
     with multiprocessing.Pool(processes=num_processes) as pool:
         # Avviamo tutti i processi asincroni
         async_results = [pool.apply_async(worker, (semaphore, param)) for param in param_combinations]
-        
+
         # Controlliamo che tutti i processi siano partiti entro max_wait_time
         start_time = time.time()
         for _ in param_combinations:
-            print("aaaa")
+            print("aaaa")  # Messaggio di debug per vedere se il ciclo funziona
             # Aspetta che ogni processo parta
-            semaphore.acquire()
-            print("bbbb")
-        
+            semaphore.acquire()  # Aspetta che il semaforo venga rilasciato
+            print("bbbb")  # Questo verrà stampato solo dopo che il semaforo è stato rilasciato
+
         elapsed_time = time.time() - start_time
         if elapsed_time > max_wait_time:
             print(f"Attenzione! Non tutti i processi sono partiti in {max_wait_time} secondi. Tempo trascorso: {elapsed_time:.2f} secondi.")
