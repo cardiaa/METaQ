@@ -82,31 +82,20 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
                 # Aggiungi la stampa dei core utilizzati dal processo (o qualsiasi altro dato di debug)
                 print(f"XXXXXXXXXX")
     
-            if sync_failed.value:
-                    print(f"Process {process_index}: Sincronizzazione fallita, interrompo l'esecuzione.", flush=True)
-                    return
+                # Aggiorna il valore di `synced` se tutti i processi sono arrivati
+                with sync_lock:
+                    # Verifica se tutti i processi sono arrivati, ossia se i tempi di arrivo sono stati registrati
+                    if all(time != -1 for time in arrival_times):  # Se tutti i processi hanno registrato il loro arrivo
+                        first_arrival = min(arrival_times)
+                        last_arrival = max(arrival_times)
+                        difference = last_arrival - first_arrival
 
-            with sync_lock:
-                if synced.value:
-                    print(f"Process {process_index}: Già sincronizzato con successo, proseguo l'esecuzione.", flush=True)
-                    return
-
-                arrival_times[process_index] = time.time()
-            
-            time.sleep(0.1)  # Piccolo ritardo per garantire che tutti i processi scrivano il proprio timestamp
-
-            with sync_lock:
-                first_arrival = min(arrival_times)
-                last_arrival = max(arrival_times)
-                difference = last_arrival - first_arrival
-
-                if difference > 0.5:
-                    print(f"Process {process_index}: Processi non sincronizzati ({difference:.2f} secondi di differenza).", flush=True)
-                    sync_failed.value = True
-                else:
-                    if all(arrival != -1 for arrival in arrival_times):  # Verifica che tutti i processi abbiano aggiornato il timestamp
-                        synced.value = True  # Tutti i processi sono sincronizzati correttamente
-                    print(f"Process {process_index}: Sincronizzazione riuscita con differenza di {difference:.2f} secondi.", flush=True)
+                    if difference > 0.5:
+                        print(f"Processi non sincronizzati: {difference:.2f} secondi di differenza")
+                        sync_failed.value = True  # Segna il fallimento della sincronizzazione
+                    else:
+                        print(f"Sincronizzazione riuscita con differenza di {difference:.2f} secondi")
+                        synced.value = True  # Imposta `synced` come True, i processi sono sincronizzati
 
 
 
