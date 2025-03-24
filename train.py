@@ -74,15 +74,15 @@ def run_in_parallel(param_combinations, num_processes, max_wait_time=0.5):
 
     with multiprocessing.Pool(processes=num_processes) as pool:
         # Avviamo tutti i processi asincroni
-        
         async_results = [pool.apply_async(worker, (semaphore, param)) for param in param_combinations]
-        print("aaaa")
+        
         # Controlliamo che tutti i processi siano partiti entro max_wait_time
         start_time = time.time()
         for _ in param_combinations:
-            print("bbbb")
+            print("aaaa")
             # Aspetta che ogni processo parta
             semaphore.acquire()
+            print("bbbb")
         
         elapsed_time = time.time() - start_time
         if elapsed_time > max_wait_time:
