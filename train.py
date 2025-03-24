@@ -28,7 +28,7 @@ def train_model(args):
     process_index = args[-2]  # Penultimo argomento è l'indice del processo
     num_processes = args[-1]  # Ultimo argomento è il numero totale di processi
 
-    set_affinity(process_index, num_processes)  # Commentata per ora
+    #set_affinity(process_index, num_processes)
 
     torch.set_num_threads(1)
 
