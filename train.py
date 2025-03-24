@@ -8,8 +8,8 @@ from utils.trainer import train_and_evaluate
 import multiprocessing
 
 
-def train_model(args, semaphore):
-
+def train_model(args, semaphore, release_times, process_id):
+    
     torch.set_num_threads(1)
 
     (C, lr, lambda_reg, alpha, subgradient_step, w0, r,
@@ -23,7 +23,8 @@ def train_model(args, semaphore):
         w0=w0, r=r, target_acc=target_acc, target_entr=target_entr,
         min_xi=min_xi, max_xi=max_xi, n_epochs=n_epochs,
         device=device, train_optimizer=train_optimizer,
-        entropy_optimizer=entropy_optimizer, semaphore=semaphore
+        entropy_optimizer=entropy_optimizer, semaphore=semaphore,
+        release_times=release_times, process_id=args[-2]
     )
 
     training_time = time.time() - start_time
@@ -31,29 +32,30 @@ def train_model(args, semaphore):
     return (C, r, training_time)
 
 
-def worker(semaphore, args):
+
+def worker(semaphore, args, release_times, process_id):
     print(f"Process {args[-2]}: Avvio worker")  # Messaggio di debug per confermare l'avvio
-    return train_model(args, semaphore)  # La funzione che avvia il training
+    return train_model(args, semaphore, release_times, process_id)
 
 
 
-def run_in_parallel(param_combinations, num_processes, max_wait_time=2):
+
+def run_in_parallel(param_combinations, num_processes, max_wait_time=5):
     semaphore = multiprocessing.Semaphore(0)  # Semaforo inizializzato a 0
     processes = []
+    release_times = multiprocessing.Array('d', num_processes)  # Array condiviso per i tempi di rilascio
     results = []
-    release_times = []  # Lista per memorizzare i tempi di rilascio
 
     # Avviamo tutti i processi asincroni
     for i, param in enumerate(param_combinations):
-        p = multiprocessing.Process(target=worker, args=(semaphore, param))
+        p = multiprocessing.Process(target=worker, args=(semaphore, param, release_times, i))
         processes.append(p)
         p.start()
 
     start_time = None  # Inizializzo una variabile per il tempo di inizio del primo rilascio
 
-    while len(release_times) < num_processes:
-        print("len(release_times):", len(release_times))
-        if len(release_times) == 0:
+    while len([t for t in release_times if t > 0]) < num_processes:
+        if len([t for t in release_times if t > 0]) == 0:
             start_time = time.time()  # Inizializzo il tempo appena il primo rilascio avviene
 
         # Controllo se il tempo trascorso tra il primo e l'ultimo rilascio è maggiore del timeout
@@ -68,6 +70,8 @@ def run_in_parallel(param_combinations, num_processes, max_wait_time=2):
 
         time.sleep(0.1)  # Faccio una piccola pausa per non caricare la CPU
 
+    # Ora possiamo calcolare il tempo totale dall'inizio del primo rilascio fino all'ultimo rilascio
+    elapsed_time = max(release_times) - start_time  # L'ultimo rilascio e il tempo trascorso
     print(f"Tutti i processi hanno rilasciato il semaforo in {elapsed_time:.2f} secondi.")
 
     # Aspetta il completamento di tutti i processi

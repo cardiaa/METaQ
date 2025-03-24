@@ -39,7 +39,7 @@ def load_data():
 
 def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r, 
                        target_acc, target_entr, min_xi, max_xi, n_epochs, device, 
-                       train_optimizer, entropy_optimizer, semaphore):
+                       train_optimizer, entropy_optimizer, semaphore, release_times, process_id):
     
     torch.set_num_threads(1)
     trainset, testset = load_data()  # Carichiamo i dati localmente
@@ -89,6 +89,8 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
 
             if i == 10 and epoch == 0:
                 semaphore.release()  # Rilascia il semaforo quando arrivo fin qua
+                # Registra il tempo di rilascio del semaforo
+                release_times[process_id] = time.time()
                 print(f"XXXXXXXXXX")
 
             inputs, labels = data[0].to(device), data[1].to(device)
