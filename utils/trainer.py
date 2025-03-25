@@ -78,8 +78,8 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
             loss.backward()
             optimizer.step()
 
-            if(i == 10 and epoch == 0):
-                print("XXXXXXX")
+            if(i % 100 == 0 and epoch == 0):
+                print("i =", i)
 
             inputs, labels = data[0].to(device), data[1].to(device)
             optimizer.zero_grad()
