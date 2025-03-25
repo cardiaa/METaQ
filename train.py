@@ -45,6 +45,7 @@ def train_model(args):
      device, train_optimizer, entropy_optimizer) = args[:-2]
 
     print(f"Process {process_index}: Dati caricati", flush=True)
+    print("aaaaa")
 
     start_time = time.time()
 
