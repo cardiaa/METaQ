@@ -33,7 +33,7 @@ def test_accuracy(model, dataloader, device):
 def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
                         target_acc, target_entr, min_xi, max_xi, n_epochs,
                         device, train_optimizer, entropy_optimizer, 
-                        trainloader, testloader, semaphore, release_times, process_id):
+                        trainloader, testloader):
     
     torch.set_num_threads(1)
 
@@ -78,15 +78,8 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
             loss.backward()
             optimizer.step()
 
-            if(i == 100 and epoch == 0):
-                #print("XXXXXXX")
-                semaphore.release()  # Rilascia il semaforo quando arrivo fin qua
-                # Registra il tempo di rilascio del semaforo
-                release_times[process_id] = time.time()
-                print(f"process_id: {process_id}, time.time(): {time.time()}")
-
-            if(i % 100 == 0 and i != 0):
-                print(f"process_id: {process_id}, i: {i}")
+            if(i == 10 and epoch == 0):
+                print("XXXXXXX")
 
             inputs, labels = data[0].to(device), data[1].to(device)
             optimizer.zero_grad()
