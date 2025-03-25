@@ -71,7 +71,7 @@ if __name__ == "__main__":
     print(f"Numero di processi: {num_processes}")
     print(f"Numero totale di core logici disponibili: {num_total_cores}")
 
-    multiprocessing.set_start_method('spawn', force=True)
+    multiprocessing.set_start_method('fork')
     device = torch.device("cpu")
     print(device)
     np.set_printoptions(precision=6)
