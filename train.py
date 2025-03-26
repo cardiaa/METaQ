@@ -50,3 +50,4 @@ if __name__ == "__main__":
         entropy_optimizer=entropy_optimizer,
         trainloader=trainloader, testloader=testloader
     )
+    
