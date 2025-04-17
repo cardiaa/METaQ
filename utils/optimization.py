@@ -1,6 +1,7 @@
 import torch  
 from torch.linalg import norm  
 from .knapsack import knapsack_specialized  
+from .knapsack import knapsack_specialized_pruning
 
 def FISTA(xi, v, w, C, subgradient_step, device, max_iterations):
     """
