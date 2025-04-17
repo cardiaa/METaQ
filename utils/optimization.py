@@ -91,7 +91,7 @@ def ProximalBM(xi, v, w, C, zeta, subgradient_step, device, max_iterations):
 
     for iteration in range(1, max_iterations + 1):
         # Solve the knapsack problem for the current xi
-        x_i_star, lambda_plus, phi_plus = knapsack_specialized(xi, v, w, C, device)
+        x_i_star, lambda_plus, phi_plus = knapsack_specialized_pruning(xi, v, w, C, device)
         sum_x_star = torch.sum(x_i_star, dim=0)
 
         # Compute the optimal c values c_star
