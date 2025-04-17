@@ -90,7 +90,10 @@ def knapsack_specialized(xi, v, w, C, device):
 
     return x_opt, lambda_opt, objective_values
 
-def knapsack_specialized_pruning(xi, v, w, C):
+def knapsack_specialized_pruning(xi, v, w, C, device):
+    xi = xi.to(device)
+    v = v.to(device)
+    w = w.to(device)
     M = w.shape[0]
 
     # Step 1: Calcolo x_plus (breakpoints)
@@ -99,18 +102,18 @@ def knapsack_specialized_pruning(xi, v, w, C):
     while True:
         delta_xi = (xi[b + 1:] - xi[b])
         delta_v = (v[b + 1:] - v[b])
-        b = torch.argmin(delta_xi / delta_v) + 1 + b_list[-1] if b_list else 0
+        b = torch.argmin(delta_xi / delta_v).item() + 1 + (b_list[-1] if b_list else 0)
         if b != C - 1:
             b_list.append(int(b))
         if b + 1 > C - 1:
             break
     b_list.append(C - 1)
-    x_plus = torch.zeros(C, dtype=torch.int32)
-    x_plus[torch.tensor(b_list)] = 1
+    x_plus = torch.zeros(C, dtype=torch.int32, device=device)
+    x_plus[torch.tensor(b_list, device=device)] = 1
 
     # Preallocazioni
-    x = torch.zeros(M, C)
-    lambda_opt = torch.zeros(M)
+    x = torch.zeros(M, C, device=device)
+    lambda_opt = torch.zeros(M, device=device)
 
     # Step 2: Classificazione dei problemi
     v0 = v[0]
@@ -118,7 +121,7 @@ def knapsack_specialized_pruning(xi, v, w, C):
     mask_small = w < v0
     mask_large = w > v_last
     mask_mid = (~mask_small) & (~mask_large)
-    
+
     # CASO: w > v[-1]
     x[mask_large, -1] = 1
 
@@ -127,18 +130,18 @@ def knapsack_specialized_pruning(xi, v, w, C):
 
     # CASO INTERMEDIO
     if mask_mid.any():
-        M_mid = mask_mid.sum() #Numero di v[0]<w<v[-1]
+        M_mid = mask_mid.sum()
         w_mid = w[mask_mid]
         ratio = xi / v
         neg_indices = torch.where(ratio < 0)[0]
         neg_sorted = neg_indices[torch.argsort(ratio[neg_indices], descending=True)]
         pos_indices = torch.where(ratio >= 0)[0]
         pos_sorted = pos_indices[torch.argsort(ratio[pos_indices])]
-        b_vector = torch.cat([neg_sorted, pos_sorted], dim=0) #questo è giusto
+        b_vector = torch.cat([neg_sorted, pos_sorted], dim=0)
         ratio_b = w_mid[:, None] / v[b_vector]
         x_plus_b = x_plus[b_vector].bool()
         cond1 = (ratio_b >= 0) & x_plus_b
-        valid_i0 = cond1.float() * torch.arange(C)[None, :]
+        valid_i0 = cond1.float() * torch.arange(C, device=device)[None, :]
         valid_i0[~cond1] = float('inf')
         i0_pos = valid_i0.argmin(dim=1)
         i0 = b_vector[i0_pos]
@@ -147,6 +150,7 @@ def knapsack_specialized_pruning(xi, v, w, C):
         invalid_i0 = x_plus[i0] == 0
         use_two = x_single > 1
         i1 = torch.full_like(i0, fill_value=-1)
+
         if use_two.any():
             b_vector_exp = b_vector.unsqueeze(0).expand(M_mid, -1)
             i0_exp = i0.unsqueeze(1).expand_as(b_vector_exp)
@@ -161,7 +165,7 @@ def knapsack_specialized_pruning(xi, v, w, C):
             i1[use_two] = torch.where(valid_i1_use_two, i1_candidate_use_two, i0_use_two)
 
         # Costruzione x_mid
-        x_mid = torch.zeros(M_mid, C)
+        x_mid = torch.zeros(M_mid, C, device=device)
 
         # Caso: uso un solo indice
         mask_one = ~use_two
@@ -182,25 +186,21 @@ def knapsack_specialized_pruning(xi, v, w, C):
         x_mid[rows_two, idx1] = torch.round(1 - theta, decimals=5)
 
         x[mask_mid] = x_mid
-        
+
     # === Calcolo vectorizzato dei moltiplicatori ===
     eps = 1e-6
     nz_mask = torch.abs(x) > eps
     nz_counts = nz_mask.sum(dim=1)
-    lambda_opt = torch.zeros(x.shape[0])  # o torch.full(..., fill_value=torch.nan) se vuoi beccare errori
+    lambda_opt = torch.zeros(x.shape[0], device=device)
 
     # Caso 1 valore non nullo
     m1 = torch.where(nz_counts == 1)[0]
-
     if m1.numel() > 0:
-        # Trova indici (m1_idx, col_idx) dove nz_mask è True, limitato a righe m1
-        submask = nz_mask[m1]                     # shape: (len(m1), C)
-        indices = submask.nonzero(as_tuple=False) # shape: (len(m1), 2)
-        # estrai solo la colonna giusta
+        submask = nz_mask[m1]
+        indices = submask.nonzero(as_tuple=False)
         i = indices[:, 1]
         lambda_opt[m1] = -xi[i] / v[i]
         lambda_opt[m1] = torch.round(lambda_opt[m1], decimals=5)
-
 
     # Caso 2 valori non nulli
     m2 = torch.where(nz_counts == 2)[0]
