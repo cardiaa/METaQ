@@ -91,15 +91,32 @@ def knapsack_specialized(xi, v, w, C, device):
     return x_opt, lambda_opt, objective_values
 
 def knapsack_specialized_pruning(xi, v, w, C, delta, device):
+    """
+    Solves a specialized knapsack problem with pruning strategy, using vectorized operations.
+
+    Args:
+        xi (torch.Tensor): xi variables.
+        v (torch.Tensor): Quantization vector.
+        w (torch.Tensor): Weight vector.
+        C (int): Number of quantization buckets.
+        delta (float): Pruning threshold to adjust xi.
+        device (torch.device): Target device for computation.
+
+    Returns:
+        tuple: Optimal allocation (x), optimal multipliers (lambda_opt), and objective values.
+    """
+
+    # Move tensors to the target device
     xi = xi.to(device)
     v = v.to(device)
     w = w.to(device)
 
+    # Apply pruning adjustment to xi
     xi = xi - delta
 
     M = w.shape[0]
 
-    # Step 1: Calcolo x_plus (breakpoints)
+    # Step 1: Compute breakpoint vector x_plus
     b_list = []
     b = 0
     while True:
@@ -114,45 +131,55 @@ def knapsack_specialized_pruning(xi, v, w, C, delta, device):
     x_plus = torch.zeros(C, dtype=torch.int32)
     x_plus[torch.tensor(b_list)] = 1
 
-    # Preallocazioni
+    # Step 2: Preallocate outputs
     x = torch.zeros(M, C)
     lambda_opt = torch.zeros(M)
 
-    # Step 2: Classificazione dei problemi
+    # Step 3: Classify instances based on weight range
     v0 = v[0]
     v_last = v[-1]
-    mask_small = w < v0
-    mask_large = w > v_last
-    mask_mid = (~mask_small) & (~mask_large)
+    mask_small = w < v0         # Case: weight less than minimum
+    mask_large = w > v_last     # Case: weight greater than maximum
+    mask_mid = (~mask_small) & (~mask_large)  # Case: weight within range
 
-    # CASO: w > v[-1]
+    # Handle weights greater than v[-1]
     x[mask_large, -1] = 1
 
-    # CASO: w < v[0]
+    # Handle weights smaller than v[0]
     x[mask_small, 0] = 1
 
-    # CASO INTERMEDIO
+    # Handle intermediate weights (v[0] < w < v[-1])
     if mask_mid.any():
-        M_mid = mask_mid.sum() #Numero di v[0]<w<v[-1]
+        M_mid = mask_mid.sum()
         w_mid = w[mask_mid]
+
+        # Sort indices based on ratio xi/v
         ratio = xi / v
         neg_indices = torch.where(ratio < 0)[0]
         neg_sorted = neg_indices[torch.argsort(ratio[neg_indices], descending=True)]
         pos_indices = torch.where(ratio >= 0)[0]
         pos_sorted = pos_indices[torch.argsort(ratio[pos_indices])]
         b_vector = torch.cat([neg_sorted, pos_sorted], dim=0)
+
+        # Compute ratio between weight and quantization levels
         ratio_b = w_mid[:, None] / v[b_vector]
         x_plus_b = x_plus[b_vector].bool()
+
+        # Identify first valid index (i0) for convex combination
         cond1 = (ratio_b >= 0) & x_plus_b
         valid_i0 = cond1.float() * torch.arange(C)[None, :]
         valid_i0[~cond1] = float('inf')
         i0_pos = valid_i0.argmin(dim=1)
         i0 = b_vector[i0_pos]
+
+        # Check whether a single index suffices or two are needed
         v_i0 = v[i0]
         x_single = w_mid / v_i0
         invalid_i0 = x_plus[i0] == 0
         use_two = x_single > 1
         i1 = torch.full_like(i0, fill_value=-1)
+
+        # Find second index (i1) for convex combination if necessary
         if use_two.any():
             b_vector_exp = b_vector.unsqueeze(0).expand(M_mid, -1)
             i0_exp = i0.unsqueeze(1).expand_as(b_vector_exp)
@@ -166,16 +193,16 @@ def knapsack_specialized_pruning(xi, v, w, C, delta, device):
             i0_use_two = i0[use_two]
             i1[use_two] = torch.where(valid_i1_use_two, i1_candidate_use_two, i0_use_two)
 
-        # Costruzione x_mid
+        # Step 4: Construct allocation matrix x_mid
         x_mid = torch.zeros(M_mid, C)
 
-        # Caso: uso un solo indice
+        # Case: single index allocation
         mask_one = ~use_two
         rows_one = torch.where(mask_one)[0]
         cols_one = i0[mask_one]
         x_mid[rows_one, cols_one] = torch.clamp(torch.round(w_mid[mask_one] / v[cols_one], decimals=5), 0.0, 1.0)
 
-        # Caso: combinazione convessa
+        # Case: convex combination of two indices
         mask_two = use_two & (i1 != i0)
         rows_two = torch.where(mask_two)[0]
         idx0 = i0[mask_two]
@@ -187,24 +214,25 @@ def knapsack_specialized_pruning(xi, v, w, C, delta, device):
         x_mid[rows_two, idx0] = torch.round(theta, decimals=5)
         x_mid[rows_two, idx1] = torch.round(1 - theta, decimals=5)
 
+        # Assign mid-case solutions
         x[mask_mid] = x_mid
-        
-    # === Calcolo vectorizzato dei moltiplicatori ===
+
+    # Step 5: Compute optimal multipliers
     eps = 1e-6
     nz_mask = torch.abs(x) > eps
     nz_counts = nz_mask.sum(dim=1)
     lambda_opt = torch.zeros(x.shape[0])
 
-    # Caso 1 valore non nullo
+    # Case: only one non-zero element in allocation
     m1 = torch.where(nz_counts == 1)[0]
     if m1.numel() > 0:
         submask = nz_mask[m1]
-        indices = submask.nonzero(as_tuple=False) 
+        indices = submask.nonzero(as_tuple=False)
         i = indices[:, 1]
         lambda_opt[m1] = -xi[i] / v[i]
         lambda_opt[m1] = torch.round(lambda_opt[m1], decimals=5)
 
-    # Caso 2 valori non nulli
+    # Case: two non-zero elements (convex combination)
     m2 = torch.where(nz_counts == 2)[0]
     if m2.numel() > 0:
         indices = nz_mask[m2].nonzero().reshape(-1, 2)
@@ -217,13 +245,14 @@ def knapsack_specialized_pruning(xi, v, w, C, delta, device):
         lambda_opt[m2] = -delta_xi / (delta_idx * passo)
         lambda_opt[m2] = torch.round(lambda_opt[m2], decimals=5)
 
+    # Step 6: Compute final objective function values
     objective_values = delta + x @ xi
-    
+
     return x, lambda_opt, objective_values
 
 def knapsack_specialized_histo(xi, v, w, C, device):
     """
-    Solves a specialized knapsack problem using a specialized method in a vectorized way
+    Solves the specialized knapsack problem in the vectorized way to construct the histogram in the complexity analysis
 
     Args:
         xi (torch.Tensor): xi variables.
