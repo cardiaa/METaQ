@@ -33,7 +33,7 @@ def test_accuracy(model, dataloader, device):
 def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
                         target_acc, target_entr, min_xi, max_xi, n_epochs,
                         device, train_optimizer, entropy_optimizer, 
-                        trainloader, testloader):
+                        trainloader, testloader, delta):
     
     torch.set_num_threads(1)
 
@@ -96,10 +96,10 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
             l = l / 1.5
             if(entropy_optimizer == 'F'):
                 #xi, beta_tensor, x_star, phi = FISTA(xi, v, w_quantized, C, subgradient_step, max_iterations=15) 
-                xi, beta_tensor, x_star, phi = FISTA(xi, v, w, C, subgradient_step, device, max_iterations=15) 
+                xi, beta_tensor, x_star, phi = FISTA(xi, v, w, C, delta, subgradient_step, device, max_iterations=15) 
             elif(entropy_optimizer == 'PM'):
                 #xi, beta_tensor, x_star, phi = ProximalBM(xi, v, w_quantized, C, zeta, subgradient_step, max_iterations=15) 
-                xi, beta_tensor, x_star, phi = ProximalBM(xi, v, w, C, zeta, subgradient_step, device, max_iterations=15)       
+                xi, beta_tensor, x_star, phi = ProximalBM(xi, v, w, C, delta, zeta, subgradient_step, device, max_iterations=15)       
             
             # Update of ∇ɸ
             idx = 0
