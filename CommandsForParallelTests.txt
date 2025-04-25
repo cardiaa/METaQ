@@ -1,0 +1,33 @@
+COMMANDS ZSH
+
+-----------------------------------------------------------------
+for i in $(seq 0 10); do
+  core_list=""
+  for j in $(seq 0 5); do
+    core=$((i * 6 + j + 96))
+    if [ $core -ge 192 ]; then
+      core=$((core + 96))
+    fi
+    core_list="$core_list,$core"
+  done
+  core_list=${core_list#,}
+  delta=$(echo "scale=1; $i * 0.1" | bc)
+  taskset -c $core_list python3 train.py --delta $delta &
+done
+-----------------------------------------------------------------
+nohup bash -c 'for i in $(seq 0 10); do
+  core_list=""
+  for j in $(seq 0 5); do
+    core=$((i * 6 + j + 96))
+    if [ $core -ge 192 ]; then
+      core=$((core + 96))
+    fi
+    core_list="$core_list,$core"
+  done
+  core_list=${core_list#,}
+  delta=$(echo "scale=1; $i * 0.1" | bc)
+  taskset -c $core_list python3 train.py --delta $delta &
+done; wait' > output.log 2>&1 &
+-----------------------------------------------------------------
+pkill -f train.py
+-----------------------------------------------------------------
