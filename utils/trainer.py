@@ -37,17 +37,17 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
     
     torch.set_num_threads(1)
 
-    # Inizializzazione del modello, funzione di perdita e ottimizzatore
+    # Initialization of the model, loss function, and optimizer.
     model = LeNet5().to(device)
     criterion = nn.CrossEntropyLoss()
     
-    # Selezione dell'ottimizzatore in base al tipo scelto
+    # Selection of the optimizer based on the chosen type.
     if train_optimizer == 'A':
         optimizer = optim.Adam(model.parameters(), lr=lr, betas=(0.9, 0.999), eps=1e-08, weight_decay=lambda_reg * alpha)
     elif train_optimizer == 'S':
         optimizer = optim.SGD(model.parameters(), lr=lr, momentum=0.9, weight_decay=lambda_reg * alpha)
     
-    # Inizializzazione dei pesi
+    # Weights Initialization
     min_w, max_w = w0 - r, w0 + r
     v = torch.linspace(min_w, max_w - (max_w - min_w)/C, steps=C, device=device)
     initialize_weights(model, min_w, max_w)
@@ -59,10 +59,7 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
     accuracies, entropies, distinct_weights = [], [], []
     zeta, l = 50000, 0.5
 
-    #time.sleep(1)
-    #print("Sto per iniziare...")
-
-    # Ciclo di allenamento
+    # Training loop
     for epoch in range(n_epochs):
         start_time = time.time()
 
@@ -70,16 +67,12 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
             inputs, targets = data
             optimizer.zero_grad()
 
-            # Passaggio attraverso il modello
             outputs = model(inputs)
             loss = criterion(outputs, targets)
 
-            # Calcolo e retropropagazione
+            # Backpropagation
             loss.backward()
             optimizer.step()
-
-            #if(i % 100 == 0 and epoch == 0):
-            #    print("i =", i)
 
             inputs, labels = data[0].to(device), data[1].to(device)
             optimizer.zero_grad()
@@ -87,7 +80,7 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
             loss = criterion(outputs, labels)
             
             w = torch.cat([param.data.view(-1) for param in model.parameters()])
-            #unique_weights = torch.unique(w).numel() 
+            #unique_weights = torch.unique(w).numel() # Alternative version
             #indices = torch.searchsorted(v, w, right=True) - 1
             #indices = torch.clamp(indices, min=0)
             #w_quantized = v[indices]
@@ -95,10 +88,10 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
             zeta *= 1 + l
             l = l / 1.5
             if(entropy_optimizer == 'F'):
-                #xi, beta_tensor, x_star, phi = FISTA(xi, v, w_quantized, C, subgradient_step, max_iterations=15) 
+                #xi, beta_tensor, x_star, phi = FISTA(xi, v, w_quantized, C, subgradient_step, max_iterations=15) # Alternative version
                 xi, beta_tensor, x_star, phi = FISTA(xi, v, w, C, delta, subgradient_step, device, max_iterations=15) 
             elif(entropy_optimizer == 'PM'):
-                #xi, beta_tensor, x_star, phi = ProximalBM(xi, v, w_quantized, C, zeta, subgradient_step, max_iterations=15) 
+                #xi, beta_tensor, x_star, phi = ProximalBM(xi, v, w_quantized, C, zeta, subgradient_step, max_iterations=15) # Alternative version
                 xi, beta_tensor, x_star, phi = ProximalBM(xi, v, w, C, delta, zeta, subgradient_step, device, max_iterations=15)       
             
             # Update of ∇ɸ
@@ -123,22 +116,8 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
         accuracy = test_accuracy(model, testloader, device)
         accuracies.append(accuracy)
         
-        # Creo un file di log per ogni combinazione
-        #output_dir = "training_logs"
-        #os.makedirs(output_dir, exist_ok=True)
-        #log_filename = f"{output_dir}/log_C_{C}_r_{r}_proc_{os.getpid()}.txt"
-
-        #with open(log_filename, "a") as f:
-        #    f.write("\nEpoch:", epoch+1)
-        #    f.write("\nAccuracies:", accuracies)
-        #    f.write("\nEntropies:", entropies)
-        #    f.write("\nMax Accuracy:", max(accuracies))
-        #    f.write("Min entropy:", min(entropies))
-
         # Saving a better model
         if(accuracy >= target_acc and entropy <= target_entr):
-            #with open(log_filename, "a") as f:
-            #    f.write("💥💥💥💥💥💥💥\n💥ATTENTION!💥\n💥💥💥💥💥💥💥")
             print("💥💥💥💥💥💥💥\n💥ATTENTION!💥\n💥💥💥💥💥💥💥", flush=True)
             torch.save(model.state_dict(), f"BestModelsBeforeQuantization/C{C}_r{round(r*1000)}.pth")
             target_acc = accuracy
@@ -146,38 +125,30 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
         
         # Entropy exit conditions
         if(epoch > 20 and entropy > 600000):
-            #with open(log_filename, "a") as f:
-            #    f.write("Entropy is not decreasing enough! (A)")
             print(f"Entropy is not decreasing enough! (A), PID: {os.getpid()}, Epoch: {epoch}, Entropia minima: {min(entropies)}, Accuracy massima: {max(accuracies)}, C: {C}, r: {r}, epoch time: {training_time:.2f}s", flush=True)
             return accuracy, entropy, target_acc, target_entr
         
         if(epoch > 50):
             if(entropies[-1] > 200000 and entropies[-2] > 200000 and entropies[-3] > 200000 and entropies[-4] > 200000):
-                #with open(log_filename, "a") as f:
-                #    f.write("Entropy is not decreasing enough! (B)")
                 print(f"Entropy is not decreasing enough! (B), PID: {os.getpid()}, Epoch: {epoch}, Entropia minima: {min(entropies)}, Accuracy massima: {max(accuracies)}, C: {C}, r: {r}, epoch time: {training_time:.2f}s", flush=True)
                 return accuracy, entropy, target_acc, target_entr           
             
         # Accuracy exit condition
         if(epoch == 1 and accuracies[-1] < 70):
-            #with open(log_filename, "a") as f:
-            #    f.write("Accuracy is too low! (C)")
             print(f"Accuracy is too low! (C), PID: {os.getpid()}, Epoch: {epoch}, Entropia minima: {min(entropies)}, Accuracy massima: {max(accuracies)}, C: {C}, r: {r}, epoch time: {training_time:.2f}s", flush=True)
             return accuracy, entropy, target_acc, target_entr  
                           
         if(epoch > 10):
             if(accuracies[-1] < 90 and accuracies[-2] < 90 and accuracies[-3] < 90 and accuracies[-4] < 90):
-                #with open(log_filename, "a") as f:
-                #    f.write("Accuracy is too low! (D)")
                 print(f"Accuracy is too low! (D), PID: {os.getpid()}, Epoch: {epoch}, Entropia minima: {min(entropies)}, Accuracy massima: {max(accuracies)}, C: {C}, r: {r}, epoch time: {training_time:.2f}s", flush=True)
                 return accuracy, entropy, target_acc, target_entr     
         
-        # ... ADD OTHER EXIT CONDITIONS ...      
+        # ... ADD OTHER EXIT CONDITIONS IF NECESSARY...      
         
         training_time = time.time() - start_time
-        #with open(log_filename, "a") as f:
-        #    f.write(f"Time taken for a epoch: {training_time:.2f} seconds\n")
-              
-        print(f"PID: {os.getpid()}, Epoch: {epoch}, Entropia minima: {min(entropies)}, Accuracy massima: {max(accuracies)}, C: {C}, r: {r}, epoch time: {training_time:.2f}s", flush=True)
+        print(f"PID: {os.getpid()}, Epoch: {epoch}, delta: {delta}, Min Entropy: {min(entropies)}, Current Entropy: {entropies[-1]}"
+              f"Max Accuracy: {max(accuracies)}, Current Accuracy: {accuracies[-1]}, C: {C}" 
+              "epoch time: {training_time:.2f}s", flush=True)
+        print("-"*60)
 
     return accuracy, entropy, target_acc, target_entr
