@@ -12,7 +12,7 @@ def load_data():
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--r", type=float, required=True, help="Valore di r")
+    parser.add_argument("--delta", type=float, required=True, help="Valore di delta")
     args = parser.parse_args()
 
     # Limitare l'utilizzo dei thread a 1
@@ -30,6 +30,7 @@ if __name__ == "__main__":
     alpha = 0.533
     subgradient_step = 1e5
     w0 = -0.11
+    r = 1.1
     target_acc = 98.99
     target_entr = 0.99602e6
     min_xi = 0
@@ -40,14 +41,15 @@ if __name__ == "__main__":
     entropy_optimizer = "F"
 
     # Allenamento del modello con il valore di r passato da terminale
-    print(f"Avvio training con r = {args.r}")
+    print(f"Avvio training con delta = {args.delta}")
     train_and_evaluate(
         C=C, lr=lr, lambda_reg=lambda_reg, alpha=alpha,
-        subgradient_step=subgradient_step, w0=w0, r=args.r,
+        subgradient_step=subgradient_step, w0=w0, r=r,
         target_acc=target_acc, target_entr=target_entr,
         min_xi=min_xi, max_xi=max_xi, n_epochs=n_epochs,
         device=device, train_optimizer=train_optimizer,
         entropy_optimizer=entropy_optimizer,
-        trainloader=trainloader, testloader=testloader
+        trainloader=trainloader, testloader=testloader, 
+        delta=args.delta
     )
     
