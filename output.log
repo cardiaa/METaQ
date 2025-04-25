@@ -1,47 +1,114 @@
 nohup: ignoring input
-Numero di processi: 40
-Thread per processo: 9
-Thread set for PyTorch: 192
-Number of core available on the machine: 384
-Dati caricati
-Dati caricati
-Dati caricati
-Dati caricati
-Dati caricati
-Dati caricati
-Dati caricati
-Dati caricati
-Dati caricati
-Dati caricati
-Dati caricati
-Dati caricati
-Dati caricati
-Dati caricati
-Dati caricati
-Dati caricati
-Dati caricati
-Dati caricati
-Dati caricati
-Dati caricati
-Dati caricati
-Dati caricati
-Dati caricati
-Dati caricati
-Dati caricati
-Dati caricati
-Dati caricati
-Dati caricati
-Dati caricati
-Dati caricati
-Dati caricati
-Dati caricati
-Dati caricati
-Dati caricati
-Dati caricati
-Dati caricati
-Dati caricati
-Dati caricati
-Dati caricati
-Dati caricati
-/usr/lib/python3.10/multiprocessing/resource_tracker.py:224: UserWarning: resource_tracker: There appear to be 6 leaked semaphore objects to clean up at shutdown
-  warnings.warn('resource_tracker: There appear to be %d '
+Avvio training con delta = 0.0
+PID: 1412359, Epoch: 0, Entropia minima: 685791, Accuracy massima: 71.26, C: 6, r: 1.1, epoch time: 89.10s
+Avvio training con delta = 0.9
+PID: 1412404, Epoch: 0, Entropia minima: 685819, Accuracy massima: 69.12, C: 6, r: 1.1, epoch time: 89.25s
+Avvio training con delta = 0.2
+PID: 1412369, Epoch: 0, Entropia minima: 685747, Accuracy massima: 60.66, C: 6, r: 1.1, epoch time: 89.34s
+Avvio training con delta = 0.5
+PID: 1412384, Epoch: 0, Entropia minima: 685797, Accuracy massima: 69.77, C: 6, r: 1.1, epoch time: 89.45s
+Avvio training con delta = 0.6
+PID: 1412389, Epoch: 0, Entropia minima: 685807, Accuracy massima: 66.81, C: 6, r: 1.1, epoch time: 89.60s
+Avvio training con delta = 0.4
+PID: 1412379, Epoch: 0, Entropia minima: 685821, Accuracy massima: 71.48, C: 6, r: 1.1, epoch time: 89.66s
+Avvio training con delta = 0.1
+PID: 1412364, Epoch: 0, Entropia minima: 685817, Accuracy massima: 70.93, C: 6, r: 1.1, epoch time: 91.22s
+Avvio training con delta = 0.7
+PID: 1412394, Epoch: 0, Entropia minima: 685827, Accuracy massima: 72.53, C: 6, r: 1.1, epoch time: 92.88s
+Avvio training con delta = 1.0
+PID: 1412409, Epoch: 0, Entropia minima: 685847, Accuracy massima: 75.2, C: 6, r: 1.1, epoch time: 94.82s
+Avvio training con delta = 0.3
+PID: 1412374, Epoch: 0, Entropia minima: 685853, Accuracy massima: 73.91, C: 6, r: 1.1, epoch time: 96.10s
+Avvio training con delta = 0.8
+PID: 1412399, Epoch: 0, Entropia minima: 685817, Accuracy massima: 73.44, C: 6, r: 1.1, epoch time: 96.77s
+Accuracy is too low! (C), PID: 1412369, Epoch: 1, Entropia minima: 685711, Accuracy massima: 67.31, C: 6, r: 1.1, epoch time: 89.34s
+PID: 1412359, Epoch: 1, Entropia minima: 685777, Accuracy massima: 71.26, C: 6, r: 1.1, epoch time: 65.45s
+Accuracy is too low! (C), PID: 1412389, Epoch: 1, Entropia minima: 685747, Accuracy massima: 66.81, C: 6, r: 1.1, epoch time: 89.60s
+PID: 1412404, Epoch: 1, Entropia minima: 685767, Accuracy massima: 70.84, C: 6, r: 1.1, epoch time: 65.74s
+PID: 1412384, Epoch: 1, Entropia minima: 685751, Accuracy massima: 71.48, C: 6, r: 1.1, epoch time: 66.20s
+PID: 1412379, Epoch: 1, Entropia minima: 685761, Accuracy massima: 71.48, C: 6, r: 1.1, epoch time: 66.67s
+Accuracy is too low! (C), PID: 1412364, Epoch: 1, Entropia minima: 685803, Accuracy massima: 70.93, C: 6, r: 1.1, epoch time: 91.22s
+PID: 1412394, Epoch: 1, Entropia minima: 685819, Accuracy massima: 72.69, C: 6, r: 1.1, epoch time: 71.50s
+PID: 1412409, Epoch: 1, Entropia minima: 685837, Accuracy massima: 75.2, C: 6, r: 1.1, epoch time: 76.18s
+PID: 1412374, Epoch: 1, Entropia minima: 685831, Accuracy massima: 73.91, C: 6, r: 1.1, epoch time: 78.71s
+PID: 1412399, Epoch: 1, Entropia minima: 685817, Accuracy massima: 73.44, C: 6, r: 1.1, epoch time: 81.04s
+PID: 1412359, Epoch: 2, Entropia minima: 685738, Accuracy massima: 71.26, C: 6, r: 1.1, epoch time: 61.60s
+PID: 1412404, Epoch: 2, Entropia minima: 685711, Accuracy massima: 70.84, C: 6, r: 1.1, epoch time: 61.91s
+PID: 1412384, Epoch: 2, Entropia minima: 685721, Accuracy massima: 71.48, C: 6, r: 1.1, epoch time: 62.19s
+PID: 1412379, Epoch: 2, Entropia minima: 685759, Accuracy massima: 71.48, C: 6, r: 1.1, epoch time: 62.41s
+PID: 1412394, Epoch: 2, Entropia minima: 685805, Accuracy massima: 72.69, C: 6, r: 1.1, epoch time: 64.81s
+PID: 1412409, Epoch: 2, Entropia minima: 685807, Accuracy massima: 75.34, C: 6, r: 1.1, epoch time: 68.31s
+PID: 1412374, Epoch: 2, Entropia minima: 685827, Accuracy massima: 73.92, C: 6, r: 1.1, epoch time: 70.35s
+PID: 1412399, Epoch: 2, Entropia minima: 685799, Accuracy massima: 75.34, C: 6, r: 1.1, epoch time: 72.56s
+PID: 1412359, Epoch: 3, Entropia minima: 685738, Accuracy massima: 71.26, C: 6, r: 1.1, epoch time: 60.80s
+PID: 1412404, Epoch: 3, Entropia minima: 685711, Accuracy massima: 70.84, C: 6, r: 1.1, epoch time: 61.09s
+PID: 1412384, Epoch: 3, Entropia minima: 685721, Accuracy massima: 71.48, C: 6, r: 1.1, epoch time: 61.34s
+PID: 1412379, Epoch: 3, Entropia minima: 685759, Accuracy massima: 71.48, C: 6, r: 1.1, epoch time: 61.30s
+PID: 1412394, Epoch: 3, Entropia minima: 685799, Accuracy massima: 72.69, C: 6, r: 1.1, epoch time: 62.74s
+PID: 1412409, Epoch: 3, Entropia minima: 685807, Accuracy massima: 75.34, C: 6, r: 1.1, epoch time: 65.33s
+PID: 1412374, Epoch: 3, Entropia minima: 685827, Accuracy massima: 73.92, C: 6, r: 1.1, epoch time: 66.60s
+PID: 1412399, Epoch: 3, Entropia minima: 685799, Accuracy massima: 75.34, C: 6, r: 1.1, epoch time: 67.63s
+PID: 1412359, Epoch: 4, Entropia minima: 685738, Accuracy massima: 71.26, C: 6, r: 1.1, epoch time: 60.35s
+PID: 1412404, Epoch: 4, Entropia minima: 685711, Accuracy massima: 70.84, C: 6, r: 1.1, epoch time: 60.67s
+PID: 1412384, Epoch: 4, Entropia minima: 685721, Accuracy massima: 71.48, C: 6, r: 1.1, epoch time: 60.80s
+PID: 1412379, Epoch: 4, Entropia minima: 685759, Accuracy massima: 71.48, C: 6, r: 1.1, epoch time: 60.63s
+PID: 1412394, Epoch: 4, Entropia minima: 685799, Accuracy massima: 72.69, C: 6, r: 1.1, epoch time: 61.44s
+PID: 1412409, Epoch: 4, Entropia minima: 685805, Accuracy massima: 75.92, C: 6, r: 1.1, epoch time: 63.69s
+PID: 1412374, Epoch: 4, Entropia minima: 685827, Accuracy massima: 73.92, C: 6, r: 1.1, epoch time: 64.68s
+PID: 1412399, Epoch: 4, Entropia minima: 685799, Accuracy massima: 75.34, C: 6, r: 1.1, epoch time: 64.87s
+PID: 1412359, Epoch: 5, Entropia minima: 685738, Accuracy massima: 71.26, C: 6, r: 1.1, epoch time: 60.11s
+PID: 1412404, Epoch: 5, Entropia minima: 685711, Accuracy massima: 70.84, C: 6, r: 1.1, epoch time: 60.40s
+PID: 1412384, Epoch: 5, Entropia minima: 685721, Accuracy massima: 71.48, C: 6, r: 1.1, epoch time: 60.46s
+PID: 1412379, Epoch: 5, Entropia minima: 685759, Accuracy massima: 71.48, C: 6, r: 1.1, epoch time: 60.36s
+PID: 1412394, Epoch: 5, Entropia minima: 685769, Accuracy massima: 72.69, C: 6, r: 1.1, epoch time: 60.80s
+PID: 1412409, Epoch: 5, Entropia minima: 685781, Accuracy massima: 75.92, C: 6, r: 1.1, epoch time: 62.63s
+PID: 1412374, Epoch: 5, Entropia minima: 685827, Accuracy massima: 73.92, C: 6, r: 1.1, epoch time: 63.33s
+PID: 1412399, Epoch: 5, Entropia minima: 685799, Accuracy massima: 75.94, C: 6, r: 1.1, epoch time: 63.39s
+PID: 1412359, Epoch: 6, Entropia minima: 685705, Accuracy massima: 71.26, C: 6, r: 1.1, epoch time: 59.99s
+PID: 1412404, Epoch: 6, Entropia minima: 685711, Accuracy massima: 70.84, C: 6, r: 1.1, epoch time: 60.23s
+PID: 1412384, Epoch: 6, Entropia minima: 685721, Accuracy massima: 71.48, C: 6, r: 1.1, epoch time: 60.17s
+PID: 1412379, Epoch: 6, Entropia minima: 685759, Accuracy massima: 71.48, C: 6, r: 1.1, epoch time: 60.14s
+PID: 1412394, Epoch: 6, Entropia minima: 685769, Accuracy massima: 72.69, C: 6, r: 1.1, epoch time: 60.35s
+PID: 1412409, Epoch: 6, Entropia minima: 685781, Accuracy massima: 75.92, C: 6, r: 1.1, epoch time: 62.00s
+PID: 1412374, Epoch: 6, Entropia minima: 685823, Accuracy massima: 73.92, C: 6, r: 1.1, epoch time: 62.50s
+PID: 1412399, Epoch: 6, Entropia minima: 685797, Accuracy massima: 75.94, C: 6, r: 1.1, epoch time: 62.42s
+PID: 1412359, Epoch: 7, Entropia minima: 685705, Accuracy massima: 71.26, C: 6, r: 1.1, epoch time: 59.80s
+PID: 1412404, Epoch: 7, Entropia minima: 685711, Accuracy massima: 70.84, C: 6, r: 1.1, epoch time: 60.06s
+PID: 1412384, Epoch: 7, Entropia minima: 685686, Accuracy massima: 71.48, C: 6, r: 1.1, epoch time: 59.92s
+PID: 1412379, Epoch: 7, Entropia minima: 685759, Accuracy massima: 71.48, C: 6, r: 1.1, epoch time: 60.02s
+PID: 1412394, Epoch: 7, Entropia minima: 685769, Accuracy massima: 72.69, C: 6, r: 1.1, epoch time: 59.97s
+PID: 1412409, Epoch: 7, Entropia minima: 685781, Accuracy massima: 75.92, C: 6, r: 1.1, epoch time: 61.56s
+PID: 1412374, Epoch: 7, Entropia minima: 685823, Accuracy massima: 74.14, C: 6, r: 1.1, epoch time: 61.98s
+PID: 1412399, Epoch: 7, Entropia minima: 685797, Accuracy massima: 76.39, C: 6, r: 1.1, epoch time: 61.93s
+PID: 1412359, Epoch: 8, Entropia minima: 685705, Accuracy massima: 71.26, C: 6, r: 1.1, epoch time: 59.66s
+PID: 1412404, Epoch: 8, Entropia minima: 685711, Accuracy massima: 70.84, C: 6, r: 1.1, epoch time: 59.94s
+PID: 1412384, Epoch: 8, Entropia minima: 685686, Accuracy massima: 71.48, C: 6, r: 1.1, epoch time: 59.68s
+PID: 1412379, Epoch: 8, Entropia minima: 685759, Accuracy massima: 71.48, C: 6, r: 1.1, epoch time: 59.93s
+PID: 1412394, Epoch: 8, Entropia minima: 685763, Accuracy massima: 72.69, C: 6, r: 1.1, epoch time: 59.70s
+PID: 1412409, Epoch: 8, Entropia minima: 685753, Accuracy massima: 75.92, C: 6, r: 1.1, epoch time: 61.21s
+PID: 1412374, Epoch: 8, Entropia minima: 685823, Accuracy massima: 74.14, C: 6, r: 1.1, epoch time: 61.57s
+PID: 1412399, Epoch: 8, Entropia minima: 685797, Accuracy massima: 76.46, C: 6, r: 1.1, epoch time: 61.60s
+PID: 1412359, Epoch: 9, Entropia minima: 685705, Accuracy massima: 71.26, C: 6, r: 1.1, epoch time: 59.46s
+PID: 1412404, Epoch: 9, Entropia minima: 685711, Accuracy massima: 70.84, C: 6, r: 1.1, epoch time: 59.89s
+PID: 1412384, Epoch: 9, Entropia minima: 685686, Accuracy massima: 71.48, C: 6, r: 1.1, epoch time: 59.43s
+PID: 1412379, Epoch: 9, Entropia minima: 685759, Accuracy massima: 71.48, C: 6, r: 1.1, epoch time: 59.88s
+PID: 1412394, Epoch: 9, Entropia minima: 685749, Accuracy massima: 72.69, C: 6, r: 1.1, epoch time: 59.54s
+PID: 1412409, Epoch: 9, Entropia minima: 685739, Accuracy massima: 75.92, C: 6, r: 1.1, epoch time: 60.84s
+PID: 1412374, Epoch: 9, Entropia minima: 685807, Accuracy massima: 74.14, C: 6, r: 1.1, epoch time: 61.24s
+PID: 1412399, Epoch: 9, Entropia minima: 685797, Accuracy massima: 76.46, C: 6, r: 1.1, epoch time: 61.34s
+PID: 1412359, Epoch: 10, Entropia minima: 685705, Accuracy massima: 71.26, C: 6, r: 1.1, epoch time: 59.28s
+PID: 1412384, Epoch: 10, Entropia minima: 685686, Accuracy massima: 71.48, C: 6, r: 1.1, epoch time: 59.25s
+PID: 1412404, Epoch: 10, Entropia minima: 685711, Accuracy massima: 70.84, C: 6, r: 1.1, epoch time: 59.81s
+PID: 1412379, Epoch: 10, Entropia minima: 685759, Accuracy massima: 71.48, C: 6, r: 1.1, epoch time: 59.82s
+PID: 1412394, Epoch: 10, Entropia minima: 685731, Accuracy massima: 72.69, C: 6, r: 1.1, epoch time: 59.40s
+PID: 1412409, Epoch: 10, Entropia minima: 685685, Accuracy massima: 75.92, C: 6, r: 1.1, epoch time: 60.47s
+PID: 1412374, Epoch: 10, Entropia minima: 685807, Accuracy massima: 74.6, C: 6, r: 1.1, epoch time: 61.06s
+PID: 1412399, Epoch: 10, Entropia minima: 685797, Accuracy massima: 76.46, C: 6, r: 1.1, epoch time: 61.14s
+Accuracy is too low! (D), PID: 1412359, Epoch: 11, Entropia minima: 685705, Accuracy massima: 71.26, C: 6, r: 1.1, epoch time: 59.28s
+Accuracy is too low! (D), PID: 1412384, Epoch: 11, Entropia minima: 685686, Accuracy massima: 71.48, C: 6, r: 1.1, epoch time: 59.25s
+Accuracy is too low! (D), PID: 1412404, Epoch: 11, Entropia minima: 685711, Accuracy massima: 70.84, C: 6, r: 1.1, epoch time: 59.81s
+Accuracy is too low! (D), PID: 1412379, Epoch: 11, Entropia minima: 685759, Accuracy massima: 71.48, C: 6, r: 1.1, epoch time: 59.82s
+Accuracy is too low! (D), PID: 1412394, Epoch: 11, Entropia minima: 685731, Accuracy massima: 72.69, C: 6, r: 1.1, epoch time: 59.40s
+Accuracy is too low! (D), PID: 1412409, Epoch: 11, Entropia minima: 685685, Accuracy massima: 75.92, C: 6, r: 1.1, epoch time: 60.47s
+Accuracy is too low! (D), PID: 1412374, Epoch: 11, Entropia minima: 685807, Accuracy massima: 74.97, C: 6, r: 1.1, epoch time: 61.06s
+Accuracy is too low! (D), PID: 1412399, Epoch: 11, Entropia minima: 685797, Accuracy massima: 76.46, C: 6, r: 1.1, epoch time: 61.14s
