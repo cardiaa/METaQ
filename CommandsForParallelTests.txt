@@ -1,33 +1,59 @@
 COMMANDS ZSH
 
+COMANDI ZSH
+
 -----------------------------------------------------------------
-for i in $(seq 0 10); do
+for i in $(seq 0 31); do
   core_list=""
   for j in $(seq 0 5); do
-    core=$((i * 6 + j + 96))
+    core=$((i * 6 + j + 96))  # Assegna i core a partire da 96
     if [ $core -ge 192 ]; then
-      core=$((core + 96))
+      core=$((core + 96))  # Se il core è oltre 191, vanno nei core da 288 in poi
     fi
     core_list="$core_list,$core"
   done
-  core_list=${core_list#,}
-  delta=$(echo "scale=1; $i * 0.1" | bc)
-  taskset -c $core_list python3 train.py --delta $delta &
+  core_list=${core_list#,}  # Rimuove la virgola iniziale
+  taskset -c $core_list python3 train.py --r $(echo "1.100 + $i * 0.001" | bc) &
 done
 -----------------------------------------------------------------
-nohup bash -c 'for i in $(seq 0 10); do
-  core_list=""
-  for j in $(seq 0 5); do
-    core=$((i * 6 + j + 96))
-    if [ $core -ge 192 ]; then
-      core=$((core + 96))
-    fi
-    core_list="$core_list,$core"
+nohup bash -c '
+max_jobs=32
+total_jobs=1000
+
+# Genera una lista di gruppi di core (blocchi da 6)
+core_groups=()
+for ((i=96; i<=191; i+=6)); do
+  group=""
+  for ((j=0; j<6; j++)); do
+    group+="$((i+j)),"
   done
-  core_list=${core_list#,}
+  core_groups+=("${group%,}")
+done
+
+for ((i=288; i<=383; i+=6)); do
+  group=""
+  for ((j=0; j<6; j++)); do
+    group+="$((i+j)),"
+  done
+  core_groups+=("${group%,}")
+done
+
+# Lancia i job
+for i in $(seq 1 $total_jobs); do
   delta=$(echo "scale=1; $i * 0.1" | bc)
+
+  group_index=$(( (i - 1) % ${#core_groups[@]} ))
+  core_list=${core_groups[$group_index]}
+
   taskset -c $core_list python3 train.py --delta $delta &
-done; wait' > output.log 2>&1 &
+
+  while [ "$(jobs -rp | wc -l)" -ge $max_jobs ]; do
+    wait -n
+  done
+done
+
+wait
+' > output.log 2>&1 &
 -----------------------------------------------------------------
-pkill -f train.py
+for pid in $(pgrep python); do taskset -c -p $pid; done
 -----------------------------------------------------------------
