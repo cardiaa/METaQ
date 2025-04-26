@@ -1,7 +1,5 @@
 COMMANDS ZSH
 
-COMANDI ZSH
-
 -----------------------------------------------------------------
 for i in $(seq 0 31); do
   core_list=""
