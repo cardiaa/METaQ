@@ -42,7 +42,7 @@ if __name__ == "__main__":
     testloader = torch.utils.data.DataLoader(testset, batch_size=1000, shuffle=False, num_workers=0)
 
     # Define fixed hyperparameters for the model and training process
-    C = 6  
+    C = 128  
     lr = 0.0007  
     lambda_reg = 0.0015 
     alpha = 0.533  
@@ -57,8 +57,6 @@ if __name__ == "__main__":
     device = torch.device("cpu")  
     train_optimizer = "A"  
     entropy_optimizer = "F"  
-
-    print(f"Starting training with delta = {args.delta}")
     
     train_and_evaluate(
         C=C, lr=lr, lambda_reg=lambda_reg, alpha=alpha,

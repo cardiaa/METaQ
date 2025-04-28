@@ -146,9 +146,9 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
         # ... ADD OTHER EXIT CONDITIONS IF NECESSARY...      
         
         training_time = time.time() - start_time
-        print(f"PID: {os.getpid()}, Epoch: {epoch}, delta: {delta}, Min Entropy: {min(entropies)}, Current Entropy: {entropies[-1]}"
-              f"Max Accuracy: {max(accuracies)}, Current Accuracy: {accuracies[-1]}, C: {C}" 
-              "epoch time: {training_time:.2f}s", flush=True)
+        print(f"delta: {delta}, Epoch: {epoch}, Current Entropy: {entropies[-1]}, Current Accuracy: {accuracies[-1]} "
+              f"Min Entropy: {min(entropies)}, Max Accuracy: {max(accuracies)}, C: {C} " 
+              f"epoch time: {training_time:.2f}s", flush=True)
         print("-"*60)
 
     return accuracy, entropy, target_acc, target_entr
