@@ -118,8 +118,8 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
         
         # Saving a better model
         if(accuracy >= target_acc and entropy <= target_entr):
-            print("💥💥💥💥💥💥💥\n💥ATTENTION!💥\n💥💥💥💥💥💥💥", flush=True)
-            torch.save(model.state_dict(), f"BestModelsBeforeQuantization/C{C}_r{round(r*1000)}.pth")
+            print("💥💥💥💥💥💥💥\n💥BEST MODEL FOUND!💥\n💥💥💥💥💥💥💥", flush=True)
+            torch.save(model.state_dict(), f"BestModelsBeforeQuantization/C{C}_delta{delta}.pth")
             target_acc = accuracy
             target_entr = entropy
         
@@ -146,8 +146,8 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
         # ... ADD OTHER EXIT CONDITIONS IF NECESSARY...      
         
         training_time = time.time() - start_time
-        print(f"delta: {delta}, Epoch: {epoch}, Current Entropy: {entropies[-1]}, Current Accuracy: {accuracies[-1]} "
-              f"Min Entropy: {min(entropies)}, Max Accuracy: {max(accuracies)}, C: {C} " 
+        print(f"delta: {delta}, Epoch: {epoch}, Current Entropy: {entropies[-1]}, Current Accuracy: {accuracies[-1]}, "
+              f"Min Entropy: {min(entropies)}, Max Accuracy: {max(accuracies)}, C: {C}, " 
               f"epoch time: {training_time:.2f}s", flush=True)
         print("-"*60)
 
