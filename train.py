@@ -42,7 +42,7 @@ if __name__ == "__main__":
     testloader = torch.utils.data.DataLoader(testset, batch_size=1000, shuffle=False, num_workers=0)
 
     # Define fixed hyperparameters for the model and training process
-    C = 128  
+    C = 6  
     lr = 0.0007  
     lambda_reg = 0.0015 
     alpha = 0.533  
