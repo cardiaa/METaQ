@@ -57,6 +57,7 @@ if __name__ == "__main__":
     device = torch.device("cpu")  
     train_optimizer = "A"  
     entropy_optimizer = "F"  
+    delta = 0
     
     train_and_evaluate(
         C=C, lr=lr, lambda_reg=lambda_reg, alpha=alpha,
@@ -65,6 +66,6 @@ if __name__ == "__main__":
         min_xi=min_xi, max_xi=max_xi, n_epochs=n_epochs,
         device=device, train_optimizer=train_optimizer,
         entropy_optimizer=entropy_optimizer,
-        trainloader=trainloader, testloader=testloader
-        #delta=args.delta  
+        trainloader=trainloader, testloader=testloader,
+        delta=delta  
     )
