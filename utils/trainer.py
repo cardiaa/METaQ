@@ -121,8 +121,6 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
         # Saving a better model
         if(entropies[-1] <= target_entr):
             print("💥💥💥💥💥💥💥\n💥💥💥ATTENTION! ACCURACY BELOW THRESHOLD!💥💥💥\n💥💥💥💥💥💥💥", flush=True)
-            target_acc = accuracies[-1]
-            target_entr = entropies[-1]
             c1=10
             c2=1000
             QuantAcc = []
@@ -186,6 +184,7 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
                 if(QuantAcc[sorted_indices[-i]] > target_acc):
                     torch.save(model.state_dict(), f"BestModelsBeforeQuantization/TestMay2025_C{C}_r{r}.pth")
                     target_acc = QuantAcc[sorted_indices[-i]]
+                    target_entr = QuantEntr[sorted_indices[-i]]
         
         # Entropy exit conditions
         if(epoch > 15 and entropies[-1] > 600000):
