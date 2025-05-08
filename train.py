@@ -50,7 +50,7 @@ if __name__ == "__main__":
     w0 = -0.11  
     #r = 1.1  
     target_acc = 98.99  
-    target_entr = 0.99602e6  
+    target_entr = 0.99602e5  
     min_xi = 0  
     max_xi = 1  
     n_epochs = 100  
