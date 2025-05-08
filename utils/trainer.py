@@ -4,14 +4,16 @@ import numpy as np
 import os
 import torch.nn as nn
 import torch.optim as optim
+import copy
+import struct
 from torch.optim import Adam, SGD
 from torch.utils.data import DataLoader
 from torchvision import datasets, transforms
 from utils.networks import LeNet5
-from utils.quantize_and_compress import compute_entropy
+from utils.quantize_and_compress import compute_entropy, quantize_weights_center
 from utils.optimization import FISTA, ProximalBM
 from utils.weight_utils import initialize_weights
-
+from utils.quantize_and_compress import compare_lists, compress_zstd, decompress_zstd
 
 def test_accuracy(model, dataloader, device):
     """
@@ -117,31 +119,92 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
         accuracies.append(accuracy)
         
         # Saving a better model
-        if(accuracy >= target_acc and entropy <= target_entr):
-            print("💥💥💥💥💥💥💥\n💥BEST MODEL FOUND!💥\n💥💥💥💥💥💥💥", flush=True)
-            torch.save(model.state_dict(), f"BestModelsBeforeQuantization/C{C}_delta{delta}.pth")
-            target_acc = accuracy
-            target_entr = entropy
+        if(entropies[-1] <= target_entr):
+            print("💥💥💥💥💥💥💥\n💥💥💥ATTENTION! ACCURACY BELOW THRESHOLD!💥💥💥\n💥💥💥💥💥💥💥", flush=True)
+            torch.save(model.state_dict(), f"BestModelsBeforeQuantization/TestMay2025_C{C}_r{r}.pth")
+            target_acc = accuracies[-1]
+            target_entr = entropies[-1]
+            c1=10
+            c2=1000
+            QuantAcc = []
+            QuantEntr = []
+            # Test quantization in C in [10, 1000] buckets
+            for C in range(c1, c2 + 1):
+                # Compute central values of the buckets
+                v_centers = (v[:-1] + v[1:]) / 2
+                v_centers = torch.cat([v_centers, v[-1:]])  # Add final value to handle the last bucket
+                # Quantize weights using central values
+                w_quantized = quantize_weights_center(w, v, v_centers)
+                model_quantized = copy.deepcopy(model).to(device)
+                # Replace quantized weights in the quantized model
+                start_idx = 0
+                for param in model_quantized.parameters():
+                    numel = param.data.numel()
+                    param.data = w_quantized[start_idx:start_idx + numel].view(param.data.size())
+                    start_idx += numel
+                # Evaluate quantized model
+                model_quantized.eval()
+                num_unique_weights_quantized = torch.unique(w_quantized).numel()
+                quantized_accuracy = test_accuracy(model_quantized, testloader, device)
+                # Compute entropy of the quantized string
+                encoded_list = [float(elem) if float(elem) != -0.0 else 0.0 for elem in w_quantized]
+                quantized_entropy = round(compute_entropy(encoded_list)) + 1
+                QuantAcc.append(quantized_accuracy)
+                QuantEntr.append(quantized_entropy)
+            # Print results for the best 10 models
+            sorted_indices = np.argsort(QuantAcc)
+            for i in range(1, 10):
+                print(f"💥💥💥r={r}, Quantization at C={sorted_indices[-i] + c1}, Accuracy:{QuantAcc[sorted_indices[-i]]}, Entropy:{QuantEntr[sorted_indices[-i]]}💥💥💥")
+                C = sorted_indices[-i] + c1
+                v = torch.linspace(min_w, max_w - (max_w - min_w)/C, steps=C)
+                v_centers = (v[:-1] + v[1:]) / 2
+                v_centers = torch.cat([v_centers, v[-1:]])
+                model_quantized = copy.deepcopy(model).to(device)
+                # Extract model weights
+                w_saved = torch.cat([param.data.view(-1) for param in model_quantized.parameters()])
+                # Quantize weights using central values
+                w_quantized = quantize_weights_center(w_saved, v, v_centers)
+                encoded_list = [float(elem) if float(elem) != -0.0 else 0.0 for elem in w_quantized]
+                # Converts float list in byte
+                input_bytes = b''.join(struct.pack('f', num) for num in encoded_list)
+                # Compression
+                zstd_compressed = compress_zstd(input_bytes)
+                # Decompression
+                zstd_decompressed = decompress_zstd(zstd_compressed)
+                # Verifies
+                if compare_lists(encoded_list, zstd_decompressed):
+                    print("💥💥💥ENCODING SUCCESSFUL!💥💥💥")
+                else:
+                    print(f"💥💥💥Encoding error! Decoded💥💥💥")
+                # Calculates dimensions
+                original_size_bits = len(input_bytes) * 8
+                zstd_size = len(zstd_compressed) * 8
+                # Compression ratio
+                zstd_ratio = zstd_size / original_size_bits
+                # Output delle dimensioni e del rapporto di compressione
+                print(f"💥💥💥Original dimension: {original_size_bits} bits💥💥💥")
+                print(f"💥💥💥Zstd-22 compressed dimension: {zstd_size} bits (Compression Ratio: {zstd_ratio:.2%})💥💥💥")
+
         
         # Entropy exit conditions
-        if(epoch > 20 and entropy > 600000):
+        if(epoch > 15 and entropies[-1] > 600000):
             print(f"Entropy is not decreasing enough! (A), PID: {os.getpid()}, Epoch: {epoch}, Entropia minima: {min(entropies)}, Accuracy massima: {max(accuracies)}, C: {C}, r: {r}, epoch time: {training_time:.2f}s", flush=True)
-            return accuracy, entropy, target_acc, target_entr
+            return accuracies[-1], entropies[-1], target_acc, target_entr
         
-        if(epoch > 50):
-            if(entropies[-1] > 200000 and entropies[-2] > 200000 and entropies[-3] > 200000 and entropies[-4] > 200000):
+        if(epoch > 40):
+            if(entropies[-1] > 150000 and entropies[-2] > 150000 and entropies[-3] > 150000 and entropies[-4] > 150000):
                 print(f"Entropy is not decreasing enough! (B), PID: {os.getpid()}, Epoch: {epoch}, Entropia minima: {min(entropies)}, Accuracy massima: {max(accuracies)}, C: {C}, r: {r}, epoch time: {training_time:.2f}s", flush=True)
-                return accuracy, entropy, target_acc, target_entr           
+                return accuracies[-1], entropies[-1], target_acc, target_entr           
             
         # Accuracy exit condition
         if(epoch == 1 and accuracies[-1] < 70):
             print(f"Accuracy is too low! (C), PID: {os.getpid()}, Epoch: {epoch}, Entropia minima: {min(entropies)}, Accuracy massima: {max(accuracies)}, C: {C}, r: {r}, epoch time: {training_time:.2f}s", flush=True)
-            return accuracy, entropy, target_acc, target_entr  
+            return accuracies[-1], entropies[-1], target_acc, target_entr  
                           
         if(epoch > 10):
             if(accuracies[-1] < 90 and accuracies[-2] < 90 and accuracies[-3] < 90 and accuracies[-4] < 90):
                 print(f"Accuracy is too low! (D), PID: {os.getpid()}, Epoch: {epoch}, Entropia minima: {min(entropies)}, Accuracy massima: {max(accuracies)}, C: {C}, r: {r}, epoch time: {training_time:.2f}s", flush=True)
-                return accuracy, entropy, target_acc, target_entr     
+                return accuracies[-1], entropies[-1], target_acc, target_entr     
         
         # ... ADD OTHER EXIT CONDITIONS IF NECESSARY...      
         
@@ -151,4 +214,4 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
               f"epoch time: {training_time:.2f}s", flush=True)
         print("-"*60)
 
-    return accuracy, entropy, target_acc, target_entr
+    return accuracies[-1], entropies[-1], target_acc, target_entr
