@@ -15,8 +15,6 @@ from utils.quantize_and_compress import encode_arithmetic, encode_arithmetic_tex
 from utils.quantize_and_compress import compare_lists, compress_gzip, compress_zstd, decompress_gzip, decompress_zstd
 from utils.networks import json_to_model  
 
-
-
 # Main entry point of the script
 if __name__ == "__main__":
     # Initialize the computing device: use GPU if available, otherwise use CPU
@@ -83,8 +81,8 @@ if __name__ == "__main__":
     entropy = round(compute_entropy(encoded_list)) + 1
     print(f"Model entropy: {entropy} bits\n")
 
-    l1 = []
-    l2 = []
+    QuantAcc = []
+    QuantEntr = []
 
     print("Select a range [c1, c2] for C (pay attention: the range must contain at least 10 values for C).")
     c1 = int(input("c1: "))
@@ -123,14 +121,15 @@ if __name__ == "__main__":
         encoded_list = [float(elem) if float(elem) != -0.0 else 0.0 for elem in w_quantized]
         entropy = round(compute_entropy(encoded_list)) + 1
         
-        l1.append(quantized_accuracy)
-        l2.append(entropy)
+        QuantAcc.append(quantized_accuracy)
+        QuantEntr.append(entropy)
         
         print(f"C = {C} analyzed")
         
-    sorted_indices = np.argsort(l1)
+    # Print results for the best 10 models
+    sorted_indices = np.argsort(QuantAcc)
     for i in range(1, 10):
-        print(f"Quantization at C={sorted_indices[-i] + c1}, Accuracy:{l1[sorted_indices[-i]]}, Entropy:{l2[sorted_indices[-i]]}")
+        print(f"Quantization at C={sorted_indices[-i] + c1}, Accuracy:{QuantAcc[sorted_indices[-i]]}, Entropy:{QuantEntr[sorted_indices[-i]]}")
 
     C = int(input("\nSelect the size of quantization.\nC: "))
 
