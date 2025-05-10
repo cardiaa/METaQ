@@ -120,7 +120,8 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
         
         # Saving a better model
         if(entropies[-1] <= target_entr):
-            print("💥💥💥💥💥💥💥\n💥💥💥ATTENTION! ACCURACY BELOW THRESHOLD!💥💥💥\n💥💥💥💥💥💥💥", flush=True)
+            print(f"💥💥💥💥💥💥💥 r={r}, CurrentAccuracy={accuracies[-1]}, CurrentEntropy={entropies[-1]}", flush=True)
+            print("💥💥💥ATTENTION! ACCURACY BELOW THRESHOLD!💥💥💥\n💥💥💥💥💥💥💥", flush=True)
             c1=10
             c2=1000
             QuantAcc = []
@@ -128,6 +129,7 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
             # Test quantization in C in [10, 1000] buckets
             for C in range(c1, c2 + 1):
                 # Compute central values of the buckets
+                v = torch.linspace(min_w, max_w - (max_w - min_w)/C, steps=C)
                 v_centers = (v[:-1] + v[1:]) / 2
                 v_centers = torch.cat([v_centers, v[-1:]])  # Add final value to handle the last bucket
                 # Quantize weights using central values
@@ -181,6 +183,7 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
                 # Output delle dimensioni e del rapporto di compressione
                 print(f"💥💥💥Original dimension: {original_size_bits} bits💥💥💥")
                 print(f"💥💥💥Zstd-22 compressed dimension: {zstd_size} bits (Compression Ratio: {zstd_ratio:.2%})💥💥💥")
+                print("💥💥💥----------------------------------💥💥💥")
                 if(QuantAcc[sorted_indices[-i]] > target_acc):
                     torch.save(model.state_dict(), f"BestModelsBeforeQuantization/TestMay2025_C{C}_r{r}.pth")
                     target_acc = QuantAcc[sorted_indices[-i]]
