@@ -53,7 +53,7 @@ if __name__ == "__main__":
     target_entr = 0.99602e5  
     min_xi = 0  
     max_xi = 1  
-    n_epochs = 100  
+    n_epochs = 1000  
     device = torch.device("cpu")  
     train_optimizer = "A"  
     entropy_optimizer = "F"  
