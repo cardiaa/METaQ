@@ -127,13 +127,13 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
             QuantAcc = []
             QuantEntr = []
             # Test quantization in C in [10, 1000] buckets
-            for C in range(c1, c2 + 1):
+            for C_tmp in range(c1, c2 + 1):
                 # Compute central values of the buckets
-                v = torch.linspace(min_w, max_w - (max_w - min_w)/C, steps=C)
-                v_centers = (v[:-1] + v[1:]) / 2
-                v_centers = torch.cat([v_centers, v[-1:]])  # Add final value to handle the last bucket
+                v_tmp = torch.linspace(min_w, max_w - (max_w - min_w)/C_tmp, steps=C_tmp)
+                v_centers = (v_tmp[:-1] + v_tmp[1:]) / 2
+                v_centers = torch.cat([v_centers, v_tmp[-1:]])  # Add final value to handle the last bucket
                 # Quantize weights using central values
-                w_quantized = quantize_weights_center(w, v, v_centers)
+                w_quantized = quantize_weights_center(w, v_tmp, v_centers)
                 model_quantized = copy.deepcopy(model).to(device)
                 # Replace quantized weights in the quantized model
                 start_idx = 0
@@ -154,15 +154,15 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
             sorted_indices = np.argsort(QuantAcc)
             for i in range(1, 10):
                 print(f"💥💥💥r={r}, Quantization at C={sorted_indices[-i] + c1}, Accuracy:{QuantAcc[sorted_indices[-i]]}, Entropy:{QuantEntr[sorted_indices[-i]]}💥💥💥")
-                C = sorted_indices[-i] + c1
-                v = torch.linspace(min_w, max_w - (max_w - min_w)/C, steps=C)
-                v_centers = (v[:-1] + v[1:]) / 2
-                v_centers = torch.cat([v_centers, v[-1:]])
+                C_tmp = sorted_indices[-i] + c1
+                v_tmp = torch.linspace(min_w, max_w - (max_w - min_w)/C, steps=C)
+                v_centers = (v_tmp[:-1] + v_tmp[1:]) / 2
+                v_centers = torch.cat([v_centers, v_tmp[-1:]])
                 model_quantized = copy.deepcopy(model).to(device)
                 # Extract model weights
                 w_saved = torch.cat([param.data.view(-1) for param in model_quantized.parameters()])
                 # Quantize weights using central values
-                w_quantized = quantize_weights_center(w_saved, v, v_centers)
+                w_quantized = quantize_weights_center(w_saved, v_tmp, v_centers)
                 encoded_list = [float(elem) if float(elem) != -0.0 else 0.0 for elem in w_quantized]
                 # Converts float list in byte
                 input_bytes = b''.join(struct.pack('f', num) for num in encoded_list)
