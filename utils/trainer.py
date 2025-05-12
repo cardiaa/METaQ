@@ -155,7 +155,7 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
             for i in range(1, 10):
                 print(f"💥💥💥r={r}, Quantization at C={sorted_indices[-i] + c1}, Accuracy:{QuantAcc[sorted_indices[-i]]}, Entropy:{QuantEntr[sorted_indices[-i]]}💥💥💥")
                 C_tmp = sorted_indices[-i] + c1
-                v_tmp = torch.linspace(min_w, max_w - (max_w - min_w)/C, steps=C)
+                v_tmp = torch.linspace(min_w, max_w - (max_w - min_w)/C_tmp, steps=C_tmp)
                 v_centers = (v_tmp[:-1] + v_tmp[1:]) / 2
                 v_centers = torch.cat([v_centers, v_tmp[-1:]])
                 model_quantized = copy.deepcopy(model).to(device)
