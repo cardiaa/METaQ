@@ -153,7 +153,7 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
             # Print results for the best 10 models
             sorted_indices = np.argsort(QuantAcc)
             for i in range(1, 10):
-                print(f"💥💥💥r={r}, Quantization at C={sorted_indices[-i] + c1}, Accuracy:{QuantAcc[sorted_indices[-i]]}, Entropy:{QuantEntr[sorted_indices[-i]]}💥💥💥")
+                print(f"💥💥💥r={r}, Quantization at C={sorted_indices[-i] + c1}, Accuracy: from {accuracy} to {QuantAcc[sorted_indices[-i]]}, Entropy: from {entropy} to {QuantEntr[sorted_indices[-i]]}💥💥💥")
                 C_tmp = sorted_indices[-i] + c1
                 v_tmp = torch.linspace(min_w, max_w - (max_w - min_w)/C_tmp, steps=C_tmp)
                 v_centers = (v_tmp[:-1] + v_tmp[1:]) / 2
@@ -183,7 +183,7 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
                 # Output delle dimensioni e del rapporto di compressione
                 print(f"💥💥💥Original dimension: {original_size_bits} bits💥💥💥")
                 print(f"💥💥💥Zstd-22 compressed dimension: {zstd_size} bits (Compression Ratio: {zstd_ratio:.2%})💥💥💥")
-                print("💥💥💥----------------------------------💥💥💥")
+                print("---------------------------------------------------------------------------")
                 if(QuantAcc[sorted_indices[-i]] > target_acc):
                     torch.save(model.state_dict(), f"BestModelsBeforeQuantization/TestMay2025_C{C}_r{r}.pth")
                     target_acc = QuantAcc[sorted_indices[-i]]
