@@ -120,8 +120,6 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
         
         # Saving a better model
         if(entropies[-1] <= target_entr):
-            print(f"💥💥💥💥💥💥💥 r={r}, CurrentAccuracy={accuracies[-1]}, CurrentEntropy={entropies[-1]}", flush=True)
-            print("💥💥💥ATTENTION! ACCURACY BELOW THRESHOLD!💥💥💥\n💥💥💥💥💥💥💥", flush=True)
             c1=10
             c2=1000
             QuantAcc = []
@@ -153,7 +151,6 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
             # Print results for the best 10 models
             sorted_indices = np.argsort(QuantAcc)
             for i in range(1, 10):
-                print(f"💥💥💥r={r}, Quantization at C={sorted_indices[-i] + c1}, Accuracy: from {accuracy} to {QuantAcc[sorted_indices[-i]]}, Entropy: from {entropy} to {QuantEntr[sorted_indices[-i]]}💥💥💥")
                 C_tmp = sorted_indices[-i] + c1
                 v_tmp = torch.linspace(min_w, max_w - (max_w - min_w)/C_tmp, steps=C_tmp)
                 v_centers = (v_tmp[:-1] + v_tmp[1:]) / 2
@@ -171,23 +168,26 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
                 # Decompression
                 zstd_decompressed = decompress_zstd(zstd_compressed)
                 # Verifies
-                if compare_lists(encoded_list, zstd_decompressed):
-                    print("💥💥💥ENCODING SUCCESSFUL!💥💥💥")
-                else:
-                    print(f"💥💥💥Encoding error! Decoded💥💥💥")
+                if not compare_lists(encoded_list, zstd_decompressed):
+                    print(f"💥💥💥Encoding error! Decoded💥💥💥")                    
                 # Calculates dimensions
                 original_size_bits = len(input_bytes) * 8
                 zstd_size = len(zstd_compressed) * 8
                 # Compression ratio
                 zstd_ratio = zstd_size / original_size_bits
                 # Output delle dimensioni e del rapporto di compressione
-                print(f"💥💥💥Original dimension: {original_size_bits} bits💥💥💥")
-                print(f"💥💥💥Zstd-22 compressed dimension: {zstd_size} bits (Compression Ratio: {zstd_ratio:.2%})💥💥💥")
-                print("---------------------------------------------------------------------------")
                 if(QuantAcc[sorted_indices[-i]] > target_acc):
                     torch.save(model.state_dict(), f"BestModelsBeforeQuantization/TestMay2025_C{C}_r{r}_epoch{epoch}.pth")
-                    print("✅"*60)
-                    
+                    print("💥"*80)
+                    print("💥"*80)
+                    print("💥"*80)
+                    print(f"💥💥💥 r={r}, Quantization at C={sorted_indices[-i] + c1}, Accuracy: from {accuracy} to {QuantAcc[sorted_indices[-i]]}, Entropy: from {entropy} to {QuantEntr[sorted_indices[-i]]} 💥💥💥")
+                    print(f"💥💥💥 r={r}, CurrentAccuracy={accuracies[-1]}, CurrentEntropy={entropies[-1]} 💥💥💥", flush=True)
+                    print(f"💥💥💥 Original dimension: {original_size_bits} bits 💥💥💥")
+                    print(f"💥💥💥 Zstd-22 compressed dimension: {zstd_size} bits (Compression Ratio: {zstd_ratio:.2%}) 💥💥💥")
+                    print("💥"*80)
+                    print("💥"*80)
+                    print("💥"*80)
         
         # Entropy exit conditions
         if(epoch > 15 and entropies[-1] > 600000):
