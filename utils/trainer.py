@@ -185,9 +185,9 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
                 print(f"💥💥💥Zstd-22 compressed dimension: {zstd_size} bits (Compression Ratio: {zstd_ratio:.2%})💥💥💥")
                 print("---------------------------------------------------------------------------")
                 if(QuantAcc[sorted_indices[-i]] > target_acc):
-                    torch.save(model.state_dict(), f"BestModelsBeforeQuantization/TestMay2025_C{C}_r{r}.pth")
-                    target_acc = QuantAcc[sorted_indices[-i]]
-                    target_entr = QuantEntr[sorted_indices[-i]]
+                    torch.save(model.state_dict(), f"BestModelsBeforeQuantization/TestMay2025_C{C}_r{r}_epoch{epoch}.pth")
+                    print("✅"*60)
+                    
         
         # Entropy exit conditions
         if(epoch > 15 and entropies[-1] > 600000):
