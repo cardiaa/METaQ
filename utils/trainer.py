@@ -176,18 +176,18 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
                 # Compression ratio
                 zstd_ratio = zstd_size / original_size_bits
                 # Output delle dimensioni e del rapporto di compressione
-                if(QuantAcc[sorted_indices[-i]] > target_acc):
-                    torch.save(model.state_dict(), f"BestModelsBeforeQuantization/TestMay2025_C{C}_r{r}_epoch{epoch}.pth")
-                    print("💥"*80)
-                    print("💥"*80)
-                    print("💥"*80)
+                if(QuantAcc[sorted_indices[-i]] >= target_acc and zstd_ratio <= 0.0343):
+                    torch.save(model.state_dict(), f"BestModelsMay2025/Test2May2025_C{C}_r{r}_epoch{epoch}.pth")
+                    print("💥"*50)
+                    print("💥"*50)
+                    print("💥"*50)
                     print(f"💥💥💥 r={r}, Quantization at C={sorted_indices[-i] + c1}, Accuracy: from {accuracy} to {QuantAcc[sorted_indices[-i]]}, Entropy: from {entropy} to {QuantEntr[sorted_indices[-i]]} 💥💥💥")
-                    print(f"💥💥💥 r={r}, CurrentAccuracy={accuracies[-1]}, CurrentEntropy={entropies[-1]} 💥💥💥", flush=True)
+                    print(f"💥💥💥 epoch={epoch}, CurrentAccuracy={accuracies[-1]}, CurrentEntropy={entropies[-1]} 💥💥💥", flush=True)
                     print(f"💥💥💥 Original dimension: {original_size_bits} bits 💥💥💥")
                     print(f"💥💥💥 Zstd-22 compressed dimension: {zstd_size} bits (Compression Ratio: {zstd_ratio:.2%}) 💥💥💥")
-                    print("💥"*80)
-                    print("💥"*80)
-                    print("💥"*80)
+                    print("💥"*50)
+                    print("💥"*50)
+                    print("💥"*50)
         
         # Entropy exit conditions
         if(epoch > 15 and entropies[-1] > 600000):
@@ -195,7 +195,7 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
             return accuracies[-1], entropies[-1], target_acc, target_entr
         
         if(epoch > 40):
-            if(entropies[-1] > 150000 and entropies[-2] > 150000 and entropies[-3] > 150000 and entropies[-4] > 150000):
+            if(entropies[-1] > 120000 and entropies[-2] > 120000 and entropies[-3] > 120000 and entropies[-4] > 120000):
                 print(f"Entropy is not decreasing enough! (B), PID: {os.getpid()}, Epoch: {epoch}, Entropia minima: {min(entropies)}, Accuracy massima: {max(accuracies)}, C: {C}, r: {r}, epoch time: {training_time:.2f}s", flush=True)
                 return accuracies[-1], entropies[-1], target_acc, target_entr           
             

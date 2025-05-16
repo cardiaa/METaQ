@@ -49,8 +49,8 @@ if __name__ == "__main__":
     subgradient_step = 1e5 
     w0 = -0.11  
     #r = 1.1  
-    target_acc = 98.99  
-    target_entr = 0.99602e5  
+    target_acc = 99.00  
+    target_entr = 1.2e5  
     min_xi = 0  
     max_xi = 1  
     n_epochs = 1000  
