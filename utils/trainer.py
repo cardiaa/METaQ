@@ -34,8 +34,8 @@ def test_accuracy(model, dataloader, device):
 
 def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
                         target_acc, target_entr, min_xi, max_xi, n_epochs,
-                        device, train_optimizer, entropy_optimizer, 
-                        trainloader, testloader, delta):
+                        max_iterations, device, train_optimizer, entropy_optimizer, 
+                        trainloader, testloader, delta, pruning):
     
     torch.set_num_threads(1)
 
@@ -90,11 +90,11 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
             zeta *= 1 + l
             l = l / 1.5
             if(entropy_optimizer == 'F'):
-                #xi, beta_tensor, x_star, phi = FISTA(xi, v, w_quantized, C, subgradient_step, max_iterations=15) # Alternative version
-                xi, beta_tensor, x_star, phi = FISTA(xi, v, w, C, delta, subgradient_step, device, max_iterations=15) 
+                #xi, beta_tensor, x_star, phi = FISTA(xi, v, w_quantized, C, subgradient_step, max_iterations, pruning) # Alternative version
+                xi, beta_tensor, x_star, phi = FISTA(xi, v, w, C, delta, subgradient_step, device, max_iterations, pruning) 
             elif(entropy_optimizer == 'PM'):
-                #xi, beta_tensor, x_star, phi = ProximalBM(xi, v, w_quantized, C, zeta, subgradient_step, max_iterations=15) # Alternative version
-                xi, beta_tensor, x_star, phi = ProximalBM(xi, v, w, C, delta, zeta, subgradient_step, device, max_iterations=15)       
+                #xi, beta_tensor, x_star, phi = ProximalBM(xi, v, w_quantized, C, zeta, subgradient_step, max_iterations, pruning) # Alternative version
+                xi, beta_tensor, x_star, phi = ProximalBM(xi, v, w, C, delta, zeta, subgradient_step, device, max_iterations, pruning)       
             
             # Update of ∇ɸ
             idx = 0
@@ -183,7 +183,7 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
                     print("💥"*50)
                     print(f"💥💥💥 r={r}, Quantization at C={sorted_indices[-i] + c1}, Accuracy: from {accuracy} to {QuantAcc[sorted_indices[-i]]}, Entropy: from {entropy} to {QuantEntr[sorted_indices[-i]]} 💥💥💥")
                     print(f"💥💥💥 epoch={epoch}, CurrentAccuracy={accuracies[-1]}, CurrentEntropy={entropies[-1]} 💥💥💥", flush=True)
-                    print(f"💥💥💥 Original dimension: {original_size_bits} bits 💥💥💥")
+                    print(f"💥💥💥 pruning={pruning}, Original dimension: {original_size_bits} bits 💥💥💥")
                     print(f"💥💥💥 Zstd-22 compressed dimension: {zstd_size} bits (Compression Ratio: {zstd_ratio:.2%}) 💥💥💥")
                     print("💥"*50)
                     print("💥"*50)
@@ -213,8 +213,8 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
         
         training_time = time.time() - start_time
         print(f"r: {r}, Epoch: {epoch}, Current Entropy: {entropies[-1]}, Current Accuracy: {accuracies[-1]}, "
-              f"Min Entropy: {min(entropies)}, Max Accuracy: {max(accuracies)}, C: {C}, " 
-              f"epoch time: {training_time:.2f}s", flush=True)
+              f"Min Entropy: {min(entropies)}, Max Accuracy: {max(accuracies)}, C: {C}, pruning: {pruning}, " 
+              f"delta: {delta}, epoch time: {training_time:.2f}s", flush=True)
         print("-"*60)
 
     return accuracies[-1], entropies[-1], target_acc, target_entr

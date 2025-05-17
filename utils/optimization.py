@@ -3,7 +3,7 @@ from torch.linalg import norm
 from .knapsack import knapsack_specialized  
 from .knapsack import knapsack_specialized_pruning
 
-def FISTA(xi, v, w, C, delta, subgradient_step, device, max_iterations):
+def FISTA(xi, v, w, C, delta, subgradient_step, device, max_iterations, pruning):
     """
     Implements the Fast Iterative Shrinking-Thresholding Algorithm (FISTA) 
     for optimizing a constrained objective function.
@@ -29,8 +29,11 @@ def FISTA(xi, v, w, C, delta, subgradient_step, device, max_iterations):
 
     for iteration in range(1, max_iterations + 1):
         # Solve the simil-knapsack problem for the current xi
-        #x_i_star, lambda_plus, phi_plus = knapsack_specialized_pruning(xi, v, w, C, delta, device)
-        x_i_star, lambda_plus, phi_plus = knapsack_specialized(xi, v, w, C, device)
+        if(pruning == "Y"):
+            x_i_star, lambda_plus, phi_plus = knapsack_specialized_pruning(xi, v, w, C, device, delta)
+        elif(pruning == "N"):
+            x_i_star, lambda_plus, phi_plus = knapsack_specialized(xi, v, w, C, device)
+
         sum_x_star = torch.sum(x_i_star, dim=0)
 
         # Compute the optimal c values c_star
@@ -64,7 +67,7 @@ def FISTA(xi, v, w, C, delta, subgradient_step, device, max_iterations):
     return xi, lambda_plus, x_i_star, phi
 
 
-def ProximalBM(xi, v, w, C, delta, zeta, subgradient_step, device, max_iterations):
+def ProximalBM(xi, v, w, C, delta, zeta, subgradient_step, device, max_iterations, pruning):
     """
     Implements the Proximal Bundle Method (PBM) for solving constrained 
     optimization problems using bundle techniques.
@@ -92,7 +95,11 @@ def ProximalBM(xi, v, w, C, delta, zeta, subgradient_step, device, max_iteration
 
     for iteration in range(1, max_iterations + 1):
         # Solve the knapsack problem for the current xi
-        x_i_star, lambda_plus, phi_plus = knapsack_specialized_pruning(xi, v, w, C, device)
+        if(pruning == "Y"):
+            x_i_star, lambda_plus, phi_plus = knapsack_specialized_pruning(xi, v, w, C, device, delta)
+        elif(pruning == "N"):
+            x_i_star, lambda_plus, phi_plus = knapsack_specialized(xi, v, w, C, device)
+
         sum_x_star = torch.sum(x_i_star, dim=0)
 
         # Compute the optimal c values c_star

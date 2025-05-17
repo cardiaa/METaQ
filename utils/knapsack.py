@@ -90,7 +90,7 @@ def knapsack_specialized(xi, v, w, C, device):
 
     return x_opt, lambda_opt, objective_values
 
-def knapsack_specialized_pruning(xi, v, w, C, delta, device):
+def knapsack_specialized_pruning(xi, v, w, C, device, delta):
     """
     Solves a specialized knapsack problem with pruning strategy, using vectorized operations.
 

@@ -54,18 +54,21 @@ if __name__ == "__main__":
     min_xi = 0  
     max_xi = 1  
     n_epochs = 1000  
+    max_iterations = 15
     device = torch.device("cpu")  
     train_optimizer = "A"  
     entropy_optimizer = "F"  
     delta = 0
+    pruning = "Y"
     
     train_and_evaluate(
         C=C, lr=lr, lambda_reg=lambda_reg, alpha=alpha,
         subgradient_step=subgradient_step, w0=w0, r=args.r, # Pass the value from command line arguments
         target_acc=target_acc, target_entr=target_entr,
         min_xi=min_xi, max_xi=max_xi, n_epochs=n_epochs,
+        max_iterations=max_iterations,
         device=device, train_optimizer=train_optimizer,
         entropy_optimizer=entropy_optimizer,
         trainloader=trainloader, testloader=testloader,
-        delta=delta  
+        delta=delta, pruning=pruning 
     )
