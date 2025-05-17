@@ -191,22 +191,30 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
         
         # Entropy exit conditions
         if(epoch > 15 and entropies[-1] > 600000):
-            print(f"Entropy is not decreasing enough! (A), PID: {os.getpid()}, Epoch: {epoch}, Entropia minima: {min(entropies)}, Accuracy massima: {max(accuracies)}, C: {C}, r: {r}, epoch time: {training_time:.2f}s", flush=True)
+            print(f"Entropy is not decreasing enough! (A), PID: {os.getpid()}, Epoch: {epoch}, "
+                  "Current Entropy: {entropies[-1]}, Current Accuracy: {accuracies[-1]}, "
+                  "C: {C}, r: {r}, epoch time: {training_time:.2f}s", flush=True)
             return accuracies[-1], entropies[-1], target_acc, target_entr
         
         if(epoch > 40):
             if(entropies[-1] > 120000 and entropies[-2] > 120000 and entropies[-3] > 120000 and entropies[-4] > 120000):
-                print(f"Entropy is not decreasing enough! (B), PID: {os.getpid()}, Epoch: {epoch}, Entropia minima: {min(entropies)}, Accuracy massima: {max(accuracies)}, C: {C}, r: {r}, epoch time: {training_time:.2f}s", flush=True)
+                print(f"Entropy is not decreasing enough! (B), PID: {os.getpid()}, Epoch: {epoch}, "
+                      "Current Entropy: {entropies[-1]}, Current Accuracy: {accuracies[-1]}, "
+                      "C: {C}, r: {r}, epoch time: {training_time:.2f}s", flush=True)
                 return accuracies[-1], entropies[-1], target_acc, target_entr           
             
         # Accuracy exit condition
         if(epoch == 1 and accuracies[-1] < 70):
-            print(f"Accuracy is too low! (C), PID: {os.getpid()}, Epoch: {epoch}, Entropia minima: {min(entropies)}, Accuracy massima: {max(accuracies)}, C: {C}, r: {r}, epoch time: {training_time:.2f}s", flush=True)
+            print(f"Accuracy is too low! (C), PID: {os.getpid()}, Epoch: {epoch}, "
+                  "Current Entropy: {entropies[-1]}, Current Accuracy: {accuracies[-1]}, "
+                  "C: {C}, r: {r}, epoch time: {training_time:.2f}s", flush=True)
             return accuracies[-1], entropies[-1], target_acc, target_entr  
                           
         if(epoch > 10):
             if(accuracies[-1] < 90 and accuracies[-2] < 90 and accuracies[-3] < 90 and accuracies[-4] < 90):
-                print(f"Accuracy is too low! (D), PID: {os.getpid()}, Epoch: {epoch}, Entropia minima: {min(entropies)}, Accuracy massima: {max(accuracies)}, C: {C}, r: {r}, epoch time: {training_time:.2f}s", flush=True)
+                print(f"Accuracy is too low! (D), PID: {os.getpid()}, Epoch: {epoch}, "
+                      "Current Entropy: {entropies[-1]}, Current Accuracy: {accuracies[-1]}, "
+                      "C: {C}, r: {r}, epoch time: {training_time:.2f}s", flush=True)
                 return accuracies[-1], entropies[-1], target_acc, target_entr     
         
         # ... ADD OTHER EXIT CONDITIONS IF NECESSARY...      
