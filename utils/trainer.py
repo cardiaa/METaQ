@@ -110,6 +110,8 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
             
             loss.backward()
             optimizer.step()
+
+            print("torch.norm(xi):", torch.norm(xi))
         
         w = torch.cat([param.data.view(-1) for param in model.parameters()]).to(device)
         
