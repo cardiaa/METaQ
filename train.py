@@ -59,7 +59,7 @@ if __name__ == "__main__":
     train_optimizer = "A"  
     entropy_optimizer = "F"  
     delta = 0
-    pruning = "Y"
+    pruning = "N"
     
     train_and_evaluate(
         C=C, lr=lr, lambda_reg=lambda_reg, alpha=alpha,
