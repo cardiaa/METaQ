@@ -244,7 +244,7 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
               f"Min Entropy: {min(entropies)}, Max Accuracy: {max(accuracies)}, C: {C}, pruning: {pruning}, " 
               f"delta: {delta}, epoch time: {training_time:.2f}s, "
               f"N_zeroes: {(w == 0).sum().item()}, Percent_zeroes: {(w == 0).float().mean().item() * 100}, "
-              f"N_under_threshold: {(w <= 0.01).sum().item()}, Percent_under_threshold: {(w <= 0.01).float().mean().item() * 100}", flush=True)
+              f"N_under_threshold: {(w <= 0.0001).sum().item()}, Percent_under_threshold: {(w <= 0.0001).float().mean().item() * 100}", flush=True)
         print("-"*60)
 
     return accuracies[-1], entropies[-1], target_acc, target_entr
