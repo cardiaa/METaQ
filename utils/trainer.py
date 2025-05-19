@@ -243,7 +243,7 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
         # ---------------------------------------------------------------------------------------------------------
         # ---------------------------------------------------------------------------------------------------------
         # Pruning exit conditions
-        elif(pruning == "Y"):
+        elif(pruning == "-"):
             # Accuracy exit condition
             # After the first epoch I must have accuracy above 60%
             if(epoch >= 1 and accuracies[-1] <= 60):
