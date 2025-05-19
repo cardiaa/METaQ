@@ -252,13 +252,20 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
                     f"C: {C}, r: {r}, epoch time: {training_time:.2f}s", flush=True)
                 return accuracies[-1], entropies[-1], target_acc, target_entr  
                 
-            # After the 20th epoch I must have accuracy above 96%
-            if(epoch >= 20 and accuracies[-1] <= 96):
+            # After the 20th epoch I must have accuracy above 95%
+            if(epoch >= 20 and accuracies[-1] <= 95):
                 print(f"Accuracy is too low! (A1.2), PID: {os.getpid()}, Epoch: {epoch}, "
                     f"Current Entropy: {entropies[-1]}, Current Accuracy: {accuracies[-1]}, "
                     f"C: {C}, r: {r}, epoch time: {training_time:.2f}s", flush=True)
                 return accuracies[-1], entropies[-1], target_acc, target_entr
 
+            # After the 50th epoch I must have accuracy above 97%
+            if(epoch >= 50 and accuracies[-1] <= 97):
+                print(f"Accuracy is too low! (A1.3), PID: {os.getpid()}, Epoch: {epoch}, "
+                    f"Current Entropy: {entropies[-1]}, Current Accuracy: {accuracies[-1]}, "
+                    f"C: {C}, r: {r}, epoch time: {training_time:.2f}s", flush=True)
+                return accuracies[-1], entropies[-1], target_acc, target_entr
+            
             # After the 80th epoch I must have accuracy above 98%
             if(epoch >= 80 and accuracies[-1] <= 98):
                 print(f"Accuracy is too low! (A1.3), PID: {os.getpid()}, Epoch: {epoch}, "
