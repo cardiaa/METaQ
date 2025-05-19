@@ -118,6 +118,7 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
         accuracy = test_accuracy(model, testloader, device)
         accuracies.append(accuracy)
 
+        
         v_centers_before = (v[:-1] + v[1:]) / 2
         v_centers_before = torch.cat([v_centers_before, v[-1:]])
         w_quantized_before = quantize_weights_center(w, v, v_centers_before)
@@ -126,8 +127,9 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
         target_entr_before = 5e4
         
         # Saving a better model
-        #if(entropies[-1] <= target_entr):
-        if(quantized_entropy_before <= target_entr_before):
+        # if(entropies[-1] <= target_entr):
+        # if(quantized_entropy_before <= target_entr_before):
+        if(True):
             c1=10
             c2=1000
             QuantAcc = []
