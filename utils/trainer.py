@@ -117,9 +117,17 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
         entropies.append(entropy)
         accuracy = test_accuracy(model, testloader, device)
         accuracies.append(accuracy)
+
+        v_centers_before = (v[:-1] + v[1:]) / 2
+        v_centers_before = torch.cat([v_centers_before, v[-1:]])
+        w_quantized_before = quantize_weights_center(w, v, v_centers_before)
+        encoded_list_before = [float(elem) if float(elem) != -0.0 else 0.0 for elem in w_quantized_before]
+        quantized_entropy_before = round(compute_entropy(encoded_list_before)) + 1
+        target_entr_before = 1e5
         
         # Saving a better model
-        if(entropies[-1] <= target_entr):
+        #if(entropies[-1] <= target_entr):
+        if(quantized_entropy_before <= target_entr_before):
             c1=10
             c2=1000
             QuantAcc = []
@@ -285,11 +293,11 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
            
         # ---------------------------------------------------------------------------------------------------------
         training_time = time.time() - start_time
-        print(f"r: {r}, Epoch: {epoch}, Current Entropy: {entropies[-1]}, Current Accuracy: {accuracies[-1]}, "
-              f"Min Entropy: {min(entropies)}, Max Accuracy: {max(accuracies)}, C: {C}, pruning: {pruning}, " 
-              f"delta: {delta}, epoch time: {training_time:.2f}s, "
-              f"N_zeroes: {(w == 0).sum().item()}, Percent_zeroes: {(w == 0).float().mean().item() * 100}, "
-              f"N_under_threshold: {(w <= 0.0001).sum().item()}, Percent_under_threshold: {(w <= 0.0001).float().mean().item() * 100}", flush=True)
+        print(f"r: {r}, Epoch: {epoch}, Current Entropy: {entropies[-1]}, quantized_entropy_before: {quantized_entropy_before}, "
+              f"Current Accuracy: {accuracies[-1]}, Min Entropy: {min(entropies)}, Max Accuracy: {max(accuracies)}, C: {C}, "
+              f"pruning: {pruning}, delta: {delta}, epoch time: {training_time:.2f}s, N_zeroes: {(w == 0).sum().item()}, " 
+              f"Percent_zeroes: {(w == 0).float().mean().item() * 100}, N_under_threshold: {(w <= 0.0001).sum().item()}, "
+              f"Percent_under_threshold: {(w <= 0.0001).float().mean().item() * 100}", flush=True)
         print("-"*60)
 
     return accuracies[-1], entropies[-1], target_acc, target_entr
