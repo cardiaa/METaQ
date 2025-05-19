@@ -118,7 +118,6 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
         accuracy = test_accuracy(model, testloader, device)
         accuracies.append(accuracy)
 
-        
         v_centers_before = (v[:-1] + v[1:]) / 2
         v_centers_before = torch.cat([v_centers_before, v[-1:]])
         w_quantized_before = quantize_weights_center(w, v, v_centers_before)
