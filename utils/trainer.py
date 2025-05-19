@@ -95,7 +95,7 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
             elif(entropy_optimizer == 'PM'):
                 #xi, beta_tensor, x_star, phi = ProximalBM(xi, v, w_quantized, C, zeta, subgradient_step, max_iterations, pruning) # Alternative version
                 xi, beta_tensor, x_star, phi = ProximalBM(xi, v, w, C, delta, zeta, subgradient_step, device, max_iterations, pruning)       
-            print("a", flush=True)
+
             # Update of ∇ɸ
             idx = 0
             for param in model.parameters():
