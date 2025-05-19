@@ -294,11 +294,10 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
            
         # ---------------------------------------------------------------------------------------------------------
         training_time = time.time() - start_time
-        print(f"➡️ r: {r}, Epoch: {epoch}, Current Entropy: {entropies[-1]}, quantized_entropy_before: {quantized_entropy_before}, "
-              f"Current Accuracy: {accuracies[-1]}, Min Entropy: {min(entropies)}, Max Accuracy: {max(accuracies)}, C: {C}, "
+        print(f"➡️ r: {r}, C: {C}, Epoch: {epoch}, Current Entropy: {entropies[-1]}, Current Accuracy: {accuracies[-1]}, "
+              f"quantized_entropy_before: {quantized_entropy_before}, Min Entropy: {min(entropies)}, Max Accuracy: {max(accuracies)}, "
               f"pruning: {pruning}, delta: {delta}, epoch time: {training_time:.2f}s, N_zeroes: {(w == 0).sum().item()}, " 
               f"Percent_zeroes: {(w == 0).float().mean().item() * 100}, N_under_threshold: {(w <= 0.0001).sum().item()}, "
               f"Percent_under_threshold: {(w <= 0.0001).float().mean().item() * 100}\n", flush=True)
         
-
     return accuracies[-1], entropies[-1], target_acc, target_entr
