@@ -12,7 +12,7 @@ from torch.utils.data import DataLoader
 from torchvision import datasets, transforms
 from collections import Counter
 from utils.networks import LeNet5
-from utils.quantize_and_compress import compute_entropy, quantize_weights_center
+from utils.quantize_and_compress import compute_entropy, compute_entropy_new, quantize_weights_center
 from utils.optimization import FISTA, ProximalBM
 from utils.weight_utils import initialize_weights
 from utils.quantize_and_compress import compare_lists, compress_zstd, decompress_zstd
@@ -115,42 +115,37 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
         
         w = torch.cat([param.data.view(-1) for param in model.parameters()]).to(device)
         
-        entropy = round(compute_entropy(w.tolist())) + 1
-        entropies.append(entropy)
+        target_entr_before = 1e4
+        pruning_threshold = 1e-4
+        
         accuracy = test_accuracy(model, testloader, device)
         accuracies.append(accuracy)
+        
+        entropy = round(compute_entropy(w.tolist())) + 1
+        entropies.append(entropy)
+        #print(f"entropy={entropy}")
 
         v_centers_before = (v[:-1] + v[1:]) / 2
         v_centers_before = torch.cat([v_centers_before, v[-1:]])
         w_quantized_before = quantize_weights_center(w, v, v_centers_before)
         encoded_list_before = [float(elem) if float(elem) != -0.0 else 0.0 for elem in w_quantized_before]
         quantized_entropy_before = round(compute_entropy(encoded_list_before)) + 1
+        #print(f"quantized_entropy_before={quantized_entropy_before}")
 
-        target_entr_before = 1e4
-        pruning_threshold = 1e-4
+        entropy_new_formula = round(compute_entropy_new(w.tolist(), pruning_threshold)) + 1
+        #print(f"entropy_new_formula={entropy_new_formula}")
 
-        # ... To put into a function...
-        #binary_list = [1 if abs(val) >= pruning_threshold else 0 for val in encoded_list_before]
-        binary_list = [1 if abs(val) >= pruning_threshold else 0 for val in w.tolist()]
-        n = len(binary_list)
-        m = sum(binary_list)
-        if(m == 0):
-            entropy_new_formula = 0
-        else:
-            #non_zero_weights = [val for val in encoded_list_before if abs(val) >= pruning_threshold]
-            non_zero_weights = [val for val in w.tolist() if abs(val) >= pruning_threshold]
-            count = Counter(non_zero_weights)
-            total = len(non_zero_weights)
-            entropy_non_zeros = -sum((freq / total) * math.log2(freq / total) for freq in count.values())
-            entropy_new_formula = m * (2 + math.ceil(math.log2(n / m))) + entropy_non_zeros
-
+        quantized_entropy_new_formula = round(compute_entropy_new(encoded_list_before, pruning_threshold)) + 1
+        #print(f"quantized_entropy_new_formula={quantized_entropy_new_formula}")
+        
         # Saving a better model
         #if(entropies[-1] <= target_entr):
-        if(quantized_entropy_before <= target_entr_before and accuracies[-1] >= 96):
+        if(accuracies[-1] >= 95):
             c1=10
             c2=1000
             QuantAcc = []
             QuantEntr = []
+            #print("... Looking for the best quantization ...")
             # Test quantization in C in [10, 1000] buckets
             for C_tmp in range(c1, c2 + 1):
                 # Compute central values of the buckets
@@ -189,17 +184,8 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
                 w_quantized = quantize_weights_center(w_saved, v_tmp, v_centers)
                 encoded_list = [float(elem) if float(elem) != -0.0 else 0.0 for elem in w_quantized]
 
-                binary_list = [1 if abs(val) >= pruning_threshold else 0 for val in encoded_list]
-                n = len(binary_list)
-                m = sum(binary_list)
-                if(m == 0):
-                    entropy_new_formula = 0
-                else:
-                    non_zero_weights = [val for val in encoded_list if abs(val) >= pruning_threshold]
-                    count = Counter(non_zero_weights)
-                    total = len(non_zero_weights)
-                    entropy_non_zeros = -sum((freq / total) * math.log2(freq / total) for freq in count.values())
-                    entropy_new_formula = m * (2 + math.ceil(math.log2(n / m))) + entropy_non_zeros
+                quantized_entropy = round(compute_entropy(encoded_list)) + 1
+                quantized_entropy_new_formula = round(compute_entropy_new(encoded_list, pruning_threshold)) + 1
 
                 # Converts float list in byte
                 input_bytes = b''.join(struct.pack('f', num) for num in encoded_list)
@@ -209,7 +195,7 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
                 zstd_decompressed = decompress_zstd(zstd_compressed)
                 # Verifies
                 if not compare_lists(encoded_list, zstd_decompressed):
-                    print(f"💥💥💥Encoding error! Decoded💥💥💥")                    
+                    print(f"💥💥💥 Encoding error! Decoded 💥💥💥")                    
                 # Calculates dimensions
                 original_size_bits = len(input_bytes) * 8
                 zstd_size = len(zstd_compressed) * 8
@@ -218,25 +204,23 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
                 # Output delle dimensioni e del rapporto di compressione
                 if(QuantAcc[sorted_indices[-i]] >= target_acc and zstd_ratio <= 0.0343):
                     torch.save(model.state_dict(), f"BestModelsMay2025/Test2May2025_C{C}_r{r}_epoch{epoch}.pth")
+                    print("✅"*50)
+                    print("✅"*50)
+                    print("✅"*50)
+                    print("✅✅✅✅✅✅ MODEL SAVED ✅✅✅✅✅✅", flush=True)
+                    print("✅"*50)
+                    print("✅"*50)
+                    print("✅"*50)
+                #if(zstd_ratio <= 0.0343):
+                if(True):
                     print("💥"*50)
+                    print("💥💥💥 ...AIN'T SAVING THE MODEL... JUST CHECKING... 💥💥💥")
                     print("💥"*50)
                     print("💥"*50)
                     print(f"💥💥💥 r={r}, Quantization at C={sorted_indices[-i] + c1}, Accuracy: from {accuracy} to {QuantAcc[sorted_indices[-i]]}, Entropy: from {entropy} to {QuantEntr[sorted_indices[-i]]} 💥💥💥")
                     print(f"💥💥💥 epoch={epoch}, CurrentAccuracy={accuracies[-1]}, CurrentEntropy={entropies[-1]} 💥💥💥", flush=True)
                     print(f"💥💥💥 pruning={pruning}, Original dimension: {original_size_bits} bits 💥💥💥")
-                    print(f"💥💥💥 Zstd-22 compressed dimension: {zstd_size} bits (Compression Ratio: {zstd_ratio:.2%}) 💥💥💥")
-                    print("💥"*50)
-                    print("💥"*50)
-                    print("💥"*50)
-                if(zstd_ratio <= 0.0343):
-                    print("💥"*50)
-                    print("...AIN'T SAVING THE MODEL... JUST CHECKING...")
-                    print("💥"*50)
-                    print("💥"*50)
-                    print(f"💥💥💥 r={r}, Quantization at C={sorted_indices[-i] + c1}, Accuracy: from {accuracy} to {QuantAcc[sorted_indices[-i]]}, Entropy: from {entropy} to {QuantEntr[sorted_indices[-i]]} 💥💥💥")
-                    print(f"💥💥💥 epoch={epoch}, CurrentAccuracy={accuracies[-1]}, CurrentEntropy={entropies[-1]} 💥💥💥", flush=True)
-                    print(f"💥💥💥 pruning={pruning}, Original dimension: {original_size_bits} bits 💥💥💥")
-                    print(f"💥💥💥 entropy_new_formula={entropy_new_formula} 💥💥💥")
+                    print(f"💥💥💥 quantized_entropy={quantized_entropy}, quantized_entropy_new_formula={quantized_entropy_new_formula} 💥💥💥")
                     print(f"💥💥💥 Zstd-22 compressed dimension: {zstd_size} bits (Compression Ratio: {zstd_ratio:.2%}) 💥💥💥")
                     print("💥"*50)
                     print("💥"*50)
@@ -344,5 +328,6 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
               f"epoch time: {training_time:.2f}s, N_zeroes: {(w == 0).sum().item()}, " 
               f"Percent_zeroes: {(w == 0).float().mean().item() * 100}, N_under_threshold: {(w <= pruning_threshold).sum().item()}, "
               f"Percent_under_threshold: {(w <= pruning_threshold).float().mean().item() * 100}\n", flush=True)
-        
+        print("-"*60)
+
     return accuracies[-1], entropies[-1], target_acc, target_entr
