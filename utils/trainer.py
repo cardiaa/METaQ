@@ -188,6 +188,19 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
                 # Quantize weights using central values
                 w_quantized = quantize_weights_center(w_saved, v_tmp, v_centers)
                 encoded_list = [float(elem) if float(elem) != -0.0 else 0.0 for elem in w_quantized]
+
+                binary_list = [1 if abs(val) >= pruning_threshold else 0 for val in encoded_list]
+                n = len(binary_list)
+                m = sum(binary_list)
+                if(m == 0):
+                    entropy_new_formula = 0
+                else:
+                    non_zero_weights = [val for val in encoded_list if abs(val) >= pruning_threshold]
+                    count = Counter(non_zero_weights)
+                    total = len(non_zero_weights)
+                    entropy_non_zeros = -sum((freq / total) * math.log2(freq / total) for freq in count.values())
+                    entropy_new_formula = m * (2 + math.ceil(math.log2(n / m))) + entropy_non_zeros
+
                 # Converts float list in byte
                 input_bytes = b''.join(struct.pack('f', num) for num in encoded_list)
                 # Compression
@@ -223,6 +236,7 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
                     print(f"💥💥💥 r={r}, Quantization at C={sorted_indices[-i] + c1}, Accuracy: from {accuracy} to {QuantAcc[sorted_indices[-i]]}, Entropy: from {entropy} to {QuantEntr[sorted_indices[-i]]} 💥💥💥")
                     print(f"💥💥💥 epoch={epoch}, CurrentAccuracy={accuracies[-1]}, CurrentEntropy={entropies[-1]} 💥💥💥", flush=True)
                     print(f"💥💥💥 pruning={pruning}, Original dimension: {original_size_bits} bits 💥💥💥")
+                    print(f"💥💥💥 entropy_new_formula={entropy_new_formula} 💥💥💥")
                     print(f"💥💥💥 Zstd-22 compressed dimension: {zstd_size} bits (Compression Ratio: {zstd_ratio:.2%}) 💥💥💥")
                     print("💥"*50)
                     print("💥"*50)
