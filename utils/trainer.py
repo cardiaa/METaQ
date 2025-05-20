@@ -123,11 +123,11 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
         w_quantized_before = quantize_weights_center(w, v, v_centers_before)
         encoded_list_before = [float(elem) if float(elem) != -0.0 else 0.0 for elem in w_quantized_before]
         quantized_entropy_before = round(compute_entropy(encoded_list_before)) + 1
-        target_entr_before = 2e4
+        target_entr_before = 3e4
         
         # Saving a better model
-        if(entropies[-1] <= target_entr):
-        #if(quantized_entropy_before <= target_entr_before):
+        #if(entropies[-1] <= target_entr):
+        if(quantized_entropy_before <= target_entr_before):
             c1=10
             c2=1000
             QuantAcc = []
@@ -187,6 +187,18 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
                 if(QuantAcc[sorted_indices[-i]] >= target_acc and zstd_ratio <= 0.0343):
                     torch.save(model.state_dict(), f"BestModelsMay2025/Test2May2025_C{C}_r{r}_epoch{epoch}.pth")
                     print("💥"*50)
+                    print("💥"*50)
+                    print("💥"*50)
+                    print(f"💥💥💥 r={r}, Quantization at C={sorted_indices[-i] + c1}, Accuracy: from {accuracy} to {QuantAcc[sorted_indices[-i]]}, Entropy: from {entropy} to {QuantEntr[sorted_indices[-i]]} 💥💥💥")
+                    print(f"💥💥💥 epoch={epoch}, CurrentAccuracy={accuracies[-1]}, CurrentEntropy={entropies[-1]} 💥💥💥", flush=True)
+                    print(f"💥💥💥 pruning={pruning}, Original dimension: {original_size_bits} bits 💥💥💥")
+                    print(f"💥💥💥 Zstd-22 compressed dimension: {zstd_size} bits (Compression Ratio: {zstd_ratio:.2%}) 💥💥💥")
+                    print("💥"*50)
+                    print("💥"*50)
+                    print("💥"*50)
+                if(QuantAcc[sorted_indices[-i]] >= 96 and zstd_ratio <= 0.0343):
+                    print("💥"*50)
+                    print("...AIN'T SAVING THE MODEL... JUST CHECKING...")
                     print("💥"*50)
                     print("💥"*50)
                     print(f"💥💥💥 r={r}, Quantization at C={sorted_indices[-i] + c1}, Accuracy: from {accuracy} to {QuantAcc[sorted_indices[-i]]}, Entropy: from {entropy} to {QuantEntr[sorted_indices[-i]]} 💥💥💥")
