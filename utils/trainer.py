@@ -130,13 +130,15 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
         pruning_threshold = 1e-4
 
         # ... To put into a function...
-        binary_list = [1 if abs(val) >= pruning_threshold else 0 for val in encoded_list_before]
+        #binary_list = [1 if abs(val) >= pruning_threshold else 0 for val in encoded_list_before]
+        binary_list = [1 if abs(val) >= pruning_threshold else 0 for val in w.tolist()]
         n = len(binary_list)
         m = sum(binary_list)
         if(m == 0):
             entropy_new_formula = 0
         else:
-            non_zero_weights = [val for val in encoded_list_before if abs(val) >= pruning_threshold]
+            #non_zero_weights = [val for val in encoded_list_before if abs(val) >= pruning_threshold]
+            non_zero_weights = [val for val in w.tolist() if abs(val) >= pruning_threshold]
             count = Counter(non_zero_weights)
             total = len(non_zero_weights)
             entropy_non_zeros = -sum((freq / total) * math.log2(freq / total) for freq in count.values())
