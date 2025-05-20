@@ -6,9 +6,11 @@ import torch.nn as nn
 import torch.optim as optim
 import copy
 import struct
+import math
 from torch.optim import Adam, SGD
 from torch.utils.data import DataLoader
 from torchvision import datasets, transforms
+from collections import Counter
 from utils.networks import LeNet5
 from utils.quantize_and_compress import compute_entropy, quantize_weights_center
 from utils.optimization import FISTA, ProximalBM
@@ -124,7 +126,22 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
         encoded_list_before = [float(elem) if float(elem) != -0.0 else 0.0 for elem in w_quantized_before]
         quantized_entropy_before = round(compute_entropy(encoded_list_before)) + 1
         target_entr_before = 3e4
-        
+
+        pruning_threshold = 1e-4
+
+        # ... To put into a function...
+        binary_list = [1 if abs(val) >= pruning_threshold else 0 for val in encoded_list_before]
+        n = len(binary_list)
+        m = sum(binary_list)
+        if(m == 0):
+            entropy_new_formula = 0
+        else:
+            non_zero_weights = [val for val in encoded_list_before if abs(val) >= pruning_threshold]
+            count = Counter(non_zero_weights)
+            total = len(non_zero_weights)
+            entropy_non_zeros = -sum((freq / total) * math.log2(freq / total) for freq in count.values())
+            entropy_new_formula = m * (2 + math.ceil(math.log2(n / m))) + entropy_non_zeros
+
         # Saving a better model
         #if(entropies[-1] <= target_entr):
         if(quantized_entropy_before <= target_entr_before):
@@ -306,9 +323,10 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
         # ---------------------------------------------------------------------------------------------------------
         training_time = time.time() - start_time
         print(f"➡️ r: {r}, C: {C}, Epoch: {epoch}, Current Entropy: {entropies[-1]}, Current Accuracy: {accuracies[-1]}, "
-              f"quantized_entropy_before: {quantized_entropy_before}, Min Entropy: {min(entropies)}, Max Accuracy: {max(accuracies)}, "
-              f"pruning: {pruning}, delta: {delta}, epoch time: {training_time:.2f}s, N_zeroes: {(w == 0).sum().item()}, " 
-              f"Percent_zeroes: {(w == 0).float().mean().item() * 100}, N_under_threshold: {(w <= 0.0001).sum().item()}, "
-              f"Percent_under_threshold: {(w <= 0.0001).float().mean().item() * 100}\n", flush=True)
+              f"quantized_entropy_before: {quantized_entropy_before}, entropy_new_formula: {entropy_new_formula}, "
+              f"Min Entropy: {min(entropies)}, Max Accuracy: {max(accuracies)}, pruning: {pruning}, delta: {delta}, "
+              f"epoch time: {training_time:.2f}s, N_zeroes: {(w == 0).sum().item()}, " 
+              f"Percent_zeroes: {(w == 0).float().mean().item() * 100}, N_under_threshold: {(w <= pruning_threshold).sum().item()}, "
+              f"Percent_under_threshold: {(w <= pruning_threshold).float().mean().item() * 100}\n", flush=True)
         
     return accuracies[-1], entropies[-1], target_acc, target_entr
