@@ -123,7 +123,7 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
         w_quantized_before = quantize_weights_center(w, v, v_centers_before)
         encoded_list_before = [float(elem) if float(elem) != -0.0 else 0.0 for elem in w_quantized_before]
         quantized_entropy_before = round(compute_entropy(encoded_list_before)) + 1
-        target_entr_before = 1e4
+        target_entr_before = 2e4
         
         # Saving a better model
         # if(entropies[-1] <= target_entr):
