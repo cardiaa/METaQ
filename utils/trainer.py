@@ -144,7 +144,7 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
 
         # Saving a better model
         #if(entropies[-1] <= target_entr):
-        if(quantized_entropy_before <= target_entr_before and QuantAcc[sorted_indices[-i]] >= 96):
+        if(quantized_entropy_before <= target_entr_before and accuracies[-1] >= 96):
             c1=10
             c2=1000
             QuantAcc = []
