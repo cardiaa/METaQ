@@ -144,7 +144,7 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
 
         # Saving a better model
         #if(entropies[-1] <= target_entr):
-        if(quantized_entropy_before <= target_entr_before):
+        if(quantized_entropy_before <= target_entr_before and QuantAcc[sorted_indices[-i]] >= 96):
             c1=10
             c2=1000
             QuantAcc = []
@@ -213,7 +213,7 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
                     print("💥"*50)
                     print("💥"*50)
                     print("💥"*50)
-                if(QuantAcc[sorted_indices[-i]] >= 96 and zstd_ratio <= 0.0343):
+                if(zstd_ratio <= 0.0343):
                     print("💥"*50)
                     print("...AIN'T SAVING THE MODEL... JUST CHECKING...")
                     print("💥"*50)
