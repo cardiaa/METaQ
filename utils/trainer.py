@@ -126,9 +126,8 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
         target_entr_before = 2e4
         
         # Saving a better model
-        # if(entropies[-1] <= target_entr):
-        # if(quantized_entropy_before <= target_entr_before):
-        if(quantized_entropy_before <= target_entr_before):
+        if(entropies[-1] <= target_entr):
+        #if(quantized_entropy_before <= target_entr_before):
             c1=10
             c2=1000
             QuantAcc = []
