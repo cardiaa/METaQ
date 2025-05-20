@@ -58,7 +58,7 @@ if __name__ == "__main__":
     device = torch.device("cpu")  
     train_optimizer = "A"  
     entropy_optimizer = "F"  
-    delta = 31
+    delta = 25
     pruning = "Y"
     
     train_and_evaluate(
