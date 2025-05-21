@@ -140,7 +140,7 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
         #print(f"quantized_entropy_new_formula={quantized_entropy_new_formula}")
 
         training_time = time.time() - start_time
-        print(f"Epoca {epoch + 1}: lr = {lr}, Accuracy = {accuracies[-1]}, H_NQ = {entropies[-1]}, H_Q = {quantized_entropy_before}, "
+        print(f"Epoca {epoch + 1}: Accuracy = {accuracies[-1]}, H_NQ = {entropies[-1]}, H_Q = {quantized_entropy_before}, "
               f"H_NQ_new = {entropy_new_formula}, H_Q_new = {quantized_entropy_new_formula}", flush = True)
         
         # Saving a better model
@@ -223,7 +223,7 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
                     #print("💥"*50)
                     #print("💥"*50)
                     #print(f"💥💥💥 r={r}, pruning={pruning}, Quantization at C={sorted_indices[-i] + c1}, "
-                    print(f"\t➡️ lr = {lr}, Quantization at C={sorted_indices[-i] + c1}, Accuracy from {accuracy} to {QuantAcc[sorted_indices[-i]]}, "
+                    print(f"\t➡️ Quantization at C={sorted_indices[-i] + c1}, Accuracy from {accuracy} to {QuantAcc[sorted_indices[-i]]}, "
                           f"H_Q = {quantized_entropy}, H_Q_new = {quantized_entropy_new_formula}", flush = True)
                     #print(f"💥💥💥 Entropy: from {entropy} to {QuantEntr[sorted_indices[-i]]} (standard formula) 💥💥💥")
                     #print(f"💥💥💥 quantized_entropy_new_formula={quantized_entropy_new_formula} (new formula) 💥💥💥")
