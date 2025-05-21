@@ -63,7 +63,7 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
     accuracies, entropies, distinct_weights = [], [], []
     zeta, l = 50000, 0.5
 
-    print("... Tarining Started ...")
+    print("... Tarining Started", flush=True)
     # Training loop
     for epoch in range(n_epochs):
         start_time = time.time()
