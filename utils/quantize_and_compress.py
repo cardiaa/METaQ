@@ -39,12 +39,12 @@ def compute_entropy_new(string, pruning_threshold):
     else:
         # Extract values above pruning threshold
         non_zero_weights = [val for val in string if abs(val) >= pruning_threshold]
-        count = Counter(non_zero_weights)
+        frequencies = Counter(non_zero_weights)
         total = len(non_zero_weights)
 
-        # Compute entropy in explicit for-loop (same style as compute_entropy)
+        # Entropy of non-zero elements
         entropy_non_zeros = 0
-        for freq in count.values():
+        for freq in frequencies.values():
             probability = freq / total
             entropy_non_zeros -= probability * math.log2(probability)
 
