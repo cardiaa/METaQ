@@ -137,15 +137,19 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
 
         quantized_entropy_new_formula = round(compute_entropy_new(encoded_list_before, pruning_threshold)) + 1
         #print(f"quantized_entropy_new_formula={quantized_entropy_new_formula}")
+
+        training_time = time.time() - start_time
+        print(f"Epoca {epoch + 1}: lr = {lr}, Accuracy = {accuracies[-1]}, H1 = {entropies[-1]}, H2 = {quantized_entropy_before}, "
+              f"H3 = {entropy_new_formula}, H4 = {quantized_entropy_new_formula}")
         
         # Saving a better model
         #if(entropies[-1] <= target_entr):
-        if(accuracies[-1] >= 93):
+        if(accuracies[-1] >= 91):
             c1=10
             c2=1000
             QuantAcc = []
             QuantEntr = []
-            print("... Looking for the best quantization ...")
+            #print("... Looking for the best quantization ...")
             # Test quantization in C in [10, 1000] buckets
             for C_tmp in range(c1, c2 + 1):
                 # Compute central values of the buckets
@@ -213,19 +217,19 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
                     print("✅"*50)
                 #if(zstd_ratio <= 0.0343):
                 if(True):
-                    print("💥"*50)
-                    print("💥💥💥 ...AIN'T SAVING THE MODEL... JUST CHECKING... 💥💥💥")
-                    print("💥"*50)
-                    print("💥"*50)
+                    #print("💥"*50)
+                    #print("💥💥💥 ...AIN'T SAVING THE MODEL... JUST CHECKING... 💥💥💥")
+                    #print("💥"*50)
+                    #print("💥"*50)
                     #print(f"💥💥💥 r={r}, pruning={pruning}, Quantization at C={sorted_indices[-i] + c1}, "
-                    print(f"💥💥💥 Accuracy: from {accuracy} to {QuantAcc[sorted_indices[-i]]} 💥💥💥")
-                    print(f"💥💥💥 Entropy: from {entropy} to {QuantEntr[sorted_indices[-i]]} (standard formula) 💥💥💥")
-                    print(f"💥💥💥 quantized_entropy_new_formula={quantized_entropy_new_formula} (new formula) 💥💥💥")
+                    print(f"\tlr = {lr}, Accuracy from {accuracy} to {QuantAcc[sorted_indices[-i]]}, H4 = {quantized_entropy_new_formula}")
+                    #print(f"💥💥💥 Entropy: from {entropy} to {QuantEntr[sorted_indices[-i]]} (standard formula) 💥💥💥")
+                    #print(f"💥💥💥 quantized_entropy_new_formula={quantized_entropy_new_formula} (new formula) 💥💥💥")
                     #print(f"💥💥💥 Original dimension: {original_size_bits} bits 💥💥💥")
-                    print(f"💥💥💥 Zstd-22 compressed dimension: {zstd_size} bits (Compression Ratio: {zstd_ratio:.2%}) 💥💥💥")
-                    print("💥"*50)
-                    print("💥"*50)
-                    print("💥"*50)
+                    print(f"\tZstd-22 compressed dimension = {zstd_size} bits (Compression Ratio = {zstd_ratio:.2%})")
+                    #print("💥"*50)
+                    #print("💥"*50)
+                    #print("💥"*50)
         
         # No-pruning exit conditions
         if(pruning == "N"):
@@ -322,7 +326,7 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
             # ... ADD OTHER EXIT CONDITIONS IF NECESSARY...   
            
         # ---------------------------------------------------------------------------------------------------------
-        training_time = time.time() - start_time
+        
         """
         print(f"➡️ r: {r}, C: {C}, Epoch: {epoch}, Current Entropy: {entropies[-1]}, Current Accuracy: {accuracies[-1]}, "
               f"quantized_entropy_before: {quantized_entropy_before}, entropy_new_formula: {entropy_new_formula}, "
@@ -331,8 +335,6 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
               f"Percent_zeroes: {(w == 0).float().mean().item() * 100}, N_under_threshold: {(w <= pruning_threshold).sum().item()}, "
               f"Percent_under_threshold: {(w <= pruning_threshold).float().mean().item() * 100}\n", flush=True)
         """
-        print(f"Epoca {epoch + 1}: Accuracy: {accuracies[-1]}, H1 = {entropies[-1]}, H2 = {quantized_entropy_before}, "
-              f"H3 = {entropy_new_formula}, H4 = {quantized_entropy_new_formula}")
         print("-"*60)
 
     return accuracies[-1], entropies[-1], target_acc, target_entr
