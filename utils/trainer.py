@@ -140,12 +140,12 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
         
         # Saving a better model
         #if(entropies[-1] <= target_entr):
-        if(accuracies[-1] >= 95):
+        if(accuracies[-1] >= 93):
             c1=10
             c2=1000
             QuantAcc = []
             QuantEntr = []
-            #print("... Looking for the best quantization ...")
+            print("... Looking for the best quantization ...")
             # Test quantization in C in [10, 1000] buckets
             for C_tmp in range(c1, c2 + 1):
                 # Compute central values of the buckets
@@ -217,10 +217,11 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
                     print("💥💥💥 ...AIN'T SAVING THE MODEL... JUST CHECKING... 💥💥💥")
                     print("💥"*50)
                     print("💥"*50)
-                    print(f"💥💥💥 r={r}, Quantization at C={sorted_indices[-i] + c1}, Accuracy: from {accuracy} to {QuantAcc[sorted_indices[-i]]}, Entropy: from {entropy} to {QuantEntr[sorted_indices[-i]]} 💥💥💥")
-                    print(f"💥💥💥 epoch={epoch}, CurrentAccuracy={accuracies[-1]}, CurrentEntropy={entropies[-1]} 💥💥💥", flush=True)
-                    print(f"💥💥💥 pruning={pruning}, Original dimension: {original_size_bits} bits 💥💥💥")
-                    print(f"💥💥💥 quantized_entropy={quantized_entropy}, quantized_entropy_new_formula={quantized_entropy_new_formula} 💥💥💥")
+                    #print(f"💥💥💥 r={r}, pruning={pruning}, Quantization at C={sorted_indices[-i] + c1}, "
+                    print(f"💥💥💥 Accuracy: from {accuracy} to {QuantAcc[sorted_indices[-i]]} 💥💥💥")
+                    print(f"💥💥💥 Entropy: from {entropy} to {QuantEntr[sorted_indices[-i]]} (standard formula) 💥💥💥")
+                    print(f"💥💥💥 quantized_entropy_new_formula={quantized_entropy_new_formula} (new formula) 💥💥💥")
+                    #print(f"💥💥💥 Original dimension: {original_size_bits} bits 💥💥💥")
                     print(f"💥💥💥 Zstd-22 compressed dimension: {zstd_size} bits (Compression Ratio: {zstd_ratio:.2%}) 💥💥💥")
                     print("💥"*50)
                     print("💥"*50)
@@ -322,12 +323,16 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
            
         # ---------------------------------------------------------------------------------------------------------
         training_time = time.time() - start_time
+        """
         print(f"➡️ r: {r}, C: {C}, Epoch: {epoch}, Current Entropy: {entropies[-1]}, Current Accuracy: {accuracies[-1]}, "
               f"quantized_entropy_before: {quantized_entropy_before}, entropy_new_formula: {entropy_new_formula}, "
               f"Min Entropy: {min(entropies)}, Max Accuracy: {max(accuracies)}, pruning: {pruning}, delta: {delta}, "
               f"epoch time: {training_time:.2f}s, N_zeroes: {(w == 0).sum().item()}, " 
               f"Percent_zeroes: {(w == 0).float().mean().item() * 100}, N_under_threshold: {(w <= pruning_threshold).sum().item()}, "
               f"Percent_under_threshold: {(w <= pruning_threshold).float().mean().item() * 100}\n", flush=True)
+        """
+        print(f"Epoca {epoch + 1}: Accuracy: {accuracies[-1]}, H1 = {entropies[-1]}, H2 = {quantized_entropy_before}, "
+              f"H3 = {entropy_new_formula}, H4 = {quantized_entropy_new_formula}")
         print("-"*60)
 
     return accuracies[-1], entropies[-1], target_acc, target_entr

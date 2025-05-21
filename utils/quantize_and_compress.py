@@ -25,19 +25,32 @@ def compute_entropy(string):
     return entropy * total_length  # Return the entropy weighted by string length
 
 def compute_entropy_new(string, pruning_threshold):
-    binary_list = [1 if abs(val) >= pruning_threshold else 0 for val in string]
-    n = len(binary_list)
-    m = sum(binary_list)
-    if(m == 0):
+    """
+    Function to compute a modified entropy measure for a list of numeric values,
+    based on pruning threshold and entropy of significant values.
+    """
+    # Create binary map based on pruning threshold
+    binary_map = [1 if abs(val) >= pruning_threshold else 0 for val in string]
+    n = len(binary_map)
+    m = sum(binary_map)
+
+    if m == 0:
         entropy_new_formula = 0
     else:
-        #non_zero_weights = [val for val in encoded_list_before if abs(val) >= pruning_threshold]
+        # Extract values above pruning threshold
         non_zero_weights = [val for val in string if abs(val) >= pruning_threshold]
         count = Counter(non_zero_weights)
         total = len(non_zero_weights)
-        entropy_non_zeros = -sum((freq / total) * math.log2(freq / total) for freq in count.values())
+
+        # Compute entropy in explicit for-loop (same style as compute_entropy)
+        entropy_non_zeros = 0
+        for freq in count.values():
+            probability = freq / total
+            entropy_non_zeros -= probability * math.log2(probability)
+
+        # Final entropy formula combining two terms
         entropy_new_formula = m * (2 + math.ceil(math.log2(n / m))) + entropy_non_zeros
-    
+
     return entropy_new_formula
 
 def quantize_weights_center(weights, v, v_centers):

@@ -43,14 +43,14 @@ if __name__ == "__main__":
 
     # Define fixed hyperparameters for the model and training process
     C = 6  
-    lr = 0.0007  
+    #lr = 0.001  
     lambda_reg = 0.0015 
     alpha = 0.533  
     subgradient_step = 1e5 
     w0 = -0.11  
-    #r = 1.1  
+    r = 1.1106  
     target_acc = 99.00  
-    target_entr = 1.2e5  
+    target_entr = 0.99e5  
     min_xi = 0  
     max_xi = 1  
     n_epochs = 150  
@@ -62,8 +62,8 @@ if __name__ == "__main__":
     pruning = "Y"
     
     train_and_evaluate(
-        C=C, lr=lr, lambda_reg=lambda_reg, alpha=alpha,
-        subgradient_step=subgradient_step, w0=w0, r=args.r, # Pass the value from command line arguments
+        C=C, lr=args.lr, lambda_reg=lambda_reg, alpha=alpha,
+        subgradient_step=subgradient_step, w0=w0, r=r, # Pass the value from command line arguments
         target_acc=target_acc, target_entr=target_entr,
         min_xi=min_xi, max_xi=max_xi, n_epochs=n_epochs,
         max_iterations=max_iterations,
