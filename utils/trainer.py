@@ -224,7 +224,7 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
                     #print("💥"*50)
                     #print(f"💥💥💥 r={r}, pruning={pruning}, Quantization at C={sorted_indices[-i] + c1}, "
                     print(f"\t➡️ lr = {lr}, Quantization at C={sorted_indices[-i] + c1}, Accuracy from {accuracy} to {QuantAcc[sorted_indices[-i]]}, "
-                          "H_Q = {quantized_entropy}, H_Q_new = {quantized_entropy_new_formula}", flush = True)
+                          f"H_Q = {quantized_entropy}, H_Q_new = {quantized_entropy_new_formula}", flush = True)
                     #print(f"💥💥💥 Entropy: from {entropy} to {QuantEntr[sorted_indices[-i]]} (standard formula) 💥💥💥")
                     #print(f"💥💥💥 quantized_entropy_new_formula={quantized_entropy_new_formula} (new formula) 💥💥💥")
                     #print(f"💥💥💥 Original dimension: {original_size_bits} bits 💥💥💥")
