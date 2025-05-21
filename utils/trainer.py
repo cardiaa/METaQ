@@ -145,7 +145,7 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
         
         # Saving a better model
         #if(entropies[-1] <= target_entr):
-        if(accuracies[-1] >= 91):
+        if(accuracies[-1] >= 93):
             c1=10
             c2=1000
             QuantAcc = []
