@@ -23,7 +23,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     
     # Add argument for 'delta', which is required for the training
-    parser.add_argument("--r", type=float, required=True, help="Value of r")
+    parser.add_argument("--lr", type=float, required=True, help="Value of lr")
     
     # Parse the command-line arguments
     args = parser.parse_args()
