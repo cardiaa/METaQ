@@ -44,40 +44,42 @@ if __name__ == "__main__":
     device = torch.device("cpu")
 
     # Define fixed hyperparameters for the model and training process
-    C = 6
-    print(f"C={C}", flush=True)
+    C = 6   
     lr = 0.0007  
-    print(f"lr={lr}", flush=True)
     lambda_reg = 0.0015 
-    print(f"lambda_reg={lambda_reg}", flush=True)
     alpha = 0.533  
-    print(f"alpha={alpha}", flush=True)
     subgradient_step = 1e5 
-    print(f"subgradient_step={subgradient_step}", flush=True)
     w0 = -0.11  
-    print(f"w0={w0}", flush=True)
     #r = 1.1106  
-    #print(f"r={r}", flush=True)
     target_acc = 99.00  
-    print(f"target_acc={target_acc}", flush=True)
     target_entr = 0.99e5  
-    print(f"target_entr={target_entr}", flush=True)
     min_xi = 0  
-    print(f"min_xi={min_xi}", flush=True)
     max_xi = 1  
-    print(f"max_xi={max_xi}", flush=True)
     n_epochs = 10  
-    print(f"n_epochs={n_epochs}", flush=True)
     max_iterations = 15
-    print(f"max_iterations={max_iterations}", flush=True)
     train_optimizer = "A"  
-    print(f"train_optimizer={train_optimizer}", flush=True)
     entropy_optimizer = "F"  
-    print(f"entropy_optimizer={entropy_optimizer}", flush=True)
     delta = 32
-    print(f"delta={delta}", flush=True)
     pruning = "Y"
-    print(f"pruning={pruning}", flush=True)
+
+    if(args.r == 1.1100):
+        print(f"C={C}", flush=True)
+        print(f"lr={lr}", flush=True)    
+        print(f"lambda_reg={lambda_reg}", flush=True)
+        print(f"alpha={alpha}", flush=True)    
+        print(f"subgradient_step={subgradient_step}", flush=True)    
+        print(f"w0={w0}", flush=True)    
+        #print(f"r={r}", flush=True)    
+        print(f"target_acc={target_acc}", flush=True)    
+        print(f"target_entr={target_entr}", flush=True)    
+        print(f"min_xi={min_xi}", flush=True)    
+        print(f"max_xi={max_xi}", flush=True)    
+        print(f"n_epochs={n_epochs}", flush=True) 
+        print(f"max_iterations={max_iterations}", flush=True)    
+        print(f"train_optimizer={train_optimizer}", flush=True)    
+        print(f"entropy_optimizer={entropy_optimizer}", flush=True) 
+        print(f"delta={delta}", flush=True) 
+        print(f"pruning={pruning}", flush=True)
     
     train_and_evaluate(
         C=C, lr=lr, lambda_reg=lambda_reg, alpha=alpha,
