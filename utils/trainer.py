@@ -140,7 +140,7 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
         #print(f"quantized_entropy_new_formula={quantized_entropy_new_formula}")
 
         training_time = time.time() - start_time
-        print(f"Epoca {epoch + 1}: Accuracy = {accuracies[-1]}, H_NQ = {entropies[-1]}, H_Q = {quantized_entropy_before}, "
+        print(f"lr = {lr}, Epoca {epoch + 1}: Accuracy = {accuracies[-1]}, H_NQ = {entropies[-1]}, H_Q = {quantized_entropy_before}, "
               f"H_NQ_new = {entropy_new_formula}, H_Q_new = {quantized_entropy_new_formula}", flush = True)
         
         # Saving a better model
@@ -208,7 +208,7 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
                 zstd_ratio = zstd_size / original_size_bits
                 # Output delle dimensioni e del rapporto di compressione
                 if(QuantAcc[sorted_indices[-i]] >= target_acc and zstd_ratio <= 0.0343):
-                    torch.save(model.state_dict(), f"BestModelsMay2025/Test2May2025_C{C}_r{r}_epoch{epoch}.pth")
+                    torch.save(model.state_dict(), f"BestModelsMay2025/Test2May2025_C{C}_lr{lr}_epoch{epoch}.pth")
                     print("✅"*50, flush = True)
                     print("✅"*50, flush = True)
                     print("✅"*50, flush = True)
@@ -223,7 +223,7 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
                     #print("💥"*50)
                     #print("💥"*50)
                     #print(f"💥💥💥 r={r}, pruning={pruning}, Quantization at C={sorted_indices[-i] + c1}, "
-                    print(f"\t➡️ Quantization at C={sorted_indices[-i] + c1}, Accuracy from {accuracy} to {QuantAcc[sorted_indices[-i]]}, "
+                    print(f"\t➡️ lr = {lr}, Quantization at C={sorted_indices[-i] + c1}, Accuracy from {accuracy} to {QuantAcc[sorted_indices[-i]]}, "
                           f"H_Q = {quantized_entropy}, H_Q_new = {quantized_entropy_new_formula}", flush = True)
                     #print(f"💥💥💥 Entropy: from {entropy} to {QuantEntr[sorted_indices[-i]]} (standard formula) 💥💥💥")
                     #print(f"💥💥💥 quantized_entropy_new_formula={quantized_entropy_new_formula} (new formula) 💥💥💥")
@@ -287,17 +287,17 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
         # ---------------------------------------------------------------------------------------------------------
         # ---------------------------------------------------------------------------------------------------------
         # Pruning exit conditions
-        elif(pruning == "-"):
+        elif(pruning == "Y"):
             # Accuracy exit condition
-            # After the first epoch I must have accuracy above 60%
-            if(epoch >= 1 and accuracies[-1] <= 60):
+            # After the first epoch I must have accuracy above 90%
+            if(epoch >= 1 and accuracies[-1] <= 90):
                 print(f"Accuracy is too low! (A1.1), PID: {os.getpid()}, Epoch: {epoch}, "
                     f"Current Entropy: {entropies[-1]}, Current Accuracy: {accuracies[-1]}, "
                     f"C: {C}, r: {r}, epoch time: {training_time:.2f}s", flush=True)
                 return accuracies[-1], entropies[-1], target_acc, target_entr  
                 
-            # After the 20th epoch I must have accuracy above 95%
-            if(epoch >= 20 and accuracies[-1] <= 95):
+            # After the 10th epoch I must have accuracy above 94%
+            if(epoch >= 10 and accuracies[-1] <= 94):
                 print(f"Accuracy is too low! (A1.2), PID: {os.getpid()}, Epoch: {epoch}, "
                     f"Current Entropy: {entropies[-1]}, Current Accuracy: {accuracies[-1]}, "
                     f"C: {C}, r: {r}, epoch time: {training_time:.2f}s", flush=True)
@@ -318,12 +318,12 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
             #    return accuracies[-1], entropies[-1], target_acc, target_entr
             
             # After the 10th epoch I must not have accuracy below 90% for 4 epochs in a row
-            if(epoch >= 10):
-                if(accuracies[-1] <= 90 and accuracies[-2] <= 90 and accuracies[-3] <= 90 and accuracies[-4] <= 90):
-                    print(f"Accuracy is too low! (A2.1), PID: {os.getpid()}, Epoch: {epoch}, "
-                        f"Current Entropy: {entropies[-1]}, Current Accuracy: {accuracies[-1]}, "
-                        f"C: {C}, r: {r}, epoch time: {training_time:.2f}s", flush=True)
-                    return accuracies[-1], entropies[-1], target_acc, target_entr     
+            #if(epoch >= 10):
+            #    if(accuracies[-1] <= 90 and accuracies[-2] <= 90 and accuracies[-3] <= 90 and accuracies[-4] <= 90):
+            #        print(f"Accuracy is too low! (A2.1), PID: {os.getpid()}, Epoch: {epoch}, "
+            #            f"Current Entropy: {entropies[-1]}, Current Accuracy: {accuracies[-1]}, "
+            #            f"C: {C}, r: {r}, epoch time: {training_time:.2f}s", flush=True)
+            #        return accuracies[-1], entropies[-1], target_acc, target_entr     
             
             # ... ADD OTHER EXIT CONDITIONS IF NECESSARY...   
            
