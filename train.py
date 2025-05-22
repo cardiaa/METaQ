@@ -44,7 +44,7 @@ if __name__ == "__main__":
     device = torch.device("cpu")
 
     # Define fixed hyperparameters for the model and training process
-    C = 64
+    C = 6
     lr = 0.0007  
     lambda_reg = 0.0015 
     alpha = 0.533  
@@ -55,7 +55,7 @@ if __name__ == "__main__":
     target_entr = 0.99e5  
     min_xi = 0  
     max_xi = 1  
-    n_epochs = 50  
+    n_epochs = 5  
     max_iterations = 15
     train_optimizer = "A"  
     entropy_optimizer = "F"  
