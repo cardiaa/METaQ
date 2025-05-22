@@ -62,7 +62,7 @@ if __name__ == "__main__":
     delta = 32
     pruning = "Y"
 
-    if(args.r == 1.1100):
+    if(args.r == 1.1):
         print(f"C={C}", flush=True)
         print(f"lr={lr}", flush=True)    
         print(f"lambda_reg={lambda_reg}", flush=True)
