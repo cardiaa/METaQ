@@ -156,9 +156,11 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
         #print(f"lr = {lr}, Epoca {epoch + 1}: Accuracy = {accuracies[-1]}, H_NQ = {entropies[-1]}, H_Q = {quantized_entropy_before}, "
         #      f"H_NQ_new = {entropy_new_formula}, H_Q_new = {quantized_entropy_new_formula}", flush = True)
         
-        print(f"lr = {lr}, Epoch {epoch + 1}: A_NQ = {accuracy}, A_Q = {quantized_accuracy}, "
-              f"H_NQ = {entropy}, H_Q = {quantized_entropy}, "
-              f"zstd_ratio = {zstd_ratio:.2%}, training_time = {training_time}s", flush = True)
+        print(f"lr = {lr}, Epoch {epoch + 1}:\n"
+              f"A_NQ = {accuracy}, H_NQ = {entropy}\n"
+              f"A_Q = {quantized_accuracy}, H_Q = {quantized_entropy}\n"
+              f"zstd_size = {zstd_size * 8}bits, zstd_ratio = {zstd_ratio:.2%}, training_time = {training_time}s", flush = True)
+        print("-"*60, flush = True)
         
         # Saving a better model
         #if(entropies[-1] <= target_entr):
@@ -306,7 +308,7 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
         elif(pruning == "Y"):
             # Entropy exit conditions
             # After the tenth epoch I must have entropy below 600000
-            if(epoch >= 0 and entropies[-1] >= 100000):
+            if(epoch >= 0 and quantized_entropy >= 40000):
                 print(f"Entropy is not decreasing enough! (E1.1), PID: {os.getpid()}, Epoch: {epoch}, "
                     f"Current Entropy: {entropies[-1]}, Current Accuracy: {accuracies[-1]}, "
                     f"C: {C}, r: {r}, epoch time: {training_time:.2f}s", flush=True)
@@ -361,6 +363,5 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
               f"Percent_zeroes: {(w == 0).float().mean().item() * 100}, N_under_threshold: {(w <= pruning_threshold).sum().item()}, "
               f"Percent_under_threshold: {(w <= pruning_threshold).float().mean().item() * 100}\n", flush=True)
         """
-        print("-"*60, flush = True)
 
     return accuracies[-1], entropies[-1], target_acc, target_entr
