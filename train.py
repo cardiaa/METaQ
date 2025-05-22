@@ -23,7 +23,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     
     # Add argument for 'delta', which is required for the training
-    parser.add_argument("--lr", type=float, required=True, help="Value of lr")
+    parser.add_argument("--r", type=float, required=True, help="Value of r")
     
     # Parse the command-line arguments
     args = parser.parse_args()
@@ -41,29 +41,47 @@ if __name__ == "__main__":
     trainloader = torch.utils.data.DataLoader(trainset, batch_size=64, shuffle=True, num_workers=0)
     testloader = torch.utils.data.DataLoader(testset, batch_size=1000, shuffle=False, num_workers=0)
 
+    device = torch.device("cpu")
+
     # Define fixed hyperparameters for the model and training process
-    C = 64
-    #lr = 0.001  
+    C = 6
+    print(f"C={C}", flush=True)
+    lr = 0.0007  
+    print(f"lr={lr}", flush=True)
     lambda_reg = 0.0015 
+    print(f"lambda_reg={lambda_reg}", flush=True)
     alpha = 0.533  
+    print(f"alpha={alpha}", flush=True)
     subgradient_step = 1e5 
+    print(f"subgradient_step={subgradient_step}", flush=True)
     w0 = -0.11  
-    r = 1.1106  
+    print(f"w0={w0}", flush=True)
+    #r = 1.1106  
+    #print(f"r={r}", flush=True)
     target_acc = 99.00  
+    print(f"target_acc={target_acc}", flush=True)
     target_entr = 0.99e5  
+    print(f"target_entr={target_entr}", flush=True)
     min_xi = 0  
+    print(f"min_xi={min_xi}", flush=True)
     max_xi = 1  
-    n_epochs = 50  
+    print(f"max_xi={max_xi}", flush=True)
+    n_epochs = 10  
+    print(f"n_epochs={n_epochs}", flush=True)
     max_iterations = 15
-    device = torch.device("cpu")  
+    print(f"max_iterations={max_iterations}", flush=True)
     train_optimizer = "A"  
+    print(f"train_optimizer={train_optimizer}", flush=True)
     entropy_optimizer = "F"  
+    print(f"entropy_optimizer={entropy_optimizer}", flush=True)
     delta = 32
+    print(f"delta={delta}", flush=True)
     pruning = "Y"
+    print(f"pruning={pruning}", flush=True)
     
     train_and_evaluate(
-        C=C, lr=args.lr, lambda_reg=lambda_reg, alpha=alpha,
-        subgradient_step=subgradient_step, w0=w0, r=r, # Pass the value from command line arguments
+        C=C, lr=lr, lambda_reg=lambda_reg, alpha=alpha,
+        subgradient_step=subgradient_step, w0=w0, r=args.r, # Pass the value from command line arguments
         target_acc=target_acc, target_entr=target_entr,
         min_xi=min_xi, max_xi=max_xi, n_epochs=n_epochs,
         max_iterations=max_iterations,
