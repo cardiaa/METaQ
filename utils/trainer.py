@@ -143,6 +143,13 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
 
         training_time = round(time.time() - start_time)
 
+        log = (
+            f"r = {r}, Epoch {epoch + 1}: A_NQ = {accuracy}, "
+            f"H_NQ = {entropy}, A_Q = {quantized_accuracy}, "
+            f"H_Q = {quantized_entropy}, zstd_size = {zstd_size * 8}bits, "
+            f"zstd_ratio = {zstd_ratio:.2%}, training_time = {training_time}s"     
+        )
+        
         # Saving a better model
         if(accuracies[-1] >= target_acc):
             c1=10
@@ -317,9 +324,6 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
         # ---------------------------------------------------------------------------------------------------------
         
     print("-"*60, flush = True)
-    print(f"r = {r}, Epoch {epoch + 1}:\n"
-            f"A_NQ = {accuracy}, H_NQ = {entropy}\n"
-            f"A_Q = {quantized_accuracy}, H_Q = {quantized_entropy}\n"
-            f"zstd_size = {zstd_size * 8}bits, zstd_ratio = {zstd_ratio:.2%}, training_time = {training_time}s", flush = True)
+    print(log, flush = True)
 
     return accuracies[-1], entropies[-1], target_acc, target_entr
