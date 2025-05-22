@@ -42,7 +42,7 @@ if __name__ == "__main__":
     testloader = torch.utils.data.DataLoader(testset, batch_size=1000, shuffle=False, num_workers=0)
 
     # Define fixed hyperparameters for the model and training process
-    C = 128
+    C = 64
     #lr = 0.001  
     lambda_reg = 0.0015 
     alpha = 0.533  
@@ -53,7 +53,7 @@ if __name__ == "__main__":
     target_entr = 0.99e5  
     min_xi = 0  
     max_xi = 1  
-    n_epochs = 150  
+    n_epochs = 50  
     max_iterations = 15
     device = torch.device("cpu")  
     train_optimizer = "A"  
