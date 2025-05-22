@@ -131,21 +131,28 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
         w_quantized_before = quantize_weights_center(w, v, v_centers_before)
         encoded_list_before = [float(elem) if float(elem) != -0.0 else 0.0 for elem in w_quantized_before]
         quantized_entropy_before = round(compute_entropy(encoded_list_before)) + 1
-        #print(f"quantized_entropy_before={quantized_entropy_before}")
+        input_bytes = b''.join(struct.pack('f', num) for num in encoded_list_before)
+        zstd_compressed = compress_zstd(input_bytes)
+        original_size_bytes = len(input_bytes)
+        zstd_size = len(zstd_compressed)
+        zstd_ratio = zstd_size / original_size_bytes        
 
-        entropy_new_formula = round(compute_entropy_new(w.tolist(), pruning_threshold)) + 1
+        #entropy_new_formula = round(compute_entropy_new(w.tolist(), pruning_threshold)) + 1
         #print(f"entropy_new_formula={entropy_new_formula}")
 
-        quantized_entropy_new_formula = round(compute_entropy_new(encoded_list_before, pruning_threshold)) + 1
+        #quantized_entropy_new_formula = round(compute_entropy_new(encoded_list_before, pruning_threshold)) + 1
         #print(f"quantized_entropy_new_formula={quantized_entropy_new_formula}")
 
         training_time = time.time() - start_time
-        print(f"lr = {lr}, Epoca {epoch + 1}: Accuracy = {accuracies[-1]}, H_NQ = {entropies[-1]}, H_Q = {quantized_entropy_before}, "
-              f"H_NQ_new = {entropy_new_formula}, H_Q_new = {quantized_entropy_new_formula}", flush = True)
+        #print(f"lr = {lr}, Epoca {epoch + 1}: Accuracy = {accuracies[-1]}, H_NQ = {entropies[-1]}, H_Q = {quantized_entropy_before}, "
+        #      f"H_NQ_new = {entropy_new_formula}, H_Q_new = {quantized_entropy_new_formula}", flush = True)
+        
+        print(f"lr = {lr}, Epoca {epoch + 1}: Accuracy = {accuracy}, H_Q = {quantized_entropy_before}, H_NQ = {entropy}"
+              f"zstd_ratio = {zstd_ratio:.2%}, training_time = {training_time}", flush = True)
         
         # Saving a better model
         #if(entropies[-1] <= target_entr):
-        if(accuracies[-1] >= 95):
+        if(accuracies[-1] >= target_acc):
             c1=10
             c2=1000
             QuantAcc = []
