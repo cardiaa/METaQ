@@ -148,7 +148,7 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
         log += (
             f"r = {r}, Epoch {epoch + 1}: A_NQ = {accuracy}, "
             f"H_NQ = {entropy}, A_Q = {quantized_accuracy}, "
-            f"H_Q = {quantized_entropy}, zstd_size = {zstd_size * 8}bits, "
+            f"H_Q = {quantized_entropy}, zstd_size = {zstd_size * 8} bits, "
             f"zstd_ratio = {zstd_ratio:.2%}, training_time = {training_time}s\n"     
         )
 
@@ -234,7 +234,7 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
                     f"C: {C}, r: {r}, epoch time: {training_time:.2f}s\n"
                 )
                 print("-"*60, flush = True)
-                print(log, flush = True)
+                print(log, flush = True, end = "")
                 return
             
             # After the 30th epoch I must not have entropy above 200000 for 4 epochs in a row
@@ -246,7 +246,7 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
                         f"C: {C}, r: {r}, epoch time: {training_time:.2f}s\n"
                     )
                     print("-"*60, flush = True)
-                    print(log, flush = True)
+                    print(log, flush = True, end = "")
                     return
                 
             # ---------------------------------------------------------------------------------------------------------
@@ -259,7 +259,7 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
                     f"C: {C}, r: {r}, epoch time: {training_time:.2f}s\n"
                 )
                 print("-"*60, flush = True)
-                print(log, flush = True)
+                print(log, flush = True, end = "")
                 return
                 
             # After the 20th epoch I must have accuracy above 96%
@@ -270,7 +270,7 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
                     f"C: {C}, r: {r}, epoch time: {training_time:.2f}s\n"
                 )
                 print("-"*60, flush = True)
-                print(log, flush = True)
+                print(log, flush = True, end = "")
                 return
 
             # After the 80th epoch I must have accuracy above 98%
@@ -281,7 +281,7 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
                     f"C: {C}, r: {r}, epoch time: {training_time:.2f}s\n"
                 )
                 print("-"*60, flush = True)
-                print(log, flush = True)
+                print(log, flush = True, end = "")
                 return
             
             # After the 30th epoch I must not have accuracy below 90% for 4 epochs in a row
@@ -293,7 +293,7 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
                         f"C: {C}, r: {r}, epoch time: {training_time:.2f}s\n"
                     )
                     print("-"*60, flush = True)
-                    print(log, flush = True)
+                    print(log, flush = True, end = "")
                     return  
             
             # ... ADD OTHER EXIT CONDITIONS IF NECESSARY...   
@@ -311,7 +311,7 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
                     f"C: {C}, r: {r}, epoch time: {training_time:.2f}s\n"
                 )
                 print("-"*60, flush = True)
-                print(log, flush = True)
+                print(log, flush = True, end = "")
                 return
             # ---------------------------------------------------------------------------------------------------------
             # Accuracy exit condition
@@ -323,7 +323,7 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
                     f"C: {C}, r: {r}, epoch time: {training_time:.2f}s\n"
                 )
                 print("-"*60, flush = True)
-                print(log, flush = True)
+                print(log, flush = True, end = "")
                 return
                 
             # After the 10th epoch I must have accuracy above 94%
@@ -334,7 +334,7 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
                     f"C: {C}, r: {r}, epoch time: {training_time:.2f}s\n"
                 )
                 print("-"*60, flush = True)
-                print(log, flush = True)
+                print(log, flush = True, end = "")
                 return
             
             # ... ADD OTHER EXIT CONDITIONS IF NECESSARY...   
@@ -342,6 +342,6 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
         # ---------------------------------------------------------------------------------------------------------
         
     print("-"*60, flush = True)
-    print(log, flush = True)
+    print(log, flush = True, end = "")
 
     return
