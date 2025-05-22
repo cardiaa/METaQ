@@ -202,10 +202,10 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
                 if not compare_lists(encoded_list, zstd_decompressed):
                     print(f"💥💥💥 Encoding error! Decoded 💥💥💥")                    
                 # Calculates dimensions
-                original_size_bits = len(input_bytes) * 8
-                zstd_size = len(zstd_compressed) * 8
+                original_size_bytes = len(input_bytes)
+                zstd_size = len(zstd_compressed)
                 # Compression ratio
-                zstd_ratio = zstd_size / original_size_bits
+                zstd_ratio = zstd_size / original_size_bytes
                 # Output delle dimensioni e del rapporto di compressione
                 if(QuantAcc[sorted_indices[-i]] >= target_acc and zstd_ratio <= 0.0343):
                     torch.save(model.state_dict(), f"BestModelsMay2025/Test2May2025_C{C}_lr{lr}_epoch{epoch}.pth")
