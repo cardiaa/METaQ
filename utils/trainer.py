@@ -115,15 +115,10 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
         
         w = torch.cat([param.data.view(-1) for param in model.parameters()]).to(device)
         
-        target_entr_before = 1e4
-        pruning_threshold = 1e-4
-        
         accuracy = test_accuracy(model, testloader, device)
         accuracies.append(accuracy)
-        
         entropy = round(compute_entropy(w.tolist())) + 1
         entropies.append(entropy)
-        #print(f"entropy={entropy}")
 
         v_centers = (v[:-1] + v[1:]) / 2
         v_centers = torch.cat([v_centers, v[-1:]])
@@ -146,30 +141,14 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
         zstd_size = len(zstd_compressed)
         zstd_ratio = zstd_size / original_size_bytes        
 
-        #entropy_new_formula = round(compute_entropy_new(w.tolist(), pruning_threshold)) + 1
-        #print(f"entropy_new_formula={entropy_new_formula}")
-
-        #quantized_entropy_new_formula = round(compute_entropy_new(encoded_list_before, pruning_threshold)) + 1
-        #print(f"quantized_entropy_new_formula={quantized_entropy_new_formula}")
-
         training_time = round(time.time() - start_time)
-        #print(f"lr = {lr}, Epoca {epoch + 1}: Accuracy = {accuracies[-1]}, H_NQ = {entropies[-1]}, H_Q = {quantized_entropy_before}, "
-        #      f"H_NQ_new = {entropy_new_formula}, H_Q_new = {quantized_entropy_new_formula}", flush = True)
-        
-        print(f"lr = {lr}, Epoch {epoch + 1}:\n"
-              f"A_NQ = {accuracy}, H_NQ = {entropy}\n"
-              f"A_Q = {quantized_accuracy}, H_Q = {quantized_entropy}\n"
-              f"zstd_size = {zstd_size * 8}bits, zstd_ratio = {zstd_ratio:.2%}, training_time = {training_time}s", flush = True)
-        print("-"*60, flush = True)
-        
+
         # Saving a better model
-        #if(entropies[-1] <= target_entr):
         if(accuracies[-1] >= target_acc):
             c1=10
             c2=1000
             QuantAcc = []
             QuantEntr = []
-            #print("... Looking for the best quantization ...")
             # Test quantization in C in [10, 1000] buckets
             for C_tmp in range(c1, c2 + 1):
                 # Compute central values of the buckets
@@ -206,10 +185,7 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
                 # Quantize weights using central values
                 w_quantized = quantize_weights_center(w_saved, v_tmp, v_centers)
                 encoded_list = [float(elem) if float(elem) != -0.0 else 0.0 for elem in w_quantized]
-
                 quantized_entropy = round(compute_entropy(encoded_list)) + 1
-                quantized_entropy_new_formula = round(compute_entropy_new(encoded_list, pruning_threshold)) + 1
-
                 # Converts float list in byte
                 input_bytes = b''.join(struct.pack('f', num) for num in encoded_list)
                 # Compression
@@ -226,30 +202,15 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
                 zstd_ratio = zstd_size / original_size_bytes
                 # Output delle dimensioni e del rapporto di compressione
                 if(QuantAcc[sorted_indices[-i]] >= target_acc and zstd_ratio <= 0.0343):
-                    torch.save(model.state_dict(), f"BestModelsMay2025/Test2May2025_C{C}_lr{lr}_epoch{epoch}.pth")
-                    print("✅"*50, flush = True)
-                    print("✅"*50, flush = True)
+                    torch.save(model.state_dict(), f"BestModelsMay2025/Test2May2025_C{C}_r{r}_epoch{epoch}.pth")
                     print("✅"*50, flush = True)
                     print("✅✅✅✅✅✅ MODEL SAVED ✅✅✅✅✅✅", flush=True)
                     print("✅"*50, flush = True)
-                    print("✅"*50, flush = True)
-                    print("✅"*50, flush = True)
-                #if(zstd_ratio <= 0.0343):
                 if(True):
-                    #print("💥"*50)
-                    #print("💥💥💥 ...AIN'T SAVING THE MODEL... JUST CHECKING... 💥💥💥")
-                    #print("💥"*50)
-                    #print("💥"*50)
-                    #print(f"💥💥💥 r={r}, pruning={pruning}, Quantization at C={sorted_indices[-i] + c1}, "
-                    print(f"\t➡️ lr = {lr}, Quantization at C={sorted_indices[-i] + c1}, Accuracy from {accuracy} to {QuantAcc[sorted_indices[-i]]}, "
-                          f"H_Q = {quantized_entropy}, H_Q_new = {quantized_entropy_new_formula}", flush = True)
-                    #print(f"💥💥💥 Entropy: from {entropy} to {QuantEntr[sorted_indices[-i]]} (standard formula) 💥💥💥")
-                    #print(f"💥💥💥 quantized_entropy_new_formula={quantized_entropy_new_formula} (new formula) 💥💥💥")
-                    #print(f"💥💥💥 Original dimension: {original_size_bits} bits 💥💥💥")
+                    print("💥💥💥 ...AIN'T SAVING THE MODEL... JUST CHECKING... 💥💥💥")
+                    print(f"\t➡️ r = {r}, Quantization at C={sorted_indices[-i] + c1}, Accuracy from {accuracy} "
+                          f"to {QuantAcc[sorted_indices[-i]]}, H_Q = {quantized_entropy}", flush = True)
                     print(f"\tZstd-22 compressed dimension = {zstd_size} bits (Compression Ratio = {zstd_ratio:.2%})", flush = True)
-                    #print("💥"*50)
-                    #print("💥"*50)
-                    #print("💥"*50)
         
         # No-pruning exit conditions
         if(pruning == "N"):
@@ -355,13 +316,10 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
            
         # ---------------------------------------------------------------------------------------------------------
         
-        """
-        print(f"➡️ r: {r}, C: {C}, Epoch: {epoch}, Current Entropy: {entropies[-1]}, Current Accuracy: {accuracies[-1]}, "
-              f"quantized_entropy_before: {quantized_entropy_before}, entropy_new_formula: {entropy_new_formula}, "
-              f"Min Entropy: {min(entropies)}, Max Accuracy: {max(accuracies)}, pruning: {pruning}, delta: {delta}, "
-              f"epoch time: {training_time:.2f}s, N_zeroes: {(w == 0).sum().item()}, " 
-              f"Percent_zeroes: {(w == 0).float().mean().item() * 100}, N_under_threshold: {(w <= pruning_threshold).sum().item()}, "
-              f"Percent_under_threshold: {(w <= pruning_threshold).float().mean().item() * 100}\n", flush=True)
-        """
+    print("-"*60, flush = True)
+    print(f"r = {r}, Epoch {epoch + 1}:\n"
+            f"A_NQ = {accuracy}, H_NQ = {entropy}\n"
+            f"A_Q = {quantized_accuracy}, H_Q = {quantized_entropy}\n"
+            f"zstd_size = {zstd_size * 8}bits, zstd_ratio = {zstd_ratio:.2%}, training_time = {training_time}s", flush = True)
 
     return accuracies[-1], entropies[-1], target_acc, target_entr
