@@ -152,6 +152,7 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
             f"zstd_ratio = {zstd_ratio:.2%}, training_time = {training_time}s\n"     
         )
         log += "-"*60
+        log += "\n"
 
         # Saving a better model
         if(accuracies[-1] >= target_acc):
