@@ -149,7 +149,8 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
             f"r = {r}, Epoch {epoch + 1}: A_NQ = {accuracy}, "
             f"H_NQ = {entropy}, A_Q = {quantized_accuracy}, "
             f"H_Q = {quantized_entropy}, zstd_size = {zstd_size * 8} bits, "
-            f"zstd_ratio = {zstd_ratio:.2%}, training_time = {training_time}s\n"     
+            f"zstd_ratio = {zstd_ratio:.2%}, training_time = {training_time}s\n" 
+            "-"*60    
         )
 
         # Saving a better model
@@ -218,10 +219,11 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
                 if(True):
                     log += "💥💥💥 ...AIN'T SAVING THE MODEL... JUST CHECKING... 💥💥💥\n" 
                     log += (
-                        f"\t➡️ r = {r}, Quantization at C={sorted_indices[-i] + c1}, Accuracy from {accuracy} "
-                        f"to {QuantAcc[sorted_indices[-i]]}, H_Q = {quantized_entropy}\n"
-                    )
-                    log += f"\tZstd-22 compressed dimension = {zstd_size} bits (Compression Ratio = {zstd_ratio:.2%})\n"
+                        f"\t➡️ r = {r}, Epoch {epoch + 1}:\n"
+                        f"\tQuantization at C={sorted_indices[-i] + c1}, Accuracy from {accuracy} to {QuantAcc[sorted_indices[-i]]}\n"
+                        f"\tH_Q = {quantized_entropy}, zstd_size = {zstd_size * 8} bits, zstd_ratio = {zstd_ratio:.2%}\n"
+                        "-"*60
+                    )           
         
         # No-pruning exit conditions
         if(pruning == "N"):
@@ -229,24 +231,22 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
             # After the tenth epoch I must have entropy below 600000
             if(epoch >= 10 and entropies[-1] >= 600000):
                 log += (
-                    f"Entropy is not decreasing enough! (E1.1), PID: {os.getpid()}, Epoch: {epoch}, "
-                    f"Current Entropy: {entropies[-1]}, Current Accuracy: {accuracies[-1]}, "
-                    f"C: {C}, r: {r}, epoch time: {training_time:.2f}s\n"
+                    f"Entropy is not decreasing enough! (E1.1), r: {r}"
+                    "-"*60
                 )
-                print("-"*60, flush = True)
-                print(log, flush = True, end = "")
+
+                print(log, flush = True)
                 return
             
             # After the 30th epoch I must not have entropy above 200000 for 4 epochs in a row
             if(epoch >= 30):
                 if(entropies[-1] >= 200000 and entropies[-2] >= 200000 and entropies[-3] >= 200000 and entropies[-4] >= 200000):
                     log += (
-                        f"Entropy is not decreasing enough! (E2.1), PID: {os.getpid()}, Epoch: {epoch}, "
-                        f"Current Entropy: {entropies[-1]}, Current Accuracy: {accuracies[-1]}, "
-                        f"C: {C}, r: {r}, epoch time: {training_time:.2f}s\n"
+                        f"Entropy is not decreasing enough! (E2.1), r: {r}"
+                        "-"*60
                     )
-                    print("-"*60, flush = True)
-                    print(log, flush = True, end = "")
+
+                    print(log, flush = True)
                     return
                 
             # ---------------------------------------------------------------------------------------------------------
@@ -254,46 +254,42 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
             # After the first epoch I must have accuracy above 60%
             if(epoch >= 1 and accuracies[-1] <= 60):
                 log += (
-                    f"Accuracy is too low! (A1.1), PID: {os.getpid()}, Epoch: {epoch}, "
-                    f"Current Entropy: {entropies[-1]}, Current Accuracy: {accuracies[-1]}, "
-                    f"C: {C}, r: {r}, epoch time: {training_time:.2f}s\n"
+                    f"Accuracy is too low! (A1.1), r: {r}"
+                    "-"*60
                 )
-                print("-"*60, flush = True)
-                print(log, flush = True, end = "")
+
+                print(log, flush = True)
                 return
                 
             # After the 20th epoch I must have accuracy above 96%
             if(epoch >= 20 and accuracies[-1] <= 96):
                 log += (
-                    f"Accuracy is too low! (A1.2), PID: {os.getpid()}, Epoch: {epoch}, "
-                    f"Current Entropy: {entropies[-1]}, Current Accuracy: {accuracies[-1]}, "
-                    f"C: {C}, r: {r}, epoch time: {training_time:.2f}s\n"
+                    f"Accuracy is too low! (A1.2), r: {r}"
+                    "-"*60
                 )
-                print("-"*60, flush = True)
-                print(log, flush = True, end = "")
+
+                print(log, flush = True)
                 return
 
             # After the 80th epoch I must have accuracy above 98%
             if(epoch >= 80 and accuracies[-1] <= 98):
                 log += (
-                    f"Accuracy is too low! (A1.3), PID: {os.getpid()}, Epoch: {epoch}, "
-                    f"Current Entropy: {entropies[-1]}, Current Accuracy: {accuracies[-1]}, "
-                    f"C: {C}, r: {r}, epoch time: {training_time:.2f}s\n"
+                    f"Accuracy is too low! (A1.3), r: {r}"
+                    "-"*60
                 )
-                print("-"*60, flush = True)
-                print(log, flush = True, end = "")
+
+                print(log, flush = True)
                 return
             
             # After the 30th epoch I must not have accuracy below 90% for 4 epochs in a row
             if(epoch >= 30):
                 if(accuracies[-1] <= 90 and accuracies[-2] <= 90 and accuracies[-3] <= 90 and accuracies[-4] <= 90):
                     log += (
-                        f"Accuracy is too low! (A2.1), PID: {os.getpid()}, Epoch: {epoch}, "
-                        f"Current Entropy: {entropies[-1]}, Current Accuracy: {accuracies[-1]}, "
-                        f"C: {C}, r: {r}, epoch time: {training_time:.2f}s\n"
+                        f"Accuracy is too low! (A2.1), r: {r}"
+                        "-"*60
                     )
-                    print("-"*60, flush = True)
-                    print(log, flush = True, end = "")
+
+                    print(log, flush = True)
                     return  
             
             # ... ADD OTHER EXIT CONDITIONS IF NECESSARY...   
@@ -304,44 +300,41 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
         elif(pruning == "Y"):
             # Entropy exit conditions
             # After the tenth epoch I must have entropy below 600000
-            if(epoch >= 0 and quantized_entropy >= 40000):
+            if(epoch >= 0 and quantized_entropy >= 200000):
                 log += (
-                    f"Entropy is not decreasing enough! (E1.1), PID: {os.getpid()}, Epoch: {epoch}, "
-                    f"Current Entropy: {entropies[-1]}, Current Accuracy: {accuracies[-1]}, "
-                    f"C: {C}, r: {r}, epoch time: {training_time:.2f}s\n"
+                    f"Accuracy is too low! (E1.1), r: {r}"
+                    "-"*60
                 )
-                print("-"*60, flush = True)
-                print(log, flush = True, end = "")
+
+                print(log, flush = True)
                 return
+            
             # ---------------------------------------------------------------------------------------------------------
             # Accuracy exit condition
-            # After the first epoch I must have accuracy above 90%
-            if(epoch >= 0 and accuracies[-1] <= 90):
+            # After the first epoch I must have accuracy above 30%
+            if(epoch >= 0 and accuracies[-1] <= 30):
                 log += (
-                    f"Accuracy is too low! (A1.1), PID: {os.getpid()}, Epoch: {epoch}, "
-                    f"Current Entropy: {entropies[-1]}, Current Accuracy: {accuracies[-1]}, "
-                    f"C: {C}, r: {r}, epoch time: {training_time:.2f}s\n"
+                    f"Accuracy is too low! (A1.1), r: {r}"
+                    "-"*60
                 )
-                print("-"*60, flush = True)
-                print(log, flush = True, end = "")
+
+                print(log, flush = True)
                 return
-                
+            """
             # After the 10th epoch I must have accuracy above 94%
             if(epoch >= 9 and accuracies[-1] <= 94):
                 log += (
-                    f"Accuracy is too low! (A1.2), PID: {os.getpid()}, Epoch: {epoch}, "
-                    f"Current Entropy: {entropies[-1]}, Current Accuracy: {accuracies[-1]}, "
-                    f"C: {C}, r: {r}, epoch time: {training_time:.2f}s\n"
+                    f"Accuracy is too low! (A1.2), r: {r}"
+                    "-"*60
                 )
-                print("-"*60, flush = True)
+
                 print(log, flush = True, end = "")
                 return
+            """
             
             # ... ADD OTHER EXIT CONDITIONS IF NECESSARY...   
            
         # ---------------------------------------------------------------------------------------------------------
         
-    print("-"*60, flush = True)
-    print(log, flush = True, end = "")
-
+    print(log, flush = True)
     return
