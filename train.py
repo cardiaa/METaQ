@@ -55,7 +55,7 @@ if __name__ == "__main__":
     target_entr = 0.99e5  
     min_xi = 0  
     max_xi = 1  
-    n_epochs = 50  
+    n_epochs = 10  
     max_iterations = 15
     train_optimizer = "A"  
     entropy_optimizer = "F"  
