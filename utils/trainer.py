@@ -35,7 +35,7 @@ def test_accuracy(model, dataloader, device):
 
 
 def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
-                        target_acc, target_entr, min_xi, max_xi, n_epochs,
+                        target_acc, target_zstd_ratio, min_xi, max_xi, n_epochs,
                         max_iterations, device, train_optimizer, entropy_optimizer, 
                         trainloader, testloader, delta, pruning):
     
@@ -144,15 +144,16 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
         zstd_ratio = zstd_size / original_size_bytes        
 
         training_time = round(time.time() - start_time)
+
+        if(epoch == 0):
+            log += f"r = {r}\n"
     
         log += (
-            f"r = {r}, Epoch {epoch + 1}: A_NQ = {accuracy}, "
+            f"Epoch {epoch + 1}: A_NQ = {accuracy}, "
             f"H_NQ = {entropy}, A_Q = {quantized_accuracy}, "
             f"H_Q = {quantized_entropy}, zstd_size = {zstd_size * 8} bits, "
             f"zstd_ratio = {zstd_ratio:.2%}, training_time = {training_time}s\n"     
         )
-        log += "-"*60
-        log += "\n"
 
         # Saving a better model
         if(accuracies[-1] >= target_acc):
@@ -212,7 +213,7 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
                 # Compression ratio
                 zstd_ratio = zstd_size / original_size_bytes
                 # Output delle dimensioni e del rapporto di compressione
-                if(QuantAcc[sorted_indices[-i]] >= target_acc and zstd_ratio <= 0.0343):
+                if(QuantAcc[sorted_indices[-i]] >= target_acc and zstd_ratio <= target_zstd_ratio):
                     torch.save(model.state_dict(), f"BestModelsMay2025/Test2May2025_C{C}_r{r}_epoch{epoch}.pth")
                     log += "✅"*50+"\n"
                     log += "✅✅✅✅✅✅ MODEL SAVED ✅✅✅✅✅✅\n"
@@ -225,7 +226,8 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
                         f"\tH_Q = {quantized_entropy}, zstd_size = {zstd_size * 8} bits, zstd_ratio = {zstd_ratio:.2%}\n"
                     )           
                     log += "-"*60
-        
+
+        # ---------------------------------------------------------------------------------------------------------
         # No-pruning exit conditions
         if(pruning == "N"):
             # Entropy exit conditions
@@ -303,7 +305,7 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
             # After the tenth epoch I must have entropy below 200000
             if(epoch >= 0 and quantized_entropy >= 120000):
                 log += (
-                    f"Accuracy is too low! (E1.1), r: {r}\n"
+                    f"Entropy is not decreasing enough! (E1.1), r: {r}\n"
                 )
                 log += "-"*60
 
@@ -337,5 +339,6 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
            
         # ---------------------------------------------------------------------------------------------------------
         
+    log += "-"*60
     print(log, flush = True)
     return
