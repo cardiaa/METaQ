@@ -149,9 +149,9 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
             f"r = {r}, Epoch {epoch + 1}: A_NQ = {accuracy}, "
             f"H_NQ = {entropy}, A_Q = {quantized_accuracy}, "
             f"H_Q = {quantized_entropy}, zstd_size = {zstd_size * 8} bits, "
-            f"zstd_ratio = {zstd_ratio:.2%}, training_time = {training_time}s\n" 
-            "-"*60    
+            f"zstd_ratio = {zstd_ratio:.2%}, training_time = {training_time}s\n"     
         )
+        log += "-"*60
 
         # Saving a better model
         if(accuracies[-1] >= target_acc):
@@ -222,8 +222,8 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
                         f"\t➡️ r = {r}, Epoch {epoch + 1}:\n"
                         f"\tQuantization at C={sorted_indices[-i] + c1}, Accuracy from {accuracy} to {QuantAcc[sorted_indices[-i]]}\n"
                         f"\tH_Q = {quantized_entropy}, zstd_size = {zstd_size * 8} bits, zstd_ratio = {zstd_ratio:.2%}\n"
-                        "-"*60
                     )           
+                    log += "-"*60
         
         # No-pruning exit conditions
         if(pruning == "N"):
@@ -231,9 +231,9 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
             # After the tenth epoch I must have entropy below 600000
             if(epoch >= 10 and entropies[-1] >= 600000):
                 log += (
-                    f"Entropy is not decreasing enough! (E1.1), r: {r}"
-                    "-"*60
+                    f"Entropy is not decreasing enough! (E1.1), r: {r}\n"
                 )
+                log += "-"*60
 
                 print(log, flush = True)
                 return
@@ -242,9 +242,9 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
             if(epoch >= 30):
                 if(entropies[-1] >= 200000 and entropies[-2] >= 200000 and entropies[-3] >= 200000 and entropies[-4] >= 200000):
                     log += (
-                        f"Entropy is not decreasing enough! (E2.1), r: {r}"
-                        "-"*60
+                        f"Entropy is not decreasing enough! (E2.1), r: {r}\n"
                     )
+                    log += "-"*60
 
                     print(log, flush = True)
                     return
@@ -254,9 +254,9 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
             # After the first epoch I must have accuracy above 60%
             if(epoch >= 1 and accuracies[-1] <= 60):
                 log += (
-                    f"Accuracy is too low! (A1.1), r: {r}"
-                    "-"*60
+                    f"Accuracy is too low! (A1.1), r: {r}\n"
                 )
+                log += "-"*60
 
                 print(log, flush = True)
                 return
@@ -264,9 +264,9 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
             # After the 20th epoch I must have accuracy above 96%
             if(epoch >= 20 and accuracies[-1] <= 96):
                 log += (
-                    f"Accuracy is too low! (A1.2), r: {r}"
-                    "-"*60
+                    f"Accuracy is too low! (A1.2), r: {r}\n"
                 )
+                log += "-"*60
 
                 print(log, flush = True)
                 return
@@ -274,9 +274,9 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
             # After the 80th epoch I must have accuracy above 98%
             if(epoch >= 80 and accuracies[-1] <= 98):
                 log += (
-                    f"Accuracy is too low! (A1.3), r: {r}"
-                    "-"*60
+                    f"Accuracy is too low! (A1.3), r: {r}\n"
                 )
+                log += "-"*60
 
                 print(log, flush = True)
                 return
@@ -285,9 +285,9 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
             if(epoch >= 30):
                 if(accuracies[-1] <= 90 and accuracies[-2] <= 90 and accuracies[-3] <= 90 and accuracies[-4] <= 90):
                     log += (
-                        f"Accuracy is too low! (A2.1), r: {r}"
-                        "-"*60
+                        f"Accuracy is too low! (A2.1), r: {r}\n"
                     )
+                    log += "-"*60
 
                     print(log, flush = True)
                     return  
@@ -302,9 +302,9 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
             # After the tenth epoch I must have entropy below 200000
             if(epoch >= 0 and quantized_entropy >= 120000):
                 log += (
-                    f"Accuracy is too low! (E1.1), r: {r}"
-                    "-"*60
+                    f"Accuracy is too low! (E1.1), r: {r}\n"
                 )
+                log += "-"*60
 
                 print(log, flush = True)
                 return
@@ -314,9 +314,9 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
             # After the first epoch I must have accuracy above 30%
             if(epoch >= 0 and accuracies[-1] <= 30):
                 log += (
-                    f"Accuracy is too low! (A1.1), r: {r}"
-                    "-"*60
+                    f"Accuracy is too low! (A1.1), r: {r}\n"
                 )
+                log += "-"*60
 
                 print(log, flush = True)
                 return
@@ -324,9 +324,9 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
             # After the 10th epoch I must have accuracy above 94%
             if(epoch >= 9 and accuracies[-1] <= 94):
                 log += (
-                    f"Accuracy is too low! (A1.2), r: {r}"
-                    "-"*60
+                    f"Accuracy is too low! (A1.2), r: {r}\n"
                 )
+                log += "-"*60
 
                 print(log, flush = True, end = "")
                 return
