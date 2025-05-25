@@ -3,7 +3,7 @@ from torch.linalg import norm
 from .knapsack import knapsack_specialized  
 from .knapsack import knapsack_specialized_pruning
 
-def FISTA(xi, v, w, C, delta, subgradient_step, device, max_iterations, pruning):
+def FISTA(xi, v, w, C, upper_c, lower_c, delta, subgradient_step, device, max_iterations, pruning):
     """
     Implements the Fast Iterative Shrinking-Thresholding Algorithm (FISTA) 
     for optimizing a constrained objective function.
@@ -21,8 +21,6 @@ def FISTA(xi, v, w, C, delta, subgradient_step, device, max_iterations, pruning)
                x_i_star (optimal allocation), and phi (objective function value).
     """
     
-    upper_c = w.size(0)  # Define an upper bound for constraints
-    
     # Initialize previous values for FISTA acceleration
     xi_prev = xi.clone().to(device)
     t_prev = torch.tensor(1.0, device=device)
@@ -38,7 +36,7 @@ def FISTA(xi, v, w, C, delta, subgradient_step, device, max_iterations, pruning)
 
         # Compute the optimal c values c_star
         c_star = torch.exp(torch.log(torch.tensor(2.0, device=device)) * xi - 1)
-        c_star = torch.clamp(c_star, min=0, max=upper_c)
+        c_star = torch.clamp(c_star, min=lower_c, max=upper_c)
 
         # Compute the super-gradient
         g = -(c_star - sum_x_star)
@@ -64,10 +62,11 @@ def FISTA(xi, v, w, C, delta, subgradient_step, device, max_iterations, pruning)
         # Ensure xi remains sorted
         xi = torch.sort(xi)[0]
 
-    return xi, lambda_plus, x_i_star, phi
+    #return xi, lambda_plus, x_i_star, phi
+    return xi, lambda_plus
 
 
-def ProximalBM(xi, v, w, C, delta, zeta, subgradient_step, device, max_iterations, pruning):
+def ProximalBM(xi, v, w, C, upper_c, lower_c, delta, zeta, subgradient_step, device, max_iterations, pruning):
     """
     Implements the Proximal Bundle Method (PBM) for solving constrained 
     optimization problems using bundle techniques.
@@ -86,8 +85,6 @@ def ProximalBM(xi, v, w, C, delta, zeta, subgradient_step, device, max_iteration
                x_i_star (optimal allocation), and phi (objective function value).
     """
     
-    upper_c = w.size(0)  # Define an upper bound for constraints
-    
     # Parameters for the bundle method
     epsilon = 1e-5  # Convergence tolerance
     bundle_size = 5  # Maximum bundle size
@@ -104,7 +101,7 @@ def ProximalBM(xi, v, w, C, delta, zeta, subgradient_step, device, max_iteration
 
         # Compute the optimal c values c_star
         c_star = torch.exp(torch.log(torch.tensor(2.0, device=device)) * xi - 1)
-        c_star = torch.clamp(c_star, min=0, max=upper_c)
+        c_star = torch.clamp(c_star, min=lower_c, max=upper_c)
 
         # Compute the super-gradient
         g = -(c_star - sum_x_star)
@@ -145,4 +142,5 @@ def ProximalBM(xi, v, w, C, delta, zeta, subgradient_step, device, max_iteration
         # Update xi for the next iteration
         xi = xi_next.clone().to(device)
 
-    return xi, lambda_plus, x_i_star, phi
+    #return xi, lambda_plus, x_i_star, phi
+    return xi, lambda_plus

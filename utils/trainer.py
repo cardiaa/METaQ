@@ -1,21 +1,13 @@
 import torch
 import time 
 import numpy as np
-import os
-import torch.nn as nn
-import torch.optim as optim
 import copy
 import struct
-import math
 from torch.optim import Adam, SGD
-from torch.utils.data import DataLoader
-from torchvision import datasets, transforms
-from collections import Counter
-from utils.networks import LeNet5
-from utils.quantize_and_compress import compute_entropy, compute_entropy_new, quantize_weights_center
+from utils.quantize_and_compress import compute_entropy, quantize_weights_center
 from utils.optimization import FISTA, ProximalBM
 from utils.weight_utils import initialize_weights
-from utils.quantize_and_compress import compare_lists, compress_zstd, decompress_zstd
+from utils.quantize_and_compress import compress_zstd, BestQuantization
 
 def test_accuracy(model, dataloader, device):
     """
@@ -34,34 +26,28 @@ def test_accuracy(model, dataloader, device):
     return accuracy
 
 
-def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
-                        target_acc, target_zstd_ratio, min_xi, max_xi, n_epochs,
+def train_and_evaluate(model, criterion, C, lr, lambda_reg, alpha, subgradient_step, w0, r,
+                        target_acc, target_zstd_ratio, min_xi, max_xi, upper_c, lower_c, zeta, l, n_epochs,
                         max_iterations, device, train_optimizer, entropy_optimizer, 
-                        trainloader, testloader, delta, pruning):
+                        trainloader, testloader, delta, pruning, QuantizationType):
     
     torch.set_num_threads(1)
-
-    # Initialization of the model, loss function, and optimizer.
-    model = LeNet5().to(device)
-    criterion = nn.CrossEntropyLoss()
     
     # Selection of the optimizer based on the chosen type.
-    if train_optimizer == 'A':
-        optimizer = optim.Adam(model.parameters(), lr=lr, betas=(0.9, 0.999), eps=1e-08, weight_decay=lambda_reg * alpha)
-    elif train_optimizer == 'S':
-        optimizer = optim.SGD(model.parameters(), lr=lr, momentum=0.9, weight_decay=lambda_reg * alpha)
+    if train_optimizer == 'ADAM':
+        optimizer = Adam(model.parameters(), lr=lr, betas=(0.9, 0.999), eps=1e-08, weight_decay=lambda_reg * alpha)
+    elif train_optimizer == 'SGD':
+        optimizer = SGD(model.parameters(), lr=lr, momentum=0.9, weight_decay=lambda_reg * alpha)
     
     # Weights Initialization
     min_w, max_w = w0 - r, w0 + r
     v = torch.linspace(min_w, max_w - (max_w - min_w)/C, steps=C, device=device)
     initialize_weights(model, min_w, max_w)
     w = torch.cat([param.data.view(-1) for param in model.parameters()]).to(device)
-    upper_c, lower_c = w.size(0), 1e-2
     xi = min_xi + (max_xi - min_xi) * torch.rand(C, device=device)
     xi = torch.sort(xi)[0]   
     entropy, accuracy = 0, 0
-    accuracies, entropies, distinct_weights = [], [], []
-    zeta, l = 50000, 0.5
+    accuracies, entropies = [], []
 
     log = ""
 
@@ -93,12 +79,16 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
 
             zeta *= 1 + l
             l = l / 1.5
-            if(entropy_optimizer == 'F'):
-                #xi, beta_tensor, x_star, phi = FISTA(xi, v, w_quantized, C, subgradient_step, max_iterations, pruning) # Alternative version
-                xi, beta_tensor, x_star, phi = FISTA(xi, v, w, C, delta, subgradient_step, device, max_iterations, pruning) 
-            elif(entropy_optimizer == 'PM'):
-                #xi, beta_tensor, x_star, phi = ProximalBM(xi, v, w_quantized, C, zeta, subgradient_step, max_iterations, pruning) # Alternative version
-                xi, beta_tensor, x_star, phi = ProximalBM(xi, v, w, C, delta, zeta, subgradient_step, device, max_iterations, pruning)       
+            if(entropy_optimizer == 'FISTA'):
+                #xi, beta_tensor = FISTA(xi, v, w_quantized, C, upper_c, lower_c, delta, 
+                #                        subgradient_step, device, max_iterations, pruning) # Alternative version
+                xi, beta_tensor = FISTA(xi, v, w, C, upper_c, lower_c, delta, 
+                                        subgradient_step, device, max_iterations, pruning) 
+            elif(entropy_optimizer == 'PROXIMAL BM'):
+                #xi, beta_tensor = ProximalBM(xi, v, w_quantized, C, upper_c, lower_c, delta, 
+                #                             zeta, subgradient_step, device, max_iterations, pruning) # Alternative version
+                xi, beta_tensor = ProximalBM(xi, v, w, C, upper_c, lower_c, delta, 
+                                             zeta, subgradient_step, device, max_iterations, pruning)       
 
             # Update of ∇ɸ
             idx = 0
@@ -122,8 +112,9 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
         entropy = round(compute_entropy(w.tolist())) + 1
         entropies.append(entropy)
 
-        v_centers = (v[:-1] + v[1:]) / 2
-        v_centers = torch.cat([v_centers, v[-1:]])
+        if(QuantizationType == "center"): # Quantize weights using central values
+            v_centers = (v[:-1] + v[1:]) / 2
+            v_centers = torch.cat([v_centers, v[-1:]]) # Add final value to handle the last bucket
         w_quantized = quantize_weights_center(w, v, v_centers)
         
         model_quantized = copy.deepcopy(model).to(device)
@@ -157,75 +148,9 @@ def train_and_evaluate(C, lr, lambda_reg, alpha, subgradient_step, w0, r,
 
         # Saving a better model
         if(accuracies[-1] >= target_acc):
-            c1=10
-            c2=1000
-            QuantAcc = []
-            QuantEntr = []
-            # Test quantization in C in [10, 1000] buckets
-            for C_tmp in range(c1, c2 + 1):
-                # Compute central values of the buckets
-                v_tmp = torch.linspace(min_w, max_w - (max_w - min_w)/C_tmp, steps=C_tmp)
-                v_centers = (v_tmp[:-1] + v_tmp[1:]) / 2
-                v_centers = torch.cat([v_centers, v_tmp[-1:]])  # Add final value to handle the last bucket
-                # Quantize weights using central values
-                w_quantized = quantize_weights_center(w, v_tmp, v_centers)
-                model_quantized = copy.deepcopy(model).to(device)
-                # Replace quantized weights in the quantized model
-                start_idx = 0
-                for param in model_quantized.parameters():
-                    numel = param.data.numel()
-                    param.data = w_quantized[start_idx:start_idx + numel].view(param.data.size())
-                    start_idx += numel
-                # Evaluate quantized model
-                model_quantized.eval()
-                quantized_accuracy = test_accuracy(model_quantized, testloader, device)
-                # Compute entropy of the quantized string
-                encoded_list = [float(elem) if float(elem) != -0.0 else 0.0 for elem in w_quantized]
-                quantized_entropy = round(compute_entropy(encoded_list)) + 1
-                QuantAcc.append(quantized_accuracy)
-                QuantEntr.append(quantized_entropy)
-            # Print results for the best 10 models
-            sorted_indices = np.argsort(QuantAcc)
-            for i in range(1, 10):
-                C_tmp = sorted_indices[-i] + c1
-                v_tmp = torch.linspace(min_w, max_w - (max_w - min_w)/C_tmp, steps=C_tmp)
-                v_centers = (v_tmp[:-1] + v_tmp[1:]) / 2
-                v_centers = torch.cat([v_centers, v_tmp[-1:]])
-                model_quantized = copy.deepcopy(model).to(device)
-                # Extract model weights
-                w_saved = torch.cat([param.data.view(-1) for param in model_quantized.parameters()])
-                # Quantize weights using central values
-                w_quantized = quantize_weights_center(w_saved, v_tmp, v_centers)
-                encoded_list = [float(elem) if float(elem) != -0.0 else 0.0 for elem in w_quantized]
-                quantized_entropy = round(compute_entropy(encoded_list)) + 1
-                # Converts float list in byte
-                input_bytes = b''.join(struct.pack('f', num) for num in encoded_list)
-                # Compression
-                zstd_compressed = compress_zstd(input_bytes)
-                # Decompression
-                zstd_decompressed = decompress_zstd(zstd_compressed)
-                # Verifies
-                if not compare_lists(encoded_list, zstd_decompressed):
-                    log += "💥💥💥 Encoding error! Decoded 💥💥💥\n"                  
-                # Calculates dimensions
-                original_size_bytes = len(input_bytes)
-                zstd_size = len(zstd_compressed)
-                # Compression ratio
-                zstd_ratio = zstd_size / original_size_bytes
-                # Output delle dimensioni e del rapporto di compressione
-                if(QuantAcc[sorted_indices[-i]] >= target_acc and zstd_ratio <= target_zstd_ratio):
-                    torch.save(model.state_dict(), f"BestModelsMay2025/Test2May2025_C{C}_r{r}_epoch{epoch}.pth")
-                    log += "✅"*50+"\n"
-                    log += "✅✅✅✅✅✅ MODEL SAVED ✅✅✅✅✅✅\n"
-                    log += "✅"*50+"\n"
-                if(True):
-                    log += "💥💥💥 ...AIN'T SAVING THE MODEL... JUST CHECKING... 💥💥💥\n" 
-                    log += (
-                        f"\t➡️ r = {r}, Epoch {epoch + 1}:\n"
-                        f"\tQuantization at C={sorted_indices[-i] + c1}, Accuracy from {accuracy} to {QuantAcc[sorted_indices[-i]]}\n"
-                        f"\tH_Q = {quantized_entropy}, zstd_size = {zstd_size * 8} bits, zstd_ratio = {zstd_ratio:.2%}\n"
-                    )           
-                    log += "-"*60
+            log = BestQuantization(log=log, C=C, r=r, epoch=epoch, min_w=min_w, max_w=max_w, w=w, c1=10, c2=1000,
+                                   target_acc=target_acc, target_zstd_ratio=target_zstd_ratio, QuantizationType=QuantizationType,
+                                   model=model, testloader=testloader, accuracy=accuracy, device=device)
 
         # ---------------------------------------------------------------------------------------------------------
         # No-pruning exit conditions

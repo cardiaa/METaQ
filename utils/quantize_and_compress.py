@@ -3,9 +3,12 @@ import math
 import gzip
 import zstandard as zstd
 import struct
+import copy
+import numpy as np
 from heapq import heappush, heappop, heapify
 from decimal import Decimal
 from collections import Counter
+from utils.trainer import test_accuracy
 
 def compute_entropy(string):
     """
@@ -163,3 +166,76 @@ def compare_lists(list1, list2, tollerance=1e-4):
     if len(list1) != len(list2):
         return False
     return all(abs(a - b) <= tollerance for a, b in zip(list1, list2))
+
+def BestQuantization(log, C, r, epoch, min_w, max_w, w, c1, c2,
+                     target_acc, target_zstd_ratio, QuantizationType, 
+                     model, testloader, accuracy, device):
+    QuantAcc = []
+    QuantEntr = []
+    # Test quantization in C in [10, 1000] buckets
+    for C_tmp in range(c1, c2 + 1):
+        # Compute central values of the buckets
+        v_tmp = torch.linspace(min_w, max_w - (max_w - min_w)/C_tmp, steps=C_tmp)
+        if(QuantizationType == 'center'): # Quantize weights using central values
+            v_centers = (v_tmp[:-1] + v_tmp[1:]) / 2
+            v_centers = torch.cat([v_centers, v_tmp[-1:]])  # Add final value to handle the last bucket
+        w_quantized = quantize_weights_center(w, v_tmp, v_centers)
+        model_quantized = copy.deepcopy(model).to(device)
+        # Replace quantized weights in the quantized model
+        start_idx = 0
+        for param in model_quantized.parameters():
+            numel = param.data.numel()
+            param.data = w_quantized[start_idx:start_idx + numel].view(param.data.size())
+            start_idx += numel
+        # Evaluate quantized model
+        model_quantized.eval()
+        quantized_accuracy = test_accuracy(model_quantized, testloader, device)
+        # Compute entropy of the quantized string
+        encoded_list = [float(elem) if float(elem) != -0.0 else 0.0 for elem in w_quantized]
+        quantized_entropy = round(compute_entropy(encoded_list)) + 1
+        QuantAcc.append(quantized_accuracy)
+        QuantEntr.append(quantized_entropy)
+    # Print results for the best 10 models
+    sorted_indices = np.argsort(QuantAcc)
+    for i in range(1, 10):
+        C_tmp = sorted_indices[-i] + c1
+        v_tmp = torch.linspace(min_w, max_w - (max_w - min_w)/C_tmp, steps=C_tmp)
+        v_centers = (v_tmp[:-1] + v_tmp[1:]) / 2
+        v_centers = torch.cat([v_centers, v_tmp[-1:]])
+        model_quantized = copy.deepcopy(model).to(device)
+        # Extract model weights
+        w_saved = torch.cat([param.data.view(-1) for param in model_quantized.parameters()])
+        # Quantize weights using central values
+        w_quantized = quantize_weights_center(w_saved, v_tmp, v_centers)
+        encoded_list = [float(elem) if float(elem) != -0.0 else 0.0 for elem in w_quantized]
+        quantized_entropy = round(compute_entropy(encoded_list)) + 1
+        # Converts float list in byte
+        input_bytes = b''.join(struct.pack('f', num) for num in encoded_list)
+        # Compression
+        zstd_compressed = compress_zstd(input_bytes)
+        # Decompression
+        zstd_decompressed = decompress_zstd(zstd_compressed)
+        # Verifies
+        if not compare_lists(encoded_list, zstd_decompressed):
+            log += "💥💥💥 Encoding error! Decoded 💥💥💥\n"                  
+        # Calculates dimensions
+        original_size_bytes = len(input_bytes)
+        zstd_size = len(zstd_compressed)
+        # Compression ratio
+        zstd_ratio = zstd_size / original_size_bytes
+        # Output delle dimensioni e del rapporto di compressione
+        if(QuantAcc[sorted_indices[-i]] >= target_acc and zstd_ratio <= target_zstd_ratio):
+            torch.save(model.state_dict(), f"BestModelsMay2025/Test2May2025_C{C}_r{r}_epoch{epoch}.pth")
+            log += "✅"*50+"\n"
+            log += "✅✅✅✅✅✅ MODEL SAVED ✅✅✅✅✅✅\n"
+            log += "✅"*50+"\n"
+        if(True):
+            log += "💥💥💥 ...AIN'T SAVING THE MODEL... JUST CHECKING... 💥💥💥\n" 
+            log += (
+                f"\t➡️ r = {r}, Epoch {epoch + 1}:\n"
+                f"\tQuantization at C={sorted_indices[-i] + c1}, Accuracy from {accuracy} to {QuantAcc[sorted_indices[-i]]}\n"
+                f"\tH_Q = {quantized_entropy}, zstd_size = {zstd_size * 8} bits, zstd_ratio = {zstd_ratio:.2%}\n"
+            )           
+            log += "-"*60
+    
+    return log
