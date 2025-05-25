@@ -3,6 +3,22 @@ from torch.linalg import norm
 from .knapsack import knapsack_specialized  
 from .knapsack import knapsack_specialized_pruning
 
+def test_accuracy(model, dataloader, device):
+    """
+    Function to calculate the accuracy of a model on a given dataloader.
+    """
+    correct, total = 0, 0
+    with torch.no_grad():  # Disable gradient computation for evaluation
+        for images, labels in dataloader:
+            images, labels = images.to(device), labels.to(device)  # Move data to the appropriate device
+            outputs = model(images)  # Get model predictions
+            _, predicted = torch.max(outputs.data, 1)  # Get the class with the highest probability
+            total += labels.size(0)  # Update total number of samples
+            correct += (predicted == labels).sum().item()  # Count correct predictions
+    
+    accuracy = 100 * correct / total  # Compute accuracy percentage
+    return accuracy
+
 def FISTA(xi, v, w, C, upper_c, lower_c, delta, subgradient_step, device, max_iterations, pruning):
     """
     Implements the Fast Iterative Shrinking-Thresholding Algorithm (FISTA) 
