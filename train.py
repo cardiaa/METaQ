@@ -3,6 +3,8 @@ import torch
 import os
 from utils.trainer import train_and_evaluate
 from torchvision import datasets, transforms
+from utils.networks import LeNet5
+from torch.nn import CrossEntropyLoss
 
 # Function to load the MNIST dataset
 def load_data():
@@ -44,10 +46,12 @@ if __name__ == "__main__":
     device = torch.device("cpu")
 
     # Define fixed hyperparameters for the model and training process
+    model, model_name = LeNet5().to(device), "LeNet-5"
+    criterion, criterion_name = CrossEntropyLoss(), "CrossEntropy" 
     C = 128
     lr = 0.0007  
-    lambda_reg = 0.0015 
-    alpha = 0.533  
+    lambda_reg = 0.0023
+    alpha = 0.6956
     subgradient_step = 1e5 
     w0 = -0.11  
     #r = 1.1106  
@@ -55,17 +59,24 @@ if __name__ == "__main__":
     target_zstd_ratio = 0.0297 
     min_xi = 0  
     max_xi = 1  
-    n_epochs = 50
+    upper_c = sum(p.numel() for p in LeNet5().parameters())
+    lower_c = 1e-2
+    zeta = 50000
+    l = 0.5
+    n_epochs = 30 # To be increased as soon as I find good configurations
     max_iterations = 15
-    train_optimizer = "A"  
-    entropy_optimizer = "F"  
+    train_optimizer = "ADAMS"  
+    entropy_optimizer = "FISTA"  
     delta = 32
     pruning = "Y"
+    QuantizationType = "center"
 
     if(args.r == 1.1001):
         print("=================================================================")
         print("==================== PARAMETER CONFIGURATION ====================")
         print("=================================================================")
+        print(f"model={model_name}", flush=True)
+        print(f"criterion={criterion_name}", flush=True)
         print(f"C={C}", flush=True)
         print(f"lr={lr}", flush=True)    
         print(f"lambda_reg={lambda_reg}", flush=True)
@@ -76,23 +87,28 @@ if __name__ == "__main__":
         print(f"target_acc={target_acc}", flush=True)    
         print(f"target_zstd_ratio={target_zstd_ratio}", flush=True)    
         print(f"min_xi={min_xi}", flush=True)    
-        print(f"max_xi={max_xi}", flush=True)    
+        print(f"max_xi={max_xi}", flush=True)  
+        print(f"upper_c={upper_c}", flush=True)
+        print(f"lower_c={lower_c}", flush=True)  
+        print(f"zeta={zeta}", flush=True)
+        print(f"l={l}", flush=True)
         print(f"n_epochs={n_epochs}", flush=True) 
         print(f"max_iterations={max_iterations}", flush=True)    
         print(f"train_optimizer={train_optimizer}", flush=True)    
         print(f"entropy_optimizer={entropy_optimizer}", flush=True) 
         print(f"delta={delta}", flush=True) 
         print(f"pruning={pruning}", flush=True)
+        print(f"QuantizationType={QuantizationType}")
         print("-"*60, flush=True)
     
     train_and_evaluate(
-        C=C, lr=lr, lambda_reg=lambda_reg, alpha=alpha,
+        model=model, C=C, lr=lr, lambda_reg=lambda_reg, alpha=alpha,
         subgradient_step=subgradient_step, w0=w0, r=args.r, # Pass the value from command line arguments
         target_acc=target_acc, target_zstd_ratio=target_zstd_ratio,
-        min_xi=min_xi, max_xi=max_xi, n_epochs=n_epochs,
+        min_xi=min_xi, max_xi=max_xi, upper_c=upper_c, lower_c=lower_c, zeta=zeta, l=l, n_epochs=n_epochs,
         max_iterations=max_iterations,
         device=device, train_optimizer=train_optimizer,
         entropy_optimizer=entropy_optimizer,
         trainloader=trainloader, testloader=testloader,
-        delta=delta, pruning=pruning 
+        delta=delta, pruning=pruning, QuantizationType=QuantizationType
     )
