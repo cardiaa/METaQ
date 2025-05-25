@@ -102,7 +102,7 @@ if __name__ == "__main__":
         print("-"*60, flush=True)
     
     train_and_evaluate(
-        model=model, C=C, lr=lr, lambda_reg=lambda_reg, alpha=alpha,
+        model=model, criterion=criterion, C=C, lr=lr, lambda_reg=lambda_reg, alpha=alpha,
         subgradient_step=subgradient_step, w0=w0, r=args.r, # Pass the value from command line arguments
         target_acc=target_acc, target_zstd_ratio=target_zstd_ratio,
         min_xi=min_xi, max_xi=max_xi, upper_c=upper_c, lower_c=lower_c, zeta=zeta, l=l, n_epochs=n_epochs,
