@@ -8,7 +8,7 @@ import numpy as np
 from heapq import heappush, heappop, heapify
 from decimal import Decimal
 from collections import Counter
-from utils.trainer import test_accuracy
+from .trainer import test_accuracy
 
 def compute_entropy(string):
     """
