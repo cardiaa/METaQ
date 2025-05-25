@@ -2,8 +2,8 @@ import argparse
 import torch
 import os
 from utils.trainer import train_and_evaluate
-from torchvision import datasets, transforms
 from utils.networks import LeNet5
+from torchvision import datasets, transforms
 from torch.nn import CrossEntropyLoss
 
 # Function to load the MNIST dataset

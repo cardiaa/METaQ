@@ -5,26 +5,9 @@ import copy
 import struct
 from torch.optim import Adam, SGD
 from utils.quantize_and_compress import compute_entropy, quantize_weights_center
-from utils.optimization import FISTA, ProximalBM
+from utils.optimization import FISTA, ProximalBM, test_accuracy
 from utils.weight_utils import initialize_weights
 from utils.quantize_and_compress import compress_zstd, BestQuantization
-
-def test_accuracy(model, dataloader, device):
-    """
-    Function to calculate the accuracy of a model on a given dataloader.
-    """
-    correct, total = 0, 0
-    with torch.no_grad():  # Disable gradient computation for evaluation
-        for images, labels in dataloader:
-            images, labels = images.to(device), labels.to(device)  # Move data to the appropriate device
-            outputs = model(images)  # Get model predictions
-            _, predicted = torch.max(outputs.data, 1)  # Get the class with the highest probability
-            total += labels.size(0)  # Update total number of samples
-            correct += (predicted == labels).sum().item()  # Count correct predictions
-    
-    accuracy = 100 * correct / total  # Compute accuracy percentage
-    return accuracy
-
 
 def train_and_evaluate(model, criterion, C, lr, lambda_reg, alpha, subgradient_step, w0, r,
                         target_acc, target_zstd_ratio, min_xi, max_xi, upper_c, lower_c, zeta, l, n_epochs,
