@@ -50,8 +50,8 @@ if __name__ == "__main__":
     criterion, criterion_name = CrossEntropyLoss(), "CrossEntropy" 
     C = 128
     lr = 0.0007  
-    lambda_reg = 0.0023
-    alpha = 0.6956
+    lambda_reg = 0.0107
+    alpha = 0.9345794392523366
     subgradient_step = 1e5 
     w0 = -0.11  
     #r = 1.1106  
