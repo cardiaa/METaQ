@@ -81,6 +81,8 @@ if __name__ == "__main__":
         print(f"lr={lr}", flush=True)    
         print(f"lambda_reg={lambda_reg}", flush=True)
         print(f"alpha={alpha}", flush=True)    
+        print(f"[T1=lambda_reg*alpha={lambda_reg*alpha}]", flush=True)
+        print(f"[T2=lambda_reg*(1-alpha)={lambda_reg*(1-alpha)}]", flush=True)
         print(f"subgradient_step={subgradient_step}", flush=True)    
         print(f"w0={w0}", flush=True)    
         #print(f"r={r}", flush=True)    
