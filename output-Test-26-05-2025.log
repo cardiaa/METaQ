@@ -8,6 +8,8 @@ C=128
 lr=0.0007
 lambda_reg=0.0023
 alpha=0.6956
+[T1=lambda_reg*alpha=0.00159988]
+[T2=lambda_reg*(1-alpha)=0.00070012]
 subgradient_step=100000.0
 w0=-0.11
 target_acc=99.0
