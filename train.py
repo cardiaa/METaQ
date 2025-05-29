@@ -49,7 +49,7 @@ if __name__ == "__main__":
     model, model_name = LeNet5().to(device), "LeNet-5"
     criterion, criterion_name = CrossEntropyLoss(), "CrossEntropy" 
     C = 128
-    lr = 0.007  
+    lr = 0.07  
     lambda_reg = 0.0015
     alpha = 0.533
     subgradient_step = 1e5 
@@ -65,7 +65,7 @@ if __name__ == "__main__":
     l = 0.5
     n_epochs = 30 # To be increased as soon as I find good configurations
     max_iterations = 15
-    train_optimizer = "SGD"  
+    train_optimizer = "ADAM"  
     entropy_optimizer = "FISTA"  
     delta = 32
     pruning = "Y"
