@@ -1,0 +1,230 @@
+nohup: ignoring input
+=================================================================
+==================== PARAMETER CONFIGURATION ====================
+=================================================================
+model=LeNet-5
+criterion=CrossEntropy
+C=128
+lr=0.07
+lambda_reg=0.0015
+alpha=0.533
+[T1=lambda_reg*alpha=0.0008]
+[T2=lambda_reg*(1-alpha)=0.0007]
+subgradient_step=100000.0
+w0=-0.11
+target_acc=99.0
+target_zstd_ratio=0.0297
+min_xi=0
+max_xi=1
+upper_c=44426
+lower_c=0.01
+zeta=50000
+l=0.5
+n_epochs=30
+max_iterations=15
+train_optimizer=ADAM
+entropy_optimizer=FISTA
+delta=32
+pruning=Y
+QuantizationType=center
+------------------------------------------------------------
+r = 1.1013
+Epoch 1: A_NQ = 8.92, H_NQ = 685865, A_Q = 8.92, H_Q = 95127, zstd_size = 128264 bits, zstd_ratio = 9.02%, training_time = 2592s
+Accuracy is too low! (A1.1), r: 1.1013
+------------------------------------------------------------
+r = 1.1023
+Epoch 1: A_NQ = 10.28, H_NQ = 685867, A_Q = 10.28, H_Q = 80788, zstd_size = 111568 bits, zstd_ratio = 7.85%, training_time = 2641s
+Accuracy is too low! (A1.1), r: 1.1023
+------------------------------------------------------------
+r = 1.1025
+Epoch 1: A_NQ = 9.82, H_NQ = 685857, A_Q = 9.82, H_Q = 83625, zstd_size = 115552 bits, zstd_ratio = 8.13%, training_time = 2658s
+Accuracy is too low! (A1.1), r: 1.1025
+------------------------------------------------------------
+r = 1.1007
+Epoch 1: A_NQ = 10.09, H_NQ = 685857, A_Q = 10.09, H_Q = 96742, zstd_size = 129016 bits, zstd_ratio = 9.08%, training_time = 2696s
+Accuracy is too low! (A1.1), r: 1.1007
+------------------------------------------------------------
+r = 1.1031
+Epoch 1: A_NQ = 11.35, H_NQ = 685871, A_Q = 11.35, H_Q = 77870, zstd_size = 108672 bits, zstd_ratio = 7.64%, training_time = 2718s
+Accuracy is too low! (A1.1), r: 1.1031
+------------------------------------------------------------
+r = 1.1002
+Epoch 1: A_NQ = 10.28, H_NQ = 685857, A_Q = 10.28, H_Q = 96097, zstd_size = 132152 bits, zstd_ratio = 9.30%, training_time = 2754s
+Accuracy is too low! (A1.1), r: 1.1002
+------------------------------------------------------------
+r = 1.1003
+Epoch 1: A_NQ = 9.8, H_NQ = 685869, A_Q = 9.8, H_Q = 79029, zstd_size = 111504 bits, zstd_ratio = 7.84%, training_time = 2811s
+Accuracy is too low! (A1.1), r: 1.1003
+------------------------------------------------------------
+r = 1.1026
+Epoch 1: A_NQ = 11.35, H_NQ = 685857, A_Q = 11.35, H_Q = 96902, zstd_size = 134056 bits, zstd_ratio = 9.43%, training_time = 2816s
+Accuracy is too low! (A1.1), r: 1.1026
+------------------------------------------------------------
+r = 1.1019
+Epoch 1: A_NQ = 10.1, H_NQ = 685859, A_Q = 10.1, H_Q = 79828, zstd_size = 110576 bits, zstd_ratio = 7.78%, training_time = 2824s
+Accuracy is too low! (A1.1), r: 1.1019
+------------------------------------------------------------
+r = 1.1008
+Epoch 1: A_NQ = 9.74, H_NQ = 685843, A_Q = 9.74, H_Q = 89306, zstd_size = 122096 bits, zstd_ratio = 8.59%, training_time = 2850s
+Accuracy is too low! (A1.1), r: 1.1008
+------------------------------------------------------------
+r = 1.1032
+Epoch 1: A_NQ = 11.35, H_NQ = 685857, A_Q = 11.35, H_Q = 97358, zstd_size = 133424 bits, zstd_ratio = 9.39%, training_time = 2872s
+Accuracy is too low! (A1.1), r: 1.1032
+------------------------------------------------------------
+r = 1.1005
+Epoch 1: A_NQ = 10.32, H_NQ = 685863, A_Q = 10.32, H_Q = 101695, zstd_size = 139952 bits, zstd_ratio = 9.84%, training_time = 2879s
+Accuracy is too low! (A1.1), r: 1.1005
+------------------------------------------------------------
+r = 1.1028
+Epoch 1: A_NQ = 9.8, H_NQ = 685853, A_Q = 9.8, H_Q = 78562, zstd_size = 108752 bits, zstd_ratio = 7.65%, training_time = 2901s
+Accuracy is too low! (A1.1), r: 1.1028
+------------------------------------------------------------
+r = 1.1024
+Epoch 1: A_NQ = 11.35, H_NQ = 685853, A_Q = 11.35, H_Q = 95513, zstd_size = 130992 bits, zstd_ratio = 9.21%, training_time = 2936s
+Accuracy is too low! (A1.1), r: 1.1024
+------------------------------------------------------------
+r = 1.1018
+Epoch 1: A_NQ = 11.35, H_NQ = 685853, A_Q = 11.35, H_Q = 102122, zstd_size = 138968 bits, zstd_ratio = 9.78%, training_time = 2936s
+Accuracy is too low! (A1.1), r: 1.1018
+------------------------------------------------------------
+r = 1.1012
+Epoch 1: A_NQ = 10.32, H_NQ = 685851, A_Q = 10.32, H_Q = 85133, zstd_size = 119424 bits, zstd_ratio = 8.40%, training_time = 2937s
+Accuracy is too low! (A1.1), r: 1.1012
+------------------------------------------------------------
+r = 1.1017
+Epoch 1: A_NQ = 10.28, H_NQ = 685861, A_Q = 10.28, H_Q = 72223, zstd_size = 102920 bits, zstd_ratio = 7.24%, training_time = 2937s
+Accuracy is too low! (A1.1), r: 1.1017
+------------------------------------------------------------
+r = 1.1029
+Epoch 1: A_NQ = 9.8, H_NQ = 685853, A_Q = 9.8, H_Q = 87866, zstd_size = 122200 bits, zstd_ratio = 8.60%, training_time = 2940s
+Accuracy is too low! (A1.1), r: 1.1029
+------------------------------------------------------------
+r = 1.101
+Epoch 1: A_NQ = 11.35, H_NQ = 685863, A_Q = 11.35, H_Q = 88966, zstd_size = 122360 bits, zstd_ratio = 8.61%, training_time = 2979s
+Accuracy is too low! (A1.1), r: 1.101
+------------------------------------------------------------
+r = 1.1021
+Epoch 1: A_NQ = 11.35, H_NQ = 685849, A_Q = 11.35, H_Q = 88145, zstd_size = 122792 bits, zstd_ratio = 8.64%, training_time = 2985s
+Accuracy is too low! (A1.1), r: 1.1021
+------------------------------------------------------------
+r = 1.1001
+Epoch 1: A_NQ = 9.58, H_NQ = 685875, A_Q = 9.58, H_Q = 98188, zstd_size = 135784 bits, zstd_ratio = 9.55%, training_time = 2985s
+Accuracy is too low! (A1.1), r: 1.1001
+------------------------------------------------------------
+r = 1.1022
+Epoch 1: A_NQ = 10.28, H_NQ = 685867, A_Q = 10.28, H_Q = 92689, zstd_size = 128256 bits, zstd_ratio = 9.02%, training_time = 2996s
+Accuracy is too low! (A1.1), r: 1.1022
+------------------------------------------------------------
+r = 1.1011
+Epoch 1: A_NQ = 9.58, H_NQ = 685875, A_Q = 9.58, H_Q = 103503, zstd_size = 140544 bits, zstd_ratio = 9.89%, training_time = 3006s
+Accuracy is too low! (A1.1), r: 1.1011
+------------------------------------------------------------
+r = 1.1006
+Epoch 1: A_NQ = 10.09, H_NQ = 685859, A_Q = 10.09, H_Q = 75134, zstd_size = 105368 bits, zstd_ratio = 7.41%, training_time = 3008s
+Accuracy is too low! (A1.1), r: 1.1006
+------------------------------------------------------------
+r = 1.102
+Epoch 1: A_NQ = 10.1, H_NQ = 685847, A_Q = 10.1, H_Q = 84213, zstd_size = 117432 bits, zstd_ratio = 8.26%, training_time = 3012s
+Accuracy is too low! (A1.1), r: 1.102
+------------------------------------------------------------
+r = 1.1004
+Epoch 1: A_NQ = 9.74, H_NQ = 685853, A_Q = 9.74, H_Q = 82073, zstd_size = 115672 bits, zstd_ratio = 8.14%, training_time = 3015s
+Accuracy is too low! (A1.1), r: 1.1004
+------------------------------------------------------------
+r = 1.1014
+Epoch 1: A_NQ = 10.28, H_NQ = 685841, A_Q = 10.28, H_Q = 97680, zstd_size = 133520 bits, zstd_ratio = 9.39%, training_time = 3019s
+Accuracy is too low! (A1.1), r: 1.1014
+------------------------------------------------------------
+r = 1.1016
+Epoch 1: A_NQ = 11.35, H_NQ = 685853, A_Q = 11.35, H_Q = 93241, zstd_size = 128552 bits, zstd_ratio = 9.04%, training_time = 3019s
+Accuracy is too low! (A1.1), r: 1.1016
+------------------------------------------------------------
+r = 1.1015
+Epoch 1: A_NQ = 10.32, H_NQ = 685869, A_Q = 10.32, H_Q = 84814, zstd_size = 117632 bits, zstd_ratio = 8.27%, training_time = 3039s
+Accuracy is too low! (A1.1), r: 1.1015
+------------------------------------------------------------
+r = 1.1009
+Epoch 1: A_NQ = 9.82, H_NQ = 685861, A_Q = 9.8, H_Q = 83633, zstd_size = 116408 bits, zstd_ratio = 8.19%, training_time = 3055s
+Accuracy is too low! (A1.1), r: 1.1009
+------------------------------------------------------------
+r = 1.103
+Epoch 1: A_NQ = 9.74, H_NQ = 685849, A_Q = 9.58, H_Q = 90726, zstd_size = 124024 bits, zstd_ratio = 8.72%, training_time = 3274s
+Accuracy is too low! (A1.1), r: 1.103
+------------------------------------------------------------
+r = 1.1027
+Epoch 1: A_NQ = 10.28, H_NQ = 685857, A_Q = 10.28, H_Q = 86750, zstd_size = 120576 bits, zstd_ratio = 8.48%, training_time = 3312s
+Accuracy is too low! (A1.1), r: 1.1027
+------------------------------------------------------------
+r = 1.1038
+Epoch 1: A_NQ = 9.74, H_NQ = 685867, A_Q = 10.1, H_Q = 66447, zstd_size = 94776 bits, zstd_ratio = 6.67%, training_time = 1884s
+Accuracy is too low! (A1.1), r: 1.1038
+------------------------------------------------------------
+r = 1.1039
+Epoch 1: A_NQ = 8.92, H_NQ = 685873, A_Q = 8.92, H_Q = 69659, zstd_size = 99296 bits, zstd_ratio = 6.98%, training_time = 1933s
+Accuracy is too low! (A1.1), r: 1.1039
+------------------------------------------------------------
+r = 1.1034
+Epoch 1: A_NQ = 9.82, H_NQ = 685851, A_Q = 9.82, H_Q = 98888, zstd_size = 136464 bits, zstd_ratio = 9.60%, training_time = 2107s
+Accuracy is too low! (A1.1), r: 1.1034
+------------------------------------------------------------
+r = 1.1041
+Epoch 1: A_NQ = 11.35, H_NQ = 685859, A_Q = 11.35, H_Q = 87265, zstd_size = 120080 bits, zstd_ratio = 8.45%, training_time = 1978s
+Accuracy is too low! (A1.1), r: 1.1041
+------------------------------------------------------------
+r = 1.1036
+Epoch 1: A_NQ = 10.32, H_NQ = 685863, A_Q = 10.32, H_Q = 92577, zstd_size = 129128 bits, zstd_ratio = 9.08%, training_time = 2124s
+Accuracy is too low! (A1.1), r: 1.1036
+------------------------------------------------------------
+r = 1.1035
+Epoch 1: A_NQ = 11.35, H_NQ = 685869, A_Q = 11.35, H_Q = 83969, zstd_size = 116312 bits, zstd_ratio = 8.18%, training_time = 2222s
+Accuracy is too low! (A1.1), r: 1.1035
+------------------------------------------------------------
+r = 1.1047
+Epoch 1: A_NQ = 10.1, H_NQ = 685871, A_Q = 10.1, H_Q = 90885, zstd_size = 124824 bits, zstd_ratio = 8.78%, training_time = 1947s
+Accuracy is too low! (A1.1), r: 1.1047
+------------------------------------------------------------
+r = 1.1037
+Epoch 1: A_NQ = 10.1, H_NQ = 685871, A_Q = 10.1, H_Q = 92049, zstd_size = 127728 bits, zstd_ratio = 8.98%, training_time = 2186s
+Accuracy is too low! (A1.1), r: 1.1037
+------------------------------------------------------------
+r = 1.1042
+Epoch 1: A_NQ = 9.58, H_NQ = 685863, A_Q = 9.58, H_Q = 81169, zstd_size = 112760 bits, zstd_ratio = 7.93%, training_time = 2055s
+Accuracy is too low! (A1.1), r: 1.1042
+------------------------------------------------------------
+r = 1.1046
+Epoch 1: A_NQ = 11.35, H_NQ = 685865, A_Q = 11.35, H_Q = 93289, zstd_size = 127560 bits, zstd_ratio = 8.97%, training_time = 1971s
+Accuracy is too low! (A1.1), r: 1.1046
+------------------------------------------------------------
+r = 1.1044
+Epoch 1: A_NQ = 9.8, H_NQ = 685859, A_Q = 9.8, H_Q = 85158, zstd_size = 118736 bits, zstd_ratio = 8.35%, training_time = 2047s
+Accuracy is too low! (A1.1), r: 1.1044
+------------------------------------------------------------
+r = 1.1049
+Epoch 1: A_NQ = 10.32, H_NQ = 685873, A_Q = 10.32, H_Q = 87221, zstd_size = 120288 bits, zstd_ratio = 8.46%, training_time = 2009s
+Accuracy is too low! (A1.1), r: 1.1049
+------------------------------------------------------------
+r = 1.1033
+Epoch 1: A_NQ = 10.1, H_NQ = 685855, A_Q = 10.1, H_Q = 81861, zstd_size = 113584 bits, zstd_ratio = 7.99%, training_time = 2361s
+Accuracy is too low! (A1.1), r: 1.1033
+------------------------------------------------------------
+r = 1.1048
+Epoch 1: A_NQ = 9.8, H_NQ = 685863, A_Q = 9.8, H_Q = 94428, zstd_size = 131144 bits, zstd_ratio = 9.22%, training_time = 2033s
+Accuracy is too low! (A1.1), r: 1.1048
+------------------------------------------------------------
+r = 1.1043
+Epoch 1: A_NQ = 11.35, H_NQ = 685871, A_Q = 11.35, H_Q = 95119, zstd_size = 129952 bits, zstd_ratio = 9.14%, training_time = 2107s
+Accuracy is too low! (A1.1), r: 1.1043
+------------------------------------------------------------
+r = 1.105
+Epoch 1: A_NQ = 11.35, H_NQ = 685869, A_Q = 11.35, H_Q = 85416, zstd_size = 118880 bits, zstd_ratio = 8.36%, training_time = 2069s
+Accuracy is too low! (A1.1), r: 1.105
+------------------------------------------------------------
+r = 1.104
+Epoch 1: A_NQ = 9.74, H_NQ = 685865, A_Q = 9.74, H_Q = 95420, zstd_size = 130448 bits, zstd_ratio = 9.18%, training_time = 2301s
+Accuracy is too low! (A1.1), r: 1.104
+------------------------------------------------------------
+r = 1.1045
+Epoch 1: A_NQ = 10.28, H_NQ = 685871, A_Q = 10.28, H_Q = 90186, zstd_size = 125760 bits, zstd_ratio = 8.85%, training_time = 2242s
+Accuracy is too low! (A1.1), r: 1.1045
+------------------------------------------------------------
