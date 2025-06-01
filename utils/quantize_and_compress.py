@@ -225,7 +225,7 @@ def BestQuantization(log, C, r, epoch, min_w, max_w, w, c1, c2,
         zstd_ratio = zstd_size / original_size_bytes
         # Output delle dimensioni e del rapporto di compressione
         if(QuantAcc[sorted_indices[-i]] >= target_acc and zstd_ratio <= target_zstd_ratio):
-            torch.save(model.state_dict(), f"BestModelsMay2025/Test2May2025_C{C}_r{r}_epoch{epoch}.pth")
+            torch.save(model.state_dict(), f"BestModelsJune2025/Test1June2025_C{C}_r{r}_epoch{epoch}.pth")
             log += "✅"*50+"\n"
             log += "✅✅✅✅✅✅ MODEL SAVED ✅✅✅✅✅✅\n"
             log += "✅"*50+"\n"
