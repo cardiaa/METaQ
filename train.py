@@ -49,7 +49,7 @@ if __name__ == "__main__":
     model, model_name = LeNet5().to(device), "LeNet-5"
     criterion, criterion_name = CrossEntropyLoss(), "CrossEntropy" 
     C = 128
-    lr = 0.01  
+    lr = 0.0007  
     lambda_reg = 0.0015
     alpha = 0.533
     subgradient_step = 1e5 
