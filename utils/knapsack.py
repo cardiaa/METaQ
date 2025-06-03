@@ -112,15 +112,14 @@ def knapsack_specialized_pruning(xi, v, w, C, device, delta):
 
     # Apply pruning adjustment to xi
     xi = xi - delta
-
     M = w.shape[0]
 
-    # Step 1: Compute breakpoint vector x_plus
+    # === Step 1: Compute x_plus ===
     b_list = []
     b = 0
     while True:
-        delta_xi = (xi[b + 1:] - xi[b])
-        delta_v = (v[b + 1:] - v[b])
+        delta_xi = xi[b + 1:] - xi[b]
+        delta_v = v[b + 1:] - v[b]
         b = torch.argmin(delta_xi / delta_v) + 1 + b_list[-1] if b_list else 0
         if b != C - 1:
             b_list.append(int(b))
@@ -130,108 +129,94 @@ def knapsack_specialized_pruning(xi, v, w, C, device, delta):
     x_plus = torch.zeros(C, dtype=torch.int32)
     x_plus[torch.tensor(b_list)] = 1
 
-    # Step 2: Preallocate outputs
+    # === Step 2: Precompute ===
+    ratio = xi / v
+    neg_indices = torch.where(v < 0)[0]
+    pos_indices = torch.where(v >= 0)[0]
+    neg_sorted = neg_indices[torch.argsort(ratio[neg_indices], descending=True)]
+    pos_sorted = pos_indices[torch.argsort(ratio[pos_indices])]
+    b_vector = torch.cat([neg_sorted, pos_sorted], dim=0)
+
+    # === Step 3: Masks ===
+    mask_small = w < v[0]
+    mask_large = w > v[-1]
+    mask_mid = (~mask_small) & (~mask_large)
+    mask_edge = (mask_small | mask_large)
+
+    # === Step 4: Initialize outputs ===
     x = torch.zeros(M, C)
     lambda_opt = torch.zeros(M)
 
-    # Step 3: Classify instances based on weight range
-    v0 = v[0]
-    v_last = v[-1]
-    mask_small = w < v0         # Case: weight less than minimum
-    mask_large = w > v_last     # Case: weight greater than maximum
-    mask_mid = (~mask_small) & (~mask_large)  # Case: weight within range
+    # === Step 5: Edge cases ===
+    if mask_edge.any():
+        w_edge = w[mask_edge]
+        condition = (w_edge / v[0] >= 0) & (w_edge / v[0] <= 1)
 
-    # Handle weights greater than v[-1]
-    x[mask_large, -1] = 1
+        x_edge = torch.zeros((w_edge.shape[0], C))
 
-    # Handle weights smaller than v[0]
-    x[mask_small, 0] = 1
+        if condition.any():
+            valid_w = w_edge[condition]
+            obj = (valid_w[:, None] / v) * xi  # [M_valid, C]
+            obj[:, x_plus == 0] = float('inf')  # only x_plus = 1 allowed
+            best_idx = torch.argmin(obj, dim=1)
+            theta = valid_w / v[best_idx]
+            x_edge[condition, best_idx] = theta
 
-    # Handle intermediate weights (v[0] < w < v[-1])
+        x[mask_edge] = x_edge
+
+    # === Step 6: Intermediate Case ===
     if mask_mid.any():
-        M_mid = mask_mid.sum()
         w_mid = w[mask_mid]
+        M_mid = w_mid.shape[0]
 
-        # Sort indices based on ratio xi/v
-        ratio = xi / v
-        neg_indices = torch.where(ratio < 0)[0]
-        neg_sorted = neg_indices[torch.argsort(ratio[neg_indices], descending=True)]
-        pos_indices = torch.where(ratio >= 0)[0]
-        pos_sorted = pos_indices[torch.argsort(ratio[pos_indices])]
-        b_vector = torch.cat([neg_sorted, pos_sorted], dim=0)
-
-        # Compute ratio between weight and quantization levels
+        # --- First Method ---
         ratio_b = w_mid[:, None] / v[b_vector]
-        x_plus_b = x_plus[b_vector].bool()
-
-        # Identify first valid index (i0) for convex combination
-        cond1 = (ratio_b >= 0) & x_plus_b
-        valid_i0 = cond1.float() * torch.arange(C)[None, :]
-        valid_i0[~cond1] = float('inf')
+        valid = (ratio_b >= 0) & (ratio_b <= 1) & (x_plus[b_vector] == 1).unsqueeze(0)
+        valid_i0 = torch.where(valid, torch.arange(C)[None, :], float('inf'))
         i0_pos = valid_i0.argmin(dim=1)
         i0 = b_vector[i0_pos]
-
-        # Check whether a single index suffices or two are needed
         v_i0 = v[i0]
-        x_single = w_mid / v_i0
-        invalid_i0 = x_plus[i0] == 0
-        use_two = x_single > 1
-        i1 = torch.full_like(i0, fill_value=-1)
+        x1_sol = torch.zeros(M_mid, C)
+        theta1 = w_mid / v_i0
+        x1_sol[torch.arange(M_mid), i0] = theta1
+        obj1 = x1_sol @ xi
+        obj1[theta1 < 0] = float('inf')
 
-        # Find second index (i1) for convex combination if necessary
-        if use_two.any():
-            b_vector_exp = b_vector.unsqueeze(0).expand(M_mid, -1)
-            i0_exp = i0.unsqueeze(1).expand_as(b_vector_exp)
-            x_plus_mask = x_plus[b_vector_exp] == 1
-            greater_mask = b_vector_exp > i0_exp
-            valid_mask = x_plus_mask & greater_mask
-            masked_b_vector = torch.where(valid_mask, b_vector_exp, torch.full_like(b_vector_exp, C))
-            i1_candidate, _ = masked_b_vector.min(dim=1)
-            i1_candidate_use_two = i1_candidate[use_two]
-            valid_i1_use_two = i1_candidate_use_two < C
-            i0_use_two = i0[use_two]
-            i1[use_two] = torch.where(valid_i1_use_two, i1_candidate_use_two, i0_use_two)
+        # --- Second Method ---
+        one_indices = torch.nonzero(x_plus, as_tuple=True)[0]
+        i_right = torch.searchsorted(v[one_indices], w_mid, right=False)
+        i_right = i_right.clamp(min=1, max=one_indices.shape[0] - 1)
+        idx_right = one_indices[i_right]
+        idx_left = one_indices[i_right - 1]
 
-        # Step 4: Construct allocation matrix x_mid
-        x_mid = torch.zeros(M_mid, C)
+        v_left = v[idx_left]
+        v_right = v[idx_right]
+        theta2 = (w_mid - v_right) / (v_left - v_right + 1e-8)
 
-        # Case: single index allocation
-        mask_one = ~use_two
-        rows_one = torch.where(mask_one)[0]
-        cols_one = i0[mask_one]
-        x_mid[rows_one, cols_one] = torch.clamp(torch.round(w_mid[mask_one] / v[cols_one], decimals=5), 0.0, 1.0)
+        x2_sol = torch.zeros(M_mid, C)
+        x2_sol[torch.arange(M_mid), idx_left] = theta2
+        x2_sol[torch.arange(M_mid), idx_right] = 1 - theta2
+        obj2 = x2_sol @ xi
 
-        # Case: convex combination of two indices
-        mask_two = use_two & (i1 != i0)
-        rows_two = torch.where(mask_two)[0]
-        idx0 = i0[mask_two]
-        idx1 = i1[mask_two]
-        v0 = v[idx0]
-        v1 = v[idx1]
-        w_sel = w_mid[mask_two]
-        theta = (w_sel - v1) / (v0 - v1)
-        x_mid[rows_two, idx0] = torch.round(theta, decimals=5)
-        x_mid[rows_two, idx1] = torch.round(1 - theta, decimals=5)
+        # --- Choose better ---
+        better_first = obj1 < obj2
+        final_x = torch.where(better_first.unsqueeze(1), x1_sol, x2_sol)
+        x[mask_mid] = final_x
 
-        # Assign mid-case solutions
-        x[mask_mid] = x_mid
-
-    # Step 5: Compute optimal multipliers
+    # === Step 7: Compute lambda_opt ===
     eps = 1e-6
     nz_mask = torch.abs(x) > eps
     nz_counts = nz_mask.sum(dim=1)
-    lambda_opt = torch.zeros(x.shape[0])
 
-    # Case: only one non-zero element in allocation
+    # One non-zero variable
     m1 = torch.where(nz_counts == 1)[0]
     if m1.numel() > 0:
-        submask = nz_mask[m1]
-        indices = submask.nonzero(as_tuple=False)
+        indices = nz_mask[m1].nonzero(as_tuple=False)
         i = indices[:, 1]
         lambda_opt[m1] = -xi[i] / v[i]
         lambda_opt[m1] = torch.round(lambda_opt[m1], decimals=5)
 
-    # Case: two non-zero elements (convex combination)
+    # Two non-zero variables
     m2 = torch.where(nz_counts == 2)[0]
     if m2.numel() > 0:
         indices = nz_mask[m2].nonzero().reshape(-1, 2)
@@ -244,7 +229,7 @@ def knapsack_specialized_pruning(xi, v, w, C, device, delta):
         lambda_opt[m2] = -delta_xi / (delta_idx * passo)
         lambda_opt[m2] = torch.round(lambda_opt[m2], decimals=5)
 
-    # Step 6: Compute final objective function values
+    # === Step 8: Objective ===
     objective_values = delta + x @ xi
 
     return x, lambda_opt, objective_values
