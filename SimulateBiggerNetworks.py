@@ -1,6 +1,5 @@
 import torch
 import numpy as np
-import cvxpy as cp
 import time
 
 def knapsack_specialized_pruning_complete_parallel(xi, v, w, C):
