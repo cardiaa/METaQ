@@ -179,7 +179,7 @@ training_time_LeNet300 = time.time() - start_time
 print(f'Time spent for the LeNet-300 Simulation: {training_time_LeNet300:.2f} seconds')
 
 print(f"M_LeNet5 / M_LeNet300 = {M_LeNet5 / M_LeNet300}, "
-      f"training_time_LeNet5 / training_time_LeNet300 {training_time_LeNet5 / training_time_LeNet300}")
+      f"training_time_LeNet5 / training_time_LeNet300: {round(training_time_LeNet5 / training_time_LeNet300, 2)}")
 print("-"*60)
 
 # ------------------------------------------------------------------------------------------------------
@@ -195,7 +195,7 @@ training_time_AlexNet = time.time() - start_time
 print(f'Time spent for the AlexNet Simulation: {training_time_AlexNet:.2f} seconds')
 
 print(f"M_LeNet5 / M_AlexNet = {M_LeNet5 / M_AlexNet}, "
-      f"training_time_LeNet5 / training_time_AlexNet {training_time_LeNet5 / training_time_AlexNet}")
+      f"training_time_LeNet5 / training_time_AlexNet: {round(training_time_LeNet5 / training_time_AlexNet, 2)}")
 print("-"*60)
 
 # ------------------------------------------------------------------------------------------------------
@@ -211,7 +211,9 @@ training_time_VGG16 = time.time() - start_time
 print(f'Time spent for the VGG16 Simulation: {training_time_VGG16:.2f} seconds')
 
 print(f"M_LeNet5 / M_VGG16 = {M_LeNet5 / M_VGG16}, "
-      f"training_time_LeNet5 / training_time_VGG16 {training_time_LeNet5 / training_time_VGG16}")
+      f"training_time_LeNet5 / training_time_VGG16: {round(training_time_LeNet5 / training_time_VGG16, 2)}")
 print("-"*60)
 
 # ------------------------------------------------------------------------------------------------------
+
+print("\n\nSimulation Completed.")
