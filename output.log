@@ -25,371 +25,262 @@ max_iterations=15
 train_optimizer=ADAM
 entropy_optimizer=FISTA
 delta=1000
-pruning=N
+pruning=Y
 QuantizationType=center
 ------------------------------------------------------------
-r = 1.1013
-Epoch 1: A_NQ = 29.28, H_NQ = 685152, A_Q = 9.8, H_Q = 47443, zstd_size = 70248 bits, zstd_ratio = 4.94%, training_time = 64s
-Epoch 2: A_NQ = 39.4, H_NQ = 642769, A_Q = 9.8, H_Q = 42126, zstd_size = 61968 bits, zstd_ratio = 4.36%, training_time = 58s
-Accuracy is too low! (A1.1), r: 1.1013
-------------------------------------------------------------
-r = 1.1006
-Epoch 1: A_NQ = 30.73, H_NQ = 685260, A_Q = 11.35, H_Q = 48131, zstd_size = 70296 bits, zstd_ratio = 4.94%, training_time = 65s
-Epoch 2: A_NQ = 30.85, H_NQ = 649380, A_Q = 11.35, H_Q = 42991, zstd_size = 62640 bits, zstd_ratio = 4.41%, training_time = 59s
-Accuracy is too low! (A1.1), r: 1.1006
-------------------------------------------------------------
-r = 1.1021
-Epoch 1: A_NQ = 28.61, H_NQ = 685248, A_Q = 9.8, H_Q = 46722, zstd_size = 68936 bits, zstd_ratio = 4.85%, training_time = 65s
-Epoch 2: A_NQ = 32.82, H_NQ = 644985, A_Q = 9.8, H_Q = 42661, zstd_size = 62584 bits, zstd_ratio = 4.40%, training_time = 59s
-Accuracy is too low! (A1.1), r: 1.1021
-------------------------------------------------------------
-r = 1.1007
-Epoch 1: A_NQ = 37.17, H_NQ = 685292, A_Q = 10.32, H_Q = 49267, zstd_size = 70976 bits, zstd_ratio = 4.99%, training_time = 68s
-Epoch 2: A_NQ = 56.56, H_NQ = 639503, A_Q = 10.32, H_Q = 43351, zstd_size = 63200 bits, zstd_ratio = 4.45%, training_time = 62s
-Accuracy is too low! (A1.1), r: 1.1007
-------------------------------------------------------------
-r = 1.102
-Epoch 1: A_NQ = 10.28, H_NQ = 685034, A_Q = 9.8, H_Q = 41432, zstd_size = 63328 bits, zstd_ratio = 4.45%, training_time = 68s
-Epoch 2: A_NQ = 11.35, H_NQ = 643564, A_Q = 9.74, H_Q = 36165, zstd_size = 56216 bits, zstd_ratio = 3.95%, training_time = 62s
-Accuracy is too low! (A1.1), r: 1.102
-------------------------------------------------------------
-r = 1.1008
-Epoch 1: A_NQ = 30.82, H_NQ = 685352, A_Q = 10.32, H_Q = 51151, zstd_size = 74016 bits, zstd_ratio = 5.21%, training_time = 68s
-Epoch 2: A_NQ = 42.47, H_NQ = 653879, A_Q = 10.32, H_Q = 44239, zstd_size = 63736 bits, zstd_ratio = 4.48%, training_time = 63s
-Accuracy is too low! (A1.1), r: 1.1008
-------------------------------------------------------------
-r = 1.1019
-Epoch 1: A_NQ = 56.54, H_NQ = 685403, A_Q = 9.58, H_Q = 53928, zstd_size = 75768 bits, zstd_ratio = 5.33%, training_time = 69s
-Epoch 2: A_NQ = 60.31, H_NQ = 652210, A_Q = 8.92, H_Q = 48525, zstd_size = 67408 bits, zstd_ratio = 4.74%, training_time = 63s
-Epoch 3: A_NQ = 58.58, H_NQ = 584375, A_Q = 8.92, H_Q = 36336, zstd_size = 45696 bits, zstd_ratio = 3.21%, training_time = 59s
-Accuracy is too low! (A1.1), r: 1.1019
-------------------------------------------------------------
 r = 1.1005
-Epoch 1: A_NQ = 87.56, H_NQ = 685855, A_Q = 9.75, H_Q = 88431, zstd_size = 117208 bits, zstd_ratio = 8.24%, training_time = 67s
-Epoch 2: A_NQ = 93.67, H_NQ = 685723, A_Q = 9.58, H_Q = 68485, zstd_size = 89824 bits, zstd_ratio = 6.32%, training_time = 61s
-Epoch 3: A_NQ = 95.28, H_NQ = 685384, A_Q = 11.3, H_Q = 55366, zstd_size = 68264 bits, zstd_ratio = 4.80%, training_time = 58s
-Epoch 4: A_NQ = 96.11, H_NQ = 685464, A_Q = 10.17, H_Q = 44815, zstd_size = 42624 bits, zstd_ratio = 3.00%, training_time = 57s
-Epoch 5: A_NQ = 96.51, H_NQ = 684726, A_Q = 9.58, H_Q = 40339, zstd_size = 38360 bits, zstd_ratio = 2.70%, training_time = 56s
-Epoch 6: A_NQ = 97.38, H_NQ = 684990, A_Q = 9.58, H_Q = 36590, zstd_size = 34904 bits, zstd_ratio = 2.46%, training_time = 56s
-Epoch 7: A_NQ = 97.08, H_NQ = 684696, A_Q = 9.74, H_Q = 33502, zstd_size = 32032 bits, zstd_ratio = 2.25%, training_time = 56s
-Epoch 8: A_NQ = 97.13, H_NQ = 685098, A_Q = 11.35, H_Q = 31084, zstd_size = 29912 bits, zstd_ratio = 2.10%, training_time = 56s
-Epoch 9: A_NQ = 97.86, H_NQ = 684635, A_Q = 9.74, H_Q = 28976, zstd_size = 27936 bits, zstd_ratio = 1.97%, training_time = 55s
-Epoch 10: A_NQ = 97.85, H_NQ = 685222, A_Q = 11.35, H_Q = 27268, zstd_size = 26672 bits, zstd_ratio = 1.88%, training_time = 56s
-Epoch 11: A_NQ = 97.42, H_NQ = 684931, A_Q = 8.92, H_Q = 25677, zstd_size = 25320 bits, zstd_ratio = 1.78%, training_time = 55s
-Entropy is not decreasing enough! (E1.1), r: 1.1005
-------------------------------------------------------------
-r = 1.1018
-Epoch 1: A_NQ = 83.48, H_NQ = 685767, A_Q = 9.74, H_Q = 78838, zstd_size = 103440 bits, zstd_ratio = 7.28%, training_time = 67s
-Epoch 2: A_NQ = 91.5, H_NQ = 677473, A_Q = 9.74, H_Q = 64250, zstd_size = 82944 bits, zstd_ratio = 5.83%, training_time = 61s
-Epoch 3: A_NQ = 93.84, H_NQ = 628235, A_Q = 9.74, H_Q = 51773, zstd_size = 61256 bits, zstd_ratio = 4.31%, training_time = 59s
-Epoch 4: A_NQ = 95.15, H_NQ = 569947, A_Q = 9.87, H_Q = 41456, zstd_size = 35352 bits, zstd_ratio = 2.49%, training_time = 58s
-Epoch 5: A_NQ = 96.21, H_NQ = 561464, A_Q = 20.05, H_Q = 38922, zstd_size = 32432 bits, zstd_ratio = 2.28%, training_time = 57s
-Epoch 6: A_NQ = 96.25, H_NQ = 564714, A_Q = 9.91, H_Q = 37031, zstd_size = 30928 bits, zstd_ratio = 2.18%, training_time = 57s
-Epoch 7: A_NQ = 96.8, H_NQ = 604352, A_Q = 19.98, H_Q = 35178, zstd_size = 29520 bits, zstd_ratio = 2.08%, training_time = 57s
-Epoch 8: A_NQ = 95.85, H_NQ = 582935, A_Q = 11.79, H_Q = 33438, zstd_size = 28216 bits, zstd_ratio = 1.98%, training_time = 57s
-Epoch 9: A_NQ = 97.42, H_NQ = 646806, A_Q = 13.55, H_Q = 31871, zstd_size = 26944 bits, zstd_ratio = 1.90%, training_time = 57s
-Epoch 10: A_NQ = 97.09, H_NQ = 676451, A_Q = 9.8, H_Q = 29967, zstd_size = 25192 bits, zstd_ratio = 1.77%, training_time = 57s
-Epoch 11: A_NQ = 97.87, H_NQ = 679755, A_Q = 9.2, H_Q = 28527, zstd_size = 23944 bits, zstd_ratio = 1.68%, training_time = 57s
-Entropy is not decreasing enough! (E1.1), r: 1.1018
-------------------------------------------------------------
-r = 1.1026
-Epoch 1: A_NQ = 86.93, H_NQ = 685749, A_Q = 9.8, H_Q = 79219, zstd_size = 102520 bits, zstd_ratio = 7.21%, training_time = 67s
-Epoch 2: A_NQ = 92.01, H_NQ = 679463, A_Q = 9.8, H_Q = 67186, zstd_size = 86952 bits, zstd_ratio = 6.12%, training_time = 61s
-Epoch 3: A_NQ = 94.57, H_NQ = 677843, A_Q = 9.8, H_Q = 55271, zstd_size = 65560 bits, zstd_ratio = 4.61%, training_time = 59s
-Epoch 4: A_NQ = 95.48, H_NQ = 684183, A_Q = 20.99, H_Q = 44524, zstd_size = 40392 bits, zstd_ratio = 2.84%, training_time = 58s
-Epoch 5: A_NQ = 96.56, H_NQ = 684069, A_Q = 35.31, H_Q = 40928, zstd_size = 36160 bits, zstd_ratio = 2.54%, training_time = 57s
-Epoch 6: A_NQ = 96.82, H_NQ = 683024, A_Q = 31.98, H_Q = 38297, zstd_size = 33424 bits, zstd_ratio = 2.35%, training_time = 57s
-Epoch 7: A_NQ = 97.08, H_NQ = 683206, A_Q = 17.43, H_Q = 36059, zstd_size = 31528 bits, zstd_ratio = 2.22%, training_time = 57s
-Epoch 8: A_NQ = 96.9, H_NQ = 681906, A_Q = 8.96, H_Q = 34133, zstd_size = 30064 bits, zstd_ratio = 2.11%, training_time = 57s
-Epoch 9: A_NQ = 97.93, H_NQ = 682034, A_Q = 8.79, H_Q = 32476, zstd_size = 28904 bits, zstd_ratio = 2.03%, training_time = 57s
-Epoch 10: A_NQ = 97.68, H_NQ = 680439, A_Q = 15.89, H_Q = 30935, zstd_size = 27240 bits, zstd_ratio = 1.92%, training_time = 57s
-Epoch 11: A_NQ = 97.87, H_NQ = 682650, A_Q = 13.77, H_Q = 29486, zstd_size = 25968 bits, zstd_ratio = 1.83%, training_time = 57s
-Entropy is not decreasing enough! (E1.1), r: 1.1026
-------------------------------------------------------------
-r = 1.1023
-Epoch 1: A_NQ = 89.11, H_NQ = 685725, A_Q = 10.1, H_Q = 75499, zstd_size = 98952 bits, zstd_ratio = 6.96%, training_time = 70s
-Epoch 2: A_NQ = 92.65, H_NQ = 675502, A_Q = 10.1, H_Q = 66356, zstd_size = 85160 bits, zstd_ratio = 5.99%, training_time = 64s
-Epoch 3: A_NQ = 94.93, H_NQ = 636717, A_Q = 10.1, H_Q = 55643, zstd_size = 65320 bits, zstd_ratio = 4.59%, training_time = 59s
-Epoch 4: A_NQ = 95.04, H_NQ = 600122, A_Q = 10.32, H_Q = 46292, zstd_size = 41736 bits, zstd_ratio = 2.94%, training_time = 58s
-Epoch 5: A_NQ = 96.7, H_NQ = 578586, A_Q = 10.32, H_Q = 42901, zstd_size = 39072 bits, zstd_ratio = 2.75%, training_time = 57s
-Epoch 6: A_NQ = 96.45, H_NQ = 572406, A_Q = 10.32, H_Q = 39894, zstd_size = 36816 bits, zstd_ratio = 2.59%, training_time = 57s
-Epoch 7: A_NQ = 97.0, H_NQ = 598425, A_Q = 10.1, H_Q = 37208, zstd_size = 34376 bits, zstd_ratio = 2.42%, training_time = 57s
-Epoch 8: A_NQ = 97.15, H_NQ = 594416, A_Q = 9.8, H_Q = 35205, zstd_size = 32824 bits, zstd_ratio = 2.31%, training_time = 57s
-Epoch 9: A_NQ = 97.24, H_NQ = 586433, A_Q = 14.95, H_Q = 33358, zstd_size = 31344 bits, zstd_ratio = 2.20%, training_time = 57s
-Epoch 10: A_NQ = 97.83, H_NQ = 580775, A_Q = 11.1, H_Q = 31594, zstd_size = 29944 bits, zstd_ratio = 2.11%, training_time = 57s
-Epoch 11: A_NQ = 97.41, H_NQ = 609597, A_Q = 9.58, H_Q = 29847, zstd_size = 28736 bits, zstd_ratio = 2.02%, training_time = 57s
-Entropy is not decreasing enough! (E1.1), r: 1.1023
-------------------------------------------------------------
-r = 1.1022
-Epoch 1: A_NQ = 80.36, H_NQ = 685859, A_Q = 10.83, H_Q = 101771, zstd_size = 138040 bits, zstd_ratio = 9.71%, training_time = 70s
-Epoch 2: A_NQ = 89.94, H_NQ = 685869, A_Q = 22.75, H_Q = 95523, zstd_size = 128440 bits, zstd_ratio = 9.03%, training_time = 66s
-Epoch 3: A_NQ = 94.12, H_NQ = 685859, A_Q = 30.58, H_Q = 81745, zstd_size = 108064 bits, zstd_ratio = 7.60%, training_time = 62s
-Epoch 4: A_NQ = 95.36, H_NQ = 685813, A_Q = 47.95, H_Q = 62424, zstd_size = 72992 bits, zstd_ratio = 5.13%, training_time = 59s
-Epoch 5: A_NQ = 96.39, H_NQ = 685742, A_Q = 46.96, H_Q = 49946, zstd_size = 50920 bits, zstd_ratio = 3.58%, training_time = 57s
-Epoch 6: A_NQ = 96.55, H_NQ = 685661, A_Q = 47.12, H_Q = 43931, zstd_size = 43464 bits, zstd_ratio = 3.06%, training_time = 56s
-Epoch 7: A_NQ = 96.58, H_NQ = 684696, A_Q = 39.67, H_Q = 39316, zstd_size = 38072 bits, zstd_ratio = 2.68%, training_time = 56s
-Epoch 8: A_NQ = 97.46, H_NQ = 685209, A_Q = 37.49, H_Q = 35994, zstd_size = 34600 bits, zstd_ratio = 2.43%, training_time = 56s
-Epoch 9: A_NQ = 97.73, H_NQ = 685255, A_Q = 40.52, H_Q = 33592, zstd_size = 31864 bits, zstd_ratio = 2.24%, training_time = 56s
-Epoch 10: A_NQ = 97.88, H_NQ = 685128, A_Q = 14.09, H_Q = 31517, zstd_size = 30208 bits, zstd_ratio = 2.12%, training_time = 56s
-Epoch 11: A_NQ = 97.81, H_NQ = 684950, A_Q = 11.51, H_Q = 29756, zstd_size = 28544 bits, zstd_ratio = 2.01%, training_time = 55s
-Entropy is not decreasing enough! (E1.1), r: 1.1022
-------------------------------------------------------------
-r = 1.103
-Epoch 1: A_NQ = 89.33, H_NQ = 685855, A_Q = 9.74, H_Q = 96626, zstd_size = 127880 bits, zstd_ratio = 9.00%, training_time = 69s
-Epoch 2: A_NQ = 93.72, H_NQ = 685737, A_Q = 11.35, H_Q = 80835, zstd_size = 103936 bits, zstd_ratio = 7.31%, training_time = 64s
-Epoch 3: A_NQ = 95.0, H_NQ = 685749, A_Q = 11.35, H_Q = 67385, zstd_size = 81016 bits, zstd_ratio = 5.70%, training_time = 61s
-Epoch 4: A_NQ = 95.87, H_NQ = 685311, A_Q = 11.35, H_Q = 56905, zstd_size = 56944 bits, zstd_ratio = 4.01%, training_time = 59s
-Epoch 5: A_NQ = 96.72, H_NQ = 684950, A_Q = 11.35, H_Q = 50900, zstd_size = 50768 bits, zstd_ratio = 3.57%, training_time = 59s
-Epoch 6: A_NQ = 96.46, H_NQ = 684979, A_Q = 11.35, H_Q = 45949, zstd_size = 46040 bits, zstd_ratio = 3.24%, training_time = 58s
-Epoch 7: A_NQ = 97.01, H_NQ = 685363, A_Q = 11.35, H_Q = 41648, zstd_size = 42240 bits, zstd_ratio = 2.97%, training_time = 58s
-Epoch 8: A_NQ = 96.85, H_NQ = 684748, A_Q = 11.35, H_Q = 38085, zstd_size = 38168 bits, zstd_ratio = 2.68%, training_time = 58s
-Epoch 9: A_NQ = 96.88, H_NQ = 683546, A_Q = 11.35, H_Q = 35819, zstd_size = 36192 bits, zstd_ratio = 2.55%, training_time = 58s
-Epoch 10: A_NQ = 97.37, H_NQ = 684289, A_Q = 11.35, H_Q = 33728, zstd_size = 34264 bits, zstd_ratio = 2.41%, training_time = 58s
-Epoch 11: A_NQ = 97.53, H_NQ = 683466, A_Q = 11.35, H_Q = 31925, zstd_size = 32136 bits, zstd_ratio = 2.26%, training_time = 57s
-Entropy is not decreasing enough! (E1.1), r: 1.103
-------------------------------------------------------------
-r = 1.1024
-Epoch 1: A_NQ = 81.31, H_NQ = 685849, A_Q = 24.23, H_Q = 101643, zstd_size = 137392 bits, zstd_ratio = 9.66%, training_time = 74s
-Epoch 2: A_NQ = 89.72, H_NQ = 685847, A_Q = 23.55, H_Q = 89325, zstd_size = 119192 bits, zstd_ratio = 8.38%, training_time = 69s
-Epoch 3: A_NQ = 93.53, H_NQ = 685812, A_Q = 17.45, H_Q = 64520, zstd_size = 81056 bits, zstd_ratio = 5.70%, training_time = 61s
-Epoch 4: A_NQ = 94.68, H_NQ = 684449, A_Q = 9.96, H_Q = 46942, zstd_size = 42656 bits, zstd_ratio = 3.00%, training_time = 58s
-Epoch 5: A_NQ = 95.61, H_NQ = 671483, A_Q = 11.22, H_Q = 43250, zstd_size = 37976 bits, zstd_ratio = 2.67%, training_time = 57s
-Epoch 6: A_NQ = 96.53, H_NQ = 633351, A_Q = 15.81, H_Q = 40517, zstd_size = 35592 bits, zstd_ratio = 2.50%, training_time = 57s
-Epoch 7: A_NQ = 95.94, H_NQ = 639037, A_Q = 14.53, H_Q = 38308, zstd_size = 33712 bits, zstd_ratio = 2.37%, training_time = 57s
-Epoch 8: A_NQ = 96.63, H_NQ = 610749, A_Q = 17.02, H_Q = 36423, zstd_size = 32048 bits, zstd_ratio = 2.25%, training_time = 57s
-Epoch 9: A_NQ = 97.14, H_NQ = 624725, A_Q = 12.02, H_Q = 34594, zstd_size = 30656 bits, zstd_ratio = 2.16%, training_time = 57s
-Epoch 10: A_NQ = 97.25, H_NQ = 594876, A_Q = 13.44, H_Q = 33023, zstd_size = 29216 bits, zstd_ratio = 2.06%, training_time = 57s
-Epoch 11: A_NQ = 97.62, H_NQ = 681133, A_Q = 14.66, H_Q = 31541, zstd_size = 27968 bits, zstd_ratio = 1.97%, training_time = 57s
-Entropy is not decreasing enough! (E1.1), r: 1.1024
-------------------------------------------------------------
-r = 1.1025
-Epoch 1: A_NQ = 85.16, H_NQ = 685859, A_Q = 38.61, H_Q = 102149, zstd_size = 138040 bits, zstd_ratio = 9.71%, training_time = 70s
-Epoch 2: A_NQ = 91.58, H_NQ = 685847, A_Q = 26.94, H_Q = 96978, zstd_size = 129808 bits, zstd_ratio = 9.13%, training_time = 66s
-Epoch 3: A_NQ = 93.67, H_NQ = 685859, A_Q = 62.33, H_Q = 86132, zstd_size = 112136 bits, zstd_ratio = 7.89%, training_time = 64s
-Epoch 4: A_NQ = 95.37, H_NQ = 685835, A_Q = 29.6, H_Q = 72855, zstd_size = 88240 bits, zstd_ratio = 6.21%, training_time = 61s
-Epoch 5: A_NQ = 95.91, H_NQ = 685835, A_Q = 15.16, H_Q = 61811, zstd_size = 70416 bits, zstd_ratio = 4.95%, training_time = 60s
-Epoch 6: A_NQ = 96.39, H_NQ = 685803, A_Q = 16.95, H_Q = 53423, zstd_size = 59800 bits, zstd_ratio = 4.21%, training_time = 59s
-Epoch 7: A_NQ = 96.84, H_NQ = 685777, A_Q = 20.46, H_Q = 46736, zstd_size = 52440 bits, zstd_ratio = 3.69%, training_time = 58s
-Epoch 8: A_NQ = 96.29, H_NQ = 685731, A_Q = 10.1, H_Q = 41677, zstd_size = 46696 bits, zstd_ratio = 3.28%, training_time = 57s
-Epoch 9: A_NQ = 97.47, H_NQ = 685757, A_Q = 8.92, H_Q = 37445, zstd_size = 42144 bits, zstd_ratio = 2.96%, training_time = 57s
-Epoch 10: A_NQ = 97.82, H_NQ = 685670, A_Q = 9.8, H_Q = 34164, zstd_size = 37984 bits, zstd_ratio = 2.67%, training_time = 57s
-Epoch 11: A_NQ = 97.1, H_NQ = 685614, A_Q = 9.8, H_Q = 31589, zstd_size = 35256 bits, zstd_ratio = 2.48%, training_time = 57s
-Entropy is not decreasing enough! (E1.1), r: 1.1025
+Epoch 1: A_NQ = 9.74, H_NQ = 664081, A_Q = 9.58, H_Q = 70740, zstd_size = 97824 bits, zstd_ratio = 6.88%, training_time = 146s
+Accuracy is too low! (A1.1), r: 1.1005
 ------------------------------------------------------------
 r = 1.1017
-Epoch 1: A_NQ = 83.63, H_NQ = 685847, A_Q = 10.29, H_Q = 102314, zstd_size = 138848 bits, zstd_ratio = 9.77%, training_time = 71s
-Epoch 2: A_NQ = 91.65, H_NQ = 685867, A_Q = 10.09, H_Q = 96518, zstd_size = 130544 bits, zstd_ratio = 9.18%, training_time = 67s
-Epoch 3: A_NQ = 94.15, H_NQ = 685875, A_Q = 10.25, H_Q = 84754, zstd_size = 110880 bits, zstd_ratio = 7.80%, training_time = 64s
-Epoch 4: A_NQ = 95.54, H_NQ = 685837, A_Q = 12.56, H_Q = 70328, zstd_size = 87288 bits, zstd_ratio = 6.14%, training_time = 61s
-Epoch 5: A_NQ = 95.31, H_NQ = 685811, A_Q = 13.23, H_Q = 58394, zstd_size = 67192 bits, zstd_ratio = 4.73%, training_time = 60s
-Epoch 6: A_NQ = 95.7, H_NQ = 685797, A_Q = 10.09, H_Q = 50000, zstd_size = 56640 bits, zstd_ratio = 3.98%, training_time = 59s
-Epoch 7: A_NQ = 96.16, H_NQ = 685773, A_Q = 10.09, H_Q = 43280, zstd_size = 48776 bits, zstd_ratio = 3.43%, training_time = 58s
-Epoch 8: A_NQ = 97.33, H_NQ = 685756, A_Q = 10.09, H_Q = 38256, zstd_size = 43360 bits, zstd_ratio = 3.05%, training_time = 58s
-Epoch 9: A_NQ = 97.3, H_NQ = 685713, A_Q = 10.31, H_Q = 34453, zstd_size = 39072 bits, zstd_ratio = 2.75%, training_time = 57s
-Epoch 10: A_NQ = 97.63, H_NQ = 685705, A_Q = 10.32, H_Q = 31648, zstd_size = 34752 bits, zstd_ratio = 2.44%, training_time = 57s
-Epoch 11: A_NQ = 97.15, H_NQ = 685668, A_Q = 10.32, H_Q = 29679, zstd_size = 32832 bits, zstd_ratio = 2.31%, training_time = 57s
-Entropy is not decreasing enough! (E1.1), r: 1.1017
-------------------------------------------------------------
-r = 1.1016
-Epoch 1: A_NQ = 88.38, H_NQ = 685851, A_Q = 9.82, H_Q = 91879, zstd_size = 122152 bits, zstd_ratio = 8.59%, training_time = 72s
-Epoch 2: A_NQ = 93.72, H_NQ = 685497, A_Q = 9.82, H_Q = 72834, zstd_size = 94096 bits, zstd_ratio = 6.62%, training_time = 66s
-Epoch 3: A_NQ = 94.97, H_NQ = 685428, A_Q = 9.82, H_Q = 58857, zstd_size = 71520 bits, zstd_ratio = 5.03%, training_time = 63s
-Epoch 4: A_NQ = 96.03, H_NQ = 685362, A_Q = 9.82, H_Q = 47906, zstd_size = 46112 bits, zstd_ratio = 3.24%, training_time = 62s
-Epoch 5: A_NQ = 96.78, H_NQ = 685231, A_Q = 9.93, H_Q = 43121, zstd_size = 40936 bits, zstd_ratio = 2.88%, training_time = 62s
-Epoch 6: A_NQ = 96.8, H_NQ = 685439, A_Q = 10.09, H_Q = 39183, zstd_size = 36912 bits, zstd_ratio = 2.60%, training_time = 61s
-Epoch 7: A_NQ = 96.83, H_NQ = 684569, A_Q = 9.58, H_Q = 36334, zstd_size = 34016 bits, zstd_ratio = 2.39%, training_time = 61s
-Epoch 8: A_NQ = 96.95, H_NQ = 684941, A_Q = 9.58, H_Q = 33943, zstd_size = 32144 bits, zstd_ratio = 2.26%, training_time = 61s
-Epoch 9: A_NQ = 96.51, H_NQ = 685406, A_Q = 9.74, H_Q = 31878, zstd_size = 29944 bits, zstd_ratio = 2.11%, training_time = 61s
-Epoch 10: A_NQ = 97.47, H_NQ = 685392, A_Q = 11.35, H_Q = 30077, zstd_size = 28416 bits, zstd_ratio = 2.00%, training_time = 61s
-Epoch 11: A_NQ = 97.86, H_NQ = 684307, A_Q = 9.82, H_Q = 28638, zstd_size = 27384 bits, zstd_ratio = 1.93%, training_time = 61s
-Entropy is not decreasing enough! (E1.1), r: 1.1016
-------------------------------------------------------------
-r = 1.1015
-Epoch 1: A_NQ = 85.21, H_NQ = 685851, A_Q = 9.25, H_Q = 96261, zstd_size = 127824 bits, zstd_ratio = 8.99%, training_time = 72s
-Epoch 2: A_NQ = 91.89, H_NQ = 685811, A_Q = 9.58, H_Q = 81742, zstd_size = 106312 bits, zstd_ratio = 7.48%, training_time = 67s
-Epoch 3: A_NQ = 94.44, H_NQ = 685754, A_Q = 11.05, H_Q = 66708, zstd_size = 81976 bits, zstd_ratio = 5.77%, training_time = 64s
-Epoch 4: A_NQ = 95.2, H_NQ = 685478, A_Q = 18.31, H_Q = 54490, zstd_size = 55344 bits, zstd_ratio = 3.89%, training_time = 62s
-Epoch 5: A_NQ = 95.2, H_NQ = 685142, A_Q = 12.71, H_Q = 48952, zstd_size = 49128 bits, zstd_ratio = 3.46%, training_time = 62s
-Epoch 6: A_NQ = 96.24, H_NQ = 684935, A_Q = 13.2, H_Q = 44403, zstd_size = 44600 bits, zstd_ratio = 3.14%, training_time = 61s
-Epoch 7: A_NQ = 96.78, H_NQ = 684426, A_Q = 12.35, H_Q = 40635, zstd_size = 41024 bits, zstd_ratio = 2.89%, training_time = 61s
-Epoch 8: A_NQ = 97.27, H_NQ = 684344, A_Q = 11.86, H_Q = 37548, zstd_size = 38288 bits, zstd_ratio = 2.69%, training_time = 61s
-Epoch 9: A_NQ = 97.45, H_NQ = 684753, A_Q = 10.09, H_Q = 34892, zstd_size = 35928 bits, zstd_ratio = 2.53%, training_time = 61s
-Epoch 10: A_NQ = 97.76, H_NQ = 684420, A_Q = 9.55, H_Q = 32661, zstd_size = 33808 bits, zstd_ratio = 2.38%, training_time = 61s
-Epoch 11: A_NQ = 97.33, H_NQ = 683647, A_Q = 11.17, H_Q = 30964, zstd_size = 32056 bits, zstd_ratio = 2.25%, training_time = 61s
-Entropy is not decreasing enough! (E1.1), r: 1.1015
-------------------------------------------------------------
-r = 1.1032
-Epoch 1: A_NQ = 80.64, H_NQ = 685871, A_Q = 10.32, H_Q = 96979, zstd_size = 129992 bits, zstd_ratio = 9.14%, training_time = 73s
-Epoch 2: A_NQ = 91.4, H_NQ = 685793, A_Q = 10.77, H_Q = 76144, zstd_size = 100664 bits, zstd_ratio = 7.08%, training_time = 67s
-Epoch 3: A_NQ = 93.92, H_NQ = 685522, A_Q = 10.48, H_Q = 57945, zstd_size = 71176 bits, zstd_ratio = 5.01%, training_time = 63s
-Epoch 4: A_NQ = 95.52, H_NQ = 684798, A_Q = 10.11, H_Q = 45622, zstd_size = 41408 bits, zstd_ratio = 2.91%, training_time = 62s
-Epoch 5: A_NQ = 96.21, H_NQ = 681757, A_Q = 16.3, H_Q = 42045, zstd_size = 37136 bits, zstd_ratio = 2.61%, training_time = 61s
-Epoch 6: A_NQ = 96.02, H_NQ = 684349, A_Q = 37.04, H_Q = 39216, zstd_size = 34944 bits, zstd_ratio = 2.46%, training_time = 61s
-Epoch 7: A_NQ = 97.13, H_NQ = 681901, A_Q = 17.93, H_Q = 36881, zstd_size = 33224 bits, zstd_ratio = 2.34%, training_time = 61s
-Epoch 8: A_NQ = 97.2, H_NQ = 680499, A_Q = 14.48, H_Q = 34617, zstd_size = 31056 bits, zstd_ratio = 2.18%, training_time = 61s
-Epoch 9: A_NQ = 97.21, H_NQ = 682961, A_Q = 10.93, H_Q = 32580, zstd_size = 29680 bits, zstd_ratio = 2.09%, training_time = 61s
-Epoch 10: A_NQ = 97.24, H_NQ = 683639, A_Q = 14.65, H_Q = 31001, zstd_size = 27712 bits, zstd_ratio = 1.95%, training_time = 61s
-Epoch 11: A_NQ = 97.55, H_NQ = 683362, A_Q = 9.58, H_Q = 29334, zstd_size = 26656 bits, zstd_ratio = 1.88%, training_time = 61s
-Entropy is not decreasing enough! (E1.1), r: 1.1032
-------------------------------------------------------------
-r = 1.1027
-Epoch 1: A_NQ = 85.76, H_NQ = 685855, A_Q = 9.75, H_Q = 101261, zstd_size = 137128 bits, zstd_ratio = 9.65%, training_time = 74s
-Epoch 2: A_NQ = 92.25, H_NQ = 685859, A_Q = 12.24, H_Q = 93383, zstd_size = 124544 bits, zstd_ratio = 8.76%, training_time = 70s
-Epoch 3: A_NQ = 94.2, H_NQ = 685867, A_Q = 9.85, H_Q = 77887, zstd_size = 99376 bits, zstd_ratio = 6.99%, training_time = 66s
-Epoch 4: A_NQ = 95.94, H_NQ = 685787, A_Q = 10.07, H_Q = 63546, zstd_size = 72104 bits, zstd_ratio = 5.07%, training_time = 64s
-Epoch 5: A_NQ = 96.51, H_NQ = 685759, A_Q = 9.59, H_Q = 53865, zstd_size = 58520 bits, zstd_ratio = 4.12%, training_time = 63s
-Epoch 6: A_NQ = 97.01, H_NQ = 685648, A_Q = 9.59, H_Q = 46685, zstd_size = 49912 bits, zstd_ratio = 3.51%, training_time = 62s
-Epoch 7: A_NQ = 97.28, H_NQ = 685582, A_Q = 9.74, H_Q = 40959, zstd_size = 44312 bits, zstd_ratio = 3.12%, training_time = 62s
-Epoch 8: A_NQ = 97.35, H_NQ = 685680, A_Q = 10.28, H_Q = 36965, zstd_size = 39984 bits, zstd_ratio = 2.81%, training_time = 61s
-Epoch 9: A_NQ = 97.58, H_NQ = 685664, A_Q = 10.28, H_Q = 33509, zstd_size = 36120 bits, zstd_ratio = 2.54%, training_time = 61s
-Epoch 10: A_NQ = 97.65, H_NQ = 685608, A_Q = 9.8, H_Q = 30977, zstd_size = 33464 bits, zstd_ratio = 2.35%, training_time = 61s
-Epoch 11: A_NQ = 97.69, H_NQ = 685583, A_Q = 9.58, H_Q = 28978, zstd_size = 31016 bits, zstd_ratio = 2.18%, training_time = 61s
-Entropy is not decreasing enough! (E1.1), r: 1.1027
-------------------------------------------------------------
-r = 1.1028
-Epoch 1: A_NQ = 87.5, H_NQ = 685859, A_Q = 9.58, H_Q = 102326, zstd_size = 138888 bits, zstd_ratio = 9.77%, training_time = 75s
-Epoch 2: A_NQ = 92.51, H_NQ = 685849, A_Q = 10.32, H_Q = 96491, zstd_size = 128560 bits, zstd_ratio = 9.04%, training_time = 71s
-Epoch 3: A_NQ = 94.64, H_NQ = 685861, A_Q = 9.8, H_Q = 84222, zstd_size = 109664 bits, zstd_ratio = 7.71%, training_time = 67s
-Epoch 4: A_NQ = 95.23, H_NQ = 685857, A_Q = 9.8, H_Q = 69966, zstd_size = 83544 bits, zstd_ratio = 5.88%, training_time = 65s
-Epoch 5: A_NQ = 95.48, H_NQ = 685803, A_Q = 9.8, H_Q = 58891, zstd_size = 66136 bits, zstd_ratio = 4.65%, training_time = 63s
-Epoch 6: A_NQ = 95.13, H_NQ = 685737, A_Q = 9.58, H_Q = 50259, zstd_size = 56416 bits, zstd_ratio = 3.97%, training_time = 62s
-Epoch 7: A_NQ = 96.03, H_NQ = 685719, A_Q = 9.58, H_Q = 43905, zstd_size = 48344 bits, zstd_ratio = 3.40%, training_time = 62s
-Epoch 8: A_NQ = 97.11, H_NQ = 685728, A_Q = 9.58, H_Q = 39148, zstd_size = 42800 bits, zstd_ratio = 3.01%, training_time = 61s
-Epoch 9: A_NQ = 97.44, H_NQ = 685569, A_Q = 9.58, H_Q = 35590, zstd_size = 38760 bits, zstd_ratio = 2.73%, training_time = 61s
-Epoch 10: A_NQ = 97.5, H_NQ = 685337, A_Q = 9.8, H_Q = 33223, zstd_size = 35904 bits, zstd_ratio = 2.53%, training_time = 61s
-Epoch 11: A_NQ = 97.59, H_NQ = 685106, A_Q = 9.58, H_Q = 31322, zstd_size = 34080 bits, zstd_ratio = 2.40%, training_time = 61s
-Entropy is not decreasing enough! (E1.1), r: 1.1028
-------------------------------------------------------------
-r = 1.1014
-Epoch 1: A_NQ = 55.16, H_NQ = 685377, A_Q = 9.8, H_Q = 54191, zstd_size = 75680 bits, zstd_ratio = 5.32%, training_time = 65s
-Epoch 2: A_NQ = 70.32, H_NQ = 652269, A_Q = 9.8, H_Q = 47729, zstd_size = 66928 bits, zstd_ratio = 4.71%, training_time = 59s
-Epoch 3: A_NQ = 76.23, H_NQ = 597959, A_Q = 9.82, H_Q = 35308, zstd_size = 44840 bits, zstd_ratio = 3.15%, training_time = 57s
-Epoch 4: A_NQ = 78.81, H_NQ = 485285, A_Q = 11.35, H_Q = 23945, zstd_size = 17560 bits, zstd_ratio = 1.24%, training_time = 56s
-Epoch 5: A_NQ = 79.65, H_NQ = 390970, A_Q = 11.35, H_Q = 23388, zstd_size = 17064 bits, zstd_ratio = 1.20%, training_time = 56s
-Epoch 6: A_NQ = 86.91, H_NQ = 311333, A_Q = 11.35, H_Q = 23034, zstd_size = 16960 bits, zstd_ratio = 1.19%, training_time = 56s
-Epoch 7: A_NQ = 88.5, H_NQ = 229217, A_Q = 9.8, H_Q = 22890, zstd_size = 16792 bits, zstd_ratio = 1.18%, training_time = 56s
-Epoch 8: A_NQ = 88.3, H_NQ = 202041, A_Q = 9.8, H_Q = 22689, zstd_size = 16688 bits, zstd_ratio = 1.17%, training_time = 56s
-Epoch 9: A_NQ = 90.58, H_NQ = 159943, A_Q = 10.09, H_Q = 22448, zstd_size = 16624 bits, zstd_ratio = 1.17%, training_time = 56s
-Epoch 10: A_NQ = 91.11, H_NQ = 137292, A_Q = 10.09, H_Q = 22219, zstd_size = 16712 bits, zstd_ratio = 1.18%, training_time = 56s
-Epoch 11: A_NQ = 92.31, H_NQ = 103417, A_Q = 10.09, H_Q = 21940, zstd_size = 16608 bits, zstd_ratio = 1.17%, training_time = 56s
-Epoch 12: A_NQ = 91.85, H_NQ = 101061, A_Q = 10.09, H_Q = 21664, zstd_size = 16424 bits, zstd_ratio = 1.16%, training_time = 55s
-Epoch 13: A_NQ = 92.76, H_NQ = 92985, A_Q = 10.28, H_Q = 21481, zstd_size = 16312 bits, zstd_ratio = 1.15%, training_time = 55s
-Epoch 14: A_NQ = 92.93, H_NQ = 92985, A_Q = 11.03, H_Q = 21186, zstd_size = 16192 bits, zstd_ratio = 1.14%, training_time = 55s
-Epoch 15: A_NQ = 92.33, H_NQ = 92979, A_Q = 15.01, H_Q = 20915, zstd_size = 16048 bits, zstd_ratio = 1.13%, training_time = 55s
-Epoch 16: A_NQ = 93.0, H_NQ = 92985, A_Q = 9.8, H_Q = 20615, zstd_size = 15952 bits, zstd_ratio = 1.12%, training_time = 55s
-Epoch 17: A_NQ = 93.05, H_NQ = 92985, A_Q = 9.8, H_Q = 20334, zstd_size = 15888 bits, zstd_ratio = 1.12%, training_time = 55s
-Epoch 18: A_NQ = 93.27, H_NQ = 92979, A_Q = 11.37, H_Q = 20050, zstd_size = 15616 bits, zstd_ratio = 1.10%, training_time = 55s
-Epoch 19: A_NQ = 94.35, H_NQ = 92983, A_Q = 9.58, H_Q = 19684, zstd_size = 15504 bits, zstd_ratio = 1.09%, training_time = 55s
-Epoch 20: A_NQ = 92.93, H_NQ = 92981, A_Q = 8.92, H_Q = 19453, zstd_size = 15336 bits, zstd_ratio = 1.08%, training_time = 55s
-Epoch 21: A_NQ = 94.21, H_NQ = 92985, A_Q = 8.08, H_Q = 19184, zstd_size = 15120 bits, zstd_ratio = 1.06%, training_time = 55s
-Accuracy is too low! (A1.2), r: 1.1014
-------------------------------------------------------------
-r = 1.1029
-Epoch 1: A_NQ = 88.88, H_NQ = 685803, A_Q = 11.18, H_Q = 84098, zstd_size = 108952 bits, zstd_ratio = 7.66%, training_time = 67s
-Epoch 2: A_NQ = 93.58, H_NQ = 678890, A_Q = 15.29, H_Q = 68624, zstd_size = 88920 bits, zstd_ratio = 6.25%, training_time = 62s
-Epoch 3: A_NQ = 95.06, H_NQ = 653300, A_Q = 28.12, H_Q = 56490, zstd_size = 67640 bits, zstd_ratio = 4.76%, training_time = 58s
-Epoch 4: A_NQ = 95.76, H_NQ = 635689, A_Q = 21.92, H_Q = 46929, zstd_size = 43496 bits, zstd_ratio = 3.06%, training_time = 57s
-Epoch 5: A_NQ = 96.19, H_NQ = 671824, A_Q = 52.3, H_Q = 43414, zstd_size = 40128 bits, zstd_ratio = 2.82%, training_time = 56s
-Epoch 6: A_NQ = 96.69, H_NQ = 666130, A_Q = 22.75, H_Q = 40246, zstd_size = 37272 bits, zstd_ratio = 2.62%, training_time = 56s
-Epoch 7: A_NQ = 97.33, H_NQ = 673588, A_Q = 28.62, H_Q = 37585, zstd_size = 35072 bits, zstd_ratio = 2.47%, training_time = 56s
-Epoch 8: A_NQ = 97.61, H_NQ = 667614, A_Q = 25.81, H_Q = 35098, zstd_size = 32656 bits, zstd_ratio = 2.30%, training_time = 56s
-Epoch 9: A_NQ = 97.85, H_NQ = 673201, A_Q = 19.5, H_Q = 33234, zstd_size = 31192 bits, zstd_ratio = 2.19%, training_time = 56s
-Epoch 10: A_NQ = 97.15, H_NQ = 667044, A_Q = 11.78, H_Q = 31251, zstd_size = 29688 bits, zstd_ratio = 2.09%, training_time = 56s
-Epoch 11: A_NQ = 98.29, H_NQ = 669895, A_Q = 17.65, H_Q = 29038, zstd_size = 27664 bits, zstd_ratio = 1.95%, training_time = 56s
-💥💥💥 ...AIN'T SAVING THE MODEL... JUST CHECKING... 💥💥💥
-	➡️ r = 1.1029, Epoch 11:
-	Quantization at C=384, Accuracy from 98.29 to 98.32
-	H_Q = 143949, zstd_size = 163072 bits, zstd_ratio = 11.47%
-------------------------------------------------------------💥💥💥 ...AIN'T SAVING THE MODEL... JUST CHECKING... 💥💥💥
-	➡️ r = 1.1029, Epoch 11:
-	Quantization at C=725, Accuracy from 98.29 to 98.31
-	H_Q = 168570, zstd_size = 190992 bits, zstd_ratio = 13.43%
-------------------------------------------------------------💥💥💥 ...AIN'T SAVING THE MODEL... JUST CHECKING... 💥💥💥
-	➡️ r = 1.1029, Epoch 11:
-	Quantization at C=509, Accuracy from 98.29 to 98.31
-	H_Q = 165258, zstd_size = 179152 bits, zstd_ratio = 12.60%
-------------------------------------------------------------💥💥💥 ...AIN'T SAVING THE MODEL... JUST CHECKING... 💥💥💥
-	➡️ r = 1.1029, Epoch 11:
-	Quantization at C=514, Accuracy from 98.29 to 98.31
-	H_Q = 155811, zstd_size = 175816 bits, zstd_ratio = 12.37%
-------------------------------------------------------------💥💥💥 ...AIN'T SAVING THE MODEL... JUST CHECKING... 💥💥💥
-	➡️ r = 1.1029, Epoch 11:
-	Quantization at C=368, Accuracy from 98.29 to 98.31
-	H_Q = 148104, zstd_size = 163200 bits, zstd_ratio = 11.48%
-------------------------------------------------------------💥💥💥 ...AIN'T SAVING THE MODEL... JUST CHECKING... 💥💥💥
-	➡️ r = 1.1029, Epoch 11:
-	Quantization at C=988, Accuracy from 98.29 to 98.3
-	H_Q = 188292, zstd_size = 207408 bits, zstd_ratio = 14.59%
-------------------------------------------------------------💥💥💥 ...AIN'T SAVING THE MODEL... JUST CHECKING... 💥💥💥
-	➡️ r = 1.1029, Epoch 11:
-	Quantization at C=542, Accuracy from 98.29 to 98.3
-	H_Q = 165390, zstd_size = 182528 bits, zstd_ratio = 12.84%
-------------------------------------------------------------💥💥💥 ...AIN'T SAVING THE MODEL... JUST CHECKING... 💥💥💥
-	➡️ r = 1.1029, Epoch 11:
-	Quantization at C=710, Accuracy from 98.29 to 98.3
-	H_Q = 173541, zstd_size = 193008 bits, zstd_ratio = 13.58%
-------------------------------------------------------------💥💥💥 ...AIN'T SAVING THE MODEL... JUST CHECKING... 💥💥💥
-	➡️ r = 1.1029, Epoch 11:
-	Quantization at C=735, Accuracy from 98.29 to 98.3
-	H_Q = 180150, zstd_size = 195592 bits, zstd_ratio = 13.76%
-------------------------------------------------------------Entropy is not decreasing enough! (E1.1), r: 1.1029
+Epoch 1: A_NQ = 10.09, H_NQ = 662787, A_Q = 10.09, H_Q = 69472, zstd_size = 96760 bits, zstd_ratio = 6.81%, training_time = 147s
+Accuracy is too low! (A1.1), r: 1.1017
 ------------------------------------------------------------
 r = 1.1009
-Epoch 1: A_NQ = 83.59, H_NQ = 685529, A_Q = 10.28, H_Q = 61653, zstd_size = 83496 bits, zstd_ratio = 5.87%, training_time = 65s
-Epoch 2: A_NQ = 92.26, H_NQ = 662233, A_Q = 10.28, H_Q = 55458, zstd_size = 73944 bits, zstd_ratio = 5.20%, training_time = 60s
-Epoch 3: A_NQ = 94.46, H_NQ = 615000, A_Q = 10.28, H_Q = 44751, zstd_size = 53776 bits, zstd_ratio = 3.78%, training_time = 58s
-Epoch 4: A_NQ = 95.37, H_NQ = 514407, A_Q = 10.28, H_Q = 35079, zstd_size = 28552 bits, zstd_ratio = 2.01%, training_time = 57s
-Epoch 5: A_NQ = 96.31, H_NQ = 441318, A_Q = 10.29, H_Q = 33892, zstd_size = 27736 bits, zstd_ratio = 1.95%, training_time = 57s
-Epoch 6: A_NQ = 96.59, H_NQ = 343092, A_Q = 10.1, H_Q = 32520, zstd_size = 26728 bits, zstd_ratio = 1.88%, training_time = 57s
-Epoch 7: A_NQ = 96.47, H_NQ = 288541, A_Q = 13.51, H_Q = 31227, zstd_size = 26016 bits, zstd_ratio = 1.83%, training_time = 57s
-Epoch 8: A_NQ = 96.97, H_NQ = 243028, A_Q = 9.27, H_Q = 29855, zstd_size = 24864 bits, zstd_ratio = 1.75%, training_time = 57s
-Epoch 9: A_NQ = 97.37, H_NQ = 218536, A_Q = 20.03, H_Q = 28835, zstd_size = 24320 bits, zstd_ratio = 1.71%, training_time = 57s
-Epoch 10: A_NQ = 97.46, H_NQ = 266095, A_Q = 16.24, H_Q = 27691, zstd_size = 23480 bits, zstd_ratio = 1.65%, training_time = 57s
-Epoch 11: A_NQ = 97.2, H_NQ = 332220, A_Q = 26.71, H_Q = 26517, zstd_size = 22728 bits, zstd_ratio = 1.60%, training_time = 57s
-Epoch 12: A_NQ = 97.46, H_NQ = 404710, A_Q = 19.22, H_Q = 25552, zstd_size = 21912 bits, zstd_ratio = 1.54%, training_time = 56s
-Epoch 13: A_NQ = 97.45, H_NQ = 426960, A_Q = 15.21, H_Q = 24621, zstd_size = 21192 bits, zstd_ratio = 1.49%, training_time = 55s
-Epoch 14: A_NQ = 97.79, H_NQ = 423328, A_Q = 8.92, H_Q = 23827, zstd_size = 20200 bits, zstd_ratio = 1.42%, training_time = 55s
-Epoch 15: A_NQ = 98.14, H_NQ = 540737, A_Q = 10.1, H_Q = 22836, zstd_size = 19352 bits, zstd_ratio = 1.36%, training_time = 55s
-💥💥💥 ...AIN'T SAVING THE MODEL... JUST CHECKING... 💥💥💥
-	➡️ r = 1.1009, Epoch 15:
-	Quantization at C=128, Accuracy from 98.14 to 98.24
-	H_Q = 73727, zstd_size = 76328 bits, zstd_ratio = 5.37%
-------------------------------------------------------------💥💥💥 ...AIN'T SAVING THE MODEL... JUST CHECKING... 💥💥💥
-	➡️ r = 1.1009, Epoch 15:
-	Quantization at C=78, Accuracy from 98.14 to 98.22
-	H_Q = 67075, zstd_size = 65816 bits, zstd_ratio = 4.63%
-------------------------------------------------------------💥💥💥 ...AIN'T SAVING THE MODEL... JUST CHECKING... 💥💥💥
-	➡️ r = 1.1009, Epoch 15:
-	Quantization at C=154, Accuracy from 98.14 to 98.22
-	H_Q = 76367, zstd_size = 80392 bits, zstd_ratio = 5.65%
-------------------------------------------------------------💥💥💥 ...AIN'T SAVING THE MODEL... JUST CHECKING... 💥💥💥
-	➡️ r = 1.1009, Epoch 15:
-	Quantization at C=208, Accuracy from 98.14 to 98.21
-	H_Q = 80156, zstd_size = 86320 bits, zstd_ratio = 6.07%
-------------------------------------------------------------💥💥💥 ...AIN'T SAVING THE MODEL... JUST CHECKING... 💥💥💥
-	➡️ r = 1.1009, Epoch 15:
-	Quantization at C=156, Accuracy from 98.14 to 98.21
-	H_Q = 76403, zstd_size = 80368 bits, zstd_ratio = 5.65%
-------------------------------------------------------------💥💥💥 ...AIN'T SAVING THE MODEL... JUST CHECKING... 💥💥💥
-	➡️ r = 1.1009, Epoch 15:
-	Quantization at C=388, Accuracy from 98.14 to 98.21
-	H_Q = 87670, zstd_size = 100808 bits, zstd_ratio = 7.09%
-------------------------------------------------------------💥💥💥 ...AIN'T SAVING THE MODEL... JUST CHECKING... 💥💥💥
-	➡️ r = 1.1009, Epoch 15:
-	Quantization at C=197, Accuracy from 98.14 to 98.2
-	H_Q = 94146, zstd_size = 91224 bits, zstd_ratio = 6.42%
-------------------------------------------------------------💥💥💥 ...AIN'T SAVING THE MODEL... JUST CHECKING... 💥💥💥
-	➡️ r = 1.1009, Epoch 15:
-	Quantization at C=100, Accuracy from 98.14 to 98.2
-	H_Q = 70395, zstd_size = 70960 bits, zstd_ratio = 4.99%
-------------------------------------------------------------💥💥💥 ...AIN'T SAVING THE MODEL... JUST CHECKING... 💥💥💥
-	➡️ r = 1.1009, Epoch 15:
-	Quantization at C=117, Accuracy from 98.14 to 98.2
-	H_Q = 72534, zstd_size = 74400 bits, zstd_ratio = 5.23%
-------------------------------------------------------------Epoch 16: A_NQ = 97.78, H_NQ = 555132, A_Q = 8.99, H_Q = 22089, zstd_size = 18928 bits, zstd_ratio = 1.33%, training_time = 55s
-Epoch 17: A_NQ = 97.75, H_NQ = 531261, A_Q = 10.1, H_Q = 21396, zstd_size = 18248 bits, zstd_ratio = 1.28%, training_time = 55s
-Epoch 18: A_NQ = 97.91, H_NQ = 558908, A_Q = 10.32, H_Q = 20712, zstd_size = 17576 bits, zstd_ratio = 1.24%, training_time = 55s
-Epoch 19: A_NQ = 97.93, H_NQ = 588630, A_Q = 9.74, H_Q = 20252, zstd_size = 16856 bits, zstd_ratio = 1.19%, training_time = 55s
-Epoch 20: A_NQ = 97.72, H_NQ = 665567, A_Q = 10.09, H_Q = 19987, zstd_size = 16544 bits, zstd_ratio = 1.16%, training_time = 55s
-Entropy is not decreasing enough! (E1.1), r: 1.1009
+Epoch 1: A_NQ = 10.32, H_NQ = 662877, A_Q = 11.35, H_Q = 70617, zstd_size = 97672 bits, zstd_ratio = 6.87%, training_time = 147s
+Accuracy is too low! (A1.1), r: 1.1009
+------------------------------------------------------------
+r = 1.1026
+Epoch 1: A_NQ = 9.74, H_NQ = 681623, A_Q = 11.35, H_Q = 79736, zstd_size = 110008 bits, zstd_ratio = 7.74%, training_time = 147s
+Accuracy is too low! (A1.1), r: 1.1026
+------------------------------------------------------------
+r = 1.1021
+Epoch 1: A_NQ = 10.32, H_NQ = 681700, A_Q = 10.32, H_Q = 80175, zstd_size = 110016 bits, zstd_ratio = 7.74%, training_time = 147s
+Accuracy is too low! (A1.1), r: 1.1021
+------------------------------------------------------------
+r = 1.101
+Epoch 1: A_NQ = 8.92, H_NQ = 665505, A_Q = 9.82, H_Q = 70586, zstd_size = 97688 bits, zstd_ratio = 6.87%, training_time = 148s
+Accuracy is too low! (A1.1), r: 1.101
+------------------------------------------------------------
+r = 1.1006
+Epoch 1: A_NQ = 11.35, H_NQ = 681672, A_Q = 10.09, H_Q = 79855, zstd_size = 109696 bits, zstd_ratio = 7.72%, training_time = 148s
+Accuracy is too low! (A1.1), r: 1.1006
+------------------------------------------------------------
+r = 1.1014
+Epoch 1: A_NQ = 9.74, H_NQ = 681604, A_Q = 9.74, H_Q = 79725, zstd_size = 109456 bits, zstd_ratio = 7.70%, training_time = 148s
+Accuracy is too low! (A1.1), r: 1.1014
+------------------------------------------------------------
+r = 1.103
+Epoch 1: A_NQ = 10.09, H_NQ = 681698, A_Q = 10.09, H_Q = 79808, zstd_size = 109280 bits, zstd_ratio = 7.69%, training_time = 148s
+Accuracy is too low! (A1.1), r: 1.103
+------------------------------------------------------------
+r = 1.1029
+Epoch 1: A_NQ = 10.1, H_NQ = 681495, A_Q = 10.1, H_Q = 79709, zstd_size = 109776 bits, zstd_ratio = 7.72%, training_time = 148s
+Accuracy is too low! (A1.1), r: 1.1029
+------------------------------------------------------------
+r = 1.1001
+Epoch 1: A_NQ = 9.58, H_NQ = 681469, A_Q = 9.58, H_Q = 79666, zstd_size = 109200 bits, zstd_ratio = 7.68%, training_time = 148s
+Accuracy is too low! (A1.1), r: 1.1001
+------------------------------------------------------------
+r = 1.1022
+Epoch 1: A_NQ = 10.09, H_NQ = 681538, A_Q = 10.09, H_Q = 79839, zstd_size = 109880 bits, zstd_ratio = 7.73%, training_time = 148s
+Accuracy is too low! (A1.1), r: 1.1022
+------------------------------------------------------------
+r = 1.1025
+Epoch 1: A_NQ = 10.28, H_NQ = 681773, A_Q = 10.28, H_Q = 79857, zstd_size = 110536 bits, zstd_ratio = 7.78%, training_time = 148s
+Accuracy is too low! (A1.1), r: 1.1025
+------------------------------------------------------------
+r = 1.1013
+Epoch 1: A_NQ = 9.8, H_NQ = 681563, A_Q = 9.8, H_Q = 79844, zstd_size = 109784 bits, zstd_ratio = 7.72%, training_time = 148s
+Accuracy is too low! (A1.1), r: 1.1013
+------------------------------------------------------------
+r = 1.102
+Epoch 1: A_NQ = 10.32, H_NQ = 681483, A_Q = 9.82, H_Q = 79723, zstd_size = 109232 bits, zstd_ratio = 7.68%, training_time = 149s
+Accuracy is too low! (A1.1), r: 1.102
+------------------------------------------------------------
+r = 1.1002
+Epoch 1: A_NQ = 9.74, H_NQ = 665301, A_Q = 11.35, H_Q = 70597, zstd_size = 98200 bits, zstd_ratio = 6.91%, training_time = 150s
+Accuracy is too low! (A1.1), r: 1.1002
+------------------------------------------------------------
+r = 1.1018
+Epoch 1: A_NQ = 10.09, H_NQ = 681777, A_Q = 10.09, H_Q = 80003, zstd_size = 109736 bits, zstd_ratio = 7.72%, training_time = 150s
+Accuracy is too low! (A1.1), r: 1.1018
+------------------------------------------------------------
+r = 1.1003
+Epoch 1: A_NQ = 9.82, H_NQ = 664734, A_Q = 9.82, H_Q = 69991, zstd_size = 97200 bits, zstd_ratio = 6.84%, training_time = 150s
+Accuracy is too low! (A1.1), r: 1.1003
+------------------------------------------------------------
+r = 1.1015
+Epoch 1: A_NQ = 8.92, H_NQ = 663713, A_Q = 9.8, H_Q = 69626, zstd_size = 96880 bits, zstd_ratio = 6.81%, training_time = 151s
+Accuracy is too low! (A1.1), r: 1.1015
+------------------------------------------------------------
+r = 1.1004
+Epoch 1: A_NQ = 10.28, H_NQ = 681662, A_Q = 10.28, H_Q = 79970, zstd_size = 109760 bits, zstd_ratio = 7.72%, training_time = 151s
+Accuracy is too low! (A1.1), r: 1.1004
+------------------------------------------------------------
+r = 1.1019
+Epoch 1: A_NQ = 10.32, H_NQ = 681595, A_Q = 10.32, H_Q = 79624, zstd_size = 109368 bits, zstd_ratio = 7.69%, training_time = 151s
+Accuracy is too low! (A1.1), r: 1.1019
+------------------------------------------------------------
+r = 1.1008
+Epoch 1: A_NQ = 10.28, H_NQ = 669265, A_Q = 10.28, H_Q = 71061, zstd_size = 97984 bits, zstd_ratio = 6.89%, training_time = 151s
+Accuracy is too low! (A1.1), r: 1.1008
+------------------------------------------------------------
+r = 1.1023
+Epoch 1: A_NQ = 9.58, H_NQ = 681549, A_Q = 9.58, H_Q = 79730, zstd_size = 109592 bits, zstd_ratio = 7.71%, training_time = 152s
+Accuracy is too low! (A1.1), r: 1.1023
+------------------------------------------------------------
+r = 1.1007
+Epoch 1: A_NQ = 9.82, H_NQ = 681782, A_Q = 9.82, H_Q = 79942, zstd_size = 110104 bits, zstd_ratio = 7.74%, training_time = 152s
+Accuracy is too low! (A1.1), r: 1.1007
+------------------------------------------------------------
+r = 1.1024
+Epoch 1: A_NQ = 9.8, H_NQ = 681537, A_Q = 8.92, H_Q = 79661, zstd_size = 109480 bits, zstd_ratio = 7.70%, training_time = 152s
+Accuracy is too low! (A1.1), r: 1.1024
+------------------------------------------------------------
+r = 1.1016
+Epoch 1: A_NQ = 11.35, H_NQ = 681571, A_Q = 11.35, H_Q = 79698, zstd_size = 109824 bits, zstd_ratio = 7.73%, training_time = 152s
+Accuracy is too low! (A1.1), r: 1.1016
+------------------------------------------------------------
+r = 1.1032
+Epoch 1: A_NQ = 9.74, H_NQ = 681823, A_Q = 9.74, H_Q = 80074, zstd_size = 110024 bits, zstd_ratio = 7.74%, training_time = 152s
+Accuracy is too low! (A1.1), r: 1.1032
+------------------------------------------------------------
+r = 1.1031
+Epoch 1: A_NQ = 9.82, H_NQ = 681687, A_Q = 9.82, H_Q = 79972, zstd_size = 109248 bits, zstd_ratio = 7.68%, training_time = 153s
+Accuracy is too low! (A1.1), r: 1.1031
+------------------------------------------------------------
+r = 1.1012
+Epoch 1: A_NQ = 9.74, H_NQ = 681467, A_Q = 9.74, H_Q = 79595, zstd_size = 109448 bits, zstd_ratio = 7.70%, training_time = 154s
+Accuracy is too low! (A1.1), r: 1.1012
+------------------------------------------------------------
+r = 1.1011
+Epoch 1: A_NQ = 11.35, H_NQ = 681576, A_Q = 11.35, H_Q = 79881, zstd_size = 109400 bits, zstd_ratio = 7.70%, training_time = 154s
+Accuracy is too low! (A1.1), r: 1.1011
+------------------------------------------------------------
+r = 1.1028
+Epoch 1: A_NQ = 8.92, H_NQ = 681458, A_Q = 8.92, H_Q = 79675, zstd_size = 110080 bits, zstd_ratio = 7.74%, training_time = 153s
+Accuracy is too low! (A1.1), r: 1.1028
+------------------------------------------------------------
+r = 1.1027
+Epoch 1: A_NQ = 10.28, H_NQ = 681664, A_Q = 10.28, H_Q = 79896, zstd_size = 109512 bits, zstd_ratio = 7.70%, training_time = 156s
+Accuracy is too low! (A1.1), r: 1.1027
+------------------------------------------------------------
+r = 1.1033
+Epoch 1: A_NQ = 11.35, H_NQ = 681738, A_Q = 11.35, H_Q = 79731, zstd_size = 109832 bits, zstd_ratio = 7.73%, training_time = 147s
+Accuracy is too low! (A1.1), r: 1.1033
+------------------------------------------------------------
+r = 1.1042
+Epoch 1: A_NQ = 11.35, H_NQ = 663059, A_Q = 10.32, H_Q = 71022, zstd_size = 98264 bits, zstd_ratio = 6.91%, training_time = 146s
+Accuracy is too low! (A1.1), r: 1.1042
+------------------------------------------------------------
+r = 1.1038
+Epoch 1: A_NQ = 10.09, H_NQ = 681672, A_Q = 10.1, H_Q = 79824, zstd_size = 109176 bits, zstd_ratio = 7.68%, training_time = 147s
+Accuracy is too low! (A1.1), r: 1.1038
+------------------------------------------------------------
+r = 1.1037
+Epoch 1: A_NQ = 10.32, H_NQ = 662832, A_Q = 10.1, H_Q = 70428, zstd_size = 97912 bits, zstd_ratio = 6.89%, training_time = 147s
+Accuracy is too low! (A1.1), r: 1.1037
+------------------------------------------------------------
+r = 1.1034
+Epoch 1: A_NQ = 10.32, H_NQ = 681600, A_Q = 10.32, H_Q = 79676, zstd_size = 109672 bits, zstd_ratio = 7.71%, training_time = 148s
+Accuracy is too low! (A1.1), r: 1.1034
+------------------------------------------------------------
+r = 1.1046
+Epoch 1: A_NQ = 10.09, H_NQ = 681549, A_Q = 10.09, H_Q = 79519, zstd_size = 109816 bits, zstd_ratio = 7.72%, training_time = 147s
+Accuracy is too low! (A1.1), r: 1.1046
+------------------------------------------------------------
+r = 1.1045
+Epoch 1: A_NQ = 11.35, H_NQ = 668357, A_Q = 9.74, H_Q = 70927, zstd_size = 98312 bits, zstd_ratio = 6.92%, training_time = 148s
+Accuracy is too low! (A1.1), r: 1.1045
+------------------------------------------------------------
+r = 1.1041
+Epoch 1: A_NQ = 9.74, H_NQ = 681569, A_Q = 9.74, H_Q = 80010, zstd_size = 110200 bits, zstd_ratio = 7.75%, training_time = 148s
+Accuracy is too low! (A1.1), r: 1.1041
+------------------------------------------------------------
+r = 1.1049
+Epoch 1: A_NQ = 11.35, H_NQ = 663988, A_Q = 11.35, H_Q = 69538, zstd_size = 96528 bits, zstd_ratio = 6.79%, training_time = 148s
+Accuracy is too low! (A1.1), r: 1.1049
+------------------------------------------------------------
+r = 1.105
+Epoch 1: A_NQ = 11.35, H_NQ = 666847, A_Q = 11.35, H_Q = 70608, zstd_size = 98232 bits, zstd_ratio = 6.91%, training_time = 148s
+Accuracy is too low! (A1.1), r: 1.105
+------------------------------------------------------------
+r = 1.1058
+Epoch 1: A_NQ = 9.82, H_NQ = 681464, A_Q = 10.32, H_Q = 79858, zstd_size = 109896 bits, zstd_ratio = 7.73%, training_time = 146s
+Accuracy is too low! (A1.1), r: 1.1058
+------------------------------------------------------------
+r = 1.1053
+Epoch 1: A_NQ = 9.74, H_NQ = 681440, A_Q = 9.74, H_Q = 79493, zstd_size = 109152 bits, zstd_ratio = 7.68%, training_time = 148s
+Accuracy is too low! (A1.1), r: 1.1053
+------------------------------------------------------------
+r = 1.1035
+Epoch 1: A_NQ = 10.1, H_NQ = 681467, A_Q = 10.1, H_Q = 79672, zstd_size = 109736 bits, zstd_ratio = 7.72%, training_time = 152s
+Accuracy is too low! (A1.1), r: 1.1035
+------------------------------------------------------------
+r = 1.1036
+Epoch 1: A_NQ = 11.35, H_NQ = 662962, A_Q = 9.8, H_Q = 70221, zstd_size = 97208 bits, zstd_ratio = 6.84%, training_time = 152s
+Accuracy is too low! (A1.1), r: 1.1036
+------------------------------------------------------------
+r = 1.1054
+Epoch 1: A_NQ = 9.82, H_NQ = 681618, A_Q = 9.82, H_Q = 79501, zstd_size = 109040 bits, zstd_ratio = 7.67%, training_time = 148s
+Accuracy is too low! (A1.1), r: 1.1054
+------------------------------------------------------------
+r = 1.104
+Epoch 1: A_NQ = 9.74, H_NQ = 664837, A_Q = 9.74, H_Q = 70326, zstd_size = 97592 bits, zstd_ratio = 6.86%, training_time = 152s
+Accuracy is too low! (A1.1), r: 1.104
+------------------------------------------------------------
+r = 1.1044
+Epoch 1: A_NQ = 11.35, H_NQ = 681548, A_Q = 11.35, H_Q = 79846, zstd_size = 109648 bits, zstd_ratio = 7.71%, training_time = 152s
+Accuracy is too low! (A1.1), r: 1.1044
+------------------------------------------------------------
+r = 1.1057
+Epoch 1: A_NQ = 9.74, H_NQ = 681659, A_Q = 10.32, H_Q = 79833, zstd_size = 109832 bits, zstd_ratio = 7.73%, training_time = 148s
+Accuracy is too low! (A1.1), r: 1.1057
+------------------------------------------------------------
+r = 1.1062
+Epoch 1: A_NQ = 10.28, H_NQ = 681647, A_Q = 11.35, H_Q = 79859, zstd_size = 109640 bits, zstd_ratio = 7.71%, training_time = 147s
+Accuracy is too low! (A1.1), r: 1.1062
+------------------------------------------------------------
+r = 1.1061
+Epoch 1: A_NQ = 10.28, H_NQ = 681353, A_Q = 10.28, H_Q = 79894, zstd_size = 110360 bits, zstd_ratio = 7.76%, training_time = 147s
+Accuracy is too low! (A1.1), r: 1.1061
+------------------------------------------------------------
+r = 1.1039
+Epoch 1: A_NQ = 9.74, H_NQ = 681636, A_Q = 9.58, H_Q = 80174, zstd_size = 109576 bits, zstd_ratio = 7.71%, training_time = 153s
+Accuracy is too low! (A1.1), r: 1.1039
+------------------------------------------------------------
+r = 1.1051
+Epoch 1: A_NQ = 9.74, H_NQ = 661050, A_Q = 9.82, H_Q = 68758, zstd_size = 95920 bits, zstd_ratio = 6.75%, training_time = 151s
+Accuracy is too low! (A1.1), r: 1.1051
+------------------------------------------------------------
+r = 1.1047
+Epoch 1: A_NQ = 9.8, H_NQ = 681425, A_Q = 9.8, H_Q = 79696, zstd_size = 109456 bits, zstd_ratio = 7.70%, training_time = 152s
+Accuracy is too low! (A1.1), r: 1.1047
+------------------------------------------------------------
+r = 1.1048
+Epoch 1: A_NQ = 8.92, H_NQ = 681560, A_Q = 9.8, H_Q = 79695, zstd_size = 109512 bits, zstd_ratio = 7.70%, training_time = 152s
+Accuracy is too low! (A1.1), r: 1.1048
+------------------------------------------------------------
+r = 1.1052
+Epoch 1: A_NQ = 10.32, H_NQ = 681451, A_Q = 10.32, H_Q = 79882, zstd_size = 110040 bits, zstd_ratio = 7.74%, training_time = 152s
+Accuracy is too low! (A1.1), r: 1.1052
+------------------------------------------------------------
+r = 1.1043
+Epoch 1: A_NQ = 9.58, H_NQ = 681508, A_Q = 9.58, H_Q = 79796, zstd_size = 109032 bits, zstd_ratio = 7.67%, training_time = 154s
+Accuracy is too low! (A1.1), r: 1.1043
+------------------------------------------------------------
+r = 1.106
+Epoch 1: A_NQ = 9.82, H_NQ = 666061, A_Q = 9.8, H_Q = 71005, zstd_size = 98288 bits, zstd_ratio = 6.91%, training_time = 150s
+Accuracy is too low! (A1.1), r: 1.106
+------------------------------------------------------------
+r = 1.1055
+Epoch 1: A_NQ = 8.92, H_NQ = 666968, A_Q = 10.28, H_Q = 72016, zstd_size = 99888 bits, zstd_ratio = 7.03%, training_time = 152s
+Accuracy is too low! (A1.1), r: 1.1055
+------------------------------------------------------------
+r = 1.1056
+Epoch 1: A_NQ = 8.92, H_NQ = 666278, A_Q = 9.58, H_Q = 71783, zstd_size = 99280 bits, zstd_ratio = 6.98%, training_time = 152s
+Accuracy is too low! (A1.1), r: 1.1056
+------------------------------------------------------------
+r = 1.1059
+Epoch 1: A_NQ = 9.8, H_NQ = 681697, A_Q = 10.09, H_Q = 80063, zstd_size = 109752 bits, zstd_ratio = 7.72%, training_time = 152s
+Accuracy is too low! (A1.1), r: 1.1059
+------------------------------------------------------------
+r = 1.1063
+Epoch 1: A_NQ = 9.82, H_NQ = 681758, A_Q = 9.82, H_Q = 80049, zstd_size = 110592 bits, zstd_ratio = 7.78%, training_time = 152s
+Accuracy is too low! (A1.1), r: 1.1063
+------------------------------------------------------------
+r = 1.1064
+Epoch 1: A_NQ = 10.28, H_NQ = 665611, A_Q = 9.82, H_Q = 70809, zstd_size = 98600 bits, zstd_ratio = 6.94%, training_time = 152s
+Accuracy is too low! (A1.1), r: 1.1064
 ------------------------------------------------------------
