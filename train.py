@@ -68,7 +68,7 @@ if __name__ == "__main__":
     train_optimizer = "ADAM"  
     entropy_optimizer = "FISTA"  
     delta = 1000
-    pruning = "N"
+    pruning = "Y"
     QuantizationType = "center"
 
     if(args.r == 1.1001):

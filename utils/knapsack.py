@@ -104,14 +104,11 @@ def knapsack_specialized_pruning(xi, v, w, C, device, delta):
     Returns:
         tuple: Optimal allocation (x), optimal multipliers (lambda_opt), and objective values.
     """
-
-    # Move tensors to the target device
-    xi = xi.to(device)
+    xi_orig = xi.to(device)        # Original xi saved
+    xi = xi_orig - delta           # Adjusted xi for pruning computations
     v = v.to(device)
     w = w.to(device)
 
-    # Apply pruning adjustment to xi
-    xi = xi - delta
     M = w.shape[0]
 
     # === Step 1: Compute x_plus ===
@@ -120,14 +117,14 @@ def knapsack_specialized_pruning(xi, v, w, C, device, delta):
     while True:
         delta_xi = xi[b + 1:] - xi[b]
         delta_v = v[b + 1:] - v[b]
-        b = torch.argmin(delta_xi / delta_v) + 1 + b_list[-1] if b_list else 0
+        b = torch.argmin(delta_xi / delta_v) + 1 + (b_list[-1] if b_list else 0)
         if b != C - 1:
             b_list.append(int(b))
         if b + 1 > C - 1:
             break
     b_list.append(C - 1)
-    x_plus = torch.zeros(C, dtype=torch.int32)
-    x_plus[torch.tensor(b_list)] = 1
+    x_plus = torch.zeros(C, dtype=torch.int32, device=device)
+    x_plus[torch.tensor(b_list, device=device)] = 1
 
     # === Step 2: Precompute ===
     ratio = xi / v
@@ -141,28 +138,24 @@ def knapsack_specialized_pruning(xi, v, w, C, device, delta):
     mask_small = w < v[0]
     mask_large = w > v[-1]
     mask_mid = (~mask_small) & (~mask_large)
-    mask_edge = (mask_small | mask_large)
+    mask_edge = mask_small | mask_large
 
     # === Step 4: Initialize outputs ===
-    x = torch.zeros(M, C)
-    lambda_opt = torch.zeros(M)
+    x = torch.zeros(M, C, device=device)
+    lambda_opt = torch.full((M,), float('nan'), device=device)  # Initialized with NaN
 
     # === Step 5: Edge cases ===
     if mask_edge.any():
         w_edge = w[mask_edge]
-        condition = (w_edge / v[0] >= 0) & (w_edge / v[0] <= 1)
-
-        x_edge = torch.zeros((w_edge.shape[0], C))
-
-        if condition.any():
-            valid_w = w_edge[condition]
-            obj = (valid_w[:, None] / v) * xi  # [M_valid, C]
-            obj[:, x_plus == 0] = float('inf')  # only x_plus = 1 allowed
-            best_idx = torch.argmin(obj, dim=1)
-            theta = valid_w / v[best_idx]
-            x_edge[condition, best_idx] = theta
-
+        x_edge = torch.zeros((w_edge.shape[0], C), device=device)
+        idx = torch.where(w_edge < v[0], 0, C - 1)
+        x_edge[torch.arange(w_edge.shape[0]), idx] = 1.0
         x[mask_edge] = x_edge
+
+        # For left edge: lambda = 0 as in knapsack_specialized
+        lambda_opt[mask_small] = 0.0
+        # For right edge: compute lambda with original xi, to replicate knapsack_specialized
+        lambda_opt[mask_large] = torch.round(xi_orig[-1] / v[-1], decimals=5)
 
     # === Step 6: Intermediate Case ===
     if mask_mid.any():
@@ -172,11 +165,11 @@ def knapsack_specialized_pruning(xi, v, w, C, device, delta):
         # --- First Method ---
         ratio_b = w_mid[:, None] / v[b_vector]
         valid = (ratio_b >= 0) & (ratio_b <= 1) & (x_plus[b_vector] == 1).unsqueeze(0)
-        valid_i0 = torch.where(valid, torch.arange(C)[None, :], float('inf'))
+        valid_i0 = torch.where(valid, torch.arange(C, device=device)[None, :], float('inf'))
         i0_pos = valid_i0.argmin(dim=1)
         i0 = b_vector[i0_pos]
         v_i0 = v[i0]
-        x1_sol = torch.zeros(M_mid, C)
+        x1_sol = torch.zeros(M_mid, C, device=device)
         theta1 = w_mid / v_i0
         x1_sol[torch.arange(M_mid), i0] = theta1
         obj1 = x1_sol @ xi
@@ -193,7 +186,7 @@ def knapsack_specialized_pruning(xi, v, w, C, device, delta):
         v_right = v[idx_right]
         theta2 = (w_mid - v_right) / (v_left - v_right + 1e-8)
 
-        x2_sol = torch.zeros(M_mid, C)
+        x2_sol = torch.zeros(M_mid, C, device=device)
         x2_sol[torch.arange(M_mid), idx_left] = theta2
         x2_sol[torch.arange(M_mid), idx_right] = 1 - theta2
         obj2 = x2_sol @ xi
@@ -203,34 +196,39 @@ def knapsack_specialized_pruning(xi, v, w, C, device, delta):
         final_x = torch.where(better_first.unsqueeze(1), x1_sol, x2_sol)
         x[mask_mid] = final_x
 
-    # === Step 7: Compute lambda_opt ===
-    eps = 1e-6
-    nz_mask = torch.abs(x) > eps
-    nz_counts = nz_mask.sum(dim=1)
+        # === Step 7: Compute lambda_opt for mid cases ===
+        x_mid = x[mask_mid]
+        eps = 1e-6
+        nz_mask = torch.abs(x_mid) > eps
+        nz_counts = nz_mask.sum(dim=1)
 
-    # One non-zero variable
-    m1 = torch.where(nz_counts == 1)[0]
-    if m1.numel() > 0:
-        indices = nz_mask[m1].nonzero(as_tuple=False)
-        i = indices[:, 1]
-        lambda_opt[m1] = -xi[i] / v[i]
-        lambda_opt[m1] = torch.round(lambda_opt[m1], decimals=5)
+        # One non-zero variable
+        m1 = torch.where(nz_counts == 1)[0]
+        if m1.numel() > 0:
+            indices = nz_mask[m1].nonzero(as_tuple=False)
+            i = indices[:, 1]
+            # Use xi_orig here to be consistent with original function
+            lambda_opt[mask_mid.nonzero(as_tuple=False).squeeze(1)[m1]] = torch.round(xi_orig[i] / v[i], decimals=5)
 
-    # Two non-zero variables
-    m2 = torch.where(nz_counts == 2)[0]
-    if m2.numel() > 0:
-        indices = nz_mask[m2].nonzero().reshape(-1, 2)
-        grouped = indices.view(-1, 2, 2)
-        i = grouped[:, 0, 1]
-        j = grouped[:, 1, 1]
-        delta_xi = xi[j] - xi[i]
-        delta_idx = j - i
-        passo = v[1] - v[0]
-        lambda_opt[m2] = -delta_xi / (delta_idx * passo)
-        lambda_opt[m2] = torch.round(lambda_opt[m2], decimals=5)
+        # Two non-zero variables
+        m2 = torch.where(nz_counts == 2)[0]
+        if m2.numel() > 0:
+            mask2 = nz_mask[m2]
+            indices = mask2.nonzero().reshape(-1, 2)
+            grouped = indices.view(-1, 2, 2)
+            i = grouped[:, 0, 1]
+            j = grouped[:, 1, 1]
+            delta_xi = xi_orig[j] - xi_orig[i]
+            delta_v = v[j] - v[i]
+            lam = delta_xi / (delta_v + 1e-8)
+            lam = torch.round(lam, decimals=5)
+            lambda_opt[mask_mid.nonzero(as_tuple=False).squeeze(1)[m2]] = lam
 
     # === Step 8: Objective ===
     objective_values = delta + x @ xi
+
+    # Replace any remaining NaNs in lambda_opt with 0
+    lambda_opt = torch.nan_to_num(lambda_opt, nan=0.0)
 
     return x, lambda_opt, objective_values
 

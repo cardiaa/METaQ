@@ -217,7 +217,7 @@ def BestQuantization(log, C, r, epoch, min_w, max_w, w, c1, c2,
         zstd_decompressed = decompress_zstd(zstd_compressed)
         # Verifies
         if not compare_lists(encoded_list, zstd_decompressed):
-            log += "💥💥💥 Encoding error! Decoded 💥💥💥\n"                  
+            log += "\n💥💥💥 Encoding error! Decoded 💥💥💥\n"                  
         # Calculates dimensions
         original_size_bytes = len(input_bytes)
         zstd_size = len(zstd_compressed)
