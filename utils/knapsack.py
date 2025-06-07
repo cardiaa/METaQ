@@ -104,7 +104,6 @@ def knapsack_specialized_pruning(xi, v, w, C, device, delta):
     Returns:
         tuple: Optimal allocation (x), optimal multipliers (lambda_opt), and objective values.
     """
-
     xi = xi.to(device)
     v = v.to(device)
     w = w.to(device)
@@ -198,17 +197,25 @@ def knapsack_specialized_pruning(xi, v, w, C, device, delta):
     idx_right = torch.zeros_like(w, dtype=torch.long)
 
     # Mid case
-    i_right_mid = torch.searchsorted(v[one_indices], w[mask_mid], right=False)
-    i_right_mid = i_right_mid.clamp(min=1, max=one_indices.shape[0] - 1)
-    idx_right_mid = one_indices[i_right_mid]
-    idx_left_mid = one_indices[i_right_mid - 1]
-    idx_left[mask_mid] = idx_left_mid
-    idx_right[mask_mid] = idx_right_mid
+    if mask_mid.any():
+        i_right_mid = torch.searchsorted(v[one_indices], w[mask_mid], right=False)
+        i_right_mid = i_right_mid.clamp(min=1, max=one_indices.shape[0] - 1)
+        idx_right_mid = one_indices[i_right_mid]
+        idx_left_mid = one_indices[i_right_mid - 1]
+
+        i0_full = torch.zeros_like(w, dtype=torch.long)
+        better_first_full = torch.zeros_like(w, dtype=torch.bool)
+        i0_full[mask_mid] = i0
+        better_first_full[mask_mid] = better_first
+
+        idx_left[mask_mid] = torch.where(better_first, i0, idx_left_mid)
+        idx_right[mask_mid] = torch.where(better_first, i0, idx_right_mid)
 
     # Edge case
-    idx_edge = torch.where(w[mask_edge] < v[0], one_indices[0], one_indices[-1])
-    idx_left[mask_edge] = idx_edge
-    idx_right[mask_edge] = idx_edge
+    if mask_edge.any():
+        idx_edge = torch.where(w[mask_edge] < v[0], one_indices[0], one_indices[-1])
+        idx_left[mask_edge] = idx_edge
+        idx_right[mask_edge] = idx_edge
 
     # === Step 8: Compute lambda_opt ===
     denominator = v[idx_right] - v[idx_left]
