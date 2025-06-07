@@ -92,7 +92,7 @@ def knapsack_specialized(xi, v, w, C, device):
 def knapsack_specialized_pruning(xi, v, w, C, device, delta):
     """
     Solves a specialized knapsack problem with pruning strategy, using vectorized operations.
-
+    
     Args:
         xi (torch.Tensor): xi variables.
         v (torch.Tensor): Quantization vector.
@@ -105,12 +105,10 @@ def knapsack_specialized_pruning(xi, v, w, C, device, delta):
         tuple: Optimal allocation (x), optimal multipliers (lambda_opt), and objective values.
     """
 
-    # Move tensors to the target device
     xi = xi.to(device)
     v = v.to(device)
     w = w.to(device)
 
-    # Apply pruning adjustment to xi
     xi = xi - delta
     M = w.shape[0]
 
@@ -177,15 +175,15 @@ def knapsack_specialized_pruning(xi, v, w, C, device, delta):
         one_indices = torch.nonzero(x_plus, as_tuple=True)[0]
         i_right = torch.searchsorted(v[one_indices], w_mid, right=False)
         i_right = i_right.clamp(min=1, max=one_indices.shape[0] - 1)
-        idx_right = one_indices[i_right]
-        idx_left = one_indices[i_right - 1]
-        v_left = v[idx_left]
-        v_right = v[idx_right]
+        idx_right_mid = one_indices[i_right]
+        idx_left_mid = one_indices[i_right - 1]
+        v_left = v[idx_left_mid]
+        v_right = v[idx_right_mid]
         theta2 = (w_mid - v_right) / (v_left - v_right + 1e-8)
 
         x2_sol = torch.zeros(M_mid, C, device=device)
-        x2_sol[torch.arange(M_mid), idx_left] = theta2
-        x2_sol[torch.arange(M_mid), idx_right] = 1 - theta2
+        x2_sol[torch.arange(M_mid), idx_left_mid] = theta2
+        x2_sol[torch.arange(M_mid), idx_right_mid] = 1 - theta2
         obj2 = x2_sol @ xi
 
         # Choose better
@@ -193,20 +191,36 @@ def knapsack_specialized_pruning(xi, v, w, C, device, delta):
         final_x = torch.where(better_first.unsqueeze(1), x1_sol, x2_sol)
         x[mask_mid] = final_x
 
-    # === Step 7: Compute lambda_opt ===
+    # === Step 7: Compute idx_left and idx_right globally ===
+    one_indices = torch.nonzero(x_plus, as_tuple=True)[0]
+
+    idx_left = torch.zeros_like(w, dtype=torch.long)
+    idx_right = torch.zeros_like(w, dtype=torch.long)
+
+    # Mid case
+    i_right_mid = torch.searchsorted(v[one_indices], w[mask_mid], right=False)
+    i_right_mid = i_right_mid.clamp(min=1, max=one_indices.shape[0] - 1)
+    idx_right_mid = one_indices[i_right_mid]
+    idx_left_mid = one_indices[i_right_mid - 1]
+    idx_left[mask_mid] = idx_left_mid
+    idx_right[mask_mid] = idx_right_mid
+
+    # Edge case
+    idx_edge = torch.where(w[mask_edge] < v[0], one_indices[0], one_indices[-1])
+    idx_left[mask_edge] = idx_edge
+    idx_right[mask_edge] = idx_edge
+
+    # === Step 8: Compute lambda_opt ===
     denominator = v[idx_right] - v[idx_left]
     denominator_zero_mask = denominator == 0
 
     lambda_opt_nonzero = (xi[idx_right] - xi[idx_left]) / denominator
     lambda_opt_zero_full = xi / v
-    lambda_opt_zero_full[0] = 0
     lambda_opt_zero = lambda_opt_zero_full[idx_left]
 
-    lambda_opt_mid = torch.where(denominator_zero_mask, lambda_opt_zero, lambda_opt_nonzero)
-    lambda_opt[mask_mid] = lambda_opt_mid
+    lambda_opt = torch.where(denominator_zero_mask, lambda_opt_zero, lambda_opt_nonzero)
 
-
-    # === Step 8: Objective ===
+    # === Step 9: Objective ===
     objective_values = delta + x @ xi
 
     return x, lambda_opt, objective_values
