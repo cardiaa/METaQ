@@ -222,7 +222,7 @@ def knapsack_specialized_pruning(xi, v, w, C, device, delta):
     denominator_zero_mask = denominator == 0
 
     lambda_opt_nonzero = (xi[idx_right] - xi[idx_left]) / denominator
-    lambda_opt_zero_full = xi / v
+    lambda_opt_zero_full = (xi + delta) / v
     lambda_opt_zero = lambda_opt_zero_full[idx_left]
 
     lambda_opt = torch.where(denominator_zero_mask, lambda_opt_zero, lambda_opt_nonzero)
