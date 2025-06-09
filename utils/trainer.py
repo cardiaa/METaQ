@@ -81,7 +81,7 @@ def train_and_evaluate(model, criterion, C, lr, lambda_reg, alpha, subgradient_s
                     param_grad = param.grad.view(-1)
                 else:
                     param_grad = torch.zeros_like(param.data.view(-1)).to(device)
-                param_grad += (1 - alpha) * lambda_reg * beta_tensor[idx:idx + numel]
+                param_grad += (1 - alpha) * lambda_reg * (- beta_tensor[idx:idx + numel]) #here there is a minus sign in front of the betas multipliers
                 param.grad = param_grad.view(param.size())
                 idx += numel
             
