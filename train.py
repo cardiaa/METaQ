@@ -72,9 +72,9 @@ if __name__ == "__main__":
     QuantizationType = "center"
 
     if(args.r == 1.1001):
-        print("=================================================================")
-        print("==================== PARAMETER CONFIGURATION ====================")
-        print("=================================================================")
+        print("=================================================================", flush = True)
+        print("==================== PARAMETER CONFIGURATION ====================", flush = True)
+        print("=================================================================", flush = True)
         print(f"model={model_name}", flush=True)
         print(f"criterion={criterion_name}", flush=True)
         print(f"C={C}", flush=True)
@@ -100,7 +100,7 @@ if __name__ == "__main__":
         print(f"entropy_optimizer={entropy_optimizer}", flush=True) 
         print(f"delta={delta}", flush=True) 
         print(f"pruning={pruning}", flush=True)
-        print(f"QuantizationType={QuantizationType}")
+        print(f"QuantizationType={QuantizationType}", flush=True)
         print("-"*60, flush=True)
     
     train_and_evaluate(
