@@ -145,12 +145,63 @@ def knapsack_specialized_pruning(xi, v, w, C, device, delta):
     lambda_opt = torch.zeros(M, device=device)
 
     # === Step 5: Edge cases ===
+
     if mask_edge.any():
         w_edge = w[mask_edge]
-        x_edge = torch.zeros((w_edge.shape[0], C), device=device)
-        idx = torch.where(w_edge < v[0], 0, C - 1)
-        x_edge[torch.arange(w_edge.shape[0]), idx] = 1.0
+        x_edge = torch.zeros((w_edge.shape[0], C), device=device, dtype=torch.float32)
+
+        # Divisioni per v[0] e v[-1]
+        w_div_v0 = w_edge / v[0]
+        w_div_v_last = w_edge / v[-1]
+
+        # Masks per sotto-casi
+        edge_small = w_edge < v[0]
+        edge_large = w_edge > v[-1]
+
+        # Per w < v[0]
+        mask_cond_small = (w_div_v0 >= 0) & (w_div_v0 <= 1) & edge_small
+        mask_else_small = edge_small & (~mask_cond_small)
+
+        if mask_cond_small.any():
+            # Calcola (w / v) * xi per ogni w, in modo broadcasting: w_edge_i / v_j * xi_j
+            # Qui serve w_edge_i / v_j per tutti i j, e moltiplichiamo per xi_j
+            # xi e v sono vettori di dimensione C
+            # Otteniamo matrice M_mid x C
+
+            w_small = w_edge[mask_cond_small].unsqueeze(1)  # shape (N_s, 1)
+            # broadcasting divisione
+            div_mat = w_small / v.unsqueeze(0)  # (N_s, C)
+            val_mat = div_mat * xi.unsqueeze(0)  # (N_s, C)
+
+            # Trova argmin per ogni riga
+            i_min = torch.argmin(val_mat, dim=1)
+            vals_min = div_mat[torch.arange(i_min.shape[0]), i_min]
+
+            # Assegna a x_edge
+            x_edge[mask_cond_small, :] = 0
+            x_edge[mask_cond_small, i_min] = vals_min
+
+        if mask_else_small.any():
+            x_edge[mask_else_small, 0] = 1.0
+
+        # Per w > v[-1]
+        mask_cond_large = (w_div_v_last >= 0) & (w_div_v_last <= 1) & edge_large
+        mask_else_large = edge_large & (~mask_cond_large)
+
+        if mask_cond_large.any():
+            w_large = w_edge[mask_cond_large].unsqueeze(1)
+            div_mat = w_large / v.unsqueeze(0)
+            val_mat = div_mat * xi.unsqueeze(0)
+            i_min = torch.argmin(val_mat, dim=1)
+            vals_min = div_mat[torch.arange(i_min.shape[0]), i_min]
+            x_edge[mask_cond_large, :] = 0
+            x_edge[mask_cond_large, i_min] = vals_min
+
+        if mask_else_large.any():
+            x_edge[mask_else_large, -1] = 1.0
+
         x[mask_edge] = x_edge
+
 
     # === Step 6: Intermediate Case ===
     if mask_mid.any():
@@ -213,7 +264,8 @@ def knapsack_specialized_pruning(xi, v, w, C, device, delta):
 
     # Edge case
     if mask_edge.any():
-        idx_edge = torch.where(w[mask_edge] < v[0], one_indices[0], one_indices[-1])
+        x_edge_masked = x[mask_edge]  # (N_edge, C)
+        idx_edge = torch.nonzero(x_edge_masked, as_tuple=True)[1]  # colonna (indice lungo C)
         idx_left[mask_edge] = idx_edge
         idx_right[mask_edge] = idx_edge
 
