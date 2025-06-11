@@ -4,7 +4,7 @@ nohup: ignoring input
 =================================================================
 model=LeNet-5
 criterion=CrossEntropy
-C=128
+C=6
 lr=0.0007
 lambda_reg=0.0015
 alpha=0.533
@@ -20,7 +20,7 @@ upper_c=44426
 lower_c=0.01
 zeta=50000
 l=0.5
-n_epochs=30
+n_epochs=500
 max_iterations=15
 train_optimizer=ADAM
 entropy_optimizer=FISTA
