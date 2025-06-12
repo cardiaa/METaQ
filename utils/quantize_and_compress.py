@@ -226,15 +226,15 @@ def BestQuantization(log, C, r, epoch, min_w, max_w, w, c1, c2,
         # Output delle dimensioni e del rapporto di compressione
         if(QuantAcc[sorted_indices[-i]] >= 99.00 and zstd_ratio <= target_zstd_ratio):
             torch.save(model.state_dict(), f"BestModelsJune2025/Test1June2025_C{C}_r{r}_epoch{epoch}.pth")
-            log += "✅"*50+"\n"
+            log += "✅"*18+"\n"
             log += "✅✅✅✅✅✅ MODEL SAVED ✅✅✅✅✅✅\n"
-            log += "✅"*50+"\n"
+            log += "✅"*18+"\n"
         if(True):
             log += "💥💥💥 ...AIN'T SAVING THE MODEL... JUST CHECKING... 💥💥💥\n" 
             log += (
                 f"\t➡️ r = {r}, Epoch {epoch + 1}:\n"
                 f"\tQuantization at C={sorted_indices[-i] + c1}, Accuracy from {accuracy} to {QuantAcc[sorted_indices[-i]]}\n"
-                f"\tH_Q = {quantized_entropy}, zstd_size = {zstd_size * 8} bits, zstd_ratio = {zstd_ratio:.2%}\n"
+                f"\tH_Q = {quantized_entropy}, zstd_ratio = {zstd_ratio:.2%}\n"
             )           
             log += "-"*60
     

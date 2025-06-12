@@ -123,9 +123,9 @@ def train_and_evaluate(model, criterion, C, lr, lambda_reg, alpha, subgradient_s
             log += f"r = {r}\n"
     
         log += (
-            f"Epoch {epoch + 1}: A_NQ = {accuracy}, "
-            f"H_NQ = {entropy}, A_Q = {quantized_accuracy}, "
-            f"H_Q = {quantized_entropy}, zstd_size = {zstd_size * 8} bits, "
+            f"Epoch {epoch + 1}: "
+            f"A_NQ = {accuracy}, H_NQ = {entropy}, "
+            f"A_Q = {quantized_accuracy}, H_Q = {quantized_entropy}, "
             f"zstd_ratio = {zstd_ratio:.2%}, training_time = {training_time}s\n"     
         )
 
@@ -134,6 +134,7 @@ def train_and_evaluate(model, criterion, C, lr, lambda_reg, alpha, subgradient_s
             log = BestQuantization(log=log, C=C, r=r, epoch=epoch, min_w=min_w, max_w=max_w, w=w, c1=10, c2=1000,
                                    target_acc=target_acc, target_zstd_ratio=target_zstd_ratio, QuantizationType=QuantizationType,
                                    model=model, testloader=testloader, accuracy=accuracy, device=device)
+            target_acc = accuracies[-1] 
 
         # ---------------------------------------------------------------------------------------------------------
         # No-pruning exit conditions
