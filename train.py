@@ -48,7 +48,7 @@ if __name__ == "__main__":
     # Define fixed hyperparameters for the model and training process
     model, model_name = LeNet5().to(device), "LeNet-5"
     criterion, criterion_name = CrossEntropyLoss(), "CrossEntropy" 
-    C = 128
+    C = 64
     lr = 0.0007  
     lambda_reg = 0.0015
     alpha = 0.533
@@ -67,7 +67,7 @@ if __name__ == "__main__":
     max_iterations = 15
     train_optimizer = "ADAM"  
     entropy_optimizer = "FISTA"  
-    delta = 1000
+    delta = 0
     pruning = "Y"
     QuantizationType = "center"
 
