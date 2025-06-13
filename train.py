@@ -55,7 +55,7 @@ if __name__ == "__main__":
     subgradient_step = 1e5 
     w0 = -0.11  
     #r = 1.1106  
-    target_acc = 98.8  
+    target_acc = 98.4
     target_zstd_ratio = 0.0297 
     min_xi = 0  
     max_xi = 1  
@@ -63,11 +63,11 @@ if __name__ == "__main__":
     lower_c = 1e-2
     zeta = 50000
     l = 0.5
-    n_epochs = 30 # To be increased as soon as I find good configurations
+    n_epochs = 120 # To be increased as soon as I find good configurations
     max_iterations = 15
     train_optimizer = "ADAM"  
     entropy_optimizer = "FISTA"  
-    delta = 1000
+    delta = 32
     pruning = "Y"
     QuantizationType = "center"
 
