@@ -4,7 +4,7 @@ nohup: ignoring input
 =================================================================
 model=LeNet-5
 criterion=CrossEntropy
-C=128
+C=64
 lr=0.0007
 lambda_reg=0.0015
 alpha=0.533
@@ -28,1027 +28,195 @@ delta=0
 pruning=Y
 QuantizationType=center
 ------------------------------------------------------------
-r = 1.1012
-Epoch 1: A_NQ = 90.73, H_NQ = 685889, A_Q = 91.93, H_Q = 106164, zstd_size = 162680 bits, zstd_ratio = 11.44%, training_time = 1486s
-Epoch 2: A_NQ = 94.91, H_NQ = 685889, A_Q = 94.21, H_Q = 63424, zstd_size = 95984 bits, zstd_ratio = 6.75%, training_time = 674s
-Epoch 3: A_NQ = 94.85, H_NQ = 685881, A_Q = 93.05, H_Q = 40059, zstd_size = 62232 bits, zstd_ratio = 4.38%, training_time = 2627s
-Epoch 4: A_NQ = 96.34, H_NQ = 685885, A_Q = 96.47, H_Q = 26861, zstd_size = 43320 bits, zstd_ratio = 3.05%, training_time = 2448s
-Epoch 5: A_NQ = 96.87, H_NQ = 685865, A_Q = 97.26, H_Q = 22023, zstd_size = 35624 bits, zstd_ratio = 2.51%, training_time = 2357s
-Epoch 6: A_NQ = 97.45, H_NQ = 685879, A_Q = 97.38, H_Q = 19250, zstd_size = 31120 bits, zstd_ratio = 2.19%, training_time = 2449s
-Epoch 7: A_NQ = 97.3, H_NQ = 685873, A_Q = 97.44, H_Q = 17385, zstd_size = 28536 bits, zstd_ratio = 2.01%, training_time = 2550s
-Epoch 8: A_NQ = 96.5, H_NQ = 685881, A_Q = 97.3, H_Q = 16899, zstd_size = 27296 bits, zstd_ratio = 1.92%, training_time = 991s
-Epoch 9: A_NQ = 97.55, H_NQ = 685853, A_Q = 97.72, H_Q = 15684, zstd_size = 25704 bits, zstd_ratio = 1.81%, training_time = 1040s
-Epoch 10: A_NQ = 97.69, H_NQ = 685861, A_Q = 97.66, H_Q = 14930, zstd_size = 24192 bits, zstd_ratio = 1.70%, training_time = 1783s
-Epoch 11: A_NQ = 97.65, H_NQ = 685851, A_Q = 97.59, H_Q = 14468, zstd_size = 23552 bits, zstd_ratio = 1.66%, training_time = 832s
-Epoch 12: A_NQ = 96.9, H_NQ = 685857, A_Q = 96.54, H_Q = 14480, zstd_size = 23464 bits, zstd_ratio = 1.65%, training_time = 1005s
-Epoch 13: A_NQ = 97.36, H_NQ = 685849, A_Q = 97.18, H_Q = 14092, zstd_size = 23064 bits, zstd_ratio = 1.62%, training_time = 1065s
-Epoch 14: A_NQ = 97.68, H_NQ = 685835, A_Q = 97.58, H_Q = 13934, zstd_size = 22616 bits, zstd_ratio = 1.59%, training_time = 1809s
-Epoch 15: A_NQ = 97.55, H_NQ = 685851, A_Q = 97.71, H_Q = 14292, zstd_size = 22840 bits, zstd_ratio = 1.61%, training_time = 1141s
-Epoch 16: A_NQ = 97.78, H_NQ = 685867, A_Q = 97.5, H_Q = 13557, zstd_size = 22136 bits, zstd_ratio = 1.56%, training_time = 1483s
-Epoch 17: A_NQ = 97.21, H_NQ = 685855, A_Q = 97.61, H_Q = 13502, zstd_size = 22000 bits, zstd_ratio = 1.55%, training_time = 2094s
-Epoch 18: A_NQ = 97.65, H_NQ = 685853, A_Q = 97.61, H_Q = 13025, zstd_size = 21472 bits, zstd_ratio = 1.51%, training_time = 2395s
-Epoch 19: A_NQ = 98.0, H_NQ = 685865, A_Q = 97.8, H_Q = 12914, zstd_size = 20944 bits, zstd_ratio = 1.47%, training_time = 1982s
-Epoch 20: A_NQ = 97.57, H_NQ = 685861, A_Q = 97.87, H_Q = 12944, zstd_size = 20992 bits, zstd_ratio = 1.48%, training_time = 2290s
-Epoch 21: A_NQ = 97.85, H_NQ = 685831, A_Q = 97.86, H_Q = 12840, zstd_size = 20744 bits, zstd_ratio = 1.46%, training_time = 2340s
-Epoch 22: A_NQ = 97.92, H_NQ = 685851, A_Q = 97.82, H_Q = 12519, zstd_size = 20336 bits, zstd_ratio = 1.43%, training_time = 2442s
-Epoch 23: A_NQ = 97.71, H_NQ = 685859, A_Q = 97.54, H_Q = 12675, zstd_size = 20472 bits, zstd_ratio = 1.44%, training_time = 2537s
-Epoch 24: A_NQ = 98.04, H_NQ = 685855, A_Q = 97.75, H_Q = 12515, zstd_size = 20176 bits, zstd_ratio = 1.42%, training_time = 2285s
-Epoch 25: A_NQ = 97.86, H_NQ = 685833, A_Q = 97.85, H_Q = 12841, zstd_size = 20480 bits, zstd_ratio = 1.44%, training_time = 2278s
-Epoch 26: A_NQ = 97.84, H_NQ = 685853, A_Q = 97.72, H_Q = 12590, zstd_size = 20392 bits, zstd_ratio = 1.43%, training_time = 2384s
-Epoch 27: A_NQ = 97.71, H_NQ = 685853, A_Q = 97.79, H_Q = 12248, zstd_size = 20376 bits, zstd_ratio = 1.43%, training_time = 2528s
-Epoch 28: A_NQ = 97.71, H_NQ = 685853, A_Q = 97.89, H_Q = 12550, zstd_size = 20032 bits, zstd_ratio = 1.41%, training_time = 2409s
-Epoch 29: A_NQ = 97.97, H_NQ = 685852, A_Q = 97.77, H_Q = 12271, zstd_size = 20088 bits, zstd_ratio = 1.41%, training_time = 2308s
-Epoch 30: A_NQ = 98.13, H_NQ = 685859, A_Q = 97.85, H_Q = 12138, zstd_size = 19584 bits, zstd_ratio = 1.38%, training_time = 2291s
-------------------------------------------------------------
-r = 1.1031
-Epoch 1: A_NQ = 91.96, H_NQ = 685893, A_Q = 92.51, H_Q = 147626, zstd_size = 221224 bits, zstd_ratio = 15.56%, training_time = 1701s
-Epoch 2: A_NQ = 92.52, H_NQ = 685885, A_Q = 93.25, H_Q = 74333, zstd_size = 113984 bits, zstd_ratio = 8.02%, training_time = 2200s
-Epoch 3: A_NQ = 95.13, H_NQ = 685883, A_Q = 95.12, H_Q = 44783, zstd_size = 70664 bits, zstd_ratio = 4.97%, training_time = 2206s
-Epoch 4: A_NQ = 96.03, H_NQ = 685875, A_Q = 96.37, H_Q = 31866, zstd_size = 50600 bits, zstd_ratio = 3.56%, training_time = 2192s
-Epoch 5: A_NQ = 96.25, H_NQ = 685875, A_Q = 96.76, H_Q = 26551, zstd_size = 42688 bits, zstd_ratio = 3.00%, training_time = 2164s
-Epoch 6: A_NQ = 96.89, H_NQ = 685865, A_Q = 97.04, H_Q = 23454, zstd_size = 38152 bits, zstd_ratio = 2.68%, training_time = 2267s
-Epoch 7: A_NQ = 97.01, H_NQ = 685869, A_Q = 97.12, H_Q = 21455, zstd_size = 34720 bits, zstd_ratio = 2.44%, training_time = 2249s
-Epoch 8: A_NQ = 96.87, H_NQ = 685865, A_Q = 97.17, H_Q = 19966, zstd_size = 32336 bits, zstd_ratio = 2.27%, training_time = 775s
-Epoch 9: A_NQ = 97.17, H_NQ = 685859, A_Q = 97.31, H_Q = 18963, zstd_size = 30696 bits, zstd_ratio = 2.16%, training_time = 662s
-Epoch 10: A_NQ = 97.4, H_NQ = 685879, A_Q = 97.45, H_Q = 17618, zstd_size = 28792 bits, zstd_ratio = 2.03%, training_time = 2308s
-Epoch 11: A_NQ = 97.6, H_NQ = 685875, A_Q = 97.7, H_Q = 17462, zstd_size = 28112 bits, zstd_ratio = 1.98%, training_time = 2335s
-Epoch 12: A_NQ = 97.48, H_NQ = 685863, A_Q = 97.61, H_Q = 16841, zstd_size = 27032 bits, zstd_ratio = 1.90%, training_time = 2185s
-Epoch 13: A_NQ = 97.59, H_NQ = 685853, A_Q = 97.76, H_Q = 16071, zstd_size = 25856 bits, zstd_ratio = 1.82%, training_time = 2180s
-Epoch 14: A_NQ = 97.71, H_NQ = 685865, A_Q = 97.76, H_Q = 15311, zstd_size = 24832 bits, zstd_ratio = 1.75%, training_time = 2384s
-Epoch 15: A_NQ = 97.44, H_NQ = 685861, A_Q = 97.68, H_Q = 15096, zstd_size = 24200 bits, zstd_ratio = 1.70%, training_time = 2430s
-Epoch 16: A_NQ = 97.68, H_NQ = 685859, A_Q = 97.82, H_Q = 14938, zstd_size = 23712 bits, zstd_ratio = 1.67%, training_time = 2210s
-Epoch 17: A_NQ = 97.57, H_NQ = 685855, A_Q = 97.48, H_Q = 14739, zstd_size = 23648 bits, zstd_ratio = 1.66%, training_time = 2143s
-Epoch 18: A_NQ = 97.59, H_NQ = 685857, A_Q = 97.88, H_Q = 14482, zstd_size = 23088 bits, zstd_ratio = 1.62%, training_time = 2234s
-Epoch 19: A_NQ = 97.75, H_NQ = 685861, A_Q = 97.8, H_Q = 14535, zstd_size = 23136 bits, zstd_ratio = 1.63%, training_time = 2201s
-Epoch 20: A_NQ = 97.73, H_NQ = 685851, A_Q = 97.93, H_Q = 14122, zstd_size = 22664 bits, zstd_ratio = 1.59%, training_time = 2217s
-Epoch 21: A_NQ = 97.78, H_NQ = 685857, A_Q = 97.86, H_Q = 14189, zstd_size = 22832 bits, zstd_ratio = 1.61%, training_time = 2207s
-Epoch 22: A_NQ = 97.76, H_NQ = 685861, A_Q = 97.69, H_Q = 13901, zstd_size = 22328 bits, zstd_ratio = 1.57%, training_time = 2252s
-Epoch 23: A_NQ = 97.74, H_NQ = 685857, A_Q = 97.65, H_Q = 13862, zstd_size = 22016 bits, zstd_ratio = 1.55%, training_time = 2324s
-Epoch 24: A_NQ = 97.74, H_NQ = 685855, A_Q = 97.69, H_Q = 13872, zstd_size = 21880 bits, zstd_ratio = 1.54%, training_time = 2184s
-Epoch 25: A_NQ = 97.74, H_NQ = 685869, A_Q = 97.58, H_Q = 13299, zstd_size = 21464 bits, zstd_ratio = 1.51%, training_time = 2287s
-Epoch 26: A_NQ = 97.64, H_NQ = 685859, A_Q = 97.72, H_Q = 13544, zstd_size = 21568 bits, zstd_ratio = 1.52%, training_time = 2455s
-Epoch 27: A_NQ = 97.5, H_NQ = 685853, A_Q = 97.71, H_Q = 13647, zstd_size = 21808 bits, zstd_ratio = 1.53%, training_time = 2388s
-Epoch 28: A_NQ = 97.67, H_NQ = 685863, A_Q = 97.81, H_Q = 13886, zstd_size = 21840 bits, zstd_ratio = 1.54%, training_time = 2301s
-Epoch 29: A_NQ = 97.71, H_NQ = 685865, A_Q = 97.86, H_Q = 13169, zstd_size = 21200 bits, zstd_ratio = 1.49%, training_time = 2444s
-Epoch 30: A_NQ = 97.57, H_NQ = 685861, A_Q = 97.72, H_Q = 13429, zstd_size = 21120 bits, zstd_ratio = 1.49%, training_time = 2285s
-------------------------------------------------------------
-r = 1.1011
-Epoch 1: A_NQ = 90.56, H_NQ = 685883, A_Q = 91.13, H_Q = 135366, zstd_size = 205992 bits, zstd_ratio = 14.49%, training_time = 2055s
-Epoch 2: A_NQ = 93.63, H_NQ = 685883, A_Q = 94.91, H_Q = 62361, zstd_size = 97616 bits, zstd_ratio = 6.87%, training_time = 2214s
-Epoch 3: A_NQ = 95.36, H_NQ = 685879, A_Q = 95.01, H_Q = 40065, zstd_size = 63672 bits, zstd_ratio = 4.48%, training_time = 1764s
-Epoch 4: A_NQ = 96.46, H_NQ = 685885, A_Q = 96.2, H_Q = 29457, zstd_size = 47120 bits, zstd_ratio = 3.31%, training_time = 1729s
-Epoch 5: A_NQ = 96.34, H_NQ = 685871, A_Q = 96.62, H_Q = 24076, zstd_size = 38952 bits, zstd_ratio = 2.74%, training_time = 2085s
-Epoch 6: A_NQ = 97.06, H_NQ = 685875, A_Q = 97.35, H_Q = 20769, zstd_size = 33496 bits, zstd_ratio = 2.36%, training_time = 647s
-Epoch 7: A_NQ = 97.54, H_NQ = 685871, A_Q = 97.65, H_Q = 18766, zstd_size = 30512 bits, zstd_ratio = 2.15%, training_time = 1718s
-Epoch 8: A_NQ = 96.77, H_NQ = 685851, A_Q = 97.46, H_Q = 17818, zstd_size = 28712 bits, zstd_ratio = 2.02%, training_time = 1869s
-Epoch 9: A_NQ = 97.6, H_NQ = 685863, A_Q = 97.59, H_Q = 17457, zstd_size = 27488 bits, zstd_ratio = 1.93%, training_time = 2117s
-Epoch 10: A_NQ = 97.54, H_NQ = 685853, A_Q = 97.44, H_Q = 16790, zstd_size = 26800 bits, zstd_ratio = 1.89%, training_time = 2177s
-Epoch 11: A_NQ = 97.59, H_NQ = 685861, A_Q = 97.67, H_Q = 16061, zstd_size = 25760 bits, zstd_ratio = 1.81%, training_time = 2078s
-Epoch 12: A_NQ = 97.75, H_NQ = 685867, A_Q = 97.42, H_Q = 15698, zstd_size = 25088 bits, zstd_ratio = 1.76%, training_time = 2092s
-Epoch 13: A_NQ = 97.79, H_NQ = 685879, A_Q = 97.48, H_Q = 15461, zstd_size = 24632 bits, zstd_ratio = 1.73%, training_time = 2163s
-Epoch 14: A_NQ = 97.97, H_NQ = 685849, A_Q = 97.87, H_Q = 14706, zstd_size = 23624 bits, zstd_ratio = 1.66%, training_time = 2344s
-Epoch 15: A_NQ = 97.85, H_NQ = 685853, A_Q = 97.89, H_Q = 13570, zstd_size = 21736 bits, zstd_ratio = 1.53%, training_time = 2314s
-Epoch 16: A_NQ = 97.76, H_NQ = 685861, A_Q = 97.67, H_Q = 13223, zstd_size = 21360 bits, zstd_ratio = 1.50%, training_time = 2296s
-Epoch 17: A_NQ = 97.79, H_NQ = 685865, A_Q = 97.73, H_Q = 13124, zstd_size = 21048 bits, zstd_ratio = 1.48%, training_time = 2303s
-Epoch 18: A_NQ = 97.9, H_NQ = 685855, A_Q = 97.84, H_Q = 12927, zstd_size = 20840 bits, zstd_ratio = 1.47%, training_time = 2396s
-Epoch 19: A_NQ = 98.0, H_NQ = 685843, A_Q = 97.75, H_Q = 12949, zstd_size = 20832 bits, zstd_ratio = 1.47%, training_time = 2418s
-Epoch 20: A_NQ = 97.58, H_NQ = 685851, A_Q = 97.57, H_Q = 12953, zstd_size = 20648 bits, zstd_ratio = 1.45%, training_time = 2420s
-Epoch 21: A_NQ = 97.99, H_NQ = 685857, A_Q = 97.75, H_Q = 12777, zstd_size = 20568 bits, zstd_ratio = 1.45%, training_time = 2454s
-Epoch 22: A_NQ = 97.44, H_NQ = 685851, A_Q = 97.32, H_Q = 12617, zstd_size = 20392 bits, zstd_ratio = 1.43%, training_time = 2447s
-Epoch 23: A_NQ = 97.42, H_NQ = 685846, A_Q = 97.16, H_Q = 12729, zstd_size = 20376 bits, zstd_ratio = 1.43%, training_time = 2447s
-Epoch 24: A_NQ = 97.91, H_NQ = 685851, A_Q = 97.34, H_Q = 12397, zstd_size = 20032 bits, zstd_ratio = 1.41%, training_time = 2452s
-Epoch 25: A_NQ = 97.59, H_NQ = 685839, A_Q = 97.21, H_Q = 12652, zstd_size = 20048 bits, zstd_ratio = 1.41%, training_time = 2450s
-Epoch 26: A_NQ = 97.84, H_NQ = 685847, A_Q = 97.41, H_Q = 12009, zstd_size = 19744 bits, zstd_ratio = 1.39%, training_time = 2429s
-Epoch 27: A_NQ = 98.07, H_NQ = 685847, A_Q = 97.7, H_Q = 12128, zstd_size = 19688 bits, zstd_ratio = 1.38%, training_time = 2214s
-Epoch 28: A_NQ = 97.33, H_NQ = 685851, A_Q = 96.99, H_Q = 12226, zstd_size = 19552 bits, zstd_ratio = 1.38%, training_time = 2162s
-Epoch 29: A_NQ = 97.69, H_NQ = 685843, A_Q = 97.87, H_Q = 12114, zstd_size = 19240 bits, zstd_ratio = 1.35%, training_time = 2151s
-Epoch 30: A_NQ = 97.93, H_NQ = 685821, A_Q = 97.69, H_Q = 11672, zstd_size = 19176 bits, zstd_ratio = 1.35%, training_time = 2358s
-------------------------------------------------------------
-r = 1.1001
-Epoch 1: A_NQ = 87.88, H_NQ = 685883, A_Q = 90.19, H_Q = 91929, zstd_size = 142536 bits, zstd_ratio = 10.03%, training_time = 2406s
-Epoch 2: A_NQ = 95.04, H_NQ = 685881, A_Q = 94.04, H_Q = 58068, zstd_size = 87112 bits, zstd_ratio = 6.13%, training_time = 2605s
-Epoch 3: A_NQ = 95.99, H_NQ = 685889, A_Q = 95.29, H_Q = 40150, zstd_size = 61824 bits, zstd_ratio = 4.35%, training_time = 2627s
-Epoch 4: A_NQ = 96.36, H_NQ = 685871, A_Q = 96.49, H_Q = 26049, zstd_size = 41512 bits, zstd_ratio = 2.92%, training_time = 2482s
-Epoch 5: A_NQ = 96.67, H_NQ = 685855, A_Q = 96.47, H_Q = 19533, zstd_size = 31744 bits, zstd_ratio = 2.23%, training_time = 2390s
-Epoch 6: A_NQ = 96.82, H_NQ = 685869, A_Q = 96.94, H_Q = 17204, zstd_size = 27880 bits, zstd_ratio = 1.96%, training_time = 2543s
-Epoch 7: A_NQ = 97.13, H_NQ = 685871, A_Q = 97.22, H_Q = 16238, zstd_size = 26120 bits, zstd_ratio = 1.84%, training_time = 2406s
-Epoch 8: A_NQ = 96.87, H_NQ = 685863, A_Q = 97.28, H_Q = 15618, zstd_size = 25328 bits, zstd_ratio = 1.78%, training_time = 2386s
-Epoch 9: A_NQ = 97.27, H_NQ = 685877, A_Q = 97.33, H_Q = 14948, zstd_size = 24368 bits, zstd_ratio = 1.71%, training_time = 2356s
-Epoch 10: A_NQ = 97.32, H_NQ = 685883, A_Q = 97.54, H_Q = 14781, zstd_size = 23736 bits, zstd_ratio = 1.67%, training_time = 2469s
-Epoch 11: A_NQ = 97.25, H_NQ = 685875, A_Q = 97.6, H_Q = 14055, zstd_size = 22936 bits, zstd_ratio = 1.61%, training_time = 2447s
-Epoch 12: A_NQ = 97.55, H_NQ = 685861, A_Q = 97.73, H_Q = 13722, zstd_size = 22312 bits, zstd_ratio = 1.57%, training_time = 2252s
-Epoch 13: A_NQ = 97.15, H_NQ = 685881, A_Q = 97.58, H_Q = 13476, zstd_size = 21976 bits, zstd_ratio = 1.55%, training_time = 2289s
-Epoch 14: A_NQ = 97.68, H_NQ = 685851, A_Q = 97.44, H_Q = 13734, zstd_size = 22072 bits, zstd_ratio = 1.55%, training_time = 2177s
-Epoch 15: A_NQ = 97.52, H_NQ = 685881, A_Q = 97.63, H_Q = 13200, zstd_size = 21440 bits, zstd_ratio = 1.51%, training_time = 2170s
-Epoch 16: A_NQ = 97.79, H_NQ = 685871, A_Q = 97.75, H_Q = 13361, zstd_size = 21792 bits, zstd_ratio = 1.53%, training_time = 2296s
-Epoch 17: A_NQ = 97.78, H_NQ = 685877, A_Q = 97.76, H_Q = 12945, zstd_size = 21256 bits, zstd_ratio = 1.50%, training_time = 2188s
-Epoch 18: A_NQ = 96.97, H_NQ = 685861, A_Q = 97.08, H_Q = 12631, zstd_size = 20824 bits, zstd_ratio = 1.46%, training_time = 2470s
-Epoch 19: A_NQ = 97.8, H_NQ = 685867, A_Q = 97.9, H_Q = 12773, zstd_size = 20936 bits, zstd_ratio = 1.47%, training_time = 2287s
-Epoch 20: A_NQ = 97.78, H_NQ = 685853, A_Q = 97.86, H_Q = 12912, zstd_size = 20952 bits, zstd_ratio = 1.47%, training_time = 2166s
-Epoch 21: A_NQ = 97.67, H_NQ = 685863, A_Q = 97.67, H_Q = 12731, zstd_size = 20856 bits, zstd_ratio = 1.47%, training_time = 2227s
-Epoch 22: A_NQ = 97.83, H_NQ = 685851, A_Q = 97.83, H_Q = 12220, zstd_size = 20240 bits, zstd_ratio = 1.42%, training_time = 2464s
-Epoch 23: A_NQ = 97.66, H_NQ = 685867, A_Q = 97.66, H_Q = 12480, zstd_size = 20224 bits, zstd_ratio = 1.42%, training_time = 2237s
-Epoch 24: A_NQ = 97.56, H_NQ = 685865, A_Q = 97.89, H_Q = 12308, zstd_size = 20488 bits, zstd_ratio = 1.44%, training_time = 2283s
-Epoch 25: A_NQ = 97.87, H_NQ = 685867, A_Q = 97.88, H_Q = 11884, zstd_size = 19824 bits, zstd_ratio = 1.39%, training_time = 2441s
-Epoch 26: A_NQ = 97.79, H_NQ = 685869, A_Q = 97.84, H_Q = 12800, zstd_size = 20808 bits, zstd_ratio = 1.46%, training_time = 2193s
-Epoch 27: A_NQ = 97.79, H_NQ = 685855, A_Q = 97.85, H_Q = 12128, zstd_size = 19992 bits, zstd_ratio = 1.41%, training_time = 2109s
-Epoch 28: A_NQ = 97.51, H_NQ = 685861, A_Q = 97.49, H_Q = 12006, zstd_size = 19824 bits, zstd_ratio = 1.39%, training_time = 2150s
-Epoch 29: A_NQ = 97.85, H_NQ = 685863, A_Q = 97.92, H_Q = 13134, zstd_size = 20696 bits, zstd_ratio = 1.46%, training_time = 2265s
-Epoch 30: A_NQ = 97.88, H_NQ = 685867, A_Q = 97.57, H_Q = 13535, zstd_size = 20504 bits, zstd_ratio = 1.44%, training_time = 2066s
-------------------------------------------------------------
-r = 1.1008
-Epoch 1: A_NQ = 87.43, H_NQ = 685887, A_Q = 87.63, H_Q = 230073, zstd_size = 335160 bits, zstd_ratio = 23.58%, training_time = 2414s
-Epoch 2: A_NQ = 91.57, H_NQ = 685881, A_Q = 94.49, H_Q = 110685, zstd_size = 168872 bits, zstd_ratio = 11.88%, training_time = 2660s
-Epoch 3: A_NQ = 95.17, H_NQ = 685891, A_Q = 95.57, H_Q = 56519, zstd_size = 89472 bits, zstd_ratio = 6.29%, training_time = 2266s
-Epoch 4: A_NQ = 95.57, H_NQ = 685869, A_Q = 96.56, H_Q = 35625, zstd_size = 56456 bits, zstd_ratio = 3.97%, training_time = 2271s
-Epoch 5: A_NQ = 96.8, H_NQ = 685875, A_Q = 97.02, H_Q = 26900, zstd_size = 43328 bits, zstd_ratio = 3.05%, training_time = 2302s
-Epoch 6: A_NQ = 96.5, H_NQ = 685873, A_Q = 96.76, H_Q = 23117, zstd_size = 36624 bits, zstd_ratio = 2.58%, training_time = 2556s
-Epoch 7: A_NQ = 96.78, H_NQ = 685877, A_Q = 97.1, H_Q = 20857, zstd_size = 33128 bits, zstd_ratio = 2.33%, training_time = 2317s
-Epoch 8: A_NQ = 97.1, H_NQ = 685845, A_Q = 97.24, H_Q = 19939, zstd_size = 31392 bits, zstd_ratio = 2.21%, training_time = 2225s
-Epoch 9: A_NQ = 97.37, H_NQ = 685865, A_Q = 97.38, H_Q = 18069, zstd_size = 29000 bits, zstd_ratio = 2.04%, training_time = 2311s
-Epoch 10: A_NQ = 97.28, H_NQ = 685855, A_Q = 97.58, H_Q = 17203, zstd_size = 27328 bits, zstd_ratio = 1.92%, training_time = 2304s
-Epoch 11: A_NQ = 97.66, H_NQ = 685867, A_Q = 97.65, H_Q = 16796, zstd_size = 26696 bits, zstd_ratio = 1.88%, training_time = 2606s
-Epoch 12: A_NQ = 97.35, H_NQ = 685873, A_Q = 97.47, H_Q = 16217, zstd_size = 26064 bits, zstd_ratio = 1.83%, training_time = 2257s
-Epoch 13: A_NQ = 97.24, H_NQ = 685879, A_Q = 97.42, H_Q = 15890, zstd_size = 25472 bits, zstd_ratio = 1.79%, training_time = 2229s
-Epoch 14: A_NQ = 97.54, H_NQ = 685857, A_Q = 97.73, H_Q = 15629, zstd_size = 24896 bits, zstd_ratio = 1.75%, training_time = 2331s
-Epoch 15: A_NQ = 97.6, H_NQ = 685863, A_Q = 97.64, H_Q = 14929, zstd_size = 24272 bits, zstd_ratio = 1.71%, training_time = 2612s
-Epoch 16: A_NQ = 97.47, H_NQ = 685851, A_Q = 97.5, H_Q = 14788, zstd_size = 23712 bits, zstd_ratio = 1.67%, training_time = 2229s
-Epoch 17: A_NQ = 97.33, H_NQ = 685838, A_Q = 97.24, H_Q = 14770, zstd_size = 23512 bits, zstd_ratio = 1.65%, training_time = 2272s
-Epoch 18: A_NQ = 97.72, H_NQ = 685815, A_Q = 97.81, H_Q = 14282, zstd_size = 23016 bits, zstd_ratio = 1.62%, training_time = 2303s
-Epoch 19: A_NQ = 97.69, H_NQ = 685861, A_Q = 97.7, H_Q = 14005, zstd_size = 22688 bits, zstd_ratio = 1.60%, training_time = 2627s
-Epoch 20: A_NQ = 97.19, H_NQ = 685831, A_Q = 97.28, H_Q = 14195, zstd_size = 22440 bits, zstd_ratio = 1.58%, training_time = 2265s
-Epoch 21: A_NQ = 97.66, H_NQ = 685839, A_Q = 97.71, H_Q = 14140, zstd_size = 22392 bits, zstd_ratio = 1.58%, training_time = 2228s
-Epoch 22: A_NQ = 96.66, H_NQ = 685839, A_Q = 97.71, H_Q = 13789, zstd_size = 22136 bits, zstd_ratio = 1.56%, training_time = 2344s
-Epoch 23: A_NQ = 96.98, H_NQ = 685849, A_Q = 97.56, H_Q = 13722, zstd_size = 21976 bits, zstd_ratio = 1.55%, training_time = 2197s
-Epoch 24: A_NQ = 97.81, H_NQ = 685861, A_Q = 97.8, H_Q = 13296, zstd_size = 21816 bits, zstd_ratio = 1.53%, training_time = 2626s
-Epoch 25: A_NQ = 97.65, H_NQ = 685877, A_Q = 97.75, H_Q = 13293, zstd_size = 21712 bits, zstd_ratio = 1.53%, training_time = 2260s
-Epoch 26: A_NQ = 97.47, H_NQ = 685843, A_Q = 97.61, H_Q = 13324, zstd_size = 21328 bits, zstd_ratio = 1.50%, training_time = 2209s
-Epoch 27: A_NQ = 97.56, H_NQ = 685863, A_Q = 97.62, H_Q = 13373, zstd_size = 21440 bits, zstd_ratio = 1.51%, training_time = 2265s
-Epoch 28: A_NQ = 97.81, H_NQ = 685863, A_Q = 97.7, H_Q = 15192, zstd_size = 22768 bits, zstd_ratio = 1.60%, training_time = 2457s
-Epoch 29: A_NQ = 97.19, H_NQ = 685863, A_Q = 97.25, H_Q = 12861, zstd_size = 21120 bits, zstd_ratio = 1.49%, training_time = 2089s
-Epoch 30: A_NQ = 97.93, H_NQ = 685869, A_Q = 97.8, H_Q = 12848, zstd_size = 21096 bits, zstd_ratio = 1.48%, training_time = 2080s
+r = 1.1026
+Epoch 1: A_NQ = 92.27, H_NQ = 685889, A_Q = 87.37, H_Q = 137374, zstd_ratio = 14.09%, training_time = 649s
+Epoch 2: A_NQ = 94.0, H_NQ = 685875, A_Q = 71.3, H_Q = 60054, zstd_ratio = 6.36%, training_time = 359s
+Epoch 3: A_NQ = 94.88, H_NQ = 685885, A_Q = 92.71, H_Q = 34281, zstd_ratio = 3.73%, training_time = 346s
+Epoch 4: A_NQ = 95.49, H_NQ = 685879, A_Q = 93.99, H_Q = 24706, zstd_ratio = 2.66%, training_time = 343s
+Epoch 5: A_NQ = 96.12, H_NQ = 685863, A_Q = 94.31, H_Q = 20651, zstd_ratio = 2.23%, training_time = 337s
+Epoch 6: A_NQ = 96.46, H_NQ = 685861, A_Q = 92.02, H_Q = 18389, zstd_ratio = 1.99%, training_time = 334s
+Epoch 7: A_NQ = 95.26, H_NQ = 685865, A_Q = 94.52, H_Q = 17190, zstd_ratio = 1.87%, training_time = 331s
+Epoch 8: A_NQ = 96.45, H_NQ = 685871, A_Q = 93.68, H_Q = 15417, zstd_ratio = 1.69%, training_time = 361s
+Epoch 9: A_NQ = 96.46, H_NQ = 685871, A_Q = 92.06, H_Q = 14818, zstd_ratio = 1.62%, training_time = 360s
+Epoch 10: A_NQ = 97.05, H_NQ = 685873, A_Q = 95.36, H_Q = 13456, zstd_ratio = 1.50%, training_time = 341s
+Epoch 11: A_NQ = 96.38, H_NQ = 685863, A_Q = 95.34, H_Q = 12826, zstd_ratio = 1.42%, training_time = 360s
+Epoch 12: A_NQ = 97.19, H_NQ = 685849, A_Q = 95.32, H_Q = 12343, zstd_ratio = 1.37%, training_time = 370s
+Epoch 13: A_NQ = 96.8, H_NQ = 685849, A_Q = 93.89, H_Q = 11797, zstd_ratio = 1.31%, training_time = 355s
+Epoch 14: A_NQ = 96.99, H_NQ = 685872, A_Q = 95.58, H_Q = 11294, zstd_ratio = 1.27%, training_time = 366s
+Epoch 15: A_NQ = 97.4, H_NQ = 685837, A_Q = 95.57, H_Q = 10922, zstd_ratio = 1.24%, training_time = 350s
+Epoch 16: A_NQ = 96.96, H_NQ = 685853, A_Q = 95.53, H_Q = 10695, zstd_ratio = 1.20%, training_time = 652s
+Epoch 17: A_NQ = 97.16, H_NQ = 685851, A_Q = 95.85, H_Q = 10785, zstd_ratio = 1.18%, training_time = 449s
+Epoch 18: A_NQ = 97.17, H_NQ = 685857, A_Q = 93.73, H_Q = 10537, zstd_ratio = 1.18%, training_time = 397s
+Epoch 19: A_NQ = 97.24, H_NQ = 685869, A_Q = 93.42, H_Q = 10319, zstd_ratio = 1.16%, training_time = 333s
+Epoch 20: A_NQ = 97.25, H_NQ = 685867, A_Q = 95.72, H_Q = 10036, zstd_ratio = 1.12%, training_time = 327s
+Epoch 21: A_NQ = 97.16, H_NQ = 685861, A_Q = 94.66, H_Q = 10071, zstd_ratio = 1.10%, training_time = 348s
+Epoch 22: A_NQ = 97.45, H_NQ = 685857, A_Q = 95.14, H_Q = 9891, zstd_ratio = 1.11%, training_time = 341s
+Epoch 23: A_NQ = 97.35, H_NQ = 685855, A_Q = 95.7, H_Q = 9592, zstd_ratio = 1.08%, training_time = 339s
+Epoch 24: A_NQ = 97.1, H_NQ = 685857, A_Q = 96.41, H_Q = 9374, zstd_ratio = 1.07%, training_time = 353s
+Epoch 25: A_NQ = 97.42, H_NQ = 685855, A_Q = 96.29, H_Q = 9271, zstd_ratio = 1.06%, training_time = 337s
+Epoch 26: A_NQ = 97.31, H_NQ = 685863, A_Q = 96.41, H_Q = 9241, zstd_ratio = 1.04%, training_time = 346s
+Epoch 27: A_NQ = 97.18, H_NQ = 685853, A_Q = 96.83, H_Q = 8785, zstd_ratio = 1.01%, training_time = 338s
+Epoch 28: A_NQ = 97.38, H_NQ = 685871, A_Q = 96.9, H_Q = 8718, zstd_ratio = 1.00%, training_time = 367s
+Epoch 29: A_NQ = 97.28, H_NQ = 685855, A_Q = 96.38, H_Q = 8747, zstd_ratio = 1.00%, training_time = 365s
+Epoch 30: A_NQ = 97.41, H_NQ = 685847, A_Q = 96.66, H_Q = 8509, zstd_ratio = 0.99%, training_time = 408s
 ------------------------------------------------------------
 r = 1.1005
-Epoch 1: A_NQ = 87.46, H_NQ = 685885, A_Q = 90.9, H_Q = 103356, zstd_size = 157728 bits, zstd_ratio = 11.09%, training_time = 2363s
-Epoch 2: A_NQ = 93.59, H_NQ = 685885, A_Q = 93.71, H_Q = 63444, zstd_size = 96016 bits, zstd_ratio = 6.75%, training_time = 2611s
-Epoch 3: A_NQ = 94.44, H_NQ = 685885, A_Q = 95.42, H_Q = 40870, zstd_size = 63560 bits, zstd_ratio = 4.47%, training_time = 2226s
-Epoch 4: A_NQ = 96.19, H_NQ = 685885, A_Q = 95.98, H_Q = 27754, zstd_size = 44832 bits, zstd_ratio = 3.15%, training_time = 2311s
-Epoch 5: A_NQ = 96.4, H_NQ = 685869, A_Q = 96.66, H_Q = 21996, zstd_size = 35392 bits, zstd_ratio = 2.49%, training_time = 2315s
-Epoch 6: A_NQ = 96.91, H_NQ = 685871, A_Q = 96.95, H_Q = 19470, zstd_size = 31144 bits, zstd_ratio = 2.19%, training_time = 2620s
-Epoch 7: A_NQ = 97.03, H_NQ = 685865, A_Q = 97.21, H_Q = 17894, zstd_size = 28712 bits, zstd_ratio = 2.02%, training_time = 2196s
-Epoch 8: A_NQ = 97.2, H_NQ = 685855, A_Q = 97.08, H_Q = 17314, zstd_size = 27792 bits, zstd_ratio = 1.95%, training_time = 2212s
-Epoch 9: A_NQ = 97.41, H_NQ = 685853, A_Q = 97.22, H_Q = 16710, zstd_size = 26960 bits, zstd_ratio = 1.90%, training_time = 2267s
-Epoch 10: A_NQ = 96.9, H_NQ = 685863, A_Q = 97.36, H_Q = 16115, zstd_size = 26408 bits, zstd_ratio = 1.86%, training_time = 2573s
-Epoch 11: A_NQ = 97.45, H_NQ = 685851, A_Q = 97.57, H_Q = 15322, zstd_size = 25280 bits, zstd_ratio = 1.78%, training_time = 2217s
-Epoch 12: A_NQ = 97.8, H_NQ = 685835, A_Q = 97.77, H_Q = 14948, zstd_size = 24448 bits, zstd_ratio = 1.72%, training_time = 2256s
-Epoch 13: A_NQ = 97.7, H_NQ = 685845, A_Q = 97.65, H_Q = 15013, zstd_size = 24032 bits, zstd_ratio = 1.69%, training_time = 2302s
-Epoch 14: A_NQ = 97.7, H_NQ = 685839, A_Q = 97.57, H_Q = 14370, zstd_size = 23400 bits, zstd_ratio = 1.65%, training_time = 2564s
-Epoch 15: A_NQ = 97.86, H_NQ = 685855, A_Q = 97.63, H_Q = 14007, zstd_size = 23112 bits, zstd_ratio = 1.63%, training_time = 2347s
-Epoch 16: A_NQ = 97.37, H_NQ = 685857, A_Q = 97.5, H_Q = 14007, zstd_size = 22720 bits, zstd_ratio = 1.60%, training_time = 2286s
-Epoch 17: A_NQ = 97.72, H_NQ = 685863, A_Q = 97.68, H_Q = 13753, zstd_size = 22440 bits, zstd_ratio = 1.58%, training_time = 2428s
-Epoch 18: A_NQ = 97.51, H_NQ = 685857, A_Q = 97.66, H_Q = 13274, zstd_size = 22088 bits, zstd_ratio = 1.55%, training_time = 2531s
-Epoch 19: A_NQ = 97.79, H_NQ = 685857, A_Q = 97.52, H_Q = 13032, zstd_size = 21016 bits, zstd_ratio = 1.48%, training_time = 2426s
-Epoch 20: A_NQ = 97.26, H_NQ = 685851, A_Q = 97.38, H_Q = 13303, zstd_size = 21560 bits, zstd_ratio = 1.52%, training_time = 2429s
-Epoch 21: A_NQ = 97.72, H_NQ = 685851, A_Q = 97.54, H_Q = 12894, zstd_size = 21128 bits, zstd_ratio = 1.49%, training_time = 2406s
-Epoch 22: A_NQ = 97.85, H_NQ = 685861, A_Q = 97.65, H_Q = 12501, zstd_size = 20168 bits, zstd_ratio = 1.42%, training_time = 2524s
-Epoch 23: A_NQ = 97.67, H_NQ = 685851, A_Q = 97.49, H_Q = 12644, zstd_size = 20344 bits, zstd_ratio = 1.43%, training_time = 2428s
-Epoch 24: A_NQ = 97.66, H_NQ = 685851, A_Q = 97.51, H_Q = 12283, zstd_size = 20056 bits, zstd_ratio = 1.41%, training_time = 2282s
-Epoch 25: A_NQ = 97.51, H_NQ = 685857, A_Q = 97.41, H_Q = 12288, zstd_size = 20064 bits, zstd_ratio = 1.41%, training_time = 2522s
-Epoch 26: A_NQ = 97.62, H_NQ = 685857, A_Q = 97.66, H_Q = 11874, zstd_size = 19648 bits, zstd_ratio = 1.38%, training_time = 2202s
-Epoch 27: A_NQ = 97.84, H_NQ = 685843, A_Q = 97.79, H_Q = 11929, zstd_size = 19568 bits, zstd_ratio = 1.38%, training_time = 2208s
-Epoch 28: A_NQ = 97.76, H_NQ = 685855, A_Q = 97.89, H_Q = 12242, zstd_size = 19648 bits, zstd_ratio = 1.38%, training_time = 2159s
-Epoch 29: A_NQ = 97.89, H_NQ = 685837, A_Q = 97.83, H_Q = 12362, zstd_size = 19656 bits, zstd_ratio = 1.38%, training_time = 2345s
-Epoch 30: A_NQ = 97.89, H_NQ = 685845, A_Q = 97.86, H_Q = 11857, zstd_size = 19224 bits, zstd_ratio = 1.35%, training_time = 2052s
+Epoch 1: A_NQ = 88.28, H_NQ = 685889, A_Q = 44.01, H_Q = 78788, zstd_ratio = 8.47%, training_time = 359s
+Epoch 2: A_NQ = 95.12, H_NQ = 685875, A_Q = 45.98, H_Q = 43716, zstd_ratio = 4.52%, training_time = 343s
+Epoch 3: A_NQ = 95.53, H_NQ = 685893, A_Q = 84.41, H_Q = 29299, zstd_ratio = 3.08%, training_time = 372s
+Epoch 4: A_NQ = 96.27, H_NQ = 685881, A_Q = 89.46, H_Q = 19822, zstd_ratio = 2.19%, training_time = 346s
+Epoch 5: A_NQ = 96.31, H_NQ = 685873, A_Q = 95.3, H_Q = 15568, zstd_ratio = 1.75%, training_time = 354s
+Epoch 6: A_NQ = 96.9, H_NQ = 685859, A_Q = 96.31, H_Q = 12699, zstd_ratio = 1.47%, training_time = 366s
+Epoch 7: A_NQ = 96.81, H_NQ = 685861, A_Q = 96.35, H_Q = 11163, zstd_ratio = 1.32%, training_time = 364s
+Epoch 8: A_NQ = 96.74, H_NQ = 685859, A_Q = 93.98, H_Q = 10667, zstd_ratio = 1.23%, training_time = 377s
+Epoch 9: A_NQ = 96.89, H_NQ = 685865, A_Q = 95.92, H_Q = 10150, zstd_ratio = 1.19%, training_time = 383s
+Epoch 10: A_NQ = 97.1, H_NQ = 685839, A_Q = 95.67, H_Q = 9769, zstd_ratio = 1.15%, training_time = 400s
+Epoch 11: A_NQ = 97.07, H_NQ = 685861, A_Q = 95.95, H_Q = 9352, zstd_ratio = 1.10%, training_time = 349s
+Epoch 12: A_NQ = 97.21, H_NQ = 685825, A_Q = 96.08, H_Q = 9128, zstd_ratio = 1.08%, training_time = 339s
+Epoch 13: A_NQ = 97.35, H_NQ = 685863, A_Q = 96.14, H_Q = 8883, zstd_ratio = 1.05%, training_time = 333s
+Epoch 14: A_NQ = 97.16, H_NQ = 685823, A_Q = 95.56, H_Q = 8527, zstd_ratio = 1.02%, training_time = 334s
+Epoch 15: A_NQ = 96.67, H_NQ = 685843, A_Q = 95.42, H_Q = 8615, zstd_ratio = 1.03%, training_time = 335s
+Epoch 16: A_NQ = 97.09, H_NQ = 685871, A_Q = 96.71, H_Q = 8583, zstd_ratio = 1.02%, training_time = 363s
+Epoch 17: A_NQ = 97.35, H_NQ = 685839, A_Q = 96.44, H_Q = 8437, zstd_ratio = 1.01%, training_time = 404s
+Epoch 18: A_NQ = 97.43, H_NQ = 685831, A_Q = 94.27, H_Q = 8413, zstd_ratio = 1.00%, training_time = 380s
+Epoch 19: A_NQ = 97.37, H_NQ = 685855, A_Q = 95.99, H_Q = 8359, zstd_ratio = 0.99%, training_time = 654s
+Epoch 20: A_NQ = 97.22, H_NQ = 685837, A_Q = 96.03, H_Q = 8674, zstd_ratio = 1.02%, training_time = 649s
+Epoch 21: A_NQ = 97.5, H_NQ = 685823, A_Q = 96.71, H_Q = 8528, zstd_ratio = 1.01%, training_time = 649s
+Epoch 22: A_NQ = 97.46, H_NQ = 685835, A_Q = 97.21, H_Q = 8539, zstd_ratio = 1.00%, training_time = 649s
+Epoch 23: A_NQ = 97.49, H_NQ = 685801, A_Q = 95.17, H_Q = 8480, zstd_ratio = 1.01%, training_time = 652s
+Epoch 24: A_NQ = 97.39, H_NQ = 685811, A_Q = 96.57, H_Q = 8173, zstd_ratio = 0.97%, training_time = 414s
+Epoch 25: A_NQ = 97.59, H_NQ = 685773, A_Q = 95.77, H_Q = 8238, zstd_ratio = 0.98%, training_time = 374s
+Epoch 26: A_NQ = 97.35, H_NQ = 685823, A_Q = 96.59, H_Q = 8393, zstd_ratio = 0.99%, training_time = 337s
+Epoch 27: A_NQ = 97.48, H_NQ = 685801, A_Q = 96.57, H_Q = 8320, zstd_ratio = 0.98%, training_time = 372s
+Epoch 28: A_NQ = 97.69, H_NQ = 685746, A_Q = 95.9, H_Q = 8170, zstd_ratio = 0.98%, training_time = 369s
+Epoch 29: A_NQ = 97.53, H_NQ = 685813, A_Q = 94.44, H_Q = 8065, zstd_ratio = 0.97%, training_time = 340s
+Epoch 30: A_NQ = 97.43, H_NQ = 685829, A_Q = 95.08, H_Q = 8098, zstd_ratio = 0.96%, training_time = 367s
 ------------------------------------------------------------
-r = 1.1026
-Epoch 1: A_NQ = 86.3, H_NQ = 685885, A_Q = 86.98, H_Q = 168805, zstd_size = 250864 bits, zstd_ratio = 17.65%, training_time = 2187s
-Epoch 2: A_NQ = 93.12, H_NQ = 685883, A_Q = 93.55, H_Q = 80211, zstd_size = 123112 bits, zstd_ratio = 8.66%, training_time = 2652s
-Epoch 3: A_NQ = 94.41, H_NQ = 685895, A_Q = 94.75, H_Q = 49642, zstd_size = 77320 bits, zstd_ratio = 5.44%, training_time = 2248s
-Epoch 4: A_NQ = 96.03, H_NQ = 685893, A_Q = 95.83, H_Q = 35334, zstd_size = 56112 bits, zstd_ratio = 3.95%, training_time = 2281s
-Epoch 5: A_NQ = 95.24, H_NQ = 685871, A_Q = 96.6, H_Q = 28288, zstd_size = 45120 bits, zstd_ratio = 3.17%, training_time = 2359s
-Epoch 6: A_NQ = 95.55, H_NQ = 685877, A_Q = 96.66, H_Q = 25255, zstd_size = 40736 bits, zstd_ratio = 2.87%, training_time = 2609s
-Epoch 7: A_NQ = 96.68, H_NQ = 685885, A_Q = 96.74, H_Q = 23524, zstd_size = 38216 bits, zstd_ratio = 2.69%, training_time = 2271s
-Epoch 8: A_NQ = 96.82, H_NQ = 685865, A_Q = 96.97, H_Q = 22039, zstd_size = 35536 bits, zstd_ratio = 2.50%, training_time = 2214s
-Epoch 9: A_NQ = 96.81, H_NQ = 685857, A_Q = 97.1, H_Q = 20366, zstd_size = 32976 bits, zstd_ratio = 2.32%, training_time = 2327s
-Epoch 10: A_NQ = 97.16, H_NQ = 685873, A_Q = 97.16, H_Q = 19010, zstd_size = 30784 bits, zstd_ratio = 2.17%, training_time = 2613s
-Epoch 11: A_NQ = 96.89, H_NQ = 685865, A_Q = 97.15, H_Q = 17905, zstd_size = 29104 bits, zstd_ratio = 2.05%, training_time = 2254s
-Epoch 12: A_NQ = 97.07, H_NQ = 685875, A_Q = 97.14, H_Q = 17990, zstd_size = 28872 bits, zstd_ratio = 2.03%, training_time = 2273s
-Epoch 13: A_NQ = 96.27, H_NQ = 685871, A_Q = 97.3, H_Q = 16985, zstd_size = 27840 bits, zstd_ratio = 1.96%, training_time = 2366s
-Epoch 14: A_NQ = 97.25, H_NQ = 685861, A_Q = 97.36, H_Q = 16589, zstd_size = 27064 bits, zstd_ratio = 1.90%, training_time = 2635s
-Epoch 15: A_NQ = 97.06, H_NQ = 685861, A_Q = 97.38, H_Q = 16964, zstd_size = 26976 bits, zstd_ratio = 1.90%, training_time = 2204s
-Epoch 16: A_NQ = 97.26, H_NQ = 685871, A_Q = 97.16, H_Q = 16510, zstd_size = 26608 bits, zstd_ratio = 1.87%, training_time = 2287s
-Epoch 17: A_NQ = 97.45, H_NQ = 685855, A_Q = 97.1, H_Q = 15737, zstd_size = 25888 bits, zstd_ratio = 1.82%, training_time = 2608s
-Epoch 18: A_NQ = 96.91, H_NQ = 685875, A_Q = 97.32, H_Q = 15946, zstd_size = 25480 bits, zstd_ratio = 1.79%, training_time = 2344s
-Epoch 19: A_NQ = 97.54, H_NQ = 685859, A_Q = 97.55, H_Q = 15002, zstd_size = 24408 bits, zstd_ratio = 1.72%, training_time = 2340s
-Epoch 20: A_NQ = 97.47, H_NQ = 685859, A_Q = 97.34, H_Q = 15475, zstd_size = 25016 bits, zstd_ratio = 1.76%, training_time = 2411s
-Epoch 21: A_NQ = 97.62, H_NQ = 685881, A_Q = 97.64, H_Q = 14863, zstd_size = 23816 bits, zstd_ratio = 1.68%, training_time = 2604s
-Epoch 22: A_NQ = 97.62, H_NQ = 685865, A_Q = 97.51, H_Q = 14484, zstd_size = 23152 bits, zstd_ratio = 1.63%, training_time = 2303s
-Epoch 23: A_NQ = 97.56, H_NQ = 685861, A_Q = 97.37, H_Q = 13829, zstd_size = 22448 bits, zstd_ratio = 1.58%, training_time = 2267s
-Epoch 24: A_NQ = 97.62, H_NQ = 685845, A_Q = 97.46, H_Q = 13822, zstd_size = 22584 bits, zstd_ratio = 1.59%, training_time = 2356s
-Epoch 25: A_NQ = 97.65, H_NQ = 685855, A_Q = 97.6, H_Q = 13807, zstd_size = 22400 bits, zstd_ratio = 1.58%, training_time = 2579s
-Epoch 26: A_NQ = 97.58, H_NQ = 685867, A_Q = 97.32, H_Q = 14200, zstd_size = 22616 bits, zstd_ratio = 1.59%, training_time = 2246s
-Epoch 27: A_NQ = 98.04, H_NQ = 685851, A_Q = 97.77, H_Q = 13338, zstd_size = 22304 bits, zstd_ratio = 1.57%, training_time = 2216s
-Epoch 28: A_NQ = 97.54, H_NQ = 685869, A_Q = 97.96, H_Q = 13565, zstd_size = 22112 bits, zstd_ratio = 1.56%, training_time = 2191s
-Epoch 29: A_NQ = 97.79, H_NQ = 685863, A_Q = 97.65, H_Q = 13253, zstd_size = 21632 bits, zstd_ratio = 1.52%, training_time = 2373s
-Epoch 30: A_NQ = 97.3, H_NQ = 685863, A_Q = 97.51, H_Q = 13322, zstd_size = 21888 bits, zstd_ratio = 1.54%, training_time = 2031s
-------------------------------------------------------------
-r = 1.1021
-Epoch 1: A_NQ = 91.97, H_NQ = 685877, A_Q = 92.17, H_Q = 103932, zstd_size = 159144 bits, zstd_ratio = 11.19%, training_time = 2307s
-Epoch 2: A_NQ = 94.22, H_NQ = 685883, A_Q = 93.62, H_Q = 57326, zstd_size = 86088 bits, zstd_ratio = 6.06%, training_time = 2611s
-Epoch 3: A_NQ = 94.94, H_NQ = 685891, A_Q = 94.37, H_Q = 38112, zstd_size = 58592 bits, zstd_ratio = 4.12%, training_time = 2350s
-Epoch 4: A_NQ = 95.99, H_NQ = 685877, A_Q = 96.51, H_Q = 28104, zstd_size = 43896 bits, zstd_ratio = 3.09%, training_time = 2420s
-Epoch 5: A_NQ = 96.59, H_NQ = 685881, A_Q = 96.29, H_Q = 22785, zstd_size = 36056 bits, zstd_ratio = 2.54%, training_time = 2558s
-Epoch 6: A_NQ = 96.69, H_NQ = 685883, A_Q = 97.01, H_Q = 20185, zstd_size = 32048 bits, zstd_ratio = 2.25%, training_time = 2250s
-Epoch 7: A_NQ = 97.19, H_NQ = 685875, A_Q = 97.26, H_Q = 18525, zstd_size = 29824 bits, zstd_ratio = 2.10%, training_time = 2242s
-Epoch 8: A_NQ = 97.46, H_NQ = 685857, A_Q = 97.47, H_Q = 17136, zstd_size = 27688 bits, zstd_ratio = 1.95%, training_time = 2316s
-Epoch 9: A_NQ = 97.4, H_NQ = 685863, A_Q = 97.44, H_Q = 16217, zstd_size = 26040 bits, zstd_ratio = 1.83%, training_time = 2552s
-Epoch 10: A_NQ = 97.7, H_NQ = 685867, A_Q = 97.82, H_Q = 15858, zstd_size = 25544 bits, zstd_ratio = 1.80%, training_time = 2291s
-Epoch 11: A_NQ = 97.27, H_NQ = 685865, A_Q = 97.4, H_Q = 15417, zstd_size = 24744 bits, zstd_ratio = 1.74%, training_time = 2270s
-Epoch 12: A_NQ = 97.83, H_NQ = 685865, A_Q = 97.79, H_Q = 14877, zstd_size = 23752 bits, zstd_ratio = 1.67%, training_time = 2403s
-Epoch 13: A_NQ = 97.7, H_NQ = 685851, A_Q = 97.87, H_Q = 14206, zstd_size = 23088 bits, zstd_ratio = 1.62%, training_time = 2585s
-Epoch 14: A_NQ = 97.57, H_NQ = 685841, A_Q = 97.62, H_Q = 13948, zstd_size = 22824 bits, zstd_ratio = 1.61%, training_time = 2258s
-Epoch 15: A_NQ = 97.82, H_NQ = 685847, A_Q = 97.74, H_Q = 13804, zstd_size = 22592 bits, zstd_ratio = 1.59%, training_time = 2191s
-Epoch 16: A_NQ = 97.75, H_NQ = 685843, A_Q = 97.71, H_Q = 14135, zstd_size = 22640 bits, zstd_ratio = 1.59%, training_time = 2320s
-Epoch 17: A_NQ = 97.69, H_NQ = 685864, A_Q = 97.99, H_Q = 13891, zstd_size = 22488 bits, zstd_ratio = 1.58%, training_time = 2586s
-Epoch 18: A_NQ = 97.83, H_NQ = 685851, A_Q = 97.68, H_Q = 13399, zstd_size = 21896 bits, zstd_ratio = 1.54%, training_time = 2187s
-Epoch 19: A_NQ = 97.85, H_NQ = 685847, A_Q = 97.95, H_Q = 13506, zstd_size = 21672 bits, zstd_ratio = 1.52%, training_time = 2237s
-Epoch 20: A_NQ = 97.99, H_NQ = 685859, A_Q = 97.86, H_Q = 13427, zstd_size = 21824 bits, zstd_ratio = 1.54%, training_time = 2334s
-Epoch 21: A_NQ = 97.8, H_NQ = 685867, A_Q = 97.85, H_Q = 13104, zstd_size = 21832 bits, zstd_ratio = 1.54%, training_time = 2602s
-Epoch 22: A_NQ = 97.88, H_NQ = 685861, A_Q = 97.88, H_Q = 12864, zstd_size = 21224 bits, zstd_ratio = 1.49%, training_time = 2283s
-Epoch 23: A_NQ = 97.57, H_NQ = 685847, A_Q = 97.85, H_Q = 12725, zstd_size = 21120 bits, zstd_ratio = 1.49%, training_time = 2246s
-Epoch 24: A_NQ = 97.72, H_NQ = 685853, A_Q = 97.79, H_Q = 12841, zstd_size = 20944 bits, zstd_ratio = 1.47%, training_time = 2327s
-Epoch 25: A_NQ = 97.56, H_NQ = 685845, A_Q = 97.76, H_Q = 12677, zstd_size = 20848 bits, zstd_ratio = 1.47%, training_time = 2578s
-Epoch 26: A_NQ = 97.88, H_NQ = 685869, A_Q = 97.99, H_Q = 12346, zstd_size = 20168 bits, zstd_ratio = 1.42%, training_time = 2293s
-Epoch 27: A_NQ = 98.14, H_NQ = 685859, A_Q = 98.02, H_Q = 12318, zstd_size = 20264 bits, zstd_ratio = 1.43%, training_time = 2398s
-Epoch 28: A_NQ = 97.88, H_NQ = 685853, A_Q = 97.73, H_Q = 12426, zstd_size = 20552 bits, zstd_ratio = 1.45%, training_time = 2293s
-Epoch 29: A_NQ = 97.75, H_NQ = 685861, A_Q = 97.9, H_Q = 12385, zstd_size = 20152 bits, zstd_ratio = 1.42%, training_time = 2320s
-Epoch 30: A_NQ = 97.88, H_NQ = 685853, A_Q = 97.87, H_Q = 12146, zstd_size = 20088 bits, zstd_ratio = 1.41%, training_time = 2177s
-------------------------------------------------------------
-r = 1.1022
-Epoch 1: A_NQ = 89.51, H_NQ = 685891, A_Q = 87.98, H_Q = 106810, zstd_size = 163912 bits, zstd_ratio = 11.53%, training_time = 2372s
-Epoch 2: A_NQ = 93.65, H_NQ = 685879, A_Q = 94.11, H_Q = 57277, zstd_size = 87096 bits, zstd_ratio = 6.13%, training_time = 2646s
-Epoch 3: A_NQ = 95.15, H_NQ = 685885, A_Q = 93.1, H_Q = 37542, zstd_size = 57376 bits, zstd_ratio = 4.04%, training_time = 2327s
-Epoch 4: A_NQ = 95.47, H_NQ = 685885, A_Q = 96.09, H_Q = 27257, zstd_size = 41736 bits, zstd_ratio = 2.94%, training_time = 2305s
-Epoch 5: A_NQ = 96.41, H_NQ = 685883, A_Q = 96.79, H_Q = 22811, zstd_size = 35576 bits, zstd_ratio = 2.50%, training_time = 2325s
-Epoch 6: A_NQ = 96.67, H_NQ = 685865, A_Q = 96.81, H_Q = 19850, zstd_size = 31488 bits, zstd_ratio = 2.21%, training_time = 2634s
-Epoch 7: A_NQ = 97.31, H_NQ = 685869, A_Q = 97.23, H_Q = 17390, zstd_size = 28408 bits, zstd_ratio = 2.00%, training_time = 2247s
-Epoch 8: A_NQ = 97.03, H_NQ = 685867, A_Q = 97.23, H_Q = 16256, zstd_size = 26440 bits, zstd_ratio = 1.86%, training_time = 2262s
-Epoch 9: A_NQ = 97.35, H_NQ = 685869, A_Q = 97.21, H_Q = 15627, zstd_size = 25552 bits, zstd_ratio = 1.80%, training_time = 2277s
-Epoch 10: A_NQ = 97.68, H_NQ = 685871, A_Q = 97.66, H_Q = 14669, zstd_size = 24560 bits, zstd_ratio = 1.73%, training_time = 2497s
-Epoch 11: A_NQ = 97.42, H_NQ = 685871, A_Q = 97.41, H_Q = 14267, zstd_size = 23704 bits, zstd_ratio = 1.67%, training_time = 2278s
-Epoch 12: A_NQ = 97.71, H_NQ = 685861, A_Q = 97.68, H_Q = 13691, zstd_size = 22912 bits, zstd_ratio = 1.61%, training_time = 2311s
-Epoch 13: A_NQ = 96.93, H_NQ = 685873, A_Q = 97.12, H_Q = 13988, zstd_size = 23056 bits, zstd_ratio = 1.62%, training_time = 2345s
-Epoch 14: A_NQ = 97.58, H_NQ = 685869, A_Q = 97.67, H_Q = 13916, zstd_size = 23008 bits, zstd_ratio = 1.62%, training_time = 2366s
-Epoch 15: A_NQ = 97.57, H_NQ = 685877, A_Q = 97.69, H_Q = 13350, zstd_size = 22144 bits, zstd_ratio = 1.56%, training_time = 2582s
-Epoch 16: A_NQ = 97.32, H_NQ = 685849, A_Q = 97.66, H_Q = 12925, zstd_size = 21928 bits, zstd_ratio = 1.54%, training_time = 2249s
-Epoch 17: A_NQ = 97.73, H_NQ = 685874, A_Q = 97.85, H_Q = 12895, zstd_size = 21640 bits, zstd_ratio = 1.52%, training_time = 2322s
-Epoch 18: A_NQ = 97.44, H_NQ = 685859, A_Q = 97.7, H_Q = 12935, zstd_size = 21520 bits, zstd_ratio = 1.51%, training_time = 2420s
-Epoch 19: A_NQ = 97.77, H_NQ = 685871, A_Q = 97.92, H_Q = 12839, zstd_size = 21376 bits, zstd_ratio = 1.50%, training_time = 2302s
-Epoch 20: A_NQ = 97.37, H_NQ = 685865, A_Q = 97.8, H_Q = 12944, zstd_size = 21112 bits, zstd_ratio = 1.49%, training_time = 2568s
-Epoch 21: A_NQ = 97.62, H_NQ = 685859, A_Q = 97.77, H_Q = 12702, zstd_size = 21248 bits, zstd_ratio = 1.49%, training_time = 2325s
-Epoch 22: A_NQ = 97.55, H_NQ = 685867, A_Q = 97.54, H_Q = 12637, zstd_size = 21296 bits, zstd_ratio = 1.50%, training_time = 2302s
-Epoch 23: A_NQ = 97.63, H_NQ = 685855, A_Q = 97.66, H_Q = 12485, zstd_size = 20760 bits, zstd_ratio = 1.46%, training_time = 2444s
-Epoch 24: A_NQ = 97.65, H_NQ = 685871, A_Q = 97.75, H_Q = 12465, zstd_size = 20624 bits, zstd_ratio = 1.45%, training_time = 2320s
-Epoch 25: A_NQ = 97.91, H_NQ = 685859, A_Q = 97.79, H_Q = 12010, zstd_size = 20128 bits, zstd_ratio = 1.42%, training_time = 2428s
-Epoch 26: A_NQ = 97.84, H_NQ = 685865, A_Q = 97.55, H_Q = 11834, zstd_size = 20008 bits, zstd_ratio = 1.41%, training_time = 2516s
-Epoch 27: A_NQ = 97.47, H_NQ = 685869, A_Q = 97.52, H_Q = 12098, zstd_size = 20200 bits, zstd_ratio = 1.42%, training_time = 2228s
-Epoch 28: A_NQ = 97.53, H_NQ = 685857, A_Q = 97.74, H_Q = 11625, zstd_size = 19872 bits, zstd_ratio = 1.40%, training_time = 2152s
-Epoch 29: A_NQ = 97.81, H_NQ = 685861, A_Q = 97.79, H_Q = 11871, zstd_size = 19528 bits, zstd_ratio = 1.37%, training_time = 2261s
-Epoch 30: A_NQ = 97.48, H_NQ = 685845, A_Q = 97.56, H_Q = 11921, zstd_size = 19496 bits, zstd_ratio = 1.37%, training_time = 2285s
+r = 1.1031
+Epoch 1: A_NQ = 92.07, H_NQ = 685891, A_Q = 83.94, H_Q = 95608, zstd_ratio = 10.12%, training_time = 778s
+Epoch 2: A_NQ = 94.39, H_NQ = 685889, A_Q = 77.92, H_Q = 44990, zstd_ratio = 4.79%, training_time = 363s
+Epoch 3: A_NQ = 96.35, H_NQ = 685881, A_Q = 93.17, H_Q = 27179, zstd_ratio = 3.01%, training_time = 366s
+Epoch 4: A_NQ = 96.13, H_NQ = 685885, A_Q = 88.3, H_Q = 19937, zstd_ratio = 2.21%, training_time = 377s
+Epoch 5: A_NQ = 96.08, H_NQ = 685881, A_Q = 93.31, H_Q = 16327, zstd_ratio = 1.86%, training_time = 367s
+Epoch 6: A_NQ = 97.02, H_NQ = 685869, A_Q = 95.66, H_Q = 14605, zstd_ratio = 1.66%, training_time = 357s
+Epoch 7: A_NQ = 97.3, H_NQ = 685857, A_Q = 96.03, H_Q = 13824, zstd_ratio = 1.55%, training_time = 353s
+Epoch 8: A_NQ = 96.89, H_NQ = 685869, A_Q = 96.51, H_Q = 13312, zstd_ratio = 1.47%, training_time = 342s
+Epoch 9: A_NQ = 97.26, H_NQ = 685871, A_Q = 96.65, H_Q = 12307, zstd_ratio = 1.38%, training_time = 347s
+Epoch 10: A_NQ = 97.26, H_NQ = 685847, A_Q = 96.47, H_Q = 11866, zstd_ratio = 1.35%, training_time = 349s
+Epoch 11: A_NQ = 97.04, H_NQ = 685849, A_Q = 97.05, H_Q = 11906, zstd_ratio = 1.34%, training_time = 353s
+Epoch 12: A_NQ = 97.48, H_NQ = 685858, A_Q = 97.35, H_Q = 11997, zstd_ratio = 1.36%, training_time = 354s
+Epoch 13: A_NQ = 97.55, H_NQ = 685855, A_Q = 96.82, H_Q = 11827, zstd_ratio = 1.33%, training_time = 1188s
+Epoch 14: A_NQ = 97.42, H_NQ = 685843, A_Q = 96.87, H_Q = 11381, zstd_ratio = 1.30%, training_time = 709s
+Epoch 15: A_NQ = 97.43, H_NQ = 685859, A_Q = 96.92, H_Q = 11229, zstd_ratio = 1.30%, training_time = 1131s
+Epoch 16: A_NQ = 97.13, H_NQ = 685861, A_Q = 96.62, H_Q = 11194, zstd_ratio = 1.26%, training_time = 1104s
+Epoch 17: A_NQ = 97.55, H_NQ = 685845, A_Q = 97.09, H_Q = 10674, zstd_ratio = 1.22%, training_time = 551s
+Epoch 18: A_NQ = 97.4, H_NQ = 685817, A_Q = 96.91, H_Q = 10458, zstd_ratio = 1.20%, training_time = 652s
+Epoch 19: A_NQ = 97.5, H_NQ = 685801, A_Q = 96.87, H_Q = 10461, zstd_ratio = 1.18%, training_time = 663s
+Epoch 20: A_NQ = 97.43, H_NQ = 685801, A_Q = 96.81, H_Q = 10340, zstd_ratio = 1.15%, training_time = 1139s
+Epoch 21: A_NQ = 97.48, H_NQ = 685805, A_Q = 96.64, H_Q = 10436, zstd_ratio = 1.17%, training_time = 1148s
+Epoch 22: A_NQ = 97.48, H_NQ = 685833, A_Q = 96.83, H_Q = 10262, zstd_ratio = 1.17%, training_time = 716s
+Epoch 23: A_NQ = 97.63, H_NQ = 685819, A_Q = 96.76, H_Q = 10266, zstd_ratio = 1.16%, training_time = 922s
+Epoch 24: A_NQ = 97.41, H_NQ = 685821, A_Q = 96.55, H_Q = 10010, zstd_ratio = 1.14%, training_time = 940s
+Epoch 25: A_NQ = 97.45, H_NQ = 685807, A_Q = 96.38, H_Q = 10139, zstd_ratio = 1.16%, training_time = 628s
+Epoch 26: A_NQ = 97.58, H_NQ = 685761, A_Q = 97.13, H_Q = 9863, zstd_ratio = 1.13%, training_time = 782s
+Epoch 27: A_NQ = 97.5, H_NQ = 685833, A_Q = 96.93, H_Q = 9969, zstd_ratio = 1.15%, training_time = 901s
+Epoch 28: A_NQ = 97.42, H_NQ = 685791, A_Q = 96.83, H_Q = 9630, zstd_ratio = 1.10%, training_time = 1082s
+Epoch 29: A_NQ = 97.38, H_NQ = 685825, A_Q = 97.18, H_Q = 9646, zstd_ratio = 1.12%, training_time = 1044s
+Epoch 30: A_NQ = 97.36, H_NQ = 685829, A_Q = 97.03, H_Q = 9649, zstd_ratio = 1.10%, training_time = 505s
 ------------------------------------------------------------
 r = 1.1016
-Epoch 1: A_NQ = 90.41, H_NQ = 685881, A_Q = 92.2, H_Q = 92243, zstd_size = 143560 bits, zstd_ratio = 10.10%, training_time = 1821s
-Epoch 2: A_NQ = 95.33, H_NQ = 685867, A_Q = 94.37, H_Q = 51218, zstd_size = 77728 bits, zstd_ratio = 5.47%, training_time = 2657s
-Epoch 3: A_NQ = 96.14, H_NQ = 685883, A_Q = 95.25, H_Q = 34186, zstd_size = 53000 bits, zstd_ratio = 3.73%, training_time = 2259s
-Epoch 4: A_NQ = 96.69, H_NQ = 685877, A_Q = 96.74, H_Q = 25443, zstd_size = 40368 bits, zstd_ratio = 2.84%, training_time = 2252s
-Epoch 5: A_NQ = 96.93, H_NQ = 685865, A_Q = 96.9, H_Q = 21538, zstd_size = 34120 bits, zstd_ratio = 2.40%, training_time = 2339s
-Epoch 6: A_NQ = 97.05, H_NQ = 685860, A_Q = 97.0, H_Q = 18908, zstd_size = 30376 bits, zstd_ratio = 2.14%, training_time = 2638s
-Epoch 7: A_NQ = 97.09, H_NQ = 685867, A_Q = 97.18, H_Q = 17723, zstd_size = 28560 bits, zstd_ratio = 2.01%, training_time = 2305s
-Epoch 8: A_NQ = 97.38, H_NQ = 685879, A_Q = 97.45, H_Q = 16560, zstd_size = 26752 bits, zstd_ratio = 1.88%, training_time = 2256s
-Epoch 9: A_NQ = 97.13, H_NQ = 685853, A_Q = 97.49, H_Q = 16209, zstd_size = 26416 bits, zstd_ratio = 1.86%, training_time = 2327s
-Epoch 10: A_NQ = 97.6, H_NQ = 685859, A_Q = 97.54, H_Q = 15241, zstd_size = 25152 bits, zstd_ratio = 1.77%, training_time = 2638s
-Epoch 11: A_NQ = 97.63, H_NQ = 685863, A_Q = 97.64, H_Q = 15043, zstd_size = 24472 bits, zstd_ratio = 1.72%, training_time = 2269s
-Epoch 12: A_NQ = 97.61, H_NQ = 685859, A_Q = 97.64, H_Q = 14657, zstd_size = 23784 bits, zstd_ratio = 1.67%, training_time = 2267s
-Epoch 13: A_NQ = 97.6, H_NQ = 685879, A_Q = 97.69, H_Q = 14469, zstd_size = 23704 bits, zstd_ratio = 1.67%, training_time = 2352s
-Epoch 14: A_NQ = 97.57, H_NQ = 685869, A_Q = 97.53, H_Q = 14105, zstd_size = 23224 bits, zstd_ratio = 1.63%, training_time = 2514s
-Epoch 15: A_NQ = 97.72, H_NQ = 685849, A_Q = 97.71, H_Q = 13808, zstd_size = 22672 bits, zstd_ratio = 1.59%, training_time = 2472s
-Epoch 16: A_NQ = 97.72, H_NQ = 685861, A_Q = 97.65, H_Q = 13582, zstd_size = 22528 bits, zstd_ratio = 1.58%, training_time = 2463s
-Epoch 17: A_NQ = 97.58, H_NQ = 685841, A_Q = 97.7, H_Q = 13083, zstd_size = 21752 bits, zstd_ratio = 1.53%, training_time = 2446s
-Epoch 18: A_NQ = 97.66, H_NQ = 685837, A_Q = 97.73, H_Q = 13118, zstd_size = 21968 bits, zstd_ratio = 1.55%, training_time = 2557s
-Epoch 19: A_NQ = 97.45, H_NQ = 685869, A_Q = 97.62, H_Q = 13205, zstd_size = 21976 bits, zstd_ratio = 1.55%, training_time = 2419s
-Epoch 20: A_NQ = 97.56, H_NQ = 685847, A_Q = 97.6, H_Q = 12507, zstd_size = 21096 bits, zstd_ratio = 1.48%, training_time = 2402s
-Epoch 21: A_NQ = 97.7, H_NQ = 685857, A_Q = 97.79, H_Q = 12746, zstd_size = 21144 bits, zstd_ratio = 1.49%, training_time = 2419s
-Epoch 22: A_NQ = 97.77, H_NQ = 685853, A_Q = 97.7, H_Q = 12382, zstd_size = 21120 bits, zstd_ratio = 1.49%, training_time = 2553s
-Epoch 23: A_NQ = 97.71, H_NQ = 685849, A_Q = 97.67, H_Q = 12345, zstd_size = 20888 bits, zstd_ratio = 1.47%, training_time = 2497s
-Epoch 24: A_NQ = 97.77, H_NQ = 685849, A_Q = 97.74, H_Q = 12807, zstd_size = 21320 bits, zstd_ratio = 1.50%, training_time = 2316s
-Epoch 25: A_NQ = 97.74, H_NQ = 685857, A_Q = 97.73, H_Q = 12354, zstd_size = 20592 bits, zstd_ratio = 1.45%, training_time = 2562s
-Epoch 26: A_NQ = 97.68, H_NQ = 685845, A_Q = 97.62, H_Q = 12148, zstd_size = 20200 bits, zstd_ratio = 1.42%, training_time = 2117s
-Epoch 27: A_NQ = 97.62, H_NQ = 685855, A_Q = 97.72, H_Q = 12268, zstd_size = 20392 bits, zstd_ratio = 1.43%, training_time = 2205s
-Epoch 28: A_NQ = 97.78, H_NQ = 685855, A_Q = 97.69, H_Q = 12145, zstd_size = 20152 bits, zstd_ratio = 1.42%, training_time = 2236s
-Epoch 29: A_NQ = 97.6, H_NQ = 685843, A_Q = 97.6, H_Q = 11739, zstd_size = 19736 bits, zstd_ratio = 1.39%, training_time = 2407s
-Epoch 30: A_NQ = 97.9, H_NQ = 685837, A_Q = 97.59, H_Q = 11639, zstd_size = 19704 bits, zstd_ratio = 1.39%, training_time = 1998s
-------------------------------------------------------------
-r = 1.1014
-Epoch 1: A_NQ = 84.17, H_NQ = 685889, A_Q = 89.84, H_Q = 113019, zstd_size = 172776 bits, zstd_ratio = 12.15%, training_time = 2252s
-Epoch 2: A_NQ = 94.77, H_NQ = 685885, A_Q = 94.92, H_Q = 62235, zstd_size = 94256 bits, zstd_ratio = 6.63%, training_time = 2472s
-Epoch 3: A_NQ = 96.01, H_NQ = 685877, A_Q = 96.11, H_Q = 40927, zstd_size = 63312 bits, zstd_ratio = 4.45%, training_time = 2581s
-Epoch 4: A_NQ = 96.63, H_NQ = 685873, A_Q = 96.69, H_Q = 27782, zstd_size = 44048 bits, zstd_ratio = 3.10%, training_time = 2324s
-Epoch 5: A_NQ = 96.74, H_NQ = 685877, A_Q = 96.62, H_Q = 22470, zstd_size = 36008 bits, zstd_ratio = 2.53%, training_time = 2277s
-Epoch 6: A_NQ = 97.16, H_NQ = 685877, A_Q = 97.21, H_Q = 19598, zstd_size = 31288 bits, zstd_ratio = 2.20%, training_time = 2607s
-Epoch 7: A_NQ = 95.81, H_NQ = 685875, A_Q = 96.95, H_Q = 18450, zstd_size = 29696 bits, zstd_ratio = 2.09%, training_time = 2239s
-Epoch 8: A_NQ = 97.61, H_NQ = 685855, A_Q = 97.56, H_Q = 16970, zstd_size = 27512 bits, zstd_ratio = 1.94%, training_time = 2282s
-Epoch 9: A_NQ = 97.31, H_NQ = 685853, A_Q = 97.55, H_Q = 16036, zstd_size = 26552 bits, zstd_ratio = 1.87%, training_time = 2390s
-Epoch 10: A_NQ = 97.41, H_NQ = 685845, A_Q = 97.45, H_Q = 15658, zstd_size = 25456 bits, zstd_ratio = 1.79%, training_time = 2596s
-Epoch 11: A_NQ = 97.62, H_NQ = 685865, A_Q = 97.8, H_Q = 15635, zstd_size = 25248 bits, zstd_ratio = 1.78%, training_time = 2274s
-Epoch 12: A_NQ = 97.63, H_NQ = 685861, A_Q = 97.66, H_Q = 14659, zstd_size = 24608 bits, zstd_ratio = 1.73%, training_time = 2281s
-Epoch 13: A_NQ = 97.67, H_NQ = 685851, A_Q = 97.8, H_Q = 14422, zstd_size = 23600 bits, zstd_ratio = 1.66%, training_time = 2406s
-Epoch 14: A_NQ = 97.67, H_NQ = 685865, A_Q = 97.87, H_Q = 14177, zstd_size = 23328 bits, zstd_ratio = 1.64%, training_time = 2612s
-Epoch 15: A_NQ = 97.83, H_NQ = 685865, A_Q = 97.71, H_Q = 13892, zstd_size = 23040 bits, zstd_ratio = 1.62%, training_time = 2268s
-Epoch 16: A_NQ = 97.73, H_NQ = 685857, A_Q = 97.68, H_Q = 13596, zstd_size = 22480 bits, zstd_ratio = 1.58%, training_time = 2253s
-Epoch 17: A_NQ = 97.69, H_NQ = 685855, A_Q = 97.71, H_Q = 13364, zstd_size = 22280 bits, zstd_ratio = 1.57%, training_time = 2395s
-Epoch 18: A_NQ = 97.72, H_NQ = 685875, A_Q = 97.76, H_Q = 13169, zstd_size = 22048 bits, zstd_ratio = 1.55%, training_time = 2626s
-Epoch 19: A_NQ = 97.95, H_NQ = 685847, A_Q = 98.08, H_Q = 13016, zstd_size = 21736 bits, zstd_ratio = 1.53%, training_time = 2273s
-Epoch 20: A_NQ = 98.03, H_NQ = 685877, A_Q = 97.69, H_Q = 13070, zstd_size = 21752 bits, zstd_ratio = 1.53%, training_time = 2279s
-Epoch 21: A_NQ = 97.98, H_NQ = 685857, A_Q = 97.97, H_Q = 12917, zstd_size = 21624 bits, zstd_ratio = 1.52%, training_time = 2361s
-Epoch 22: A_NQ = 97.85, H_NQ = 685851, A_Q = 97.94, H_Q = 12809, zstd_size = 21448 bits, zstd_ratio = 1.51%, training_time = 2620s
-Epoch 23: A_NQ = 97.97, H_NQ = 685871, A_Q = 97.82, H_Q = 12792, zstd_size = 21360 bits, zstd_ratio = 1.50%, training_time = 2316s
-Epoch 24: A_NQ = 97.99, H_NQ = 685867, A_Q = 97.82, H_Q = 12735, zstd_size = 21672 bits, zstd_ratio = 1.52%, training_time = 2288s
-Epoch 25: A_NQ = 98.05, H_NQ = 685873, A_Q = 98.02, H_Q = 12625, zstd_size = 20960 bits, zstd_ratio = 1.47%, training_time = 2587s
-Epoch 26: A_NQ = 97.84, H_NQ = 685869, A_Q = 98.12, H_Q = 12603, zstd_size = 21256 bits, zstd_ratio = 1.50%, training_time = 2228s
-Epoch 27: A_NQ = 97.99, H_NQ = 685869, A_Q = 97.91, H_Q = 12798, zstd_size = 21504 bits, zstd_ratio = 1.51%, training_time = 2226s
-Epoch 28: A_NQ = 98.1, H_NQ = 685861, A_Q = 97.9, H_Q = 12725, zstd_size = 21240 bits, zstd_ratio = 1.49%, training_time = 2144s
-Epoch 29: A_NQ = 97.74, H_NQ = 685777, A_Q = 98.19, H_Q = 12473, zstd_size = 20928 bits, zstd_ratio = 1.47%, training_time = 2304s
-Epoch 30: A_NQ = 98.02, H_NQ = 685835, A_Q = 98.11, H_Q = 13008, zstd_size = 21488 bits, zstd_ratio = 1.51%, training_time = 2206s
-------------------------------------------------------------
-r = 1.1017
-Epoch 1: A_NQ = 90.89, H_NQ = 685883, A_Q = 92.01, H_Q = 116073, zstd_size = 175736 bits, zstd_ratio = 12.36%, training_time = 2312s
-Epoch 2: A_NQ = 94.27, H_NQ = 685881, A_Q = 94.97, H_Q = 62311, zstd_size = 94696 bits, zstd_ratio = 6.66%, training_time = 2321s
-Epoch 3: A_NQ = 96.06, H_NQ = 685883, A_Q = 94.77, H_Q = 38923, zstd_size = 60944 bits, zstd_ratio = 4.29%, training_time = 2590s
-Epoch 4: A_NQ = 96.62, H_NQ = 685877, A_Q = 96.57, H_Q = 26727, zstd_size = 43120 bits, zstd_ratio = 3.03%, training_time = 2307s
-Epoch 5: A_NQ = 96.29, H_NQ = 685877, A_Q = 96.35, H_Q = 22314, zstd_size = 35928 bits, zstd_ratio = 2.53%, training_time = 2309s
-Epoch 6: A_NQ = 96.97, H_NQ = 685871, A_Q = 97.09, H_Q = 19504, zstd_size = 31672 bits, zstd_ratio = 2.23%, training_time = 2360s
-Epoch 7: A_NQ = 97.34, H_NQ = 685867, A_Q = 97.34, H_Q = 17908, zstd_size = 28728 bits, zstd_ratio = 2.02%, training_time = 2546s
-Epoch 8: A_NQ = 97.61, H_NQ = 685873, A_Q = 97.47, H_Q = 16320, zstd_size = 26896 bits, zstd_ratio = 1.89%, training_time = 2253s
-Epoch 9: A_NQ = 97.51, H_NQ = 685871, A_Q = 97.51, H_Q = 15790, zstd_size = 25992 bits, zstd_ratio = 1.83%, training_time = 2259s
-Epoch 10: A_NQ = 97.25, H_NQ = 685837, A_Q = 97.5, H_Q = 15107, zstd_size = 24536 bits, zstd_ratio = 1.73%, training_time = 2399s
-Epoch 11: A_NQ = 97.58, H_NQ = 685855, A_Q = 97.74, H_Q = 14288, zstd_size = 23400 bits, zstd_ratio = 1.65%, training_time = 2481s
-Epoch 12: A_NQ = 97.1, H_NQ = 685865, A_Q = 97.39, H_Q = 13934, zstd_size = 22984 bits, zstd_ratio = 1.62%, training_time = 2257s
-Epoch 13: A_NQ = 97.57, H_NQ = 685855, A_Q = 97.63, H_Q = 13508, zstd_size = 22872 bits, zstd_ratio = 1.61%, training_time = 2201s
-Epoch 14: A_NQ = 97.39, H_NQ = 685873, A_Q = 97.44, H_Q = 13128, zstd_size = 22120 bits, zstd_ratio = 1.56%, training_time = 2355s
-Epoch 15: A_NQ = 97.62, H_NQ = 685873, A_Q = 97.65, H_Q = 13072, zstd_size = 21720 bits, zstd_ratio = 1.53%, training_time = 2509s
-Epoch 16: A_NQ = 97.55, H_NQ = 685851, A_Q = 97.64, H_Q = 13193, zstd_size = 21920 bits, zstd_ratio = 1.54%, training_time = 2261s
-Epoch 17: A_NQ = 97.7, H_NQ = 685855, A_Q = 97.76, H_Q = 12953, zstd_size = 21640 bits, zstd_ratio = 1.52%, training_time = 2398s
-Epoch 18: A_NQ = 97.69, H_NQ = 685861, A_Q = 97.76, H_Q = 13110, zstd_size = 21512 bits, zstd_ratio = 1.51%, training_time = 2451s
-Epoch 19: A_NQ = 97.76, H_NQ = 685843, A_Q = 97.8, H_Q = 12659, zstd_size = 21232 bits, zstd_ratio = 1.49%, training_time = 2527s
-Epoch 20: A_NQ = 97.8, H_NQ = 685867, A_Q = 97.86, H_Q = 12430, zstd_size = 20632 bits, zstd_ratio = 1.45%, training_time = 2410s
-Epoch 21: A_NQ = 97.52, H_NQ = 685829, A_Q = 97.63, H_Q = 12467, zstd_size = 20424 bits, zstd_ratio = 1.44%, training_time = 2405s
-Epoch 22: A_NQ = 97.49, H_NQ = 685851, A_Q = 97.7, H_Q = 12320, zstd_size = 20208 bits, zstd_ratio = 1.42%, training_time = 2430s
-Epoch 23: A_NQ = 97.62, H_NQ = 685853, A_Q = 97.76, H_Q = 12237, zstd_size = 20240 bits, zstd_ratio = 1.42%, training_time = 2579s
-Epoch 24: A_NQ = 97.83, H_NQ = 685849, A_Q = 97.78, H_Q = 12218, zstd_size = 20304 bits, zstd_ratio = 1.43%, training_time = 2381s
-Epoch 25: A_NQ = 97.45, H_NQ = 685871, A_Q = 97.57, H_Q = 12038, zstd_size = 19928 bits, zstd_ratio = 1.40%, training_time = 2508s
-Epoch 26: A_NQ = 97.8, H_NQ = 685863, A_Q = 97.77, H_Q = 12431, zstd_size = 20408 bits, zstd_ratio = 1.44%, training_time = 2327s
-Epoch 27: A_NQ = 97.96, H_NQ = 685867, A_Q = 97.96, H_Q = 12049, zstd_size = 19952 bits, zstd_ratio = 1.40%, training_time = 2437s
-Epoch 28: A_NQ = 97.94, H_NQ = 685845, A_Q = 98.0, H_Q = 11938, zstd_size = 19688 bits, zstd_ratio = 1.38%, training_time = 2293s
-Epoch 29: A_NQ = 97.9, H_NQ = 685855, A_Q = 97.84, H_Q = 12040, zstd_size = 19904 bits, zstd_ratio = 1.40%, training_time = 2324s
-Epoch 30: A_NQ = 98.03, H_NQ = 685825, A_Q = 97.92, H_Q = 11675, zstd_size = 19784 bits, zstd_ratio = 1.39%, training_time = 1971s
-------------------------------------------------------------
-r = 1.1025
-Epoch 1: A_NQ = 87.32, H_NQ = 685879, A_Q = 88.83, H_Q = 131379, zstd_size = 198488 bits, zstd_ratio = 13.96%, training_time = 1901s
-Epoch 2: A_NQ = 93.44, H_NQ = 685877, A_Q = 94.46, H_Q = 70825, zstd_size = 106864 bits, zstd_ratio = 7.52%, training_time = 2545s
-Epoch 3: A_NQ = 94.5, H_NQ = 685887, A_Q = 95.21, H_Q = 44621, zstd_size = 69216 bits, zstd_ratio = 4.87%, training_time = 2401s
-Epoch 4: A_NQ = 96.55, H_NQ = 685883, A_Q = 96.08, H_Q = 30177, zstd_size = 48360 bits, zstd_ratio = 3.40%, training_time = 2393s
-Epoch 5: A_NQ = 96.42, H_NQ = 685873, A_Q = 95.43, H_Q = 24607, zstd_size = 39512 bits, zstd_ratio = 2.78%, training_time = 2393s
-Epoch 6: A_NQ = 96.69, H_NQ = 685869, A_Q = 96.56, H_Q = 22041, zstd_size = 35760 bits, zstd_ratio = 2.52%, training_time = 2551s
-Epoch 7: A_NQ = 96.95, H_NQ = 685879, A_Q = 96.94, H_Q = 19366, zstd_size = 31952 bits, zstd_ratio = 2.25%, training_time = 2325s
-Epoch 8: A_NQ = 97.15, H_NQ = 685875, A_Q = 97.03, H_Q = 18211, zstd_size = 29904 bits, zstd_ratio = 2.10%, training_time = 2375s
-Epoch 9: A_NQ = 97.13, H_NQ = 685869, A_Q = 96.98, H_Q = 17446, zstd_size = 28816 bits, zstd_ratio = 2.03%, training_time = 2438s
-Epoch 10: A_NQ = 97.55, H_NQ = 685871, A_Q = 97.24, H_Q = 16524, zstd_size = 27560 bits, zstd_ratio = 1.94%, training_time = 2531s
-Epoch 11: A_NQ = 97.42, H_NQ = 685867, A_Q = 96.84, H_Q = 16403, zstd_size = 26648 bits, zstd_ratio = 1.87%, training_time = 2370s
-Epoch 12: A_NQ = 97.44, H_NQ = 685871, A_Q = 97.1, H_Q = 15288, zstd_size = 25096 bits, zstd_ratio = 1.77%, training_time = 2406s
-Epoch 13: A_NQ = 97.57, H_NQ = 685861, A_Q = 97.22, H_Q = 14880, zstd_size = 24120 bits, zstd_ratio = 1.70%, training_time = 2416s
-Epoch 14: A_NQ = 97.39, H_NQ = 685865, A_Q = 97.07, H_Q = 14806, zstd_size = 24464 bits, zstd_ratio = 1.72%, training_time = 2507s
-Epoch 15: A_NQ = 97.51, H_NQ = 685859, A_Q = 97.23, H_Q = 14065, zstd_size = 23496 bits, zstd_ratio = 1.65%, training_time = 2491s
-Epoch 16: A_NQ = 97.59, H_NQ = 685859, A_Q = 97.44, H_Q = 13995, zstd_size = 23440 bits, zstd_ratio = 1.65%, training_time = 2463s
-Epoch 17: A_NQ = 97.38, H_NQ = 685847, A_Q = 97.41, H_Q = 13850, zstd_size = 23312 bits, zstd_ratio = 1.64%, training_time = 2524s
-Epoch 18: A_NQ = 97.53, H_NQ = 685859, A_Q = 97.44, H_Q = 13224, zstd_size = 22432 bits, zstd_ratio = 1.58%, training_time = 2574s
-Epoch 19: A_NQ = 97.59, H_NQ = 685853, A_Q = 97.43, H_Q = 13653, zstd_size = 22664 bits, zstd_ratio = 1.59%, training_time = 2239s
-Epoch 20: A_NQ = 97.69, H_NQ = 685851, A_Q = 97.48, H_Q = 13622, zstd_size = 22840 bits, zstd_ratio = 1.61%, training_time = 2274s
-Epoch 21: A_NQ = 97.57, H_NQ = 685855, A_Q = 97.08, H_Q = 13144, zstd_size = 22152 bits, zstd_ratio = 1.56%, training_time = 2345s
-Epoch 22: A_NQ = 97.74, H_NQ = 685863, A_Q = 97.47, H_Q = 13050, zstd_size = 21832 bits, zstd_ratio = 1.54%, training_time = 2611s
-Epoch 23: A_NQ = 97.93, H_NQ = 685865, A_Q = 97.52, H_Q = 12814, zstd_size = 21760 bits, zstd_ratio = 1.53%, training_time = 2274s
-Epoch 24: A_NQ = 97.72, H_NQ = 685861, A_Q = 97.53, H_Q = 12823, zstd_size = 21592 bits, zstd_ratio = 1.52%, training_time = 2293s
-Epoch 25: A_NQ = 97.46, H_NQ = 685865, A_Q = 97.67, H_Q = 12480, zstd_size = 21032 bits, zstd_ratio = 1.48%, training_time = 2309s
-Epoch 26: A_NQ = 97.64, H_NQ = 685863, A_Q = 97.46, H_Q = 12724, zstd_size = 21016 bits, zstd_ratio = 1.48%, training_time = 2547s
-Epoch 27: A_NQ = 97.84, H_NQ = 685853, A_Q = 97.84, H_Q = 12541, zstd_size = 20976 bits, zstd_ratio = 1.48%, training_time = 2172s
-Epoch 28: A_NQ = 97.86, H_NQ = 685869, A_Q = 97.82, H_Q = 12521, zstd_size = 20912 bits, zstd_ratio = 1.47%, training_time = 2102s
-Epoch 29: A_NQ = 97.93, H_NQ = 685855, A_Q = 97.81, H_Q = 12620, zstd_size = 21032 bits, zstd_ratio = 1.48%, training_time = 2191s
-Epoch 30: A_NQ = 97.32, H_NQ = 685837, A_Q = 97.47, H_Q = 12140, zstd_size = 20480 bits, zstd_ratio = 1.44%, training_time = 2224s
-------------------------------------------------------------
-r = 1.1019
-Epoch 1: A_NQ = 92.52, H_NQ = 685889, A_Q = 92.75, H_Q = 127663, zstd_size = 192904 bits, zstd_ratio = 13.57%, training_time = 2428s
-Epoch 2: A_NQ = 94.84, H_NQ = 685887, A_Q = 95.36, H_Q = 68589, zstd_size = 104600 bits, zstd_ratio = 7.36%, training_time = 2633s
-Epoch 3: A_NQ = 95.51, H_NQ = 685879, A_Q = 95.82, H_Q = 44024, zstd_size = 68928 bits, zstd_ratio = 4.85%, training_time = 2270s
-Epoch 4: A_NQ = 96.61, H_NQ = 685869, A_Q = 96.33, H_Q = 31218, zstd_size = 50088 bits, zstd_ratio = 3.52%, training_time = 2294s
-Epoch 5: A_NQ = 97.04, H_NQ = 685875, A_Q = 96.96, H_Q = 25145, zstd_size = 40680 bits, zstd_ratio = 2.86%, training_time = 2356s
-Epoch 6: A_NQ = 97.22, H_NQ = 685869, A_Q = 97.25, H_Q = 21653, zstd_size = 35448 bits, zstd_ratio = 2.49%, training_time = 2620s
-Epoch 7: A_NQ = 97.61, H_NQ = 685865, A_Q = 97.62, H_Q = 19341, zstd_size = 32264 bits, zstd_ratio = 2.27%, training_time = 2211s
-Epoch 8: A_NQ = 97.37, H_NQ = 685871, A_Q = 97.6, H_Q = 18640, zstd_size = 30392 bits, zstd_ratio = 2.14%, training_time = 2216s
-Epoch 9: A_NQ = 97.27, H_NQ = 685865, A_Q = 97.42, H_Q = 17431, zstd_size = 29096 bits, zstd_ratio = 2.05%, training_time = 2298s
-Epoch 10: A_NQ = 97.46, H_NQ = 685859, A_Q = 97.33, H_Q = 16342, zstd_size = 27856 bits, zstd_ratio = 1.96%, training_time = 2623s
-Epoch 11: A_NQ = 97.33, H_NQ = 685857, A_Q = 97.4, H_Q = 16102, zstd_size = 27152 bits, zstd_ratio = 1.91%, training_time = 2281s
-Epoch 12: A_NQ = 97.01, H_NQ = 685861, A_Q = 97.08, H_Q = 15348, zstd_size = 25896 bits, zstd_ratio = 1.82%, training_time = 2278s
-Epoch 13: A_NQ = 97.58, H_NQ = 685867, A_Q = 97.6, H_Q = 14376, zstd_size = 24472 bits, zstd_ratio = 1.72%, training_time = 2398s
-Epoch 14: A_NQ = 97.69, H_NQ = 685863, A_Q = 97.54, H_Q = 14017, zstd_size = 23936 bits, zstd_ratio = 1.68%, training_time = 2608s
-Epoch 15: A_NQ = 97.57, H_NQ = 685873, A_Q = 97.47, H_Q = 13741, zstd_size = 23520 bits, zstd_ratio = 1.65%, training_time = 2254s
-Epoch 16: A_NQ = 97.49, H_NQ = 685851, A_Q = 97.44, H_Q = 13053, zstd_size = 22192 bits, zstd_ratio = 1.56%, training_time = 2238s
-Epoch 17: A_NQ = 97.71, H_NQ = 685863, A_Q = 97.53, H_Q = 13086, zstd_size = 21968 bits, zstd_ratio = 1.55%, training_time = 2345s
-Epoch 18: A_NQ = 97.77, H_NQ = 685845, A_Q = 97.49, H_Q = 12875, zstd_size = 21912 bits, zstd_ratio = 1.54%, training_time = 2644s
-Epoch 19: A_NQ = 97.37, H_NQ = 685871, A_Q = 97.31, H_Q = 13051, zstd_size = 21776 bits, zstd_ratio = 1.53%, training_time = 2246s
-Epoch 20: A_NQ = 97.72, H_NQ = 685861, A_Q = 97.26, H_Q = 13002, zstd_size = 21712 bits, zstd_ratio = 1.53%, training_time = 2232s
-Epoch 21: A_NQ = 97.41, H_NQ = 685851, A_Q = 97.28, H_Q = 12645, zstd_size = 21384 bits, zstd_ratio = 1.50%, training_time = 2447s
-Epoch 22: A_NQ = 97.47, H_NQ = 685857, A_Q = 97.61, H_Q = 12468, zstd_size = 20712 bits, zstd_ratio = 1.46%, training_time = 2535s
-Epoch 23: A_NQ = 97.8, H_NQ = 685857, A_Q = 97.63, H_Q = 12271, zstd_size = 20192 bits, zstd_ratio = 1.42%, training_time = 2446s
-Epoch 24: A_NQ = 97.76, H_NQ = 685845, A_Q = 97.84, H_Q = 11914, zstd_size = 19840 bits, zstd_ratio = 1.40%, training_time = 2435s
-Epoch 25: A_NQ = 97.71, H_NQ = 685849, A_Q = 97.55, H_Q = 11969, zstd_size = 19928 bits, zstd_ratio = 1.40%, training_time = 2407s
-Epoch 26: A_NQ = 97.85, H_NQ = 685841, A_Q = 97.74, H_Q = 11933, zstd_size = 19768 bits, zstd_ratio = 1.39%, training_time = 2456s
-Epoch 27: A_NQ = 97.8, H_NQ = 685853, A_Q = 97.59, H_Q = 12103, zstd_size = 19928 bits, zstd_ratio = 1.40%, training_time = 2361s
-Epoch 28: A_NQ = 97.84, H_NQ = 685847, A_Q = 97.32, H_Q = 11963, zstd_size = 19920 bits, zstd_ratio = 1.40%, training_time = 2232s
-Epoch 29: A_NQ = 98.1, H_NQ = 685849, A_Q = 97.82, H_Q = 11794, zstd_size = 19752 bits, zstd_ratio = 1.39%, training_time = 2232s
-Epoch 30: A_NQ = 98.12, H_NQ = 685835, A_Q = 97.84, H_Q = 11881, zstd_size = 19776 bits, zstd_ratio = 1.39%, training_time = 2172s
-------------------------------------------------------------
-r = 1.1004
-Epoch 1: A_NQ = 86.49, H_NQ = 685889, A_Q = 86.52, H_Q = 231397, zstd_size = 336440 bits, zstd_ratio = 23.67%, training_time = 2242s
-Epoch 2: A_NQ = 93.22, H_NQ = 685875, A_Q = 94.24, H_Q = 105101, zstd_size = 162200 bits, zstd_ratio = 11.41%, training_time = 2637s
-Epoch 3: A_NQ = 94.82, H_NQ = 685873, A_Q = 95.42, H_Q = 54206, zstd_size = 86624 bits, zstd_ratio = 6.09%, training_time = 2326s
-Epoch 4: A_NQ = 95.69, H_NQ = 685883, A_Q = 96.01, H_Q = 35595, zstd_size = 56408 bits, zstd_ratio = 3.97%, training_time = 2582s
-Epoch 5: A_NQ = 95.49, H_NQ = 685873, A_Q = 96.16, H_Q = 27492, zstd_size = 43984 bits, zstd_ratio = 3.09%, training_time = 2267s
-Epoch 6: A_NQ = 96.08, H_NQ = 685879, A_Q = 96.78, H_Q = 23100, zstd_size = 37848 bits, zstd_ratio = 2.66%, training_time = 2318s
-Epoch 7: A_NQ = 97.07, H_NQ = 685873, A_Q = 97.01, H_Q = 20692, zstd_size = 33408 bits, zstd_ratio = 2.35%, training_time = 2283s
-Epoch 8: A_NQ = 97.06, H_NQ = 685881, A_Q = 97.14, H_Q = 18591, zstd_size = 30184 bits, zstd_ratio = 2.12%, training_time = 2565s
-Epoch 9: A_NQ = 97.31, H_NQ = 685857, A_Q = 97.28, H_Q = 17507, zstd_size = 28080 bits, zstd_ratio = 1.98%, training_time = 2263s
-Epoch 10: A_NQ = 97.64, H_NQ = 685859, A_Q = 97.64, H_Q = 16626, zstd_size = 26552 bits, zstd_ratio = 1.87%, training_time = 2274s
-Epoch 11: A_NQ = 97.46, H_NQ = 685867, A_Q = 97.54, H_Q = 15788, zstd_size = 25176 bits, zstd_ratio = 1.77%, training_time = 2319s
-Epoch 12: A_NQ = 97.47, H_NQ = 685859, A_Q = 97.49, H_Q = 15089, zstd_size = 24368 bits, zstd_ratio = 1.71%, training_time = 2579s
-Epoch 13: A_NQ = 97.61, H_NQ = 685859, A_Q = 97.46, H_Q = 14695, zstd_size = 23680 bits, zstd_ratio = 1.67%, training_time = 2306s
-Epoch 14: A_NQ = 97.52, H_NQ = 685853, A_Q = 97.52, H_Q = 14075, zstd_size = 22912 bits, zstd_ratio = 1.61%, training_time = 2483s
-Epoch 15: A_NQ = 97.64, H_NQ = 685849, A_Q = 97.68, H_Q = 13839, zstd_size = 22248 bits, zstd_ratio = 1.56%, training_time = 2359s
-Epoch 16: A_NQ = 97.42, H_NQ = 685859, A_Q = 97.5, H_Q = 13610, zstd_size = 22096 bits, zstd_ratio = 1.55%, training_time = 2591s
-Epoch 17: A_NQ = 97.83, H_NQ = 685857, A_Q = 97.62, H_Q = 12823, zstd_size = 21208 bits, zstd_ratio = 1.49%, training_time = 2490s
-Epoch 18: A_NQ = 97.79, H_NQ = 685847, A_Q = 97.76, H_Q = 12945, zstd_size = 21136 bits, zstd_ratio = 1.49%, training_time = 2500s
-Epoch 19: A_NQ = 97.72, H_NQ = 685847, A_Q = 97.67, H_Q = 12691, zstd_size = 20952 bits, zstd_ratio = 1.47%, training_time = 2358s
-Epoch 20: A_NQ = 97.74, H_NQ = 685869, A_Q = 97.81, H_Q = 13124, zstd_size = 21328 bits, zstd_ratio = 1.50%, training_time = 2624s
-Epoch 21: A_NQ = 97.77, H_NQ = 685839, A_Q = 97.72, H_Q = 12734, zstd_size = 21144 bits, zstd_ratio = 1.49%, training_time = 2292s
-Epoch 22: A_NQ = 97.77, H_NQ = 685859, A_Q = 97.77, H_Q = 12654, zstd_size = 20712 bits, zstd_ratio = 1.46%, training_time = 2324s
-Epoch 23: A_NQ = 97.79, H_NQ = 685837, A_Q = 97.78, H_Q = 12478, zstd_size = 20656 bits, zstd_ratio = 1.45%, training_time = 2355s
-Epoch 24: A_NQ = 98.05, H_NQ = 685851, A_Q = 98.01, H_Q = 12549, zstd_size = 20568 bits, zstd_ratio = 1.45%, training_time = 2634s
-Epoch 25: A_NQ = 97.82, H_NQ = 685869, A_Q = 97.87, H_Q = 12363, zstd_size = 20288 bits, zstd_ratio = 1.43%, training_time = 2289s
-Epoch 26: A_NQ = 97.71, H_NQ = 685877, A_Q = 97.84, H_Q = 11934, zstd_size = 19808 bits, zstd_ratio = 1.39%, training_time = 2224s
-Epoch 27: A_NQ = 97.66, H_NQ = 685857, A_Q = 97.68, H_Q = 12017, zstd_size = 19768 bits, zstd_ratio = 1.39%, training_time = 2269s
-Epoch 28: A_NQ = 97.79, H_NQ = 685855, A_Q = 97.84, H_Q = 11760, zstd_size = 19568 bits, zstd_ratio = 1.38%, training_time = 2388s
-Epoch 29: A_NQ = 97.68, H_NQ = 685844, A_Q = 97.87, H_Q = 11841, zstd_size = 19776 bits, zstd_ratio = 1.39%, training_time = 2122s
-Epoch 30: A_NQ = 97.87, H_NQ = 685875, A_Q = 97.9, H_Q = 11745, zstd_size = 19448 bits, zstd_ratio = 1.37%, training_time = 1973s
-------------------------------------------------------------
-r = 1.102
-Epoch 1: A_NQ = 90.39, H_NQ = 685883, A_Q = 92.21, H_Q = 113583, zstd_size = 174448 bits, zstd_ratio = 12.27%, training_time = 2401s
-Epoch 2: A_NQ = 94.95, H_NQ = 685887, A_Q = 94.58, H_Q = 55830, zstd_size = 86008 bits, zstd_ratio = 6.05%, training_time = 2625s
-Epoch 3: A_NQ = 96.21, H_NQ = 685881, A_Q = 96.43, H_Q = 35485, zstd_size = 56144 bits, zstd_ratio = 3.95%, training_time = 2474s
-Epoch 4: A_NQ = 96.47, H_NQ = 685869, A_Q = 96.89, H_Q = 25888, zstd_size = 41408 bits, zstd_ratio = 2.91%, training_time = 2290s
-Epoch 5: A_NQ = 97.04, H_NQ = 685863, A_Q = 96.99, H_Q = 22578, zstd_size = 36296 bits, zstd_ratio = 2.55%, training_time = 2302s
-Epoch 6: A_NQ = 97.02, H_NQ = 685863, A_Q = 97.21, H_Q = 20355, zstd_size = 32664 bits, zstd_ratio = 2.30%, training_time = 2619s
-Epoch 7: A_NQ = 97.29, H_NQ = 685867, A_Q = 97.32, H_Q = 18563, zstd_size = 30048 bits, zstd_ratio = 2.11%, training_time = 2250s
-Epoch 8: A_NQ = 97.16, H_NQ = 685887, A_Q = 97.25, H_Q = 18115, zstd_size = 28936 bits, zstd_ratio = 2.04%, training_time = 2286s
-Epoch 9: A_NQ = 97.29, H_NQ = 685867, A_Q = 97.26, H_Q = 16379, zstd_size = 26856 bits, zstd_ratio = 1.89%, training_time = 2341s
-Epoch 10: A_NQ = 97.47, H_NQ = 685871, A_Q = 97.46, H_Q = 15897, zstd_size = 26144 bits, zstd_ratio = 1.84%, training_time = 2606s
-Epoch 11: A_NQ = 97.42, H_NQ = 685863, A_Q = 97.38, H_Q = 14829, zstd_size = 24584 bits, zstd_ratio = 1.73%, training_time = 2309s
-Epoch 12: A_NQ = 97.35, H_NQ = 685845, A_Q = 97.4, H_Q = 14585, zstd_size = 24192 bits, zstd_ratio = 1.70%, training_time = 2288s
-Epoch 13: A_NQ = 97.59, H_NQ = 685861, A_Q = 97.65, H_Q = 14669, zstd_size = 24088 bits, zstd_ratio = 1.69%, training_time = 2321s
-Epoch 14: A_NQ = 97.53, H_NQ = 685851, A_Q = 97.56, H_Q = 14439, zstd_size = 23912 bits, zstd_ratio = 1.68%, training_time = 2620s
-Epoch 15: A_NQ = 97.52, H_NQ = 685847, A_Q = 97.48, H_Q = 14743, zstd_size = 23848 bits, zstd_ratio = 1.68%, training_time = 2299s
-Epoch 16: A_NQ = 97.56, H_NQ = 685853, A_Q = 97.55, H_Q = 14102, zstd_size = 23248 bits, zstd_ratio = 1.64%, training_time = 2280s
-Epoch 17: A_NQ = 97.64, H_NQ = 685845, A_Q = 97.57, H_Q = 13517, zstd_size = 22928 bits, zstd_ratio = 1.61%, training_time = 2455s
-Epoch 18: A_NQ = 97.55, H_NQ = 685857, A_Q = 97.51, H_Q = 13666, zstd_size = 22416 bits, zstd_ratio = 1.58%, training_time = 2557s
-Epoch 19: A_NQ = 97.66, H_NQ = 685859, A_Q = 97.59, H_Q = 13718, zstd_size = 22048 bits, zstd_ratio = 1.55%, training_time = 2428s
-Epoch 20: A_NQ = 97.56, H_NQ = 685865, A_Q = 97.54, H_Q = 13693, zstd_size = 22512 bits, zstd_ratio = 1.58%, training_time = 2381s
-Epoch 21: A_NQ = 97.56, H_NQ = 685857, A_Q = 97.62, H_Q = 13102, zstd_size = 21888 bits, zstd_ratio = 1.54%, training_time = 2503s
-Epoch 22: A_NQ = 97.69, H_NQ = 685839, A_Q = 97.5, H_Q = 12868, zstd_size = 21480 bits, zstd_ratio = 1.51%, training_time = 2525s
-Epoch 23: A_NQ = 97.89, H_NQ = 685839, A_Q = 97.84, H_Q = 12542, zstd_size = 21240 bits, zstd_ratio = 1.49%, training_time = 2180s
-Epoch 24: A_NQ = 97.73, H_NQ = 685843, A_Q = 97.76, H_Q = 12246, zstd_size = 21024 bits, zstd_ratio = 1.48%, training_time = 2234s
-Epoch 25: A_NQ = 97.7, H_NQ = 685839, A_Q = 97.54, H_Q = 12399, zstd_size = 20888 bits, zstd_ratio = 1.47%, training_time = 2251s
-Epoch 26: A_NQ = 97.93, H_NQ = 685839, A_Q = 97.76, H_Q = 12116, zstd_size = 20480 bits, zstd_ratio = 1.44%, training_time = 2530s
-Epoch 27: A_NQ = 97.78, H_NQ = 685847, A_Q = 97.61, H_Q = 12108, zstd_size = 20544 bits, zstd_ratio = 1.45%, training_time = 2190s
-Epoch 28: A_NQ = 97.9, H_NQ = 685859, A_Q = 97.63, H_Q = 11936, zstd_size = 20248 bits, zstd_ratio = 1.42%, training_time = 2278s
-Epoch 29: A_NQ = 97.83, H_NQ = 685847, A_Q = 97.78, H_Q = 11997, zstd_size = 20344 bits, zstd_ratio = 1.43%, training_time = 2274s
-Epoch 30: A_NQ = 97.92, H_NQ = 685846, A_Q = 97.66, H_Q = 12054, zstd_size = 20176 bits, zstd_ratio = 1.42%, training_time = 2154s
-------------------------------------------------------------
-r = 1.103
-Epoch 1: A_NQ = 88.72, H_NQ = 685881, A_Q = 91.86, H_Q = 93545, zstd_size = 145136 bits, zstd_ratio = 10.21%, training_time = 2196s
-Epoch 2: A_NQ = 94.06, H_NQ = 685889, A_Q = 91.02, H_Q = 58038, zstd_size = 87824 bits, zstd_ratio = 6.18%, training_time = 2331s
-Epoch 3: A_NQ = 95.79, H_NQ = 685889, A_Q = 93.1, H_Q = 39618, zstd_size = 61784 bits, zstd_ratio = 4.35%, training_time = 2409s
-Epoch 4: A_NQ = 96.07, H_NQ = 685877, A_Q = 96.25, H_Q = 26497, zstd_size = 42488 bits, zstd_ratio = 2.99%, training_time = 2545s
-Epoch 5: A_NQ = 96.8, H_NQ = 685869, A_Q = 96.25, H_Q = 20871, zstd_size = 34000 bits, zstd_ratio = 2.39%, training_time = 2306s
-Epoch 6: A_NQ = 97.06, H_NQ = 685881, A_Q = 96.64, H_Q = 19274, zstd_size = 31824 bits, zstd_ratio = 2.24%, training_time = 2377s
-Epoch 7: A_NQ = 97.27, H_NQ = 685863, A_Q = 96.75, H_Q = 18182, zstd_size = 29984 bits, zstd_ratio = 2.11%, training_time = 2213s
-Epoch 8: A_NQ = 96.31, H_NQ = 685865, A_Q = 96.26, H_Q = 17194, zstd_size = 28792 bits, zstd_ratio = 2.03%, training_time = 2464s
-Epoch 9: A_NQ = 97.23, H_NQ = 685853, A_Q = 96.58, H_Q = 16474, zstd_size = 27432 bits, zstd_ratio = 1.93%, training_time = 2285s
-Epoch 10: A_NQ = 97.3, H_NQ = 685863, A_Q = 97.19, H_Q = 15650, zstd_size = 25944 bits, zstd_ratio = 1.82%, training_time = 2206s
-Epoch 11: A_NQ = 97.53, H_NQ = 685851, A_Q = 96.92, H_Q = 14983, zstd_size = 24832 bits, zstd_ratio = 1.75%, training_time = 2302s
-Epoch 12: A_NQ = 97.38, H_NQ = 685861, A_Q = 97.16, H_Q = 14600, zstd_size = 24464 bits, zstd_ratio = 1.72%, training_time = 2575s
-Epoch 13: A_NQ = 97.81, H_NQ = 685865, A_Q = 97.49, H_Q = 14174, zstd_size = 23408 bits, zstd_ratio = 1.65%, training_time = 2308s
-Epoch 14: A_NQ = 97.81, H_NQ = 685873, A_Q = 97.43, H_Q = 14196, zstd_size = 23368 bits, zstd_ratio = 1.64%, training_time = 2242s
-Epoch 15: A_NQ = 97.67, H_NQ = 685859, A_Q = 97.32, H_Q = 13922, zstd_size = 23080 bits, zstd_ratio = 1.62%, training_time = 2412s
-Epoch 16: A_NQ = 97.57, H_NQ = 685863, A_Q = 97.44, H_Q = 13729, zstd_size = 22696 bits, zstd_ratio = 1.60%, training_time = 2502s
-Epoch 17: A_NQ = 97.7, H_NQ = 685851, A_Q = 97.55, H_Q = 13749, zstd_size = 22624 bits, zstd_ratio = 1.59%, training_time = 2344s
-Epoch 18: A_NQ = 97.7, H_NQ = 685865, A_Q = 97.88, H_Q = 14021, zstd_size = 22936 bits, zstd_ratio = 1.61%, training_time = 2445s
-Epoch 19: A_NQ = 97.73, H_NQ = 685855, A_Q = 97.04, H_Q = 13352, zstd_size = 22136 bits, zstd_ratio = 1.56%, training_time = 2470s
-Epoch 20: A_NQ = 97.94, H_NQ = 685857, A_Q = 97.62, H_Q = 13583, zstd_size = 22464 bits, zstd_ratio = 1.58%, training_time = 2541s
-Epoch 21: A_NQ = 97.92, H_NQ = 685871, A_Q = 97.57, H_Q = 13286, zstd_size = 21904 bits, zstd_ratio = 1.54%, training_time = 2431s
-Epoch 22: A_NQ = 97.7, H_NQ = 685865, A_Q = 97.79, H_Q = 13327, zstd_size = 21872 bits, zstd_ratio = 1.54%, training_time = 2447s
-Epoch 23: A_NQ = 97.9, H_NQ = 685863, A_Q = 97.64, H_Q = 13188, zstd_size = 21768 bits, zstd_ratio = 1.53%, training_time = 2465s
-Epoch 24: A_NQ = 97.84, H_NQ = 685865, A_Q = 97.79, H_Q = 12875, zstd_size = 21288 bits, zstd_ratio = 1.50%, training_time = 2544s
-Epoch 25: A_NQ = 97.89, H_NQ = 685853, A_Q = 97.97, H_Q = 12923, zstd_size = 21032 bits, zstd_ratio = 1.48%, training_time = 2446s
-Epoch 26: A_NQ = 97.91, H_NQ = 685843, A_Q = 97.33, H_Q = 13530, zstd_size = 20984 bits, zstd_ratio = 1.48%, training_time = 2375s
-Epoch 27: A_NQ = 97.86, H_NQ = 685859, A_Q = 97.82, H_Q = 12544, zstd_size = 20728 bits, zstd_ratio = 1.46%, training_time = 2394s
-Epoch 28: A_NQ = 97.67, H_NQ = 685861, A_Q = 97.65, H_Q = 12382, zstd_size = 20264 bits, zstd_ratio = 1.43%, training_time = 2331s
-Epoch 29: A_NQ = 97.81, H_NQ = 685851, A_Q = 97.83, H_Q = 12221, zstd_size = 20464 bits, zstd_ratio = 1.44%, training_time = 2258s
-Epoch 30: A_NQ = 97.77, H_NQ = 685867, A_Q = 97.73, H_Q = 12397, zstd_size = 20376 bits, zstd_ratio = 1.43%, training_time = 2105s
-------------------------------------------------------------
-r = 1.1006
-Epoch 1: A_NQ = 89.44, H_NQ = 685875, A_Q = 92.9, H_Q = 108605, zstd_size = 165312 bits, zstd_ratio = 11.63%, training_time = 2386s
-Epoch 2: A_NQ = 92.41, H_NQ = 685889, A_Q = 94.97, H_Q = 63684, zstd_size = 97016 bits, zstd_ratio = 6.82%, training_time = 2560s
-Epoch 3: A_NQ = 96.13, H_NQ = 685875, A_Q = 95.36, H_Q = 40694, zstd_size = 63640 bits, zstd_ratio = 4.48%, training_time = 2407s
-Epoch 4: A_NQ = 96.84, H_NQ = 685875, A_Q = 96.58, H_Q = 28322, zstd_size = 44768 bits, zstd_ratio = 3.15%, training_time = 2387s
-Epoch 5: A_NQ = 97.04, H_NQ = 685869, A_Q = 97.3, H_Q = 23036, zstd_size = 36800 bits, zstd_ratio = 2.59%, training_time = 2406s
-Epoch 6: A_NQ = 96.87, H_NQ = 685871, A_Q = 97.03, H_Q = 20637, zstd_size = 33528 bits, zstd_ratio = 2.36%, training_time = 2552s
-Epoch 7: A_NQ = 96.83, H_NQ = 685865, A_Q = 96.41, H_Q = 19149, zstd_size = 30952 bits, zstd_ratio = 2.18%, training_time = 2542s
-Epoch 8: A_NQ = 97.42, H_NQ = 685865, A_Q = 97.23, H_Q = 18029, zstd_size = 29184 bits, zstd_ratio = 2.05%, training_time = 2277s
-Epoch 9: A_NQ = 97.37, H_NQ = 685863, A_Q = 97.42, H_Q = 17425, zstd_size = 28360 bits, zstd_ratio = 1.99%, training_time = 2270s
-Epoch 10: A_NQ = 97.62, H_NQ = 685849, A_Q = 97.53, H_Q = 16749, zstd_size = 27512 bits, zstd_ratio = 1.94%, training_time = 2388s
-Epoch 11: A_NQ = 97.64, H_NQ = 685865, A_Q = 97.62, H_Q = 16123, zstd_size = 26336 bits, zstd_ratio = 1.85%, training_time = 2564s
-Epoch 12: A_NQ = 97.74, H_NQ = 685863, A_Q = 97.72, H_Q = 15772, zstd_size = 25968 bits, zstd_ratio = 1.83%, training_time = 2290s
-Epoch 13: A_NQ = 97.51, H_NQ = 685863, A_Q = 97.53, H_Q = 15325, zstd_size = 24952 bits, zstd_ratio = 1.76%, training_time = 2271s
-Epoch 14: A_NQ = 97.66, H_NQ = 685883, A_Q = 97.5, H_Q = 15356, zstd_size = 25192 bits, zstd_ratio = 1.77%, training_time = 2465s
-Epoch 15: A_NQ = 97.6, H_NQ = 685847, A_Q = 97.81, H_Q = 14956, zstd_size = 24424 bits, zstd_ratio = 1.72%, training_time = 2499s
-Epoch 16: A_NQ = 97.82, H_NQ = 685841, A_Q = 97.47, H_Q = 14484, zstd_size = 23520 bits, zstd_ratio = 1.65%, training_time = 2444s
-Epoch 17: A_NQ = 97.83, H_NQ = 685847, A_Q = 97.67, H_Q = 14420, zstd_size = 23616 bits, zstd_ratio = 1.66%, training_time = 2459s
-Epoch 18: A_NQ = 97.61, H_NQ = 685867, A_Q = 97.48, H_Q = 14340, zstd_size = 23320 bits, zstd_ratio = 1.64%, training_time = 2465s
-Epoch 19: A_NQ = 97.72, H_NQ = 685861, A_Q = 97.57, H_Q = 13969, zstd_size = 22840 bits, zstd_ratio = 1.61%, training_time = 2607s
-Epoch 20: A_NQ = 97.63, H_NQ = 685853, A_Q = 97.46, H_Q = 13917, zstd_size = 22888 bits, zstd_ratio = 1.61%, training_time = 2201s
-Epoch 21: A_NQ = 97.52, H_NQ = 685867, A_Q = 97.86, H_Q = 13975, zstd_size = 22800 bits, zstd_ratio = 1.60%, training_time = 2195s
-Epoch 22: A_NQ = 97.91, H_NQ = 685877, A_Q = 97.8, H_Q = 13757, zstd_size = 22448 bits, zstd_ratio = 1.58%, training_time = 2331s
-Epoch 23: A_NQ = 97.76, H_NQ = 685867, A_Q = 97.71, H_Q = 13773, zstd_size = 22544 bits, zstd_ratio = 1.59%, training_time = 2589s
-Epoch 24: A_NQ = 97.75, H_NQ = 685857, A_Q = 97.66, H_Q = 13812, zstd_size = 22464 bits, zstd_ratio = 1.58%, training_time = 2416s
-Epoch 25: A_NQ = 97.52, H_NQ = 685859, A_Q = 96.92, H_Q = 13938, zstd_size = 22208 bits, zstd_ratio = 1.56%, training_time = 2241s
-Epoch 26: A_NQ = 97.78, H_NQ = 685863, A_Q = 97.61, H_Q = 13454, zstd_size = 22096 bits, zstd_ratio = 1.55%, training_time = 2309s
-Epoch 27: A_NQ = 97.87, H_NQ = 685847, A_Q = 97.83, H_Q = 13415, zstd_size = 21904 bits, zstd_ratio = 1.54%, training_time = 2485s
-Epoch 28: A_NQ = 97.45, H_NQ = 685859, A_Q = 97.43, H_Q = 13358, zstd_size = 21872 bits, zstd_ratio = 1.54%, training_time = 2147s
-Epoch 29: A_NQ = 98.0, H_NQ = 685865, A_Q = 97.75, H_Q = 13110, zstd_size = 21224 bits, zstd_ratio = 1.49%, training_time = 2110s
-Epoch 30: A_NQ = 97.78, H_NQ = 685853, A_Q = 97.68, H_Q = 13179, zstd_size = 21368 bits, zstd_ratio = 1.50%, training_time = 2030s
-------------------------------------------------------------
-r = 1.1029
-Epoch 1: A_NQ = 89.44, H_NQ = 685887, A_Q = 90.49, H_Q = 116660, zstd_size = 175184 bits, zstd_ratio = 12.32%, training_time = 2271s
-Epoch 2: A_NQ = 94.92, H_NQ = 685875, A_Q = 94.69, H_Q = 71984, zstd_size = 107752 bits, zstd_ratio = 7.58%, training_time = 2379s
-Epoch 3: A_NQ = 94.38, H_NQ = 685883, A_Q = 94.58, H_Q = 44763, zstd_size = 69504 bits, zstd_ratio = 4.89%, training_time = 2558s
-Epoch 4: A_NQ = 96.3, H_NQ = 685873, A_Q = 96.61, H_Q = 30179, zstd_size = 48032 bits, zstd_ratio = 3.38%, training_time = 2573s
-Epoch 5: A_NQ = 96.97, H_NQ = 685867, A_Q = 96.51, H_Q = 23689, zstd_size = 37904 bits, zstd_ratio = 2.67%, training_time = 2242s
-Epoch 6: A_NQ = 97.02, H_NQ = 685883, A_Q = 97.2, H_Q = 20605, zstd_size = 33064 bits, zstd_ratio = 2.33%, training_time = 2339s
-Epoch 7: A_NQ = 96.85, H_NQ = 685879, A_Q = 97.16, H_Q = 18682, zstd_size = 29992 bits, zstd_ratio = 2.11%, training_time = 2320s
-Epoch 8: A_NQ = 97.31, H_NQ = 685873, A_Q = 97.38, H_Q = 17106, zstd_size = 28032 bits, zstd_ratio = 1.97%, training_time = 2551s
-Epoch 9: A_NQ = 97.34, H_NQ = 685853, A_Q = 97.3, H_Q = 16335, zstd_size = 26848 bits, zstd_ratio = 1.89%, training_time = 2331s
-Epoch 10: A_NQ = 97.76, H_NQ = 685855, A_Q = 97.54, H_Q = 15774, zstd_size = 25656 bits, zstd_ratio = 1.80%, training_time = 2317s
-Epoch 11: A_NQ = 97.65, H_NQ = 685869, A_Q = 97.42, H_Q = 15290, zstd_size = 25088 bits, zstd_ratio = 1.76%, training_time = 2427s
-Epoch 12: A_NQ = 97.71, H_NQ = 685869, A_Q = 97.47, H_Q = 15045, zstd_size = 24672 bits, zstd_ratio = 1.74%, training_time = 2574s
-Epoch 13: A_NQ = 97.5, H_NQ = 685865, A_Q = 97.49, H_Q = 14865, zstd_size = 24192 bits, zstd_ratio = 1.70%, training_time = 2329s
-Epoch 14: A_NQ = 97.63, H_NQ = 685865, A_Q = 97.6, H_Q = 14425, zstd_size = 23296 bits, zstd_ratio = 1.64%, training_time = 2354s
-Epoch 15: A_NQ = 97.74, H_NQ = 685847, A_Q = 97.53, H_Q = 14356, zstd_size = 23232 bits, zstd_ratio = 1.63%, training_time = 2428s
-Epoch 16: A_NQ = 97.71, H_NQ = 685873, A_Q = 97.61, H_Q = 13882, zstd_size = 22632 bits, zstd_ratio = 1.59%, training_time = 2579s
-Epoch 17: A_NQ = 97.89, H_NQ = 685869, A_Q = 97.72, H_Q = 13661, zstd_size = 22592 bits, zstd_ratio = 1.59%, training_time = 2474s
-Epoch 18: A_NQ = 97.75, H_NQ = 685861, A_Q = 97.69, H_Q = 14016, zstd_size = 22960 bits, zstd_ratio = 1.62%, training_time = 2308s
-Epoch 19: A_NQ = 97.77, H_NQ = 685865, A_Q = 97.56, H_Q = 13991, zstd_size = 23064 bits, zstd_ratio = 1.62%, training_time = 2466s
-Epoch 20: A_NQ = 97.68, H_NQ = 685863, A_Q = 97.67, H_Q = 13646, zstd_size = 22616 bits, zstd_ratio = 1.59%, training_time = 2632s
-Epoch 21: A_NQ = 97.59, H_NQ = 685853, A_Q = 97.66, H_Q = 13554, zstd_size = 22632 bits, zstd_ratio = 1.59%, training_time = 2288s
-Epoch 22: A_NQ = 97.86, H_NQ = 685859, A_Q = 97.52, H_Q = 13665, zstd_size = 22448 bits, zstd_ratio = 1.58%, training_time = 2319s
-Epoch 23: A_NQ = 97.9, H_NQ = 685871, A_Q = 97.65, H_Q = 13335, zstd_size = 22280 bits, zstd_ratio = 1.57%, training_time = 2393s
-Epoch 24: A_NQ = 97.89, H_NQ = 685857, A_Q = 97.7, H_Q = 13274, zstd_size = 22320 bits, zstd_ratio = 1.57%, training_time = 2633s
-Epoch 25: A_NQ = 97.89, H_NQ = 685853, A_Q = 97.76, H_Q = 12841, zstd_size = 21744 bits, zstd_ratio = 1.53%, training_time = 2226s
-Epoch 26: A_NQ = 97.61, H_NQ = 685861, A_Q = 97.67, H_Q = 13258, zstd_size = 22120 bits, zstd_ratio = 1.56%, training_time = 2218s
-Epoch 27: A_NQ = 97.95, H_NQ = 685841, A_Q = 97.86, H_Q = 12906, zstd_size = 21944 bits, zstd_ratio = 1.54%, training_time = 2266s
-Epoch 28: A_NQ = 98.04, H_NQ = 685867, A_Q = 97.79, H_Q = 13642, zstd_size = 22416 bits, zstd_ratio = 1.58%, training_time = 2415s
-Epoch 29: A_NQ = 97.86, H_NQ = 685875, A_Q = 97.75, H_Q = 13114, zstd_size = 21768 bits, zstd_ratio = 1.53%, training_time = 2128s
-Epoch 30: A_NQ = 97.89, H_NQ = 685853, A_Q = 97.77, H_Q = 13154, zstd_size = 21800 bits, zstd_ratio = 1.53%, training_time = 2020s
+Epoch 1: A_NQ = 87.87, H_NQ = 685889, A_Q = 84.63, H_Q = 154299, zstd_ratio = 15.72%, training_time = 693s
+Epoch 2: A_NQ = 93.24, H_NQ = 685883, A_Q = 72.2, H_Q = 73523, zstd_ratio = 7.67%, training_time = 368s
+Epoch 3: A_NQ = 95.3, H_NQ = 685872, A_Q = 92.03, H_Q = 40266, zstd_ratio = 4.37%, training_time = 364s
+Epoch 4: A_NQ = 96.55, H_NQ = 685875, A_Q = 93.43, H_Q = 26319, zstd_ratio = 2.87%, training_time = 356s
+Epoch 5: A_NQ = 96.8, H_NQ = 685871, A_Q = 94.0, H_Q = 19768, zstd_ratio = 2.17%, training_time = 380s
+Epoch 6: A_NQ = 96.75, H_NQ = 685881, A_Q = 94.15, H_Q = 16491, zstd_ratio = 1.84%, training_time = 382s
+Epoch 7: A_NQ = 97.06, H_NQ = 685875, A_Q = 95.25, H_Q = 14501, zstd_ratio = 1.64%, training_time = 398s
+Epoch 8: A_NQ = 96.72, H_NQ = 685877, A_Q = 93.78, H_Q = 13701, zstd_ratio = 1.50%, training_time = 901s
+Epoch 9: A_NQ = 97.07, H_NQ = 685877, A_Q = 95.25, H_Q = 12559, zstd_ratio = 1.41%, training_time = 462s
+Epoch 10: A_NQ = 97.01, H_NQ = 685861, A_Q = 92.12, H_Q = 12004, zstd_ratio = 1.34%, training_time = 725s
+Epoch 11: A_NQ = 97.23, H_NQ = 685855, A_Q = 94.07, H_Q = 12017, zstd_ratio = 1.33%, training_time = 509s
+Epoch 12: A_NQ = 97.27, H_NQ = 685849, A_Q = 86.46, H_Q = 11839, zstd_ratio = 1.28%, training_time = 638s
+Epoch 13: A_NQ = 97.41, H_NQ = 685853, A_Q = 96.26, H_Q = 11516, zstd_ratio = 1.26%, training_time = 647s
+Epoch 14: A_NQ = 97.23, H_NQ = 685841, A_Q = 95.11, H_Q = 10778, zstd_ratio = 1.19%, training_time = 960s
+Epoch 15: A_NQ = 97.38, H_NQ = 685843, A_Q = 95.9, H_Q = 10390, zstd_ratio = 1.16%, training_time = 862s
+Epoch 16: A_NQ = 97.36, H_NQ = 685855, A_Q = 95.33, H_Q = 10364, zstd_ratio = 1.13%, training_time = 760s
+Epoch 17: A_NQ = 97.47, H_NQ = 685843, A_Q = 95.95, H_Q = 10144, zstd_ratio = 1.12%, training_time = 813s
+Epoch 18: A_NQ = 97.54, H_NQ = 685853, A_Q = 96.65, H_Q = 10042, zstd_ratio = 1.12%, training_time = 975s
+Epoch 19: A_NQ = 97.49, H_NQ = 685845, A_Q = 96.51, H_Q = 9655, zstd_ratio = 1.08%, training_time = 1055s
+Epoch 20: A_NQ = 97.55, H_NQ = 685853, A_Q = 96.91, H_Q = 9562, zstd_ratio = 1.06%, training_time = 771s
+Epoch 21: A_NQ = 97.45, H_NQ = 685849, A_Q = 97.09, H_Q = 9364, zstd_ratio = 1.04%, training_time = 767s
+Epoch 22: A_NQ = 97.57, H_NQ = 685859, A_Q = 96.7, H_Q = 9383, zstd_ratio = 1.04%, training_time = 1026s
+Epoch 23: A_NQ = 97.59, H_NQ = 685855, A_Q = 96.85, H_Q = 9451, zstd_ratio = 1.04%, training_time = 988s
+Epoch 24: A_NQ = 97.73, H_NQ = 685873, A_Q = 97.03, H_Q = 8932, zstd_ratio = 1.02%, training_time = 1012s
+Epoch 25: A_NQ = 97.69, H_NQ = 685851, A_Q = 96.91, H_Q = 9335, zstd_ratio = 1.03%, training_time = 1025s
+Epoch 26: A_NQ = 97.64, H_NQ = 685845, A_Q = 97.0, H_Q = 8808, zstd_ratio = 1.01%, training_time = 995s
+Epoch 27: A_NQ = 97.58, H_NQ = 685847, A_Q = 96.64, H_Q = 9080, zstd_ratio = 1.02%, training_time = 894s
+Epoch 28: A_NQ = 97.87, H_NQ = 685865, A_Q = 97.37, H_Q = 9279, zstd_ratio = 1.03%, training_time = 924s
+Epoch 29: A_NQ = 97.59, H_NQ = 685837, A_Q = 96.35, H_Q = 9074, zstd_ratio = 1.02%, training_time = 982s
+Epoch 30: A_NQ = 97.53, H_NQ = 685849, A_Q = 96.9, H_Q = 8931, zstd_ratio = 1.00%, training_time = 1128s
 ------------------------------------------------------------
 r = 1.1003
-Epoch 1: A_NQ = 85.89, H_NQ = 685895, A_Q = 86.31, H_Q = 176304, zstd_size = 262752 bits, zstd_ratio = 18.48%, training_time = 2409s
-Epoch 2: A_NQ = 93.41, H_NQ = 685863, A_Q = 93.67, H_Q = 79804, zstd_size = 124248 bits, zstd_ratio = 8.74%, training_time = 2385s
-Epoch 3: A_NQ = 95.65, H_NQ = 685895, A_Q = 95.62, H_Q = 45909, zstd_size = 72624 bits, zstd_ratio = 5.11%, training_time = 2273s
-Epoch 4: A_NQ = 96.26, H_NQ = 685887, A_Q = 96.46, H_Q = 30756, zstd_size = 49248 bits, zstd_ratio = 3.46%, training_time = 2275s
-Epoch 5: A_NQ = 96.84, H_NQ = 685881, A_Q = 96.66, H_Q = 23594, zstd_size = 38656 bits, zstd_ratio = 2.72%, training_time = 2379s
-Epoch 6: A_NQ = 96.79, H_NQ = 685883, A_Q = 96.99, H_Q = 21334, zstd_size = 34584 bits, zstd_ratio = 2.43%, training_time = 2631s
-Epoch 7: A_NQ = 96.32, H_NQ = 685873, A_Q = 97.12, H_Q = 19199, zstd_size = 31216 bits, zstd_ratio = 2.20%, training_time = 2220s
-Epoch 8: A_NQ = 96.77, H_NQ = 685869, A_Q = 97.45, H_Q = 17879, zstd_size = 29472 bits, zstd_ratio = 2.07%, training_time = 2249s
-Epoch 9: A_NQ = 97.17, H_NQ = 685865, A_Q = 97.26, H_Q = 17152, zstd_size = 27488 bits, zstd_ratio = 1.93%, training_time = 2356s
-Epoch 10: A_NQ = 97.46, H_NQ = 685855, A_Q = 97.43, H_Q = 16146, zstd_size = 26232 bits, zstd_ratio = 1.85%, training_time = 2629s
-Epoch 11: A_NQ = 97.34, H_NQ = 685863, A_Q = 97.47, H_Q = 16084, zstd_size = 25600 bits, zstd_ratio = 1.80%, training_time = 2247s
-Epoch 12: A_NQ = 97.17, H_NQ = 685863, A_Q = 97.47, H_Q = 15997, zstd_size = 25344 bits, zstd_ratio = 1.78%, training_time = 2271s
-Epoch 13: A_NQ = 97.2, H_NQ = 685865, A_Q = 97.67, H_Q = 15427, zstd_size = 24864 bits, zstd_ratio = 1.75%, training_time = 2337s
-Epoch 14: A_NQ = 97.61, H_NQ = 685877, A_Q = 97.4, H_Q = 14977, zstd_size = 24216 bits, zstd_ratio = 1.70%, training_time = 2648s
-Epoch 15: A_NQ = 97.53, H_NQ = 685841, A_Q = 97.69, H_Q = 14995, zstd_size = 23904 bits, zstd_ratio = 1.68%, training_time = 2273s
-Epoch 16: A_NQ = 97.41, H_NQ = 685871, A_Q = 97.62, H_Q = 14637, zstd_size = 23688 bits, zstd_ratio = 1.67%, training_time = 2308s
-Epoch 17: A_NQ = 97.94, H_NQ = 685867, A_Q = 97.69, H_Q = 14340, zstd_size = 23200 bits, zstd_ratio = 1.63%, training_time = 2465s
-Epoch 18: A_NQ = 97.59, H_NQ = 685853, A_Q = 97.67, H_Q = 14715, zstd_size = 23512 bits, zstd_ratio = 1.65%, training_time = 2573s
-Epoch 19: A_NQ = 97.81, H_NQ = 685861, A_Q = 97.78, H_Q = 14455, zstd_size = 22864 bits, zstd_ratio = 1.61%, training_time = 2445s
-Epoch 20: A_NQ = 97.83, H_NQ = 685863, A_Q = 97.77, H_Q = 14100, zstd_size = 22720 bits, zstd_ratio = 1.60%, training_time = 2429s
-Epoch 21: A_NQ = 97.42, H_NQ = 685869, A_Q = 97.68, H_Q = 13747, zstd_size = 22520 bits, zstd_ratio = 1.58%, training_time = 2442s
-Epoch 22: A_NQ = 97.39, H_NQ = 685853, A_Q = 97.11, H_Q = 14009, zstd_size = 22272 bits, zstd_ratio = 1.57%, training_time = 2571s
-Epoch 23: A_NQ = 97.9, H_NQ = 685865, A_Q = 97.76, H_Q = 13641, zstd_size = 22096 bits, zstd_ratio = 1.55%, training_time = 2434s
-Epoch 24: A_NQ = 97.98, H_NQ = 685863, A_Q = 97.78, H_Q = 13796, zstd_size = 22016 bits, zstd_ratio = 1.55%, training_time = 2420s
-Epoch 25: A_NQ = 96.84, H_NQ = 685873, A_Q = 97.47, H_Q = 13756, zstd_size = 21928 bits, zstd_ratio = 1.54%, training_time = 2402s
-Epoch 26: A_NQ = 97.97, H_NQ = 685846, A_Q = 97.8, H_Q = 13016, zstd_size = 21184 bits, zstd_ratio = 1.49%, training_time = 2489s
-Epoch 27: A_NQ = 97.83, H_NQ = 685859, A_Q = 97.48, H_Q = 13201, zstd_size = 21448 bits, zstd_ratio = 1.51%, training_time = 2346s
-Epoch 28: A_NQ = 97.66, H_NQ = 685861, A_Q = 97.76, H_Q = 13056, zstd_size = 21112 bits, zstd_ratio = 1.49%, training_time = 2219s
-Epoch 29: A_NQ = 97.48, H_NQ = 685867, A_Q = 97.46, H_Q = 13234, zstd_size = 21448 bits, zstd_ratio = 1.51%, training_time = 2154s
-Epoch 30: A_NQ = 97.77, H_NQ = 685865, A_Q = 97.9, H_Q = 13372, zstd_size = 21424 bits, zstd_ratio = 1.51%, training_time = 2087s
+Epoch 1: A_NQ = 89.09, H_NQ = 685877, A_Q = 79.7, H_Q = 122186, zstd_ratio = 12.59%, training_time = 777s
+Epoch 2: A_NQ = 93.31, H_NQ = 685879, A_Q = 69.02, H_Q = 61250, zstd_ratio = 6.43%, training_time = 972s
+Epoch 3: A_NQ = 95.49, H_NQ = 685883, A_Q = 57.28, H_Q = 35840, zstd_ratio = 3.94%, training_time = 1007s
+Epoch 4: A_NQ = 95.49, H_NQ = 685877, A_Q = 92.83, H_Q = 24323, zstd_ratio = 2.74%, training_time = 1102s
+Epoch 5: A_NQ = 96.16, H_NQ = 685877, A_Q = 94.91, H_Q = 19399, zstd_ratio = 2.19%, training_time = 925s
+Epoch 6: A_NQ = 96.68, H_NQ = 685867, A_Q = 95.74, H_Q = 17056, zstd_ratio = 1.96%, training_time = 942s
+Epoch 7: A_NQ = 96.72, H_NQ = 685877, A_Q = 96.14, H_Q = 14727, zstd_ratio = 1.72%, training_time = 1026s
+Epoch 8: A_NQ = 96.78, H_NQ = 685853, A_Q = 96.37, H_Q = 13833, zstd_ratio = 1.61%, training_time = 1180s
+Epoch 9: A_NQ = 97.0, H_NQ = 685863, A_Q = 96.26, H_Q = 13115, zstd_ratio = 1.53%, training_time = 1011s
+Epoch 10: A_NQ = 96.86, H_NQ = 685851, A_Q = 96.29, H_Q = 12573, zstd_ratio = 1.46%, training_time = 1037s
+Epoch 11: A_NQ = 96.66, H_NQ = 685847, A_Q = 95.51, H_Q = 11969, zstd_ratio = 1.38%, training_time = 1073s
+Epoch 12: A_NQ = 96.86, H_NQ = 685871, A_Q = 96.86, H_Q = 11213, zstd_ratio = 1.32%, training_time = 1170s
+Epoch 13: A_NQ = 97.42, H_NQ = 685869, A_Q = 96.78, H_Q = 10994, zstd_ratio = 1.30%, training_time = 1049s
+Epoch 14: A_NQ = 97.34, H_NQ = 685845, A_Q = 96.51, H_Q = 10622, zstd_ratio = 1.28%, training_time = 1041s
+Epoch 15: A_NQ = 97.35, H_NQ = 685853, A_Q = 96.76, H_Q = 10567, zstd_ratio = 1.26%, training_time = 1055s
+Epoch 16: A_NQ = 97.14, H_NQ = 685851, A_Q = 96.07, H_Q = 10583, zstd_ratio = 1.26%, training_time = 1148s
+Epoch 17: A_NQ = 97.4, H_NQ = 685861, A_Q = 96.34, H_Q = 10131, zstd_ratio = 1.21%, training_time = 1030s
+Epoch 18: A_NQ = 97.25, H_NQ = 685861, A_Q = 95.34, H_Q = 9924, zstd_ratio = 1.21%, training_time = 1057s
+Epoch 19: A_NQ = 97.13, H_NQ = 685831, A_Q = 96.4, H_Q = 9779, zstd_ratio = 1.16%, training_time = 1052s
+Epoch 20: A_NQ = 97.3, H_NQ = 685839, A_Q = 96.66, H_Q = 9397, zstd_ratio = 1.15%, training_time = 1130s
+Epoch 21: A_NQ = 97.27, H_NQ = 685829, A_Q = 96.39, H_Q = 9580, zstd_ratio = 1.16%, training_time = 643s
+Epoch 22: A_NQ = 97.17, H_NQ = 685839, A_Q = 97.03, H_Q = 9048, zstd_ratio = 1.09%, training_time = 878s
+Epoch 23: A_NQ = 97.22, H_NQ = 685851, A_Q = 97.4, H_Q = 9250, zstd_ratio = 1.10%, training_time = 848s
+Epoch 24: A_NQ = 97.42, H_NQ = 685863, A_Q = 97.29, H_Q = 9052, zstd_ratio = 1.08%, training_time = 957s
+Epoch 25: A_NQ = 97.62, H_NQ = 685847, A_Q = 97.01, H_Q = 9001, zstd_ratio = 1.08%, training_time = 388s
+Epoch 26: A_NQ = 97.42, H_NQ = 685815, A_Q = 97.04, H_Q = 8939, zstd_ratio = 1.07%, training_time = 328s
+Epoch 27: A_NQ = 97.51, H_NQ = 685815, A_Q = 96.88, H_Q = 8778, zstd_ratio = 1.04%, training_time = 327s
+Epoch 28: A_NQ = 97.39, H_NQ = 685859, A_Q = 97.29, H_Q = 8989, zstd_ratio = 1.06%, training_time = 327s
+Epoch 29: A_NQ = 97.34, H_NQ = 685817, A_Q = 97.44, H_Q = 8569, zstd_ratio = 1.04%, training_time = 327s
+Epoch 30: A_NQ = 97.55, H_NQ = 685843, A_Q = 97.18, H_Q = 8552, zstd_ratio = 1.03%, training_time = 327s
 ------------------------------------------------------------
-r = 1.101
-Epoch 1: A_NQ = 90.83, H_NQ = 685881, A_Q = 92.06, H_Q = 113439, zstd_size = 173776 bits, zstd_ratio = 12.22%, training_time = 2356s
-Epoch 2: A_NQ = 94.77, H_NQ = 685889, A_Q = 95.28, H_Q = 60067, zstd_size = 92784 bits, zstd_ratio = 6.53%, training_time = 2340s
-Epoch 3: A_NQ = 96.03, H_NQ = 685891, A_Q = 96.1, H_Q = 37599, zstd_size = 60144 bits, zstd_ratio = 4.23%, training_time = 2311s
-Epoch 4: A_NQ = 96.55, H_NQ = 685879, A_Q = 96.7, H_Q = 27473, zstd_size = 44976 bits, zstd_ratio = 3.16%, training_time = 2342s
-Epoch 5: A_NQ = 96.65, H_NQ = 685867, A_Q = 96.74, H_Q = 23382, zstd_size = 38784 bits, zstd_ratio = 2.73%, training_time = 2326s
-Epoch 6: A_NQ = 96.91, H_NQ = 685883, A_Q = 96.64, H_Q = 20592, zstd_size = 34480 bits, zstd_ratio = 2.43%, training_time = 2639s
-Epoch 7: A_NQ = 97.06, H_NQ = 685881, A_Q = 96.78, H_Q = 19067, zstd_size = 31968 bits, zstd_ratio = 2.25%, training_time = 2250s
-Epoch 8: A_NQ = 97.44, H_NQ = 685865, A_Q = 97.37, H_Q = 17855, zstd_size = 29680 bits, zstd_ratio = 2.09%, training_time = 2246s
-Epoch 9: A_NQ = 97.12, H_NQ = 685873, A_Q = 97.11, H_Q = 17284, zstd_size = 28640 bits, zstd_ratio = 2.01%, training_time = 2354s
-Epoch 10: A_NQ = 97.47, H_NQ = 685871, A_Q = 97.27, H_Q = 16120, zstd_size = 27128 bits, zstd_ratio = 1.91%, training_time = 2641s
-Epoch 11: A_NQ = 97.35, H_NQ = 685873, A_Q = 97.46, H_Q = 15957, zstd_size = 26600 bits, zstd_ratio = 1.87%, training_time = 2306s
-Epoch 12: A_NQ = 97.13, H_NQ = 685867, A_Q = 97.19, H_Q = 15685, zstd_size = 25824 bits, zstd_ratio = 1.82%, training_time = 2347s
-Epoch 13: A_NQ = 97.59, H_NQ = 685863, A_Q = 97.71, H_Q = 15187, zstd_size = 25280 bits, zstd_ratio = 1.78%, training_time = 2439s
-Epoch 14: A_NQ = 97.64, H_NQ = 685847, A_Q = 97.41, H_Q = 15000, zstd_size = 24776 bits, zstd_ratio = 1.74%, training_time = 2608s
-Epoch 15: A_NQ = 97.07, H_NQ = 685873, A_Q = 97.69, H_Q = 14880, zstd_size = 24744 bits, zstd_ratio = 1.74%, training_time = 2292s
-Epoch 16: A_NQ = 97.61, H_NQ = 685873, A_Q = 97.58, H_Q = 14365, zstd_size = 23968 bits, zstd_ratio = 1.69%, training_time = 2289s
-Epoch 17: A_NQ = 97.6, H_NQ = 685863, A_Q = 97.56, H_Q = 14426, zstd_size = 23880 bits, zstd_ratio = 1.68%, training_time = 2355s
-Epoch 18: A_NQ = 97.31, H_NQ = 685871, A_Q = 97.64, H_Q = 14489, zstd_size = 23744 bits, zstd_ratio = 1.67%, training_time = 2646s
-Epoch 19: A_NQ = 97.73, H_NQ = 685859, A_Q = 97.78, H_Q = 13815, zstd_size = 23024 bits, zstd_ratio = 1.62%, training_time = 2311s
-Epoch 20: A_NQ = 97.79, H_NQ = 685857, A_Q = 97.84, H_Q = 13943, zstd_size = 23504 bits, zstd_ratio = 1.65%, training_time = 2356s
-Epoch 21: A_NQ = 97.69, H_NQ = 685865, A_Q = 97.77, H_Q = 13706, zstd_size = 22776 bits, zstd_ratio = 1.60%, training_time = 2344s
-Epoch 22: A_NQ = 97.76, H_NQ = 685851, A_Q = 97.61, H_Q = 13592, zstd_size = 22616 bits, zstd_ratio = 1.59%, training_time = 2555s
-Epoch 23: A_NQ = 97.71, H_NQ = 685871, A_Q = 97.67, H_Q = 13102, zstd_size = 22104 bits, zstd_ratio = 1.55%, training_time = 2404s
-Epoch 24: A_NQ = 97.81, H_NQ = 685849, A_Q = 97.66, H_Q = 13475, zstd_size = 22344 bits, zstd_ratio = 1.57%, training_time = 2418s
-Epoch 25: A_NQ = 97.75, H_NQ = 685875, A_Q = 97.61, H_Q = 13155, zstd_size = 21944 bits, zstd_ratio = 1.54%, training_time = 2390s
-Epoch 26: A_NQ = 97.28, H_NQ = 685855, A_Q = 97.46, H_Q = 13211, zstd_size = 22176 bits, zstd_ratio = 1.56%, training_time = 2481s
-Epoch 27: A_NQ = 97.71, H_NQ = 685861, A_Q = 97.6, H_Q = 13209, zstd_size = 22264 bits, zstd_ratio = 1.57%, training_time = 2424s
-Epoch 28: A_NQ = 97.37, H_NQ = 685849, A_Q = 97.8, H_Q = 13257, zstd_size = 22184 bits, zstd_ratio = 1.56%, training_time = 2281s
-Epoch 29: A_NQ = 97.72, H_NQ = 685867, A_Q = 97.61, H_Q = 13273, zstd_size = 21968 bits, zstd_ratio = 1.55%, training_time = 2221s
-Epoch 30: A_NQ = 97.87, H_NQ = 685847, A_Q = 97.75, H_Q = 12898, zstd_size = 21496 bits, zstd_ratio = 1.51%, training_time = 2112s
-------------------------------------------------------------
-r = 1.1009
-Epoch 1: A_NQ = 89.9, H_NQ = 685881, A_Q = 90.62, H_Q = 101049, zstd_size = 152864 bits, zstd_ratio = 10.75%, training_time = 2362s
-Epoch 2: A_NQ = 94.79, H_NQ = 685893, A_Q = 93.83, H_Q = 60090, zstd_size = 91184 bits, zstd_ratio = 6.41%, training_time = 2641s
-Epoch 3: A_NQ = 94.66, H_NQ = 685869, A_Q = 95.45, H_Q = 39626, zstd_size = 61704 bits, zstd_ratio = 4.34%, training_time = 2525s
-Epoch 4: A_NQ = 95.76, H_NQ = 685875, A_Q = 95.06, H_Q = 27362, zstd_size = 43848 bits, zstd_ratio = 3.08%, training_time = 2259s
-Epoch 5: A_NQ = 96.45, H_NQ = 685871, A_Q = 96.16, H_Q = 21818, zstd_size = 35496 bits, zstd_ratio = 2.50%, training_time = 2384s
-Epoch 6: A_NQ = 96.78, H_NQ = 685873, A_Q = 96.85, H_Q = 19265, zstd_size = 31296 bits, zstd_ratio = 2.20%, training_time = 2611s
-Epoch 7: A_NQ = 96.95, H_NQ = 685867, A_Q = 96.59, H_Q = 17577, zstd_size = 28976 bits, zstd_ratio = 2.04%, training_time = 2253s
-Epoch 8: A_NQ = 96.88, H_NQ = 685875, A_Q = 97.18, H_Q = 16832, zstd_size = 27704 bits, zstd_ratio = 1.95%, training_time = 2361s
-Epoch 9: A_NQ = 97.09, H_NQ = 685867, A_Q = 96.67, H_Q = 15760, zstd_size = 25624 bits, zstd_ratio = 1.80%, training_time = 2359s
-Epoch 10: A_NQ = 97.3, H_NQ = 685865, A_Q = 97.37, H_Q = 15219, zstd_size = 25352 bits, zstd_ratio = 1.78%, training_time = 2592s
-Epoch 11: A_NQ = 97.3, H_NQ = 685869, A_Q = 97.09, H_Q = 14840, zstd_size = 24520 bits, zstd_ratio = 1.72%, training_time = 2465s
-Epoch 12: A_NQ = 97.31, H_NQ = 685873, A_Q = 97.09, H_Q = 14670, zstd_size = 24096 bits, zstd_ratio = 1.69%, training_time = 2461s
-Epoch 13: A_NQ = 97.36, H_NQ = 685851, A_Q = 96.95, H_Q = 14306, zstd_size = 23736 bits, zstd_ratio = 1.67%, training_time = 2496s
-Epoch 14: A_NQ = 97.27, H_NQ = 685869, A_Q = 97.0, H_Q = 13978, zstd_size = 22832 bits, zstd_ratio = 1.61%, training_time = 2642s
-Epoch 15: A_NQ = 97.39, H_NQ = 685853, A_Q = 97.42, H_Q = 13477, zstd_size = 22656 bits, zstd_ratio = 1.59%, training_time = 2244s
-Epoch 16: A_NQ = 97.6, H_NQ = 685861, A_Q = 97.68, H_Q = 13335, zstd_size = 22080 bits, zstd_ratio = 1.55%, training_time = 2310s
-Epoch 17: A_NQ = 97.39, H_NQ = 685875, A_Q = 97.37, H_Q = 13338, zstd_size = 22440 bits, zstd_ratio = 1.58%, training_time = 2456s
-Epoch 18: A_NQ = 97.49, H_NQ = 685859, A_Q = 97.41, H_Q = 13538, zstd_size = 22488 bits, zstd_ratio = 1.58%, training_time = 2261s
-Epoch 19: A_NQ = 97.26, H_NQ = 685881, A_Q = 97.52, H_Q = 13053, zstd_size = 21968 bits, zstd_ratio = 1.55%, training_time = 2633s
-Epoch 20: A_NQ = 97.37, H_NQ = 685863, A_Q = 97.4, H_Q = 13035, zstd_size = 21944 bits, zstd_ratio = 1.54%, training_time = 2350s
-Epoch 21: A_NQ = 97.42, H_NQ = 685853, A_Q = 97.6, H_Q = 13293, zstd_size = 22152 bits, zstd_ratio = 1.56%, training_time = 2273s
-Epoch 22: A_NQ = 97.63, H_NQ = 685867, A_Q = 97.66, H_Q = 13031, zstd_size = 22112 bits, zstd_ratio = 1.56%, training_time = 2383s
-Epoch 23: A_NQ = 97.44, H_NQ = 685869, A_Q = 97.65, H_Q = 12517, zstd_size = 21160 bits, zstd_ratio = 1.49%, training_time = 2636s
-Epoch 24: A_NQ = 97.36, H_NQ = 685842, A_Q = 97.64, H_Q = 12724, zstd_size = 21560 bits, zstd_ratio = 1.52%, training_time = 2304s
-Epoch 25: A_NQ = 97.56, H_NQ = 685857, A_Q = 97.57, H_Q = 12909, zstd_size = 21688 bits, zstd_ratio = 1.53%, training_time = 2323s
-Epoch 26: A_NQ = 97.67, H_NQ = 685865, A_Q = 97.8, H_Q = 12936, zstd_size = 21664 bits, zstd_ratio = 1.52%, training_time = 2376s
-Epoch 27: A_NQ = 97.71, H_NQ = 685857, A_Q = 97.8, H_Q = 12626, zstd_size = 21160 bits, zstd_ratio = 1.49%, training_time = 2497s
-Epoch 28: A_NQ = 97.77, H_NQ = 685859, A_Q = 97.76, H_Q = 12378, zstd_size = 21104 bits, zstd_ratio = 1.48%, training_time = 2077s
-Epoch 29: A_NQ = 97.46, H_NQ = 685859, A_Q = 97.62, H_Q = 12368, zstd_size = 21096 bits, zstd_ratio = 1.48%, training_time = 2107s
-Epoch 30: A_NQ = 97.63, H_NQ = 685859, A_Q = 97.54, H_Q = 12655, zstd_size = 21248 bits, zstd_ratio = 1.49%, training_time = 1861s
-------------------------------------------------------------
-r = 1.1018
-Epoch 1: A_NQ = 88.3, H_NQ = 685891, A_Q = 88.77, H_Q = 164413, zstd_size = 246536 bits, zstd_ratio = 17.34%, training_time = 2356s
-Epoch 2: A_NQ = 94.45, H_NQ = 685879, A_Q = 95.24, H_Q = 69864, zstd_size = 108816 bits, zstd_ratio = 7.65%, training_time = 2613s
-Epoch 3: A_NQ = 94.61, H_NQ = 685873, A_Q = 95.9, H_Q = 40405, zstd_size = 65264 bits, zstd_ratio = 4.59%, training_time = 2359s
-Epoch 4: A_NQ = 96.06, H_NQ = 685889, A_Q = 96.6, H_Q = 28730, zstd_size = 46288 bits, zstd_ratio = 3.26%, training_time = 2321s
-Epoch 5: A_NQ = 96.84, H_NQ = 685883, A_Q = 97.07, H_Q = 23313, zstd_size = 37576 bits, zstd_ratio = 2.64%, training_time = 2365s
-Epoch 6: A_NQ = 97.08, H_NQ = 685867, A_Q = 97.52, H_Q = 20473, zstd_size = 33088 bits, zstd_ratio = 2.33%, training_time = 2610s
-Epoch 7: A_NQ = 97.17, H_NQ = 685859, A_Q = 97.61, H_Q = 18588, zstd_size = 30480 bits, zstd_ratio = 2.14%, training_time = 2211s
-Epoch 8: A_NQ = 97.33, H_NQ = 685859, A_Q = 97.37, H_Q = 17717, zstd_size = 28656 bits, zstd_ratio = 2.02%, training_time = 2246s
-Epoch 9: A_NQ = 97.44, H_NQ = 685861, A_Q = 97.53, H_Q = 16820, zstd_size = 27688 bits, zstd_ratio = 1.95%, training_time = 2352s
-Epoch 10: A_NQ = 97.53, H_NQ = 685861, A_Q = 97.58, H_Q = 16073, zstd_size = 26600 bits, zstd_ratio = 1.87%, training_time = 2597s
-Epoch 11: A_NQ = 97.61, H_NQ = 685859, A_Q = 97.45, H_Q = 15946, zstd_size = 26424 bits, zstd_ratio = 1.86%, training_time = 2383s
-Epoch 12: A_NQ = 97.68, H_NQ = 685865, A_Q = 97.56, H_Q = 15431, zstd_size = 25544 bits, zstd_ratio = 1.80%, training_time = 2369s
-Epoch 13: A_NQ = 96.87, H_NQ = 685859, A_Q = 97.16, H_Q = 15652, zstd_size = 25712 bits, zstd_ratio = 1.81%, training_time = 2449s
-Epoch 14: A_NQ = 97.75, H_NQ = 685849, A_Q = 97.79, H_Q = 15236, zstd_size = 25168 bits, zstd_ratio = 1.77%, training_time = 2646s
-Epoch 15: A_NQ = 97.66, H_NQ = 685857, A_Q = 97.65, H_Q = 14759, zstd_size = 24672 bits, zstd_ratio = 1.74%, training_time = 2307s
-Epoch 16: A_NQ = 97.91, H_NQ = 685863, A_Q = 97.72, H_Q = 14363, zstd_size = 24232 bits, zstd_ratio = 1.70%, training_time = 2302s
-Epoch 17: A_NQ = 97.83, H_NQ = 685863, A_Q = 97.67, H_Q = 14011, zstd_size = 23488 bits, zstd_ratio = 1.65%, training_time = 2421s
-Epoch 18: A_NQ = 97.83, H_NQ = 685855, A_Q = 97.95, H_Q = 14259, zstd_size = 23488 bits, zstd_ratio = 1.65%, training_time = 2558s
-Epoch 19: A_NQ = 97.9, H_NQ = 685857, A_Q = 97.63, H_Q = 13757, zstd_size = 22936 bits, zstd_ratio = 1.61%, training_time = 2381s
-Epoch 20: A_NQ = 97.84, H_NQ = 685865, A_Q = 97.67, H_Q = 13740, zstd_size = 22672 bits, zstd_ratio = 1.59%, training_time = 2466s
-Epoch 21: A_NQ = 97.73, H_NQ = 685873, A_Q = 97.58, H_Q = 13857, zstd_size = 22392 bits, zstd_ratio = 1.58%, training_time = 2411s
-Epoch 22: A_NQ = 97.78, H_NQ = 685871, A_Q = 97.72, H_Q = 13151, zstd_size = 21824 bits, zstd_ratio = 1.54%, training_time = 2596s
-Epoch 23: A_NQ = 97.69, H_NQ = 685859, A_Q = 97.75, H_Q = 13114, zstd_size = 21904 bits, zstd_ratio = 1.54%, training_time = 2490s
-Epoch 24: A_NQ = 97.98, H_NQ = 685847, A_Q = 97.81, H_Q = 12724, zstd_size = 21152 bits, zstd_ratio = 1.49%, training_time = 2483s
-Epoch 25: A_NQ = 97.74, H_NQ = 685849, A_Q = 97.74, H_Q = 12763, zstd_size = 21152 bits, zstd_ratio = 1.49%, training_time = 2367s
-Epoch 26: A_NQ = 97.59, H_NQ = 685865, A_Q = 97.48, H_Q = 13227, zstd_size = 21816 bits, zstd_ratio = 1.53%, training_time = 2520s
-Epoch 27: A_NQ = 97.81, H_NQ = 685863, A_Q = 97.6, H_Q = 12677, zstd_size = 21304 bits, zstd_ratio = 1.50%, training_time = 2143s
-Epoch 28: A_NQ = 97.87, H_NQ = 685873, A_Q = 97.66, H_Q = 12684, zstd_size = 21248 bits, zstd_ratio = 1.49%, training_time = 2075s
-Epoch 29: A_NQ = 97.9, H_NQ = 685861, A_Q = 97.69, H_Q = 12634, zstd_size = 20936 bits, zstd_ratio = 1.47%, training_time = 2103s
-Epoch 30: A_NQ = 97.82, H_NQ = 685853, A_Q = 97.54, H_Q = 12219, zstd_size = 20664 bits, zstd_ratio = 1.45%, training_time = 2062s
-------------------------------------------------------------
-r = 1.1032
-Epoch 1: A_NQ = 85.21, H_NQ = 685881, A_Q = 84.97, H_Q = 225796, zstd_size = 329408 bits, zstd_ratio = 23.17%, training_time = 2244s
-Epoch 2: A_NQ = 91.19, H_NQ = 685877, A_Q = 93.51, H_Q = 110731, zstd_size = 170136 bits, zstd_ratio = 11.97%, training_time = 2539s
-Epoch 3: A_NQ = 93.84, H_NQ = 685883, A_Q = 95.06, H_Q = 59994, zstd_size = 95704 bits, zstd_ratio = 6.73%, training_time = 2501s
-Epoch 4: A_NQ = 94.1, H_NQ = 685881, A_Q = 95.53, H_Q = 38877, zstd_size = 62296 bits, zstd_ratio = 4.38%, training_time = 2497s
-Epoch 5: A_NQ = 96.74, H_NQ = 685863, A_Q = 96.94, H_Q = 28698, zstd_size = 45936 bits, zstd_ratio = 3.23%, training_time = 2292s
-Epoch 6: A_NQ = 96.77, H_NQ = 685871, A_Q = 97.05, H_Q = 24532, zstd_size = 39296 bits, zstd_ratio = 2.76%, training_time = 2625s
-Epoch 7: A_NQ = 97.2, H_NQ = 685873, A_Q = 97.31, H_Q = 21632, zstd_size = 34880 bits, zstd_ratio = 2.45%, training_time = 2277s
-Epoch 8: A_NQ = 97.27, H_NQ = 685887, A_Q = 97.3, H_Q = 19777, zstd_size = 31880 bits, zstd_ratio = 2.24%, training_time = 2294s
-Epoch 9: A_NQ = 97.59, H_NQ = 685871, A_Q = 97.62, H_Q = 18504, zstd_size = 29952 bits, zstd_ratio = 2.11%, training_time = 2408s
-Epoch 10: A_NQ = 97.28, H_NQ = 685863, A_Q = 97.54, H_Q = 17171, zstd_size = 28104 bits, zstd_ratio = 1.98%, training_time = 2623s
-Epoch 11: A_NQ = 97.36, H_NQ = 685869, A_Q = 97.34, H_Q = 16622, zstd_size = 26912 bits, zstd_ratio = 1.89%, training_time = 2306s
-Epoch 12: A_NQ = 96.89, H_NQ = 685863, A_Q = 97.21, H_Q = 16213, zstd_size = 26216 bits, zstd_ratio = 1.84%, training_time = 2279s
-Epoch 13: A_NQ = 97.6, H_NQ = 685873, A_Q = 97.83, H_Q = 15759, zstd_size = 25264 bits, zstd_ratio = 1.78%, training_time = 2342s
-Epoch 14: A_NQ = 97.65, H_NQ = 685851, A_Q = 97.77, H_Q = 15102, zstd_size = 24296 bits, zstd_ratio = 1.71%, training_time = 2657s
-Epoch 15: A_NQ = 97.69, H_NQ = 685875, A_Q = 97.6, H_Q = 14966, zstd_size = 23872 bits, zstd_ratio = 1.68%, training_time = 2407s
-Epoch 16: A_NQ = 97.3, H_NQ = 685871, A_Q = 97.49, H_Q = 14277, zstd_size = 23032 bits, zstd_ratio = 1.62%, training_time = 2415s
-Epoch 17: A_NQ = 97.71, H_NQ = 685857, A_Q = 97.66, H_Q = 13655, zstd_size = 22384 bits, zstd_ratio = 1.57%, training_time = 2446s
-Epoch 18: A_NQ = 97.76, H_NQ = 685863, A_Q = 97.8, H_Q = 13384, zstd_size = 21888 bits, zstd_ratio = 1.54%, training_time = 2533s
-Epoch 19: A_NQ = 97.75, H_NQ = 685865, A_Q = 97.86, H_Q = 13115, zstd_size = 21416 bits, zstd_ratio = 1.51%, training_time = 2424s
-Epoch 20: A_NQ = 97.73, H_NQ = 685867, A_Q = 97.83, H_Q = 13228, zstd_size = 21504 bits, zstd_ratio = 1.51%, training_time = 2438s
-Epoch 21: A_NQ = 97.84, H_NQ = 685843, A_Q = 97.8, H_Q = 13316, zstd_size = 21784 bits, zstd_ratio = 1.53%, training_time = 2435s
-Epoch 22: A_NQ = 97.76, H_NQ = 685869, A_Q = 97.83, H_Q = 12685, zstd_size = 21072 bits, zstd_ratio = 1.48%, training_time = 2556s
-Epoch 23: A_NQ = 97.72, H_NQ = 685861, A_Q = 97.71, H_Q = 12544, zstd_size = 20904 bits, zstd_ratio = 1.47%, training_time = 2433s
-Epoch 24: A_NQ = 97.6, H_NQ = 685867, A_Q = 97.7, H_Q = 12439, zstd_size = 20560 bits, zstd_ratio = 1.45%, training_time = 2441s
-Epoch 25: A_NQ = 97.9, H_NQ = 685855, A_Q = 97.9, H_Q = 12289, zstd_size = 20448 bits, zstd_ratio = 1.44%, training_time = 2383s
-Epoch 26: A_NQ = 97.69, H_NQ = 685861, A_Q = 97.68, H_Q = 12163, zstd_size = 20240 bits, zstd_ratio = 1.42%, training_time = 2373s
-Epoch 27: A_NQ = 97.77, H_NQ = 685859, A_Q = 97.66, H_Q = 12675, zstd_size = 20936 bits, zstd_ratio = 1.47%, training_time = 2466s
-Epoch 28: A_NQ = 97.82, H_NQ = 685839, A_Q = 97.82, H_Q = 12365, zstd_size = 20512 bits, zstd_ratio = 1.44%, training_time = 2101s
-Epoch 29: A_NQ = 97.73, H_NQ = 685861, A_Q = 97.97, H_Q = 12138, zstd_size = 20192 bits, zstd_ratio = 1.42%, training_time = 2084s
-Epoch 30: A_NQ = 97.85, H_NQ = 685861, A_Q = 97.74, H_Q = 11933, zstd_size = 20144 bits, zstd_ratio = 1.42%, training_time = 1796s
-------------------------------------------------------------
-r = 1.1015
-Epoch 1: A_NQ = 92.38, H_NQ = 685883, A_Q = 92.47, H_Q = 130956, zstd_size = 196584 bits, zstd_ratio = 13.83%, training_time = 2313s
-Epoch 2: A_NQ = 95.47, H_NQ = 685885, A_Q = 95.15, H_Q = 70204, zstd_size = 106208 bits, zstd_ratio = 7.47%, training_time = 2635s
-Epoch 3: A_NQ = 96.38, H_NQ = 685887, A_Q = 95.19, H_Q = 42780, zstd_size = 66792 bits, zstd_ratio = 4.70%, training_time = 2288s
-Epoch 4: A_NQ = 96.86, H_NQ = 685869, A_Q = 96.78, H_Q = 29145, zstd_size = 47000 bits, zstd_ratio = 3.31%, training_time = 2471s
-Epoch 5: A_NQ = 97.34, H_NQ = 685879, A_Q = 97.29, H_Q = 23972, zstd_size = 38640 bits, zstd_ratio = 2.72%, training_time = 2583s
-Epoch 6: A_NQ = 97.51, H_NQ = 685869, A_Q = 97.54, H_Q = 21129, zstd_size = 34264 bits, zstd_ratio = 2.41%, training_time = 2288s
-Epoch 7: A_NQ = 97.76, H_NQ = 685877, A_Q = 97.41, H_Q = 19608, zstd_size = 31824 bits, zstd_ratio = 2.24%, training_time = 2249s
-Epoch 8: A_NQ = 97.46, H_NQ = 685857, A_Q = 97.05, H_Q = 18262, zstd_size = 29536 bits, zstd_ratio = 2.08%, training_time = 2342s
-Epoch 9: A_NQ = 97.8, H_NQ = 685857, A_Q = 97.51, H_Q = 17109, zstd_size = 28048 bits, zstd_ratio = 1.97%, training_time = 2569s
-Epoch 10: A_NQ = 97.74, H_NQ = 685853, A_Q = 97.65, H_Q = 16542, zstd_size = 26776 bits, zstd_ratio = 1.88%, training_time = 2276s
-Epoch 11: A_NQ = 97.24, H_NQ = 685839, A_Q = 97.47, H_Q = 16143, zstd_size = 26168 bits, zstd_ratio = 1.84%, training_time = 2253s
-Epoch 12: A_NQ = 97.45, H_NQ = 685835, A_Q = 97.51, H_Q = 14992, zstd_size = 24288 bits, zstd_ratio = 1.71%, training_time = 2345s
-Epoch 13: A_NQ = 97.83, H_NQ = 685847, A_Q = 97.39, H_Q = 14747, zstd_size = 24064 bits, zstd_ratio = 1.69%, training_time = 2597s
-Epoch 14: A_NQ = 97.65, H_NQ = 685869, A_Q = 97.02, H_Q = 14589, zstd_size = 23696 bits, zstd_ratio = 1.67%, training_time = 2289s
-Epoch 15: A_NQ = 97.87, H_NQ = 685861, A_Q = 97.71, H_Q = 13996, zstd_size = 23168 bits, zstd_ratio = 1.63%, training_time = 2344s
-Epoch 16: A_NQ = 97.87, H_NQ = 685861, A_Q = 97.86, H_Q = 13845, zstd_size = 22736 bits, zstd_ratio = 1.60%, training_time = 2303s
-Epoch 17: A_NQ = 97.59, H_NQ = 685867, A_Q = 97.64, H_Q = 13890, zstd_size = 22624 bits, zstd_ratio = 1.59%, training_time = 2530s
-Epoch 18: A_NQ = 97.98, H_NQ = 685877, A_Q = 97.96, H_Q = 13872, zstd_size = 22368 bits, zstd_ratio = 1.57%, training_time = 2306s
-Epoch 19: A_NQ = 97.92, H_NQ = 685849, A_Q = 97.82, H_Q = 13420, zstd_size = 21408 bits, zstd_ratio = 1.51%, training_time = 2459s
-Epoch 20: A_NQ = 97.93, H_NQ = 685869, A_Q = 97.86, H_Q = 13328, zstd_size = 21520 bits, zstd_ratio = 1.51%, training_time = 2515s
-Epoch 21: A_NQ = 97.48, H_NQ = 685857, A_Q = 97.87, H_Q = 13393, zstd_size = 21576 bits, zstd_ratio = 1.52%, training_time = 2517s
-Epoch 22: A_NQ = 97.95, H_NQ = 685879, A_Q = 97.73, H_Q = 13553, zstd_size = 21616 bits, zstd_ratio = 1.52%, training_time = 2509s
-Epoch 23: A_NQ = 97.77, H_NQ = 685855, A_Q = 97.85, H_Q = 13216, zstd_size = 21152 bits, zstd_ratio = 1.49%, training_time = 2477s
-Epoch 24: A_NQ = 97.9, H_NQ = 685855, A_Q = 97.93, H_Q = 12806, zstd_size = 20752 bits, zstd_ratio = 1.46%, training_time = 2491s
-Epoch 25: A_NQ = 97.08, H_NQ = 685875, A_Q = 97.11, H_Q = 12781, zstd_size = 20824 bits, zstd_ratio = 1.46%, training_time = 2469s
-Epoch 26: A_NQ = 97.87, H_NQ = 685859, A_Q = 97.79, H_Q = 13083, zstd_size = 20824 bits, zstd_ratio = 1.46%, training_time = 2439s
-Epoch 27: A_NQ = 97.79, H_NQ = 685847, A_Q = 97.83, H_Q = 13423, zstd_size = 21336 bits, zstd_ratio = 1.50%, training_time = 2393s
-Epoch 28: A_NQ = 98.11, H_NQ = 685853, A_Q = 98.05, H_Q = 12649, zstd_size = 20400 bits, zstd_ratio = 1.43%, training_time = 2224s
-Epoch 29: A_NQ = 98.07, H_NQ = 685855, A_Q = 97.57, H_Q = 13030, zstd_size = 20768 bits, zstd_ratio = 1.46%, training_time = 2328s
-Epoch 30: A_NQ = 97.84, H_NQ = 685865, A_Q = 97.86, H_Q = 12465, zstd_size = 20224 bits, zstd_ratio = 1.42%, training_time = 1859s
-------------------------------------------------------------
-r = 1.1007
-Epoch 1: A_NQ = 87.83, H_NQ = 685883, A_Q = 89.33, H_Q = 147895, zstd_size = 221552 bits, zstd_ratio = 15.58%, training_time = 2286s
-Epoch 2: A_NQ = 93.57, H_NQ = 685887, A_Q = 94.81, H_Q = 78711, zstd_size = 118280 bits, zstd_ratio = 8.32%, training_time = 2560s
-Epoch 3: A_NQ = 94.81, H_NQ = 685885, A_Q = 95.75, H_Q = 50550, zstd_size = 77736 bits, zstd_ratio = 5.47%, training_time = 2457s
-Epoch 4: A_NQ = 96.32, H_NQ = 685873, A_Q = 96.62, H_Q = 36475, zstd_size = 56240 bits, zstd_ratio = 3.96%, training_time = 2349s
-Epoch 5: A_NQ = 96.08, H_NQ = 685879, A_Q = 96.85, H_Q = 29078, zstd_size = 44856 bits, zstd_ratio = 3.16%, training_time = 2391s
-Epoch 6: A_NQ = 96.74, H_NQ = 685877, A_Q = 96.13, H_Q = 25944, zstd_size = 40136 bits, zstd_ratio = 2.82%, training_time = 2547s
-Epoch 7: A_NQ = 96.42, H_NQ = 685875, A_Q = 96.78, H_Q = 22847, zstd_size = 35976 bits, zstd_ratio = 2.53%, training_time = 2369s
-Epoch 8: A_NQ = 96.98, H_NQ = 685875, A_Q = 97.08, H_Q = 21153, zstd_size = 33664 bits, zstd_ratio = 2.37%, training_time = 2415s
-Epoch 9: A_NQ = 97.05, H_NQ = 685873, A_Q = 97.2, H_Q = 19188, zstd_size = 30632 bits, zstd_ratio = 2.15%, training_time = 2451s
-Epoch 10: A_NQ = 97.15, H_NQ = 685865, A_Q = 97.24, H_Q = 18224, zstd_size = 29192 bits, zstd_ratio = 2.05%, training_time = 2512s
-Epoch 11: A_NQ = 97.41, H_NQ = 685859, A_Q = 97.35, H_Q = 17221, zstd_size = 27624 bits, zstd_ratio = 1.94%, training_time = 2471s
-Epoch 12: A_NQ = 96.75, H_NQ = 685857, A_Q = 96.96, H_Q = 16543, zstd_size = 26528 bits, zstd_ratio = 1.87%, training_time = 2475s
-Epoch 13: A_NQ = 97.64, H_NQ = 685869, A_Q = 97.47, H_Q = 15991, zstd_size = 25720 bits, zstd_ratio = 1.81%, training_time = 2468s
-Epoch 14: A_NQ = 97.42, H_NQ = 685849, A_Q = 97.51, H_Q = 15130, zstd_size = 24496 bits, zstd_ratio = 1.72%, training_time = 2519s
-Epoch 15: A_NQ = 97.12, H_NQ = 685867, A_Q = 97.31, H_Q = 14879, zstd_size = 24008 bits, zstd_ratio = 1.69%, training_time = 2481s
-Epoch 16: A_NQ = 97.41, H_NQ = 685857, A_Q = 97.55, H_Q = 14246, zstd_size = 23104 bits, zstd_ratio = 1.63%, training_time = 2495s
-Epoch 17: A_NQ = 97.58, H_NQ = 685851, A_Q = 97.53, H_Q = 13949, zstd_size = 22688 bits, zstd_ratio = 1.60%, training_time = 2478s
-Epoch 18: A_NQ = 97.59, H_NQ = 685863, A_Q = 97.45, H_Q = 13904, zstd_size = 22632 bits, zstd_ratio = 1.59%, training_time = 2356s
-Epoch 19: A_NQ = 97.78, H_NQ = 685861, A_Q = 97.59, H_Q = 13435, zstd_size = 22232 bits, zstd_ratio = 1.56%, training_time = 2503s
-Epoch 20: A_NQ = 97.59, H_NQ = 685851, A_Q = 97.52, H_Q = 13486, zstd_size = 22032 bits, zstd_ratio = 1.55%, training_time = 2311s
-Epoch 21: A_NQ = 97.8, H_NQ = 685863, A_Q = 97.58, H_Q = 13425, zstd_size = 21800 bits, zstd_ratio = 1.53%, training_time = 2351s
-Epoch 22: A_NQ = 97.65, H_NQ = 685875, A_Q = 97.59, H_Q = 12976, zstd_size = 21424 bits, zstd_ratio = 1.51%, training_time = 2429s
-Epoch 23: A_NQ = 97.55, H_NQ = 685867, A_Q = 97.76, H_Q = 12586, zstd_size = 20472 bits, zstd_ratio = 1.44%, training_time = 2505s
-Epoch 24: A_NQ = 97.85, H_NQ = 685859, A_Q = 97.71, H_Q = 12115, zstd_size = 19984 bits, zstd_ratio = 1.41%, training_time = 2400s
-Epoch 25: A_NQ = 97.74, H_NQ = 685873, A_Q = 97.77, H_Q = 11965, zstd_size = 19520 bits, zstd_ratio = 1.37%, training_time = 2310s
-Epoch 26: A_NQ = 97.83, H_NQ = 685869, A_Q = 97.83, H_Q = 11865, zstd_size = 19280 bits, zstd_ratio = 1.36%, training_time = 2376s
-Epoch 27: A_NQ = 98.03, H_NQ = 685849, A_Q = 97.85, H_Q = 11736, zstd_size = 19016 bits, zstd_ratio = 1.34%, training_time = 2379s
-Epoch 28: A_NQ = 97.99, H_NQ = 685863, A_Q = 97.8, H_Q = 11288, zstd_size = 18536 bits, zstd_ratio = 1.30%, training_time = 2273s
-Epoch 29: A_NQ = 97.81, H_NQ = 685871, A_Q = 97.73, H_Q = 11230, zstd_size = 18768 bits, zstd_ratio = 1.32%, training_time = 2220s
-Epoch 30: A_NQ = 97.82, H_NQ = 685875, A_Q = 97.57, H_Q = 12937, zstd_size = 19536 bits, zstd_ratio = 1.37%, training_time = 1770s
-------------------------------------------------------------
-r = 1.1013
-Epoch 1: A_NQ = 87.86, H_NQ = 685891, A_Q = 87.18, H_Q = 105752, zstd_size = 162992 bits, zstd_ratio = 11.47%, training_time = 2326s
-Epoch 2: A_NQ = 92.8, H_NQ = 685881, A_Q = 91.05, H_Q = 66838, zstd_size = 101472 bits, zstd_ratio = 7.14%, training_time = 2515s
-Epoch 3: A_NQ = 94.68, H_NQ = 685877, A_Q = 84.88, H_Q = 45567, zstd_size = 69800 bits, zstd_ratio = 4.91%, training_time = 2499s
-Epoch 4: A_NQ = 95.2, H_NQ = 685883, A_Q = 87.52, H_Q = 31703, zstd_size = 50016 bits, zstd_ratio = 3.52%, training_time = 2424s
-Epoch 5: A_NQ = 96.33, H_NQ = 685879, A_Q = 90.87, H_Q = 24862, zstd_size = 39760 bits, zstd_ratio = 2.80%, training_time = 2452s
-Epoch 6: A_NQ = 96.0, H_NQ = 685871, A_Q = 94.66, H_Q = 22000, zstd_size = 35216 bits, zstd_ratio = 2.48%, training_time = 2489s
-Epoch 7: A_NQ = 96.45, H_NQ = 685883, A_Q = 95.71, H_Q = 19886, zstd_size = 32032 bits, zstd_ratio = 2.25%, training_time = 2405s
-Epoch 8: A_NQ = 96.95, H_NQ = 685875, A_Q = 95.72, H_Q = 18363, zstd_size = 29856 bits, zstd_ratio = 2.10%, training_time = 2432s
-Epoch 9: A_NQ = 97.17, H_NQ = 685843, A_Q = 96.91, H_Q = 17342, zstd_size = 28352 bits, zstd_ratio = 1.99%, training_time = 2449s
-Epoch 10: A_NQ = 97.26, H_NQ = 685861, A_Q = 96.74, H_Q = 17107, zstd_size = 27912 bits, zstd_ratio = 1.96%, training_time = 2470s
-Epoch 11: A_NQ = 97.48, H_NQ = 685873, A_Q = 96.95, H_Q = 16739, zstd_size = 27256 bits, zstd_ratio = 1.92%, training_time = 2448s
-Epoch 12: A_NQ = 97.64, H_NQ = 685871, A_Q = 97.32, H_Q = 16278, zstd_size = 26696 bits, zstd_ratio = 1.88%, training_time = 2455s
-Epoch 13: A_NQ = 97.54, H_NQ = 685879, A_Q = 96.75, H_Q = 15360, zstd_size = 25432 bits, zstd_ratio = 1.79%, training_time = 2476s
-Epoch 14: A_NQ = 97.74, H_NQ = 685865, A_Q = 97.36, H_Q = 15435, zstd_size = 25512 bits, zstd_ratio = 1.79%, training_time = 2482s
-Epoch 15: A_NQ = 97.47, H_NQ = 685865, A_Q = 97.15, H_Q = 15214, zstd_size = 24872 bits, zstd_ratio = 1.75%, training_time = 2471s
-Epoch 16: A_NQ = 97.5, H_NQ = 685867, A_Q = 97.25, H_Q = 15004, zstd_size = 24800 bits, zstd_ratio = 1.74%, training_time = 2463s
-Epoch 17: A_NQ = 97.62, H_NQ = 685873, A_Q = 97.51, H_Q = 14678, zstd_size = 24280 bits, zstd_ratio = 1.71%, training_time = 2487s
-Epoch 18: A_NQ = 97.41, H_NQ = 685879, A_Q = 97.28, H_Q = 14822, zstd_size = 24320 bits, zstd_ratio = 1.71%, training_time = 2473s
-Epoch 19: A_NQ = 97.55, H_NQ = 685865, A_Q = 97.32, H_Q = 14538, zstd_size = 23992 bits, zstd_ratio = 1.69%, training_time = 2468s
-Epoch 20: A_NQ = 97.6, H_NQ = 685855, A_Q = 97.57, H_Q = 14151, zstd_size = 23360 bits, zstd_ratio = 1.64%, training_time = 2466s
-Epoch 21: A_NQ = 97.56, H_NQ = 685865, A_Q = 97.45, H_Q = 13962, zstd_size = 23136 bits, zstd_ratio = 1.63%, training_time = 2474s
-Epoch 22: A_NQ = 97.9, H_NQ = 685863, A_Q = 97.75, H_Q = 13529, zstd_size = 22456 bits, zstd_ratio = 1.58%, training_time = 2472s
-Epoch 23: A_NQ = 97.36, H_NQ = 685863, A_Q = 97.56, H_Q = 13634, zstd_size = 22632 bits, zstd_ratio = 1.59%, training_time = 2477s
-Epoch 24: A_NQ = 97.89, H_NQ = 685865, A_Q = 97.67, H_Q = 13410, zstd_size = 22248 bits, zstd_ratio = 1.56%, training_time = 2453s
-Epoch 25: A_NQ = 97.7, H_NQ = 685865, A_Q = 97.6, H_Q = 13267, zstd_size = 22184 bits, zstd_ratio = 1.56%, training_time = 2408s
-Epoch 26: A_NQ = 97.02, H_NQ = 685859, A_Q = 97.55, H_Q = 13339, zstd_size = 21776 bits, zstd_ratio = 1.53%, training_time = 2408s
-Epoch 27: A_NQ = 97.8, H_NQ = 685857, A_Q = 97.69, H_Q = 13009, zstd_size = 21648 bits, zstd_ratio = 1.52%, training_time = 2308s
-Epoch 28: A_NQ = 97.66, H_NQ = 685879, A_Q = 97.79, H_Q = 13268, zstd_size = 21696 bits, zstd_ratio = 1.53%, training_time = 2270s
-Epoch 29: A_NQ = 97.86, H_NQ = 685857, A_Q = 97.48, H_Q = 12915, zstd_size = 21600 bits, zstd_ratio = 1.52%, training_time = 2225s
-Epoch 30: A_NQ = 97.94, H_NQ = 685853, A_Q = 97.69, H_Q = 12934, zstd_size = 21488 bits, zstd_ratio = 1.51%, training_time = 1585s
-------------------------------------------------------------
-r = 1.1024
-Epoch 1: A_NQ = 90.96, H_NQ = 685893, A_Q = 91.17, H_Q = 138599, zstd_size = 206656 bits, zstd_ratio = 14.54%, training_time = 2379s
-Epoch 2: A_NQ = 93.53, H_NQ = 685881, A_Q = 94.64, H_Q = 79555, zstd_size = 121480 bits, zstd_ratio = 8.55%, training_time = 2536s
-Epoch 3: A_NQ = 95.8, H_NQ = 685881, A_Q = 95.64, H_Q = 46386, zstd_size = 72960 bits, zstd_ratio = 5.13%, training_time = 2490s
-Epoch 4: A_NQ = 96.02, H_NQ = 685873, A_Q = 96.26, H_Q = 30927, zstd_size = 49416 bits, zstd_ratio = 3.48%, training_time = 2488s
-Epoch 5: A_NQ = 96.65, H_NQ = 685867, A_Q = 96.66, H_Q = 24440, zstd_size = 39152 bits, zstd_ratio = 2.75%, training_time = 2326s
-Epoch 6: A_NQ = 96.94, H_NQ = 685873, A_Q = 96.87, H_Q = 21404, zstd_size = 34168 bits, zstd_ratio = 2.40%, training_time = 2457s
-Epoch 7: A_NQ = 97.02, H_NQ = 685859, A_Q = 97.19, H_Q = 19768, zstd_size = 31424 bits, zstd_ratio = 2.21%, training_time = 2472s
-Epoch 8: A_NQ = 96.14, H_NQ = 685863, A_Q = 97.18, H_Q = 18661, zstd_size = 29400 bits, zstd_ratio = 2.07%, training_time = 2400s
-Epoch 9: A_NQ = 97.38, H_NQ = 685867, A_Q = 97.32, H_Q = 17156, zstd_size = 27552 bits, zstd_ratio = 1.94%, training_time = 2431s
-Epoch 10: A_NQ = 97.39, H_NQ = 685849, A_Q = 97.48, H_Q = 17101, zstd_size = 27528 bits, zstd_ratio = 1.94%, training_time = 2450s
-Epoch 11: A_NQ = 97.58, H_NQ = 685853, A_Q = 97.53, H_Q = 16004, zstd_size = 25816 bits, zstd_ratio = 1.82%, training_time = 2514s
-Epoch 12: A_NQ = 97.53, H_NQ = 685855, A_Q = 97.64, H_Q = 15892, zstd_size = 25440 bits, zstd_ratio = 1.79%, training_time = 2428s
-Epoch 13: A_NQ = 97.75, H_NQ = 685849, A_Q = 97.62, H_Q = 15278, zstd_size = 24808 bits, zstd_ratio = 1.75%, training_time = 2445s
-Epoch 14: A_NQ = 97.12, H_NQ = 685845, A_Q = 97.16, H_Q = 14835, zstd_size = 24080 bits, zstd_ratio = 1.69%, training_time = 2498s
-Epoch 15: A_NQ = 97.25, H_NQ = 685857, A_Q = 97.22, H_Q = 14688, zstd_size = 23768 bits, zstd_ratio = 1.67%, training_time = 2549s
-Epoch 16: A_NQ = 97.75, H_NQ = 685861, A_Q = 97.62, H_Q = 14514, zstd_size = 23200 bits, zstd_ratio = 1.63%, training_time = 2437s
-Epoch 17: A_NQ = 97.56, H_NQ = 685859, A_Q = 97.6, H_Q = 13782, zstd_size = 22440 bits, zstd_ratio = 1.58%, training_time = 2433s
-Epoch 18: A_NQ = 97.65, H_NQ = 685871, A_Q = 97.71, H_Q = 13792, zstd_size = 21968 bits, zstd_ratio = 1.55%, training_time = 2456s
-Epoch 19: A_NQ = 97.63, H_NQ = 685873, A_Q = 97.65, H_Q = 13298, zstd_size = 21176 bits, zstd_ratio = 1.49%, training_time = 2499s
-Epoch 20: A_NQ = 97.54, H_NQ = 685857, A_Q = 97.6, H_Q = 12897, zstd_size = 20704 bits, zstd_ratio = 1.46%, training_time = 2557s
-Epoch 21: A_NQ = 97.49, H_NQ = 685855, A_Q = 97.57, H_Q = 12670, zstd_size = 20288 bits, zstd_ratio = 1.43%, training_time = 2454s
-Epoch 22: A_NQ = 96.94, H_NQ = 685863, A_Q = 97.56, H_Q = 12767, zstd_size = 20760 bits, zstd_ratio = 1.46%, training_time = 2449s
-Epoch 23: A_NQ = 97.68, H_NQ = 685869, A_Q = 97.71, H_Q = 12648, zstd_size = 20320 bits, zstd_ratio = 1.43%, training_time = 2451s
-Epoch 24: A_NQ = 97.9, H_NQ = 685853, A_Q = 97.86, H_Q = 12420, zstd_size = 20296 bits, zstd_ratio = 1.43%, training_time = 2528s
-Epoch 25: A_NQ = 97.56, H_NQ = 685847, A_Q = 97.73, H_Q = 12795, zstd_size = 20176 bits, zstd_ratio = 1.42%, training_time = 2359s
-Epoch 26: A_NQ = 97.83, H_NQ = 685853, A_Q = 97.72, H_Q = 12417, zstd_size = 19944 bits, zstd_ratio = 1.40%, training_time = 2429s
-Epoch 27: A_NQ = 97.42, H_NQ = 685859, A_Q = 97.51, H_Q = 12308, zstd_size = 19832 bits, zstd_ratio = 1.40%, training_time = 2295s
-Epoch 28: A_NQ = 97.77, H_NQ = 685865, A_Q = 97.74, H_Q = 12020, zstd_size = 19456 bits, zstd_ratio = 1.37%, training_time = 2322s
-Epoch 29: A_NQ = 97.76, H_NQ = 685859, A_Q = 97.91, H_Q = 12199, zstd_size = 19816 bits, zstd_ratio = 1.39%, training_time = 2175s
-Epoch 30: A_NQ = 97.5, H_NQ = 685869, A_Q = 97.67, H_Q = 12240, zstd_size = 19392 bits, zstd_ratio = 1.36%, training_time = 1578s
-------------------------------------------------------------
-r = 1.1002
-Epoch 1: A_NQ = 87.06, H_NQ = 685889, A_Q = 87.38, H_Q = 218092, zstd_size = 319544 bits, zstd_ratio = 22.48%, training_time = 2399s
-Epoch 2: A_NQ = 93.36, H_NQ = 685877, A_Q = 93.76, H_Q = 99995, zstd_size = 153536 bits, zstd_ratio = 10.80%, training_time = 2491s
-Epoch 3: A_NQ = 93.72, H_NQ = 685887, A_Q = 94.34, H_Q = 55519, zstd_size = 87616 bits, zstd_ratio = 6.16%, training_time = 2448s
-Epoch 4: A_NQ = 95.78, H_NQ = 685881, A_Q = 96.01, H_Q = 36466, zstd_size = 57968 bits, zstd_ratio = 4.08%, training_time = 2471s
-Epoch 5: A_NQ = 96.28, H_NQ = 685865, A_Q = 96.46, H_Q = 28130, zstd_size = 45280 bits, zstd_ratio = 3.19%, training_time = 2448s
-Epoch 6: A_NQ = 96.3, H_NQ = 685877, A_Q = 96.61, H_Q = 24466, zstd_size = 39712 bits, zstd_ratio = 2.79%, training_time = 2488s
-Epoch 7: A_NQ = 96.44, H_NQ = 685877, A_Q = 96.83, H_Q = 21257, zstd_size = 34888 bits, zstd_ratio = 2.45%, training_time = 2407s
-Epoch 8: A_NQ = 96.76, H_NQ = 685875, A_Q = 97.11, H_Q = 19746, zstd_size = 32072 bits, zstd_ratio = 2.26%, training_time = 2445s
-Epoch 9: A_NQ = 96.93, H_NQ = 685859, A_Q = 97.11, H_Q = 18118, zstd_size = 29808 bits, zstd_ratio = 2.10%, training_time = 2450s
-Epoch 10: A_NQ = 97.27, H_NQ = 685857, A_Q = 97.34, H_Q = 17455, zstd_size = 28464 bits, zstd_ratio = 2.00%, training_time = 2468s
-Epoch 11: A_NQ = 97.22, H_NQ = 685869, A_Q = 97.27, H_Q = 17209, zstd_size = 27800 bits, zstd_ratio = 1.96%, training_time = 2466s
-Epoch 12: A_NQ = 97.42, H_NQ = 685875, A_Q = 97.35, H_Q = 16686, zstd_size = 26848 bits, zstd_ratio = 1.89%, training_time = 2473s
-Epoch 13: A_NQ = 97.13, H_NQ = 685857, A_Q = 97.5, H_Q = 16352, zstd_size = 26672 bits, zstd_ratio = 1.88%, training_time = 2479s
-Epoch 14: A_NQ = 96.74, H_NQ = 685879, A_Q = 97.15, H_Q = 16250, zstd_size = 26416 bits, zstd_ratio = 1.86%, training_time = 2485s
-Epoch 15: A_NQ = 97.08, H_NQ = 685861, A_Q = 97.27, H_Q = 15835, zstd_size = 25920 bits, zstd_ratio = 1.82%, training_time = 2481s
-Epoch 16: A_NQ = 97.49, H_NQ = 685863, A_Q = 97.52, H_Q = 15477, zstd_size = 25488 bits, zstd_ratio = 1.79%, training_time = 2486s
-Epoch 17: A_NQ = 97.62, H_NQ = 685857, A_Q = 97.57, H_Q = 14913, zstd_size = 24704 bits, zstd_ratio = 1.74%, training_time = 2493s
-Epoch 18: A_NQ = 97.59, H_NQ = 685877, A_Q = 97.57, H_Q = 15483, zstd_size = 24928 bits, zstd_ratio = 1.75%, training_time = 2487s
-Epoch 19: A_NQ = 97.68, H_NQ = 685855, A_Q = 97.51, H_Q = 14635, zstd_size = 24288 bits, zstd_ratio = 1.71%, training_time = 2487s
-Epoch 20: A_NQ = 97.35, H_NQ = 685855, A_Q = 97.43, H_Q = 14442, zstd_size = 23960 bits, zstd_ratio = 1.69%, training_time = 2484s
-Epoch 21: A_NQ = 97.56, H_NQ = 685859, A_Q = 97.68, H_Q = 14463, zstd_size = 23984 bits, zstd_ratio = 1.69%, training_time = 2482s
-Epoch 22: A_NQ = 97.87, H_NQ = 685851, A_Q = 97.78, H_Q = 14037, zstd_size = 23584 bits, zstd_ratio = 1.66%, training_time = 2491s
-Epoch 23: A_NQ = 97.82, H_NQ = 685849, A_Q = 97.73, H_Q = 14299, zstd_size = 23656 bits, zstd_ratio = 1.66%, training_time = 2489s
-Epoch 24: A_NQ = 97.7, H_NQ = 685859, A_Q = 97.69, H_Q = 14366, zstd_size = 23560 bits, zstd_ratio = 1.66%, training_time = 2465s
-Epoch 25: A_NQ = 97.78, H_NQ = 685857, A_Q = 97.79, H_Q = 14221, zstd_size = 23568 bits, zstd_ratio = 1.66%, training_time = 2414s
-Epoch 26: A_NQ = 97.76, H_NQ = 685861, A_Q = 97.78, H_Q = 13880, zstd_size = 23056 bits, zstd_ratio = 1.62%, training_time = 2416s
-Epoch 27: A_NQ = 97.67, H_NQ = 685873, A_Q = 97.76, H_Q = 13678, zstd_size = 22800 bits, zstd_ratio = 1.60%, training_time = 2313s
-Epoch 28: A_NQ = 97.84, H_NQ = 685869, A_Q = 97.85, H_Q = 13337, zstd_size = 22408 bits, zstd_ratio = 1.58%, training_time = 2284s
-Epoch 29: A_NQ = 97.98, H_NQ = 685875, A_Q = 97.83, H_Q = 13199, zstd_size = 22008 bits, zstd_ratio = 1.55%, training_time = 2205s
-Epoch 30: A_NQ = 97.96, H_NQ = 685853, A_Q = 97.95, H_Q = 13090, zstd_size = 22144 bits, zstd_ratio = 1.56%, training_time = 1512s
-------------------------------------------------------------
-r = 1.1027
-Epoch 1: A_NQ = 89.4, H_NQ = 685875, A_Q = 90.27, H_Q = 135870, zstd_size = 204088 bits, zstd_ratio = 14.36%, training_time = 2429s
-Epoch 2: A_NQ = 93.17, H_NQ = 685893, A_Q = 91.41, H_Q = 77461, zstd_size = 116624 bits, zstd_ratio = 8.20%, training_time = 2489s
-Epoch 3: A_NQ = 94.95, H_NQ = 685885, A_Q = 92.13, H_Q = 49069, zstd_size = 76048 bits, zstd_ratio = 5.35%, training_time = 2612s
-Epoch 4: A_NQ = 96.06, H_NQ = 685869, A_Q = 95.0, H_Q = 34923, zstd_size = 54720 bits, zstd_ratio = 3.85%, training_time = 2451s
-Epoch 5: A_NQ = 96.14, H_NQ = 685877, A_Q = 95.95, H_Q = 28316, zstd_size = 44624 bits, zstd_ratio = 3.14%, training_time = 2470s
-Epoch 6: A_NQ = 96.36, H_NQ = 685861, A_Q = 96.89, H_Q = 24267, zstd_size = 38440 bits, zstd_ratio = 2.70%, training_time = 2497s
-Epoch 7: A_NQ = 96.94, H_NQ = 685873, A_Q = 96.94, H_Q = 22089, zstd_size = 34480 bits, zstd_ratio = 2.43%, training_time = 2430s
-Epoch 8: A_NQ = 96.94, H_NQ = 685859, A_Q = 96.82, H_Q = 20030, zstd_size = 32216 bits, zstd_ratio = 2.27%, training_time = 2448s
-Epoch 9: A_NQ = 97.07, H_NQ = 685865, A_Q = 97.07, H_Q = 19493, zstd_size = 30504 bits, zstd_ratio = 2.15%, training_time = 2464s
-Epoch 10: A_NQ = 97.08, H_NQ = 685885, A_Q = 97.16, H_Q = 18760, zstd_size = 29344 bits, zstd_ratio = 2.06%, training_time = 2476s
-Epoch 11: A_NQ = 96.76, H_NQ = 685867, A_Q = 96.89, H_Q = 17359, zstd_size = 26944 bits, zstd_ratio = 1.90%, training_time = 2455s
-Epoch 12: A_NQ = 97.07, H_NQ = 685869, A_Q = 96.91, H_Q = 16917, zstd_size = 26824 bits, zstd_ratio = 1.89%, training_time = 2461s
-Epoch 13: A_NQ = 96.82, H_NQ = 685875, A_Q = 97.07, H_Q = 16492, zstd_size = 25840 bits, zstd_ratio = 1.82%, training_time = 2473s
-Epoch 14: A_NQ = 97.47, H_NQ = 685853, A_Q = 97.21, H_Q = 15811, zstd_size = 25088 bits, zstd_ratio = 1.76%, training_time = 2471s
-Epoch 15: A_NQ = 97.13, H_NQ = 685853, A_Q = 97.28, H_Q = 15137, zstd_size = 24144 bits, zstd_ratio = 1.70%, training_time = 2469s
-Epoch 16: A_NQ = 97.39, H_NQ = 685861, A_Q = 97.4, H_Q = 14939, zstd_size = 24048 bits, zstd_ratio = 1.69%, training_time = 2475s
-Epoch 17: A_NQ = 97.39, H_NQ = 685851, A_Q = 97.18, H_Q = 14802, zstd_size = 23488 bits, zstd_ratio = 1.65%, training_time = 2489s
-Epoch 18: A_NQ = 97.33, H_NQ = 685861, A_Q = 97.16, H_Q = 14563, zstd_size = 23488 bits, zstd_ratio = 1.65%, training_time = 2478s
-Epoch 19: A_NQ = 97.71, H_NQ = 685867, A_Q = 97.41, H_Q = 14588, zstd_size = 23312 bits, zstd_ratio = 1.64%, training_time = 2478s
-Epoch 20: A_NQ = 97.51, H_NQ = 685865, A_Q = 97.44, H_Q = 14151, zstd_size = 22672 bits, zstd_ratio = 1.59%, training_time = 2474s
-Epoch 21: A_NQ = 97.45, H_NQ = 685869, A_Q = 97.43, H_Q = 14505, zstd_size = 22784 bits, zstd_ratio = 1.60%, training_time = 2474s
-Epoch 22: A_NQ = 97.54, H_NQ = 685865, A_Q = 97.38, H_Q = 13920, zstd_size = 22688 bits, zstd_ratio = 1.60%, training_time = 2485s
-Epoch 23: A_NQ = 96.91, H_NQ = 685859, A_Q = 97.4, H_Q = 13769, zstd_size = 22240 bits, zstd_ratio = 1.56%, training_time = 2476s
-Epoch 24: A_NQ = 97.51, H_NQ = 685881, A_Q = 97.39, H_Q = 13455, zstd_size = 21712 bits, zstd_ratio = 1.53%, training_time = 2448s
-Epoch 25: A_NQ = 97.64, H_NQ = 685851, A_Q = 97.65, H_Q = 13688, zstd_size = 21872 bits, zstd_ratio = 1.54%, training_time = 2394s
-Epoch 26: A_NQ = 97.61, H_NQ = 685851, A_Q = 97.46, H_Q = 13908, zstd_size = 22176 bits, zstd_ratio = 1.56%, training_time = 2390s
-Epoch 27: A_NQ = 97.36, H_NQ = 685843, A_Q = 97.63, H_Q = 13341, zstd_size = 21432 bits, zstd_ratio = 1.51%, training_time = 2283s
-Epoch 28: A_NQ = 97.51, H_NQ = 685861, A_Q = 97.38, H_Q = 13613, zstd_size = 21896 bits, zstd_ratio = 1.54%, training_time = 2259s
-Epoch 29: A_NQ = 97.66, H_NQ = 685867, A_Q = 97.67, H_Q = 13558, zstd_size = 21496 bits, zstd_ratio = 1.51%, training_time = 2187s
-Epoch 30: A_NQ = 97.78, H_NQ = 685849, A_Q = 97.63, H_Q = 13085, zstd_size = 21072 bits, zstd_ratio = 1.48%, training_time = 1519s
-------------------------------------------------------------
-r = 1.1028
-Epoch 1: A_NQ = 86.51, H_NQ = 685891, A_Q = 86.94, H_Q = 191989, zstd_size = 284208 bits, zstd_ratio = 19.99%, training_time = 2422s
-Epoch 2: A_NQ = 93.53, H_NQ = 685877, A_Q = 94.48, H_Q = 88237, zstd_size = 135608 bits, zstd_ratio = 9.54%, training_time = 2520s
-Epoch 3: A_NQ = 95.76, H_NQ = 685887, A_Q = 95.99, H_Q = 51692, zstd_size = 81216 bits, zstd_ratio = 5.71%, training_time = 2428s
-Epoch 4: A_NQ = 96.24, H_NQ = 685889, A_Q = 96.35, H_Q = 33438, zstd_size = 53232 bits, zstd_ratio = 3.74%, training_time = 2537s
-Epoch 5: A_NQ = 96.71, H_NQ = 685871, A_Q = 96.96, H_Q = 25406, zstd_size = 39880 bits, zstd_ratio = 2.81%, training_time = 2485s
-Epoch 6: A_NQ = 96.89, H_NQ = 685881, A_Q = 97.26, H_Q = 21597, zstd_size = 34640 bits, zstd_ratio = 2.44%, training_time = 2501s
-Epoch 7: A_NQ = 96.28, H_NQ = 685877, A_Q = 97.42, H_Q = 19293, zstd_size = 30880 bits, zstd_ratio = 2.17%, training_time = 2442s
-Epoch 8: A_NQ = 97.41, H_NQ = 685875, A_Q = 97.46, H_Q = 17951, zstd_size = 29512 bits, zstd_ratio = 2.08%, training_time = 2458s
-Epoch 9: A_NQ = 97.11, H_NQ = 685861, A_Q = 97.41, H_Q = 17516, zstd_size = 28112 bits, zstd_ratio = 1.98%, training_time = 2474s
-Epoch 10: A_NQ = 97.39, H_NQ = 685847, A_Q = 97.42, H_Q = 16533, zstd_size = 27032 bits, zstd_ratio = 1.90%, training_time = 2483s
-Epoch 11: A_NQ = 97.48, H_NQ = 685863, A_Q = 97.38, H_Q = 15563, zstd_size = 25384 bits, zstd_ratio = 1.79%, training_time = 2474s
-Epoch 12: A_NQ = 97.61, H_NQ = 685858, A_Q = 97.61, H_Q = 14984, zstd_size = 24688 bits, zstd_ratio = 1.74%, training_time = 2473s
-Epoch 13: A_NQ = 97.66, H_NQ = 685845, A_Q = 97.6, H_Q = 14949, zstd_size = 24528 bits, zstd_ratio = 1.73%, training_time = 2487s
-Epoch 14: A_NQ = 97.69, H_NQ = 685873, A_Q = 97.63, H_Q = 14292, zstd_size = 23832 bits, zstd_ratio = 1.68%, training_time = 2483s
-Epoch 15: A_NQ = 97.76, H_NQ = 685859, A_Q = 97.64, H_Q = 14255, zstd_size = 23912 bits, zstd_ratio = 1.68%, training_time = 2480s
-Epoch 16: A_NQ = 97.57, H_NQ = 685859, A_Q = 97.56, H_Q = 13868, zstd_size = 23280 bits, zstd_ratio = 1.64%, training_time = 2491s
-Epoch 17: A_NQ = 97.64, H_NQ = 685853, A_Q = 97.54, H_Q = 13992, zstd_size = 23192 bits, zstd_ratio = 1.63%, training_time = 2501s
-Epoch 18: A_NQ = 97.62, H_NQ = 685841, A_Q = 97.59, H_Q = 13604, zstd_size = 22648 bits, zstd_ratio = 1.59%, training_time = 2497s
-Epoch 19: A_NQ = 97.47, H_NQ = 685857, A_Q = 97.68, H_Q = 13318, zstd_size = 22336 bits, zstd_ratio = 1.57%, training_time = 2490s
-Epoch 20: A_NQ = 97.7, H_NQ = 685863, A_Q = 97.75, H_Q = 13352, zstd_size = 22320 bits, zstd_ratio = 1.57%, training_time = 2486s
-Epoch 21: A_NQ = 97.85, H_NQ = 685847, A_Q = 97.76, H_Q = 13152, zstd_size = 22000 bits, zstd_ratio = 1.55%, training_time = 2496s
-Epoch 22: A_NQ = 97.59, H_NQ = 685851, A_Q = 97.64, H_Q = 13077, zstd_size = 21976 bits, zstd_ratio = 1.55%, training_time = 2497s
-Epoch 23: A_NQ = 97.15, H_NQ = 685823, A_Q = 97.61, H_Q = 12704, zstd_size = 21560 bits, zstd_ratio = 1.52%, training_time = 2488s
-Epoch 24: A_NQ = 97.78, H_NQ = 685849, A_Q = 97.77, H_Q = 12658, zstd_size = 21176 bits, zstd_ratio = 1.49%, training_time = 2457s
-Epoch 25: A_NQ = 97.89, H_NQ = 685847, A_Q = 97.93, H_Q = 12163, zstd_size = 20648 bits, zstd_ratio = 1.45%, training_time = 2411s
-Epoch 26: A_NQ = 97.63, H_NQ = 685831, A_Q = 97.79, H_Q = 12176, zstd_size = 20824 bits, zstd_ratio = 1.46%, training_time = 2403s
-Epoch 27: A_NQ = 97.69, H_NQ = 685837, A_Q = 97.5, H_Q = 13236, zstd_size = 21120 bits, zstd_ratio = 1.49%, training_time = 2279s
-Epoch 28: A_NQ = 97.76, H_NQ = 685839, A_Q = 97.72, H_Q = 12099, zstd_size = 20504 bits, zstd_ratio = 1.44%, training_time = 2195s
-Epoch 29: A_NQ = 97.62, H_NQ = 685843, A_Q = 97.8, H_Q = 12583, zstd_size = 20984 bits, zstd_ratio = 1.48%, training_time = 2122s
-Epoch 30: A_NQ = 97.84, H_NQ = 685835, A_Q = 97.77, H_Q = 11965, zstd_size = 20344 bits, zstd_ratio = 1.43%, training_time = 1506s
-------------------------------------------------------------
-r = 1.1023
-Epoch 1: A_NQ = 88.87, H_NQ = 685887, A_Q = 88.87, H_Q = 202237, zstd_size = 297672 bits, zstd_ratio = 20.94%, training_time = 2352s
-Epoch 2: A_NQ = 93.42, H_NQ = 685885, A_Q = 94.11, H_Q = 92731, zstd_size = 142144 bits, zstd_ratio = 10.00%, training_time = 2567s
-Epoch 3: A_NQ = 94.38, H_NQ = 685887, A_Q = 95.01, H_Q = 52103, zstd_size = 82416 bits, zstd_ratio = 5.80%, training_time = 2577s
-Epoch 4: A_NQ = 95.97, H_NQ = 685883, A_Q = 96.14, H_Q = 34764, zstd_size = 55840 bits, zstd_ratio = 3.93%, training_time = 2422s
-Epoch 5: A_NQ = 95.8, H_NQ = 685881, A_Q = 96.22, H_Q = 27664, zstd_size = 43456 bits, zstd_ratio = 3.06%, training_time = 2436s
-Epoch 6: A_NQ = 96.56, H_NQ = 685877, A_Q = 97.06, H_Q = 23842, zstd_size = 37632 bits, zstd_ratio = 2.65%, training_time = 2556s
-Epoch 7: A_NQ = 96.79, H_NQ = 685863, A_Q = 97.14, H_Q = 22257, zstd_size = 34912 bits, zstd_ratio = 2.46%, training_time = 2362s
-Epoch 8: A_NQ = 96.68, H_NQ = 685863, A_Q = 96.92, H_Q = 20499, zstd_size = 32808 bits, zstd_ratio = 2.31%, training_time = 2441s
-Epoch 9: A_NQ = 96.88, H_NQ = 685881, A_Q = 97.21, H_Q = 19739, zstd_size = 31744 bits, zstd_ratio = 2.23%, training_time = 2454s
-Epoch 10: A_NQ = 97.25, H_NQ = 685865, A_Q = 97.3, H_Q = 18949, zstd_size = 30232 bits, zstd_ratio = 2.13%, training_time = 2497s
-Epoch 11: A_NQ = 97.39, H_NQ = 685875, A_Q = 97.34, H_Q = 18183, zstd_size = 29432 bits, zstd_ratio = 2.07%, training_time = 2485s
-Epoch 12: A_NQ = 97.4, H_NQ = 685857, A_Q = 97.21, H_Q = 17977, zstd_size = 28432 bits, zstd_ratio = 2.00%, training_time = 2494s
-Epoch 13: A_NQ = 97.48, H_NQ = 685851, A_Q = 97.49, H_Q = 17443, zstd_size = 27800 bits, zstd_ratio = 1.96%, training_time = 2484s
-Epoch 14: A_NQ = 97.74, H_NQ = 685851, A_Q = 97.71, H_Q = 17036, zstd_size = 27040 bits, zstd_ratio = 1.90%, training_time = 2513s
-Epoch 15: A_NQ = 97.56, H_NQ = 685875, A_Q = 97.67, H_Q = 17032, zstd_size = 26768 bits, zstd_ratio = 1.88%, training_time = 2493s
-Epoch 16: A_NQ = 97.54, H_NQ = 685863, A_Q = 97.5, H_Q = 16587, zstd_size = 26432 bits, zstd_ratio = 1.86%, training_time = 2520s
-Epoch 17: A_NQ = 97.67, H_NQ = 685851, A_Q = 97.49, H_Q = 16345, zstd_size = 26176 bits, zstd_ratio = 1.84%, training_time = 2437s
-Epoch 18: A_NQ = 97.65, H_NQ = 685857, A_Q = 97.56, H_Q = 16073, zstd_size = 25472 bits, zstd_ratio = 1.79%, training_time = 2463s
-Epoch 19: A_NQ = 97.15, H_NQ = 685865, A_Q = 97.35, H_Q = 15751, zstd_size = 25120 bits, zstd_ratio = 1.77%, training_time = 2467s
-Epoch 20: A_NQ = 97.56, H_NQ = 685855, A_Q = 97.57, H_Q = 15114, zstd_size = 24040 bits, zstd_ratio = 1.69%, training_time = 2541s
-Epoch 21: A_NQ = 97.61, H_NQ = 685850, A_Q = 97.57, H_Q = 14890, zstd_size = 24136 bits, zstd_ratio = 1.70%, training_time = 2483s
-Epoch 22: A_NQ = 97.53, H_NQ = 685875, A_Q = 97.43, H_Q = 14584, zstd_size = 23528 bits, zstd_ratio = 1.65%, training_time = 2498s
-Epoch 23: A_NQ = 97.61, H_NQ = 685855, A_Q = 97.47, H_Q = 14061, zstd_size = 22848 bits, zstd_ratio = 1.61%, training_time = 2481s
-Epoch 24: A_NQ = 97.56, H_NQ = 685835, A_Q = 97.56, H_Q = 14283, zstd_size = 23104 bits, zstd_ratio = 1.63%, training_time = 2525s
-Epoch 25: A_NQ = 97.75, H_NQ = 685847, A_Q = 97.45, H_Q = 14220, zstd_size = 23016 bits, zstd_ratio = 1.62%, training_time = 2372s
-Epoch 26: A_NQ = 97.65, H_NQ = 685863, A_Q = 97.63, H_Q = 14546, zstd_size = 22920 bits, zstd_ratio = 1.61%, training_time = 2364s
-Epoch 27: A_NQ = 97.6, H_NQ = 685853, A_Q = 97.45, H_Q = 14230, zstd_size = 23120 bits, zstd_ratio = 1.63%, training_time = 2332s
-Epoch 28: A_NQ = 97.66, H_NQ = 685861, A_Q = 97.54, H_Q = 14019, zstd_size = 22744 bits, zstd_ratio = 1.60%, training_time = 2108s
-Epoch 29: A_NQ = 97.55, H_NQ = 685855, A_Q = 97.69, H_Q = 13818, zstd_size = 22256 bits, zstd_ratio = 1.57%, training_time = 2238s
-Epoch 30: A_NQ = 97.71, H_NQ = 685875, A_Q = 97.62, H_Q = 13767, zstd_size = 22592 bits, zstd_ratio = 1.59%, training_time = 1549s
+r = 1.1012
+Epoch 1: A_NQ = 90.4, H_NQ = 685891, A_Q = 75.95, H_Q = 132903, zstd_ratio = 13.74%, training_time = 715s
+Epoch 2: A_NQ = 92.35, H_NQ = 685881, A_Q = 75.54, H_Q = 56557, zstd_ratio = 6.00%, training_time = 952s
+Epoch 3: A_NQ = 95.61, H_NQ = 685891, A_Q = 87.66, H_Q = 33044, zstd_ratio = 3.64%, training_time = 590s
+Epoch 4: A_NQ = 96.31, H_NQ = 685867, A_Q = 93.75, H_Q = 23877, zstd_ratio = 2.60%, training_time = 1042s
+Epoch 5: A_NQ = 96.08, H_NQ = 685887, A_Q = 93.64, H_Q = 20332, zstd_ratio = 2.19%, training_time = 970s
+Epoch 6: A_NQ = 96.62, H_NQ = 685859, A_Q = 94.21, H_Q = 17407, zstd_ratio = 1.89%, training_time = 1182s
+Epoch 7: A_NQ = 97.08, H_NQ = 685879, A_Q = 96.26, H_Q = 16261, zstd_ratio = 1.76%, training_time = 987s
+Epoch 8: A_NQ = 97.09, H_NQ = 685863, A_Q = 96.08, H_Q = 15511, zstd_ratio = 1.67%, training_time = 965s
+Epoch 9: A_NQ = 96.74, H_NQ = 685869, A_Q = 96.47, H_Q = 14440, zstd_ratio = 1.57%, training_time = 1050s
+Epoch 10: A_NQ = 97.41, H_NQ = 685859, A_Q = 96.15, H_Q = 13784, zstd_ratio = 1.51%, training_time = 1186s
+Epoch 11: A_NQ = 97.43, H_NQ = 685863, A_Q = 96.68, H_Q = 13365, zstd_ratio = 1.48%, training_time = 1063s
+Epoch 12: A_NQ = 97.14, H_NQ = 685865, A_Q = 94.2, H_Q = 13120, zstd_ratio = 1.46%, training_time = 1065s
+Epoch 13: A_NQ = 97.14, H_NQ = 685859, A_Q = 96.64, H_Q = 12280, zstd_ratio = 1.39%, training_time = 1064s
+Epoch 14: A_NQ = 97.13, H_NQ = 685849, A_Q = 96.88, H_Q = 12094, zstd_ratio = 1.37%, training_time = 1140s
+Epoch 15: A_NQ = 97.44, H_NQ = 685879, A_Q = 97.0, H_Q = 11942, zstd_ratio = 1.34%, training_time = 1041s
+Epoch 16: A_NQ = 97.04, H_NQ = 685845, A_Q = 96.31, H_Q = 11991, zstd_ratio = 1.34%, training_time = 1057s
+Epoch 17: A_NQ = 97.48, H_NQ = 685859, A_Q = 97.2, H_Q = 11626, zstd_ratio = 1.28%, training_time = 1037s
+Epoch 18: A_NQ = 97.2, H_NQ = 685825, A_Q = 97.02, H_Q = 10858, zstd_ratio = 1.24%, training_time = 1140s
+Epoch 19: A_NQ = 97.32, H_NQ = 685831, A_Q = 97.05, H_Q = 10841, zstd_ratio = 1.24%, training_time = 1059s
+Epoch 20: A_NQ = 97.4, H_NQ = 685851, A_Q = 96.95, H_Q = 10750, zstd_ratio = 1.24%, training_time = 1058s
+Epoch 21: A_NQ = 97.52, H_NQ = 685845, A_Q = 97.1, H_Q = 10809, zstd_ratio = 1.23%, training_time = 1038s
+Epoch 22: A_NQ = 97.43, H_NQ = 685869, A_Q = 96.84, H_Q = 10303, zstd_ratio = 1.19%, training_time = 501s
+Epoch 23: A_NQ = 97.58, H_NQ = 685851, A_Q = 97.08, H_Q = 10190, zstd_ratio = 1.19%, training_time = 573s
+Epoch 24: A_NQ = 97.39, H_NQ = 685849, A_Q = 97.21, H_Q = 10307, zstd_ratio = 1.20%, training_time = 596s
+Epoch 25: A_NQ = 97.54, H_NQ = 685853, A_Q = 97.25, H_Q = 10293, zstd_ratio = 1.22%, training_time = 831s
+Epoch 26: A_NQ = 97.33, H_NQ = 685820, A_Q = 97.24, H_Q = 10165, zstd_ratio = 1.19%, training_time = 452s
+Epoch 27: A_NQ = 97.64, H_NQ = 685853, A_Q = 97.05, H_Q = 10022, zstd_ratio = 1.17%, training_time = 679s
+Epoch 28: A_NQ = 97.78, H_NQ = 685839, A_Q = 97.16, H_Q = 10122, zstd_ratio = 1.16%, training_time = 565s
+Epoch 29: A_NQ = 97.52, H_NQ = 685861, A_Q = 96.56, H_Q = 9699, zstd_ratio = 1.15%, training_time = 920s
+Epoch 30: A_NQ = 97.35, H_NQ = 685859, A_Q = 96.28, H_Q = 9860, zstd_ratio = 1.14%, training_time = 870s
 ------------------------------------------------------------
