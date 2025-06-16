@@ -239,3 +239,14 @@ def BestQuantization(log, C, r, epoch, min_w, max_w, w, c1, c2,
             log += "-"*60
     
     return log
+
+def pack_bitmask(bits):
+    """Casts a list of 0/1 in bytes (8 bit per byte)."""
+    byte_arr = bytearray()
+    for i in range(0, len(bits), 8):
+        byte = 0
+        for j in range(8):
+            if i + j < len(bits):
+                byte |= (bits[i + j] & 1) << (7 - j)
+        byte_arr.append(byte)
+    return bytes(byte_arr)

@@ -7,7 +7,7 @@ from torch.optim import Adam, SGD
 from utils.quantize_and_compress import compute_entropy, quantize_weights_center
 from utils.optimization import FISTA, ProximalBM, test_accuracy
 from utils.weight_utils import initialize_weights
-from utils.quantize_and_compress import compress_zstd, BestQuantization
+from utils.quantize_and_compress import compress_zstd, BestQuantization, pack_bitmask
 
 def train_and_evaluate(model, criterion, C, lr, lambda_reg, alpha, subgradient_step, w0, r,
                         target_acc, target_zstd_ratio, min_xi, max_xi, upper_c, lower_c, zeta, l, n_epochs,
@@ -120,9 +120,9 @@ def train_and_evaluate(model, criterion, C, lr, lambda_reg, alpha, subgradient_s
         # --- Sparse compression ---
         mask = [1 if abs(val) > sparsity_threshold else 0 for val in encoded_list]
         nonzero_values = [val for val in encoded_list if abs(val) > sparsity_threshold]
-        mask_bytes = bytes(mask)  
+        bitmask_bytes = pack_bitmask(mask)
         packed_nonzeros = b''.join(struct.pack('f', val) for val in nonzero_values)
-        compressed_mask = compress_zstd(mask_bytes)
+        compressed_mask = compress_zstd(bitmask_bytes)
         compressed_values = compress_zstd(packed_nonzeros)
         sparse_compressed_size = len(compressed_mask) + len(compressed_values)
         sparse_ratio = sparse_compressed_size / original_size_bytes
