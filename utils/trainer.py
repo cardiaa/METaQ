@@ -12,7 +12,7 @@ from utils.quantize_and_compress import compress_zstd, BestQuantization
 def train_and_evaluate(model, criterion, C, lr, lambda_reg, alpha, subgradient_step, w0, r,
                         target_acc, target_zstd_ratio, min_xi, max_xi, upper_c, lower_c, zeta, l, n_epochs,
                         max_iterations, device, train_optimizer, entropy_optimizer, 
-                        trainloader, testloader, delta, pruning, QuantizationType):
+                        trainloader, testloader, delta, pruning, QuantizationType, sparsity_threshold):
     
     torch.set_num_threads(1)
     
@@ -115,7 +115,18 @@ def train_and_evaluate(model, criterion, C, lr, lambda_reg, alpha, subgradient_s
         zstd_compressed = compress_zstd(input_bytes)
         original_size_bytes = len(input_bytes)
         zstd_size = len(zstd_compressed)
-        zstd_ratio = zstd_size / original_size_bytes        
+        zstd_ratio = zstd_size / original_size_bytes  
+
+        # --- Sparse compression ---
+        mask = [1 if abs(val) > sparsity_threshold else 0 for val in encoded_list]
+        nonzero_values = [val for val in encoded_list if abs(val) > sparsity_threshold]
+        mask_bytes = bytes(mask)  
+        packed_nonzeros = b''.join(struct.pack('f', val) for val in nonzero_values)
+        compressed_mask = compress_zstd(mask_bytes)
+        compressed_values = compress_zstd(packed_nonzeros)
+        sparse_compressed_size = len(compressed_mask) + len(compressed_values)
+        sparse_ratio = sparse_compressed_size / original_size_bytes
+        sparsity = 1.0 - sum(mask) / len(mask) 
 
         training_time = round(time.time() - start_time)
 
@@ -126,7 +137,8 @@ def train_and_evaluate(model, criterion, C, lr, lambda_reg, alpha, subgradient_s
             f"Epoch {epoch + 1}: "
             f"A_NQ = {accuracy}, H_NQ = {entropy}, "
             f"A_Q = {quantized_accuracy}, H_Q = {quantized_entropy}, "
-            f"zstd_ratio = {zstd_ratio:.2%}, training_time = {training_time}s\n"     
+            f"zstd_ratio = {zstd_ratio:.2%}, sparse_ratio = {sparse_ratio:.2%}, "
+            f"sparsity = {sparsity:.2%} training_time = {training_time}s\n"     
         )
 
         # Saving a better model

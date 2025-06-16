@@ -70,6 +70,7 @@ if __name__ == "__main__":
     delta = 8
     pruning = "Y"
     QuantizationType = "center"
+    sparsity_threshold = 1e-4
 
     if(args.r == 1.1001):
         print("=================================================================", flush = True)
@@ -101,6 +102,7 @@ if __name__ == "__main__":
         print(f"delta={delta}", flush=True) 
         print(f"pruning={pruning}", flush=True)
         print(f"QuantizationType={QuantizationType}", flush=True)
+        print(f"sparsity_threshold={sparsity_threshold}", flush=True)
         print("-"*60, flush=True)
     
     train_and_evaluate(
@@ -112,5 +114,5 @@ if __name__ == "__main__":
         device=device, train_optimizer=train_optimizer,
         entropy_optimizer=entropy_optimizer,
         trainloader=trainloader, testloader=testloader,
-        delta=delta, pruning=pruning, QuantizationType=QuantizationType
+        delta=delta, pruning=pruning, QuantizationType=QuantizationType, sparsity_threshold=sparsity_threshold
     )
