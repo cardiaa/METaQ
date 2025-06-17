@@ -67,7 +67,7 @@ if __name__ == "__main__":
     max_iterations = 15
     train_optimizer = "ADAM"  
     entropy_optimizer = "FISTA"  
-    delta = 12
+    delta = 16
     pruning = "Y"
     QuantizationType = "center"
     sparsity_threshold = 1e-4
@@ -116,5 +116,3 @@ if __name__ == "__main__":
         trainloader=trainloader, testloader=testloader,
         delta=delta, pruning=pruning, QuantizationType=QuantizationType, sparsity_threshold=sparsity_threshold
     )
-
-# YOLO test
