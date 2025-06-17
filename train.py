@@ -116,3 +116,5 @@ if __name__ == "__main__":
         trainloader=trainloader, testloader=testloader,
         delta=delta, pruning=pruning, QuantizationType=QuantizationType, sparsity_threshold=sparsity_threshold
     )
+
+# YOLO test
