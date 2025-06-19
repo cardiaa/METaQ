@@ -53,7 +53,7 @@ if __name__ == "__main__":
     lambda_reg = 0.0015
     alpha = 0.533
     subgradient_step = 1e5 
-    w0 = -0.11  
+    w0 = 0 # If it is 0 and C is even, then exists bucket 0
     #r = 1.1106  
     target_acc = 98.4
     target_zstd_ratio = 0.0297 
@@ -67,7 +67,7 @@ if __name__ == "__main__":
     max_iterations = 15
     train_optimizer = "ADAM"  
     entropy_optimizer = "FISTA"  
-    delta = 20
+    delta = 13.5
     pruning = "Y"
     QuantizationType = "center"
     sparsity_threshold = 1e-2

@@ -197,7 +197,8 @@ def BestQuantization(log, C, r, epoch, min_w, max_w, w, c1, c2,
         QuantEntr.append(quantized_entropy)
     # Print results for the best 10 models
     sorted_indices = np.argsort(QuantAcc)
-    for i in range(1, 10):
+    i = 1
+    while(QuantAcc[sorted_indices[-i]] > accuracy - 0.2):
         C_tmp = sorted_indices[-i] + c1
         v_tmp = torch.linspace(min_w, max_w - (max_w - min_w)/C_tmp, steps=C_tmp)
         v_centers = (v_tmp[:-1] + v_tmp[1:]) / 2
@@ -237,6 +238,7 @@ def BestQuantization(log, C, r, epoch, min_w, max_w, w, c1, c2,
                 f"\tH_Q = {quantized_entropy}, zstd_ratio = {zstd_ratio:.2%}\n"
             )           
             log += "-"*60
+        i += 1
     
     return log
 
