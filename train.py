@@ -67,7 +67,7 @@ if __name__ == "__main__":
     max_iterations = 15
     train_optimizer = "ADAM"  
     entropy_optimizer = "FISTA"  
-    delta = 14.5
+    delta = 13.5
     pruning = "Y"
     QuantizationType = "center"
     sparsity_threshold = 1e-2

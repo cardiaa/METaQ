@@ -204,14 +204,15 @@ def BestQuantization(log, C, r, epoch, min_w, max_w, w, c1, c2,
     for i in sorted_indices_by_entr:
         C_tmp = sorted_indices[i] + c1
         v_tmp = torch.linspace(min_w, max_w - (max_w - min_w)/C_tmp, steps=C_tmp)
+        model_quantized = copy.deepcopy(model).to(device)
+        # Extract model weights
+        w_saved = torch.cat([param.data.view(-1) for param in model_quantized.parameters()])        
         if(QuantizationType == 'center'):
             v_centers = (v_tmp[:-1] + v_tmp[1:]) / 2
             v_centers = torch.cat([v_centers, v_tmp[-1:]])
             # Quantize weights using central values
             w_quantized = quantize_weights_center(w_saved, v_tmp, v_centers)
-        model_quantized = copy.deepcopy(model).to(device)
-        # Extract model weights
-        w_saved = torch.cat([param.data.view(-1) for param in model_quantized.parameters()])
+
         encoded_list = [float(elem) if float(elem) != -0.0 else 0.0 for elem in w_quantized]
         quantized_entropy = round(compute_entropy(encoded_list)) + 1
         # Converts float list in byte
