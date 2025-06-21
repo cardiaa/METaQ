@@ -140,7 +140,7 @@ def train_and_evaluate(model, criterion, C, lr, lambda_reg, alpha, subgradient_s
             f"zstd_ratio = {zstd_ratio:.2%}, sparse_ratio = {sparse_ratio:.2%}, "
             f"sparsity = {sparsity:.2%} training_time = {training_time}s\n"     
         )
-
+        #print(log, flush=True)
         # Saving a better model
         if(accuracies[-1] >= target_acc):
             log = BestQuantization(log=log, C=C, r=r, epoch=epoch, min_w=min_w, max_w=max_w, w=w, c1=10, c2=1000,
