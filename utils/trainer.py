@@ -10,8 +10,8 @@ from utils.weight_utils import initialize_weights
 from utils.quantize_and_compress import compress_zstd, BestQuantization, pack_bitmask
 
 def train_and_evaluate(model, criterion, C, lr, lambda_reg, alpha, subgradient_step, w0, r,
-                        target_acc, target_zstd_ratio, min_xi, max_xi, upper_c, lower_c, zeta, l, n_epochs,
-                        max_iterations, device, train_optimizer, entropy_optimizer, 
+                        BestQuantization_target_acc, final_target_acc, target_zstd_ratio, min_xi, max_xi, upper_c, lower_c, 
+                        c1, c2, zeta, l, n_epochs, max_iterations, device, train_optimizer, entropy_optimizer, 
                         trainloader, testloader, delta, pruning, QuantizationType, sparsity_threshold):
     
     torch.set_num_threads(1)
@@ -98,7 +98,7 @@ def train_and_evaluate(model, criterion, C, lr, lambda_reg, alpha, subgradient_s
         if(QuantizationType == "center"): # Quantize weights using central values
             v_centers = (v[:-1] + v[1:]) / 2
             v_centers = torch.cat([v_centers, v[-1:]]) # Add final value to handle the last bucket
-        w_quantized = quantize_weights_center(w, v, v_centers)
+            w_quantized = quantize_weights_center(w, v, v_centers)
         
         model_quantized = copy.deepcopy(model).to(device)
         start_idx = 0
@@ -128,6 +128,23 @@ def train_and_evaluate(model, criterion, C, lr, lambda_reg, alpha, subgradient_s
         sparse_ratio = sparse_compressed_size / original_size_bytes
         sparsity = 1.0 - sum(mask) / len(mask) 
 
+        # Applies the sparsity mask to quantized weights
+        w_sparse = torch.tensor(encoded_list).to(device)
+        sparse_mask_tensor = torch.tensor(mask, dtype=torch.bool).to(device)
+        w_sparse[~sparse_mask_tensor] = 0.0  # Zeri dove la maschera è 0
+
+        # Build a new sparsified model
+        model_sparse = copy.deepcopy(model).to(device)
+        start_idx = 0
+        for param in model_sparse.parameters():
+            numel = param.data.numel()
+            param.data = w_sparse[start_idx:start_idx + numel].view(param.data.size())
+            start_idx += numel
+        model_sparse.eval()
+
+        # Evaluate the accuracy of the sparsified model
+        sparse_accuracy = test_accuracy(model_sparse, testloader, device)
+
         training_time = round(time.time() - start_time)
 
         if(epoch == 0):
@@ -138,16 +155,16 @@ def train_and_evaluate(model, criterion, C, lr, lambda_reg, alpha, subgradient_s
             f"A_NQ = {accuracy}, H_NQ = {entropy}, "
             f"A_Q = {quantized_accuracy}, H_Q = {quantized_entropy}, "
             f"zstd_ratio = {zstd_ratio:.2%}, sparse_ratio = {sparse_ratio:.2%}, "
-            f"sparsity = {sparsity:.2%} training_time = {training_time}s\n"     
+            f"sparsity = {sparsity:.2%} , sparse_accuracy = {sparse_accuracy}, training_time = {training_time}s\n"     
         )
-        #print(log, flush=True)
+
         # Saving a better model
-        if(accuracies[-1] >= target_acc):
-            log = BestQuantization(log=log, C=C, r=r, epoch=epoch, min_w=min_w, max_w=max_w, w=w, c1=10, c2=1000,
-                                   target_acc=target_acc, target_zstd_ratio=target_zstd_ratio, QuantizationType=QuantizationType,
+        if(accuracies[-1] >= BestQuantization_target_acc):
+            log = BestQuantization(log=log, C=C, r=r, epoch=epoch, min_w=min_w, max_w=max_w, w=w, c1=c1, c2=c2,
+                                   final_target_acc=final_target_acc, target_zstd_ratio=target_zstd_ratio, QuantizationType=QuantizationType,
                                    model=model, testloader=testloader, accuracy=accuracy, device=device)
             target_acc = accuracies[-1] 
-
+        
         # ---------------------------------------------------------------------------------------------------------
         # No-pruning exit conditions
         if(pruning == "N"):

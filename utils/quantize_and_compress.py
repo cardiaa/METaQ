@@ -168,7 +168,7 @@ def compare_lists(list1, list2, tollerance=1e-4):
     return all(abs(a - b) <= tollerance for a, b in zip(list1, list2))
 
 def BestQuantization(log, C, r, epoch, min_w, max_w, w, c1, c2,
-                     target_acc, target_zstd_ratio, QuantizationType, 
+                     final_target_acc, target_zstd_ratio, QuantizationType, 
                      model, testloader, accuracy, device):
     QuantAcc = []
     QuantEntr = []
@@ -202,8 +202,7 @@ def BestQuantization(log, C, r, epoch, min_w, max_w, w, c1, c2,
     sorted_indices_by_entr = sorted(filtered_indices_by_accuracy, key=lambda i: QuantEntr[i])
 
     for i in sorted_indices_by_entr:
-        C_tmp = i + c1
-        #print(f"Testing C={C_tmp}")
+        C_tmp = c1 + i
         v_tmp = torch.linspace(min_w, max_w - (max_w - min_w)/C_tmp, steps=C_tmp)
         model_quantized = copy.deepcopy(model).to(device)
         # Extract model weights
@@ -230,7 +229,7 @@ def BestQuantization(log, C, r, epoch, min_w, max_w, w, c1, c2,
         # Compression ratio
         zstd_ratio = zstd_size / original_size_bytes
         # Output delle dimensioni e del rapporto di compressione
-        if(QuantAcc[i] >= 99.00 and zstd_ratio <= target_zstd_ratio):
+        if(QuantAcc[i] >= final_target_acc and zstd_ratio <= target_zstd_ratio):
             torch.save(model.state_dict(), f"BestModelsJune2025/Test1June2025_C{C}_r{r}_epoch{epoch}.pth")
             log += "✅"*18+"\n"
             log += "✅✅✅✅✅✅ MODEL SAVED ✅✅✅✅✅✅\n"
@@ -238,7 +237,7 @@ def BestQuantization(log, C, r, epoch, min_w, max_w, w, c1, c2,
         log += "💥💥💥 ...AIN'T SAVING THE MODEL... JUST CHECKING... 💥💥💥\n" 
         log += (
             f"\t➡️ r = {r}, Epoch {epoch + 1}:\n"
-            f"\tQuantization at C={i + c1}, Accuracy from {accuracy} to {QuantAcc[i]}\n"
+            f"\tQuantization at C={c1 + i}, Accuracy from {accuracy} to {QuantAcc[i]}\n"
             f"\tH_Q = {quantized_entropy}, zstd_ratio = {zstd_ratio:.2%}\n"
         )           
         log += "-"*60

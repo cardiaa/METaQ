@@ -48,29 +48,33 @@ if __name__ == "__main__":
     # Define fixed hyperparameters for the model and training process
     model, model_name = LeNet5().to(device), "LeNet-5"
     criterion, criterion_name = CrossEntropyLoss(), "CrossEntropy" 
-    C = 64
+    C = 6
     lr = 0.0007  
     lambda_reg = 0.0015
     alpha = 0.533
     subgradient_step = 1e5 
-    w0 = 0 # If it is 0 and C is even, then exists bucket 0
+    bucket_zero = round((C-1)/2) #it must range from 0 to C-2
+    w0 = round(args.r - (bucket_zero + 0.5) * 2 * args.r * (1 - 1/C) / (C - 1), 3)
     #r = 1.1106  
-    target_acc = 98.4
+    BestQuantization_target_acc = 98.4
+    final_target_acc = 99
     target_zstd_ratio = 0.0297 
     min_xi = 0  
     max_xi = 1  
     upper_c = sum(p.numel() for p in LeNet5().parameters())
     lower_c = 1e-2
+    c1 = 10
+    c2 = 1000
     zeta = 50000
     l = 0.5
     n_epochs = 90 # To be increased as soon as I find good configurations
     max_iterations = 15
     train_optimizer = "ADAM"  
     entropy_optimizer = "FISTA"  
-    delta = 14.5
+    delta = 13.5
     pruning = "Y"
     QuantizationType = "center"
-    sparsity_threshold = 1e-2
+    sparsity_threshold = 1e-3
 
     if(args.r == 1.1001):
         print("=================================================================", flush = True)
@@ -86,13 +90,17 @@ if __name__ == "__main__":
         print(f"[T2=lambda_reg*(1-alpha)={round(lambda_reg*(1-alpha), 6)}]", flush=True)
         print(f"subgradient_step={subgradient_step}", flush=True)    
         print(f"w0={w0}", flush=True)    
-        #print(f"r={r}", flush=True)    
-        print(f"target_acc={target_acc}", flush=True)    
+        #print(f"r={r}", flush=True)  
+        print(f"bucket_zero={bucket_zero}", flush=True)  
+        print(f"BestQuantization_target_acc={BestQuantization_target_acc}", flush=True)    
+        print(f"final_target_acc={final_target_acc}", flush=True)
         print(f"target_zstd_ratio={target_zstd_ratio}", flush=True)    
         print(f"min_xi={min_xi}", flush=True)    
         print(f"max_xi={max_xi}", flush=True)  
         print(f"upper_c={upper_c}", flush=True)
         print(f"lower_c={lower_c}", flush=True)  
+        print(f"c1={c1}", flush=True)
+        print(f"c2={c2}", flush=True)
         print(f"zeta={zeta}", flush=True)
         print(f"l={l}", flush=True)
         print(f"n_epochs={n_epochs}", flush=True) 
@@ -108,11 +116,9 @@ if __name__ == "__main__":
     train_and_evaluate(
         model=model, criterion=criterion, C=C, lr=lr, lambda_reg=lambda_reg, alpha=alpha,
         subgradient_step=subgradient_step, w0=w0, r=args.r, # Pass the value from command line arguments
-        target_acc=target_acc, target_zstd_ratio=target_zstd_ratio,
-        min_xi=min_xi, max_xi=max_xi, upper_c=upper_c, lower_c=lower_c, zeta=zeta, l=l, n_epochs=n_epochs,
-        max_iterations=max_iterations,
-        device=device, train_optimizer=train_optimizer,
-        entropy_optimizer=entropy_optimizer,
-        trainloader=trainloader, testloader=testloader,
+        BestQuantization_target_acc=BestQuantization_target_acc, final_target_acc=final_target_acc, 
+        target_zstd_ratio=target_zstd_ratio, min_xi=min_xi, max_xi=max_xi, upper_c=upper_c, lower_c=lower_c, c1=c1, c2=c2, 
+        zeta=zeta, l=l, n_epochs=n_epochs, max_iterations=max_iterations, device=device, train_optimizer=train_optimizer,
+        entropy_optimizer=entropy_optimizer, trainloader=trainloader, testloader=testloader,
         delta=delta, pruning=pruning, QuantizationType=QuantizationType, sparsity_threshold=sparsity_threshold
     )
