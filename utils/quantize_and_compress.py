@@ -195,14 +195,15 @@ def BestQuantization(log, C, r, epoch, min_w, max_w, w, c1, c2,
         quantized_entropy = round(compute_entropy(encoded_list)) + 1
         QuantAcc.append(quantized_accuracy)
         QuantEntr.append(quantized_entropy)
-
+    
     # Find the best models, in terms of entropy, that have accuracy higher than the original accuracy
     sorted_indices = np.argsort(QuantAcc)
     filtered_indices_by_accuracy = [i for i in sorted_indices if QuantAcc[i] > accuracy]
     sorted_indices_by_entr = sorted(filtered_indices_by_accuracy, key=lambda i: QuantEntr[i])
 
     for i in sorted_indices_by_entr:
-        C_tmp = sorted_indices[i] + c1
+        C_tmp = i + c1
+        #print(f"Testing C={C_tmp}")
         v_tmp = torch.linspace(min_w, max_w - (max_w - min_w)/C_tmp, steps=C_tmp)
         model_quantized = copy.deepcopy(model).to(device)
         # Extract model weights
@@ -212,7 +213,6 @@ def BestQuantization(log, C, r, epoch, min_w, max_w, w, c1, c2,
             v_centers = torch.cat([v_centers, v_tmp[-1:]])
             # Quantize weights using central values
             w_quantized = quantize_weights_center(w_saved, v_tmp, v_centers)
-
         encoded_list = [float(elem) if float(elem) != -0.0 else 0.0 for elem in w_quantized]
         quantized_entropy = round(compute_entropy(encoded_list)) + 1
         # Converts float list in byte
@@ -230,7 +230,7 @@ def BestQuantization(log, C, r, epoch, min_w, max_w, w, c1, c2,
         # Compression ratio
         zstd_ratio = zstd_size / original_size_bytes
         # Output delle dimensioni e del rapporto di compressione
-        if(QuantAcc[sorted_indices[i]] >= 99.00 and zstd_ratio <= target_zstd_ratio):
+        if(QuantAcc[i] >= 99.00 and zstd_ratio <= target_zstd_ratio):
             torch.save(model.state_dict(), f"BestModelsJune2025/Test1June2025_C{C}_r{r}_epoch{epoch}.pth")
             log += "✅"*18+"\n"
             log += "✅✅✅✅✅✅ MODEL SAVED ✅✅✅✅✅✅\n"
@@ -238,7 +238,7 @@ def BestQuantization(log, C, r, epoch, min_w, max_w, w, c1, c2,
         log += "💥💥💥 ...AIN'T SAVING THE MODEL... JUST CHECKING... 💥💥💥\n" 
         log += (
             f"\t➡️ r = {r}, Epoch {epoch + 1}:\n"
-            f"\tQuantization at C={sorted_indices[i] + c1}, Accuracy from {accuracy} to {QuantAcc[sorted_indices[i]]}\n"
+            f"\tQuantization at C={i + c1}, Accuracy from {accuracy} to {QuantAcc[i]}\n"
             f"\tH_Q = {quantized_entropy}, zstd_ratio = {zstd_ratio:.2%}\n"
         )           
         log += "-"*60
