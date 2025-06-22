@@ -132,7 +132,7 @@ def train_and_evaluate(model, criterion, C, lr, lambda_reg, alpha, subgradient_s
         # Applies the sparsity mask to quantized weights
         w_sparse = torch.tensor(encoded_list).to(device)
         sparse_mask_tensor = torch.tensor(mask, dtype=torch.bool).to(device)
-        w_sparse[~sparse_mask_tensor] = 0.0  # Zeri dove la maschera è 0
+        w_sparse[~sparse_mask_tensor] = 0.0
 
         # Build a new sparsified model
         model_sparse = copy.deepcopy(model).to(device)
