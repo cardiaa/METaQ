@@ -157,7 +157,15 @@ def train_and_evaluate(model, criterion, C, lr, lambda_reg, alpha, subgradient_s
             f"zstd_ratio = {zstd_ratio:.2%}, sparse_ratio = {sparse_ratio:.2%}, "
             f"sparsity = {sparsity:.2%} , sparse_accuracy = {sparse_accuracy}, training_time = {training_time}s\n"     
         )
-
+        print(
+            f"r = {r}\n"
+            f"Epoch {epoch + 1}: "
+            f"A_NQ = {accuracy}, H_NQ = {entropy}, "
+            f"A_Q = {quantized_accuracy}, H_Q = {quantized_entropy}, "
+            f"zstd_ratio = {zstd_ratio:.2%}, sparse_ratio = {sparse_ratio:.2%}, "
+            f"sparsity = {sparsity:.2%} , sparse_accuracy = {sparse_accuracy}, training_time = {training_time}s\n"
+            "-"*60            
+        )
         # Saving a better model
         if(accuracies[-1] >= BestQuantization_target_acc):
             log = BestQuantization(log=log, C=C, r=r, epoch=epoch, min_w=min_w, max_w=max_w, w=w, c1=c1, c2=c2,
