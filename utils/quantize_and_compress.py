@@ -169,7 +169,8 @@ def compare_lists(list1, list2, tollerance=1e-4):
 
 def BestQuantization(log, C, r, epoch, min_w, max_w, w, c1, c2,
                      final_target_acc, target_zstd_ratio, QuantizationType, 
-                     model, testloader, accuracy, device):
+                     model, testloader, accuracy, device, first_best_indices,
+                     accuracy_tollerance):
     QuantAcc = []
     QuantEntr = []
     # Test quantization in C in [10, 1000] buckets
@@ -198,9 +199,11 @@ def BestQuantization(log, C, r, epoch, min_w, max_w, w, c1, c2,
     
     # Find the best models, in terms of entropy, that have accuracy higher than the original accuracy
     sorted_indices = np.argsort(QuantAcc)
-    filtered_indices_by_accuracy = [i for i in sorted_indices if QuantAcc[i] > accuracy]
+    filtered_indices_by_accuracy = [i for i in sorted_indices if QuantAcc[i] > accuracy - accuracy_tollerance]
     sorted_indices_by_entr = sorted(filtered_indices_by_accuracy, key=lambda i: QuantEntr[i])
-
+    # Take the first first_best_indices indices with lowest entropy
+    sorted_indices_by_entr = sorted_indices_by_entr[:first_best_indices]  
+    
     for i in sorted_indices_by_entr:
         C_tmp = c1 + i
         v_tmp = torch.linspace(min_w, max_w - (max_w - min_w)/C_tmp, steps=C_tmp)
