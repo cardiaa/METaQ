@@ -242,6 +242,7 @@ def BestQuantization(log, C, r, epoch, min_w, max_w, w, c1, c2, final_target_acc
             f"\tH_Q = {quantized_entropy}, zstd_ratio = {zstd_ratio:.2%}\n"
         )           
         log += "-"*60
+        log += "\n"
     
     return log
 
