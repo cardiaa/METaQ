@@ -56,7 +56,7 @@ if __name__ == "__main__":
     bucket_zero = round((C-1)/2) #it must range from 0 to C-2
     w0 = round(args.r - (bucket_zero + 0.5) * 2 * args.r * (1 - 1/C) / (C - 1), 3)
     #r = 1.1106  
-    BestQuantization_target_acc = 98.4
+    BestQuantization_target_acc = 98.6
     final_target_acc = 99
     target_zstd_ratio = 0.0297 
     min_xi = 0  
@@ -73,7 +73,7 @@ if __name__ == "__main__":
     max_iterations = 15
     train_optimizer = "ADAM"  
     entropy_optimizer = "FISTA"  
-    delta = 6
+    delta = 4
     pruning = "Y"
     QuantizationType = "center"
     sparsity_threshold = 1e-3
