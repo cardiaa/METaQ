@@ -165,7 +165,7 @@ def train_and_evaluate(model, criterion, C, lr, lambda_reg, alpha, subgradient_s
             f"A_Q = {quantized_accuracy}, H_Q = {quantized_entropy}, "
             f"zstd_ratio = {zstd_ratio:.2%}, sparse_ratio = {sparse_ratio:.2%}, "
             f"sparsity = {sparsity:.2%} , sparse_accuracy = {sparse_accuracy}, training_time = {training_time}s\n"
-            "-"*60, file=sys.__stdout__, flush=True     
+            "-"*60, flush=True     
         )
         # Saving a better model
         if(accuracies[-1] >= BestQuantization_target_acc):
