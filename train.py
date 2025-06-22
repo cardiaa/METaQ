@@ -65,13 +65,15 @@ if __name__ == "__main__":
     lower_c = 1e-2
     c1 = 10
     c2 = 1000
+    first_best_indices = 20
+    accuracy_tollerance = 0.2
     zeta = 50000
     l = 0.5
     n_epochs = 90 # To be increased as soon as I find good configurations
     max_iterations = 15
     train_optimizer = "ADAM"  
     entropy_optimizer = "FISTA"  
-    delta = 14.5
+    delta = 8
     pruning = "Y"
     QuantizationType = "center"
     sparsity_threshold = 1e-3
@@ -101,6 +103,8 @@ if __name__ == "__main__":
         print(f"lower_c={lower_c}", flush=True)  
         print(f"c1={c1}", flush=True)
         print(f"c2={c2}", flush=True)
+        print(f"first_best_indices={first_best_indices}", flush=True)
+        print(f"accuracy_tollerance={accuracy_tollerance}", flush=True)
         print(f"zeta={zeta}", flush=True)
         print(f"l={l}", flush=True)
         print(f"n_epochs={n_epochs}", flush=True) 
@@ -115,10 +119,10 @@ if __name__ == "__main__":
     
     train_and_evaluate(
         model=model, criterion=criterion, C=C, lr=lr, lambda_reg=lambda_reg, alpha=alpha,
-        subgradient_step=subgradient_step, w0=w0, r=args.r, # Pass the value from command line arguments
+        subgradient_step=subgradient_step, w0=w0, r=args.r, first_best_indices=first_best_indices,
         BestQuantization_target_acc=BestQuantization_target_acc, final_target_acc=final_target_acc, 
         target_zstd_ratio=target_zstd_ratio, min_xi=min_xi, max_xi=max_xi, upper_c=upper_c, lower_c=lower_c, c1=c1, c2=c2, 
         zeta=zeta, l=l, n_epochs=n_epochs, max_iterations=max_iterations, device=device, train_optimizer=train_optimizer,
-        entropy_optimizer=entropy_optimizer, trainloader=trainloader, testloader=testloader,
-        delta=delta, pruning=pruning, QuantizationType=QuantizationType, sparsity_threshold=sparsity_threshold
+        entropy_optimizer=entropy_optimizer, trainloader=trainloader, testloader=testloader, delta=delta, pruning=pruning, 
+        QuantizationType=QuantizationType, sparsity_threshold=sparsity_threshold, accuracy_tollerance=accuracy_tollerance
     )
