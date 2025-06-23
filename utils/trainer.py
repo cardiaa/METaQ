@@ -161,7 +161,7 @@ def train_and_evaluate(model, criterion, C, lr, lambda_reg, alpha, subgradient_s
 
         # Saving a better model
         if(accuracies[-1] >= BestQuantization_target_acc):
-            log = BestQuantization(log=log, C=C, r=r, epoch=epoch, min_w=min_w, max_w=max_w, w=w, c1=c1, c2=c2,
+            log = BestQuantization(log=log, C=C, r=r, delta=delta, epoch=epoch, min_w=min_w, max_w=max_w, w=w, c1=c1, c2=c2,
                                    final_target_acc=final_target_acc, target_zstd_ratio=target_zstd_ratio, 
                                    QuantizationType=QuantizationType, model=model, testloader=testloader, accuracy=accuracy, 
                                    device=device, first_best_indices=first_best_indices, accuracy_tollerance=accuracy_tollerance)

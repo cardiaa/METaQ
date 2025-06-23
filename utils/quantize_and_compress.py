@@ -167,7 +167,7 @@ def compare_lists(list1, list2, tollerance=1e-4):
         return False
     return all(abs(a - b) <= tollerance for a, b in zip(list1, list2))
 
-def BestQuantization(log, C, r, epoch, min_w, max_w, w, c1, c2, final_target_acc, target_zstd_ratio, 
+def BestQuantization(log, C, r, delta, epoch, min_w, max_w, w, c1, c2, final_target_acc, target_zstd_ratio, 
                      QuantizationType, model, testloader, accuracy, device, first_best_indices, accuracy_tollerance):
     QuantAcc = []
     QuantEntr = []
@@ -231,13 +231,13 @@ def BestQuantization(log, C, r, epoch, min_w, max_w, w, c1, c2, final_target_acc
         zstd_ratio = zstd_size / original_size_bytes
 
         if(QuantAcc[i] >= final_target_acc and zstd_ratio <= target_zstd_ratio):
-            torch.save(model.state_dict(), f"BestModelsJune2025/Test1June2025_C{C}_r{r}_epoch{epoch}.pth")
+            torch.save(model.state_dict(), f"BestModelsJune2025/Test1June2025_C{C}_delta{delta}_epoch{epoch}.pth")
             log += "✅"*18+"\n"
             log += "✅✅✅✅✅✅ MODEL SAVED ✅✅✅✅✅✅\n"
             log += "✅"*18+"\n"
         log += "💥💥💥 ...AIN'T SAVING THE MODEL... JUST CHECKING... 💥💥💥\n" 
         log += (
-            f"\t➡️ r = {r}, Epoch {epoch + 1}:\n"
+            f"\t➡️ delta = {delta}, Epoch {epoch + 1}:\n"
             f"\tQuantization at C={c1 + i}, Accuracy from {accuracy} to {QuantAcc[i]}\n"
             f"\tH_Q = {quantized_entropy}, zstd_ratio = {zstd_ratio:.2%}\n"
         )           
