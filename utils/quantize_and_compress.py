@@ -167,7 +167,7 @@ def compare_lists(list1, list2, tollerance=1e-4):
         return False
     return all(abs(a - b) <= tollerance for a, b in zip(list1, list2))
 
-def BestQuantization(log, C, r, delta, epoch, min_w, max_w, w, c1, c2, final_target_acc, target_zstd_ratio, 
+def BestQuantization(log, C, r, delta, epoch, min_w, max_w, w, c1, c2, final_target_acc, target_zstd_ratio, sparsity_threshold,
                      QuantizationType, model, testloader, accuracy, device, first_best_indices, accuracy_tollerance):
     QuantAcc = []
     QuantEntr = []
@@ -230,6 +230,38 @@ def BestQuantization(log, C, r, delta, epoch, min_w, max_w, w, c1, c2, final_tar
         zstd_size = len(zstd_compressed)
         zstd_ratio = zstd_size / original_size_bytes
 
+        # --- Sparse compression ---
+        mask = [1 if abs(val) > sparsity_threshold else 0 for val in encoded_list]
+        nonzero_values = [val for val in encoded_list if abs(val) > sparsity_threshold]
+        bitmask_bytes = pack_bitmask(mask)
+        packed_nonzeros = b''.join(struct.pack('f', val) for val in nonzero_values)
+        compressed_mask = compress_zstd(bitmask_bytes)
+        compressed_values = compress_zstd(packed_nonzeros)
+        sparse_compressed_size = len(compressed_mask) + len(compressed_values)
+        sparse_ratio = sparse_compressed_size / original_size_bytes
+        sparsity = 1.0 - sum(mask) / len(mask) 
+
+        # Applies the sparsity mask to quantized weights
+        w_sparse = torch.tensor(encoded_list).to(device)
+        sparse_mask_tensor = torch.tensor(mask, dtype=torch.bool).to(device)
+        w_sparse[~sparse_mask_tensor] = 0.0
+
+        # Build a new sparsified model
+        model_sparse = copy.deepcopy(model).to(device)
+        start_idx = 0
+        for param in model_sparse.parameters():
+            numel = param.data.numel()
+            param.data = w_sparse[start_idx:start_idx + numel].view(param.data.size())
+            start_idx += numel
+        model_sparse.eval()
+
+        # Evaluate the accuracy of the sparsified model
+        sparse_accuracy = test_accuracy(model_sparse, testloader, device)
+
+
+
+
+
         if(QuantAcc[i] >= final_target_acc and zstd_ratio <= target_zstd_ratio):
             torch.save(model.state_dict(), f"BestModelsJune2025/Test1June2025_C{C}_delta{delta}_epoch{epoch}.pth")
             log += "✅"*18+"\n"
@@ -240,6 +272,7 @@ def BestQuantization(log, C, r, delta, epoch, min_w, max_w, w, c1, c2, final_tar
             f"\t➡️ delta = {delta}, Epoch {epoch + 1}:\n"
             f"\tQuantization at C={c1 + i}, Accuracy from {accuracy} to {QuantAcc[i]}\n"
             f"\tH_Q = {quantized_entropy}, zstd_ratio = {zstd_ratio:.2%}\n"
+            f"\tSparse zstd_ratio = {sparse_ratio:.2%}, sparse_accuracy = {sparse_accuracy}, Sparsity = {sparsity:.2%}\n"
         )           
         log += "-"*60
         log += "\n"
