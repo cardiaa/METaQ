@@ -269,7 +269,7 @@ def BestQuantization(log, C, r, delta, epoch, min_w, max_w, w, c1, c2, final_tar
             f"\t➡️ delta = {delta}, Epoch {epoch + 1}:\n"
             f"\tQuantization at C={c1 + i}, Accuracy from {accuracy} to {QuantAcc[i]}\n"
             f"\tH_Q = {quantized_entropy}, zstd_ratio = {zstd_ratio:.2%}\n"
-            f"\tSparse zstd_ratio = {sparse_ratio:.2%}, sparse_accuracy = {sparse_accuracy}, Sparsity = {sparsity:.2%}\n"
+            f"\tsparse_ratio = {sparse_ratio:.2%}, sparse_accuracy = {sparse_accuracy}, sparsity = {sparsity:.2%}\n"
         )           
         log += "-"*60
         log += "\n"
