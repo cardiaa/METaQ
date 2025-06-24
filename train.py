@@ -56,7 +56,7 @@ if __name__ == "__main__":
     bucket_zero = round((C-1)/2) #it must range from 0 to C-2
     r = 1.1    
     w0 = round(r - (bucket_zero + 0.5) * 2 * r * (1 - 1/C) / (C - 1), 3)
-    BestQuantization_target_acc = 98.6
+    BestQuantization_target_acc = 98.5
     final_target_acc = 99
     target_zstd_ratio = 0.0297 
     min_xi = 0  
