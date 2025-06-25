@@ -9,13 +9,21 @@ from torch.nn import CrossEntropyLoss
 # Function to load the MNIST dataset
 def load_data():
     # Define a transformation to convert images to tensors
-    transform = transforms.Compose([transforms.ToTensor()])
+    transform_train = transforms.Compose([ 
+        transforms.RandomRotation(10),
+        transforms.RandomAffine(0, translate=(0.1, 0.1)),
+        transforms.ToTensor(),
+    ])
+
+    transform_test = transforms.Compose([ 
+        transforms.ToTensor(),
+    ])
     
     # Load the training set of MNIST dataset with the specified transformation
-    trainset = datasets.MNIST(root='./data', train=True, download=True, transform=transform)
+    trainset = datasets.MNIST(root='./data', train=True, download=True, transform=transform_train)
     
     # Load the test set of MNIST dataset with the specified transformation
-    testset = datasets.MNIST(root='./data', train=False, download=True, transform=transform)
+    testset = datasets.MNIST(root='./data', train=False, download=True, transform=transform_test)
     
     # Return the loaded training and test datasets
     return trainset, testset
@@ -40,7 +48,7 @@ if __name__ == "__main__":
     trainset, testset = load_data()
     
     # Create data loaders for training and testing, with specific batch sizes and no parallel data loading (num_workers=0)
-    trainloader = torch.utils.data.DataLoader(trainset, batch_size=64, shuffle=True, num_workers=0)
+    trainloader = torch.utils.data.DataLoader(trainset, batch_size=128, shuffle=True, num_workers=0)
     testloader = torch.utils.data.DataLoader(testset, batch_size=1000, shuffle=False, num_workers=0)
 
     device = torch.device("cpu")
@@ -56,7 +64,7 @@ if __name__ == "__main__":
     bucket_zero = round((C-1)/2) #it must range from 0 to C-2
     r = 1.1    
     w0 = round(r - (bucket_zero + 0.5) * 2 * r * (1 - 1/C) / (C - 1), 3)
-    BestQuantization_target_acc = 98.5
+    BestQuantization_target_acc = 98.6
     final_target_acc = 99
     target_zstd_ratio = 0.0297 
     min_xi = 0  
