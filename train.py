@@ -54,7 +54,7 @@ if __name__ == "__main__":
     device = torch.device("cpu")
 
     # Define fixed hyperparameters for the model and training process
-    model, model_name = LeNet5().to(device), "LeNet-5"
+    model, model_name = LeNet5().to(device), "LeNet-5 enhanced"
     criterion, criterion_name = CrossEntropyLoss(), "CrossEntropy" 
     C = 64
     lr = 0.0007  
