@@ -1,0 +1,499 @@
+nohup: ignoring input
+=================================================================
+==================== PARAMETER CONFIGURATION ====================
+=================================================================
+model=LeNet-5
+criterion=CrossEntropy
+C=64
+lr=0.0007
+lambda_reg=0.0015
+alpha=0.533
+[T1=lambda_reg*alpha=0.0008]
+[T2=lambda_reg*(1-alpha)=0.0007]
+subgradient_step=100000.0
+w0=-0.017
+r=1.1
+bucket_zero=32
+BestQuantization_target_acc=98.5
+final_target_acc=99
+target_zstd_ratio=0.0297
+min_xi=0
+max_xi=1
+upper_c=44426
+lower_c=0.01
+c1=10
+c2=1000
+first_best_indices=20
+accuracy_tollerance=0.2
+zeta=50000
+l=0.5
+n_epochs=100
+max_iterations=15
+train_optimizer=ADAM
+entropy_optimizer=FISTA
+pruning=Y
+QuantizationType=center
+sparsity_threshold=0.001
+------------------------------------------------------------
+delta = 10.53
+Epoch 1: A_NQ = 84.51, H_NQ = 685879, A_Q = 84.38, H_Q = 220144, zstd_ratio = 21.84%, sparse_ratio = 20.41%, sparsity = 30.97% , sparse_accuracy = 84.43, training_time = 706s
+Epoch 2: A_NQ = 91.96, H_NQ = 685889, A_Q = 92.59, H_Q = 187739, zstd_ratio = 18.88%, sparse_ratio = 17.07%, sparsity = 43.64% , sparse_accuracy = 92.58, training_time = 685s
+Epoch 3: A_NQ = 94.69, H_NQ = 685887, A_Q = 95.05, H_Q = 158439, zstd_ratio = 15.98%, sparse_ratio = 14.07%, sparsity = 54.01% , sparse_accuracy = 95.02, training_time = 799s
+Epoch 4: A_NQ = 95.87, H_NQ = 685889, A_Q = 96.11, H_Q = 142842, zstd_ratio = 14.45%, sparse_ratio = 12.61%, sparsity = 57.95% , sparse_accuracy = 96.14, training_time = 822s
+Epoch 5: A_NQ = 96.57, H_NQ = 685883, A_Q = 96.54, H_Q = 117582, zstd_ratio = 12.00%, sparse_ratio = 10.37%, sparsity = 66.73% , sparse_accuracy = 96.55, training_time = 534s
+Epoch 6: A_NQ = 96.77, H_NQ = 685877, A_Q = 97.27, H_Q = 104031, zstd_ratio = 10.73%, sparse_ratio = 9.16%, sparsity = 70.42% , sparse_accuracy = 97.23, training_time = 621s
+Epoch 7: A_NQ = 97.39, H_NQ = 685873, A_Q = 97.58, H_Q = 79511, zstd_ratio = 8.34%, sparse_ratio = 6.91%, sparsity = 78.89% , sparse_accuracy = 97.53, training_time = 414s
+Epoch 8: A_NQ = 97.25, H_NQ = 685873, A_Q = 97.67, H_Q = 69298, zstd_ratio = 7.34%, sparse_ratio = 6.00%, sparsity = 81.78% , sparse_accuracy = 97.69, training_time = 658s
+Epoch 9: A_NQ = 97.94, H_NQ = 685869, A_Q = 98.11, H_Q = 57827, zstd_ratio = 6.18%, sparse_ratio = 4.94%, sparsity = 85.28% , sparse_accuracy = 98.13, training_time = 572s
+Epoch 10: A_NQ = 97.76, H_NQ = 685881, A_Q = 98.05, H_Q = 48286, zstd_ratio = 5.26%, sparse_ratio = 4.13%, sparsity = 88.18% , sparse_accuracy = 98.03, training_time = 629s
+Epoch 11: A_NQ = 97.75, H_NQ = 685873, A_Q = 97.99, H_Q = 40318, zstd_ratio = 4.49%, sparse_ratio = 3.46%, sparsity = 90.60% , sparse_accuracy = 97.99, training_time = 402s
+Epoch 12: A_NQ = 97.99, H_NQ = 685847, A_Q = 97.98, H_Q = 35914, zstd_ratio = 4.01%, sparse_ratio = 3.07%, sparsity = 91.80% , sparse_accuracy = 97.96, training_time = 537s
+Epoch 13: A_NQ = 97.63, H_NQ = 685859, A_Q = 97.46, H_Q = 32903, zstd_ratio = 3.71%, sparse_ratio = 2.85%, sparsity = 92.59% , sparse_accuracy = 97.45, training_time = 758s
+Epoch 14: A_NQ = 97.31, H_NQ = 685827, A_Q = 97.84, H_Q = 31191, zstd_ratio = 3.51%, sparse_ratio = 2.69%, sparsity = 93.00% , sparse_accuracy = 97.89, training_time = 709s
+Epoch 15: A_NQ = 98.11, H_NQ = 685873, A_Q = 98.39, H_Q = 30704, zstd_ratio = 3.47%, sparse_ratio = 2.64%, sparsity = 93.07% , sparse_accuracy = 98.39, training_time = 725s
+Epoch 16: A_NQ = 97.78, H_NQ = 685865, A_Q = 98.24, H_Q = 29829, zstd_ratio = 3.37%, sparse_ratio = 2.55%, sparsity = 93.22% , sparse_accuracy = 98.26, training_time = 659s
+Epoch 17: A_NQ = 97.99, H_NQ = 685869, A_Q = 98.26, H_Q = 30527, zstd_ratio = 3.40%, sparse_ratio = 2.59%, sparsity = 92.84% , sparse_accuracy = 98.26, training_time = 501s
+Epoch 18: A_NQ = 97.76, H_NQ = 685869, A_Q = 98.37, H_Q = 31407, zstd_ratio = 3.48%, sparse_ratio = 2.64%, sparsity = 92.45% , sparse_accuracy = 98.37, training_time = 607s
+Epoch 19: A_NQ = 98.12, H_NQ = 685881, A_Q = 98.41, H_Q = 28941, zstd_ratio = 3.19%, sparse_ratio = 2.43%, sparsity = 93.31% , sparse_accuracy = 98.41, training_time = 806s
+Epoch 20: A_NQ = 98.35, H_NQ = 685773, A_Q = 98.55, H_Q = 28125, zstd_ratio = 3.15%, sparse_ratio = 2.36%, sparsity = 93.53% , sparse_accuracy = 98.53, training_time = 769s
+Epoch 21: A_NQ = 98.24, H_NQ = 685857, A_Q = 98.49, H_Q = 25636, zstd_ratio = 2.92%, sparse_ratio = 2.19%, sparsity = 94.33% , sparse_accuracy = 98.48, training_time = 494s
+Epoch 22: A_NQ = 97.18, H_NQ = 685783, A_Q = 98.41, H_Q = 28168, zstd_ratio = 3.15%, sparse_ratio = 2.37%, sparsity = 93.32% , sparse_accuracy = 98.42, training_time = 652s
+Epoch 23: A_NQ = 98.24, H_NQ = 685851, A_Q = 98.44, H_Q = 24055, zstd_ratio = 2.75%, sparse_ratio = 2.06%, sparsity = 94.76% , sparse_accuracy = 98.42, training_time = 596s
+Epoch 24: A_NQ = 97.69, H_NQ = 685869, A_Q = 98.52, H_Q = 23524, zstd_ratio = 2.68%, sparse_ratio = 2.02%, sparsity = 94.89% , sparse_accuracy = 98.51, training_time = 542s
+Epoch 25: A_NQ = 98.35, H_NQ = 685801, A_Q = 98.46, H_Q = 23546, zstd_ratio = 2.69%, sparse_ratio = 2.00%, sparsity = 94.83% , sparse_accuracy = 98.46, training_time = 545s
+Epoch 26: A_NQ = 98.11, H_NQ = 685875, A_Q = 98.36, H_Q = 24213, zstd_ratio = 2.74%, sparse_ratio = 2.06%, sparsity = 94.62% , sparse_accuracy = 98.34, training_time = 690s
+Epoch 27: A_NQ = 97.74, H_NQ = 685863, A_Q = 98.23, H_Q = 23434, zstd_ratio = 2.66%, sparse_ratio = 1.98%, sparsity = 94.82% , sparse_accuracy = 98.25, training_time = 663s
+Epoch 28: A_NQ = 97.51, H_NQ = 685761, A_Q = 98.46, H_Q = 23693, zstd_ratio = 2.67%, sparse_ratio = 1.99%, sparsity = 94.78% , sparse_accuracy = 98.46, training_time = 552s
+Epoch 29: A_NQ = 98.27, H_NQ = 685849, A_Q = 98.53, H_Q = 23952, zstd_ratio = 2.66%, sparse_ratio = 2.00%, sparsity = 94.66% , sparse_accuracy = 98.52, training_time = 733s
+Epoch 30: A_NQ = 98.48, H_NQ = 685873, A_Q = 98.54, H_Q = 24550, zstd_ratio = 2.73%, sparse_ratio = 2.06%, sparsity = 94.49% , sparse_accuracy = 98.53, training_time = 720s
+Epoch 31: A_NQ = 98.0, H_NQ = 685686, A_Q = 98.37, H_Q = 24048, zstd_ratio = 2.70%, sparse_ratio = 2.01%, sparsity = 94.63% , sparse_accuracy = 98.4, training_time = 389s
+Epoch 32: A_NQ = 98.06, H_NQ = 685777, A_Q = 98.43, H_Q = 22386, zstd_ratio = 2.54%, sparse_ratio = 1.90%, sparsity = 95.12% , sparse_accuracy = 98.45, training_time = 669s
+Epoch 33: A_NQ = 98.39, H_NQ = 685827, A_Q = 98.52, H_Q = 19191, zstd_ratio = 2.28%, sparse_ratio = 1.66%, sparsity = 96.07% , sparse_accuracy = 98.5, training_time = 714s
+Epoch 34: A_NQ = 98.39, H_NQ = 685709, A_Q = 98.4, H_Q = 25906, zstd_ratio = 2.87%, sparse_ratio = 2.15%, sparsity = 93.87% , sparse_accuracy = 98.39, training_time = 322s
+Epoch 35: A_NQ = 97.71, H_NQ = 685855, A_Q = 98.42, H_Q = 23258, zstd_ratio = 2.59%, sparse_ratio = 1.93%, sparsity = 94.78% , sparse_accuracy = 98.4, training_time = 796s
+Epoch 36: A_NQ = 98.34, H_NQ = 685773, A_Q = 98.42, H_Q = 21617, zstd_ratio = 2.44%, sparse_ratio = 1.81%, sparsity = 95.31% , sparse_accuracy = 98.42, training_time = 747s
+Epoch 37: A_NQ = 98.34, H_NQ = 685596, A_Q = 98.35, H_Q = 26257, zstd_ratio = 2.81%, sparse_ratio = 2.14%, sparsity = 93.55% , sparse_accuracy = 98.34, training_time = 764s
+Epoch 38: A_NQ = 98.4, H_NQ = 685551, A_Q = 98.53, H_Q = 25023, zstd_ratio = 2.71%, sparse_ratio = 2.04%, sparsity = 94.11% , sparse_accuracy = 98.54, training_time = 758s
+Epoch 39: A_NQ = 98.21, H_NQ = 685801, A_Q = 98.51, H_Q = 21513, zstd_ratio = 2.42%, sparse_ratio = 1.80%, sparsity = 95.34% , sparse_accuracy = 98.52, training_time = 771s
+Epoch 40: A_NQ = 98.59, H_NQ = 685885, A_Q = 98.69, H_Q = 20534, zstd_ratio = 2.33%, sparse_ratio = 1.73%, sparsity = 95.65% , sparse_accuracy = 98.67, training_time = 575s
+💥💥💥 ...AIN'T SAVING THE MODEL... JUST CHECKING... 💥💥💥
+	➡️ delta = 10.53, Epoch 40:
+	Quantization at C=34, Accuracy from 98.59 to 98.52
+	H_Q = 17485, zstd_ratio = 1.94%
+	sparse_ratio = 1.95%, sparse_accuracy = 98.52, sparsity = 0.00%
+------------------------------------------------------------
+💥💥💥 ...AIN'T SAVING THE MODEL... JUST CHECKING... 💥💥💥
+	➡️ delta = 10.53, Epoch 40:
+	Quantization at C=36, Accuracy from 98.59 to 98.43
+	H_Q = 17741, zstd_ratio = 1.98%
+	sparse_ratio = 1.99%, sparse_accuracy = 98.43, sparsity = 0.00%
+------------------------------------------------------------
+💥💥💥 ...AIN'T SAVING THE MODEL... JUST CHECKING... 💥💥💥
+	➡️ delta = 10.53, Epoch 40:
+	Quantization at C=38, Accuracy from 98.59 to 98.57
+	H_Q = 17935, zstd_ratio = 1.99%
+	sparse_ratio = 2.00%, sparse_accuracy = 98.57, sparsity = 0.00%
+------------------------------------------------------------
+💥💥💥 ...AIN'T SAVING THE MODEL... JUST CHECKING... 💥💥💥
+	➡️ delta = 10.53, Epoch 40:
+	Quantization at C=40, Accuracy from 98.59 to 98.47
+	H_Q = 18092, zstd_ratio = 2.02%
+	sparse_ratio = 2.03%, sparse_accuracy = 98.47, sparsity = 0.00%
+------------------------------------------------------------
+💥💥💥 ...AIN'T SAVING THE MODEL... JUST CHECKING... 💥💥💥
+	➡️ delta = 10.53, Epoch 40:
+	Quantization at C=42, Accuracy from 98.59 to 98.63
+	H_Q = 18301, zstd_ratio = 2.06%
+	sparse_ratio = 2.07%, sparse_accuracy = 98.63, sparsity = 0.00%
+------------------------------------------------------------
+💥💥💥 ...AIN'T SAVING THE MODEL... JUST CHECKING... 💥💥💥
+	➡️ delta = 10.53, Epoch 40:
+	Quantization at C=44, Accuracy from 98.59 to 98.57
+	H_Q = 18498, zstd_ratio = 2.08%
+	sparse_ratio = 2.09%, sparse_accuracy = 98.57, sparsity = 0.00%
+------------------------------------------------------------
+💥💥💥 ...AIN'T SAVING THE MODEL... JUST CHECKING... 💥💥💥
+	➡️ delta = 10.53, Epoch 40:
+	Quantization at C=46, Accuracy from 98.59 to 98.56
+	H_Q = 18643, zstd_ratio = 2.09%
+	sparse_ratio = 2.10%, sparse_accuracy = 98.56, sparsity = 0.00%
+------------------------------------------------------------
+💥💥💥 ...AIN'T SAVING THE MODEL... JUST CHECKING... 💥💥💥
+	➡️ delta = 10.53, Epoch 40:
+	Quantization at C=48, Accuracy from 98.59 to 98.55
+	H_Q = 18890, zstd_ratio = 2.13%
+	sparse_ratio = 2.14%, sparse_accuracy = 98.55, sparsity = 0.00%
+------------------------------------------------------------
+💥💥💥 ...AIN'T SAVING THE MODEL... JUST CHECKING... 💥💥💥
+	➡️ delta = 10.53, Epoch 40:
+	Quantization at C=50, Accuracy from 98.59 to 98.55
+	H_Q = 19049, zstd_ratio = 2.15%
+	sparse_ratio = 2.16%, sparse_accuracy = 98.55, sparsity = 0.00%
+------------------------------------------------------------
+💥💥💥 ...AIN'T SAVING THE MODEL... JUST CHECKING... 💥💥💥
+	➡️ delta = 10.53, Epoch 40:
+	Quantization at C=52, Accuracy from 98.59 to 98.58
+	H_Q = 19270, zstd_ratio = 2.17%
+	sparse_ratio = 2.18%, sparse_accuracy = 98.58, sparsity = 0.00%
+------------------------------------------------------------
+💥💥💥 ...AIN'T SAVING THE MODEL... JUST CHECKING... 💥💥💥
+	➡️ delta = 10.53, Epoch 40:
+	Quantization at C=54, Accuracy from 98.59 to 98.63
+	H_Q = 19439, zstd_ratio = 2.20%
+	sparse_ratio = 2.21%, sparse_accuracy = 98.63, sparsity = 0.00%
+------------------------------------------------------------
+💥💥💥 ...AIN'T SAVING THE MODEL... JUST CHECKING... 💥💥💥
+	➡️ delta = 10.53, Epoch 40:
+	Quantization at C=56, Accuracy from 98.59 to 98.59
+	H_Q = 19626, zstd_ratio = 2.23%
+	sparse_ratio = 2.25%, sparse_accuracy = 98.59, sparsity = 0.00%
+------------------------------------------------------------
+💥💥💥 ...AIN'T SAVING THE MODEL... JUST CHECKING... 💥💥💥
+	➡️ delta = 10.53, Epoch 40:
+	Quantization at C=58, Accuracy from 98.59 to 98.61
+	H_Q = 19891, zstd_ratio = 2.27%
+	sparse_ratio = 2.28%, sparse_accuracy = 98.61, sparsity = 0.00%
+------------------------------------------------------------
+💥💥💥 ...AIN'T SAVING THE MODEL... JUST CHECKING... 💥💥💥
+	➡️ delta = 10.53, Epoch 40:
+	Quantization at C=60, Accuracy from 98.59 to 98.64
+	H_Q = 20084, zstd_ratio = 2.27%
+	sparse_ratio = 2.28%, sparse_accuracy = 98.64, sparsity = 0.00%
+------------------------------------------------------------
+💥💥💥 ...AIN'T SAVING THE MODEL... JUST CHECKING... 💥💥💥
+	➡️ delta = 10.53, Epoch 40:
+	Quantization at C=62, Accuracy from 98.59 to 98.63
+	H_Q = 20269, zstd_ratio = 2.30%
+	sparse_ratio = 1.70%, sparse_accuracy = 98.65, sparsity = 95.70%
+------------------------------------------------------------
+💥💥💥 ...AIN'T SAVING THE MODEL... JUST CHECKING... 💥💥💥
+	➡️ delta = 10.53, Epoch 40:
+	Quantization at C=64, Accuracy from 98.59 to 98.69
+	H_Q = 20534, zstd_ratio = 2.33%
+	sparse_ratio = 1.73%, sparse_accuracy = 98.67, sparsity = 95.65%
+------------------------------------------------------------
+💥💥💥 ...AIN'T SAVING THE MODEL... JUST CHECKING... 💥💥💥
+	➡️ delta = 10.53, Epoch 40:
+	Quantization at C=66, Accuracy from 98.59 to 98.64
+	H_Q = 20748, zstd_ratio = 2.34%
+	sparse_ratio = 1.75%, sparse_accuracy = 98.65, sparsity = 95.61%
+------------------------------------------------------------
+💥💥💥 ...AIN'T SAVING THE MODEL... JUST CHECKING... 💥💥💥
+	➡️ delta = 10.53, Epoch 40:
+	Quantization at C=68, Accuracy from 98.59 to 98.58
+	H_Q = 20956, zstd_ratio = 2.36%
+	sparse_ratio = 1.77%, sparse_accuracy = 98.6, sparsity = 95.58%
+------------------------------------------------------------
+💥💥💥 ...AIN'T SAVING THE MODEL... JUST CHECKING... 💥💥💥
+	➡️ delta = 10.53, Epoch 40:
+	Quantization at C=70, Accuracy from 98.59 to 98.63
+	H_Q = 21217, zstd_ratio = 2.40%
+	sparse_ratio = 2.41%, sparse_accuracy = 98.63, sparsity = 0.00%
+------------------------------------------------------------
+💥💥💥 ...AIN'T SAVING THE MODEL... JUST CHECKING... 💥💥💥
+	➡️ delta = 10.53, Epoch 40:
+	Quantization at C=72, Accuracy from 98.59 to 98.72
+	H_Q = 21478, zstd_ratio = 2.42%
+	sparse_ratio = 2.43%, sparse_accuracy = 98.72, sparsity = 0.00%
+------------------------------------------------------------
+Epoch 41: A_NQ = 98.39, H_NQ = 685822, A_Q = 98.44, H_Q = 19805, zstd_ratio = 2.25%, sparse_ratio = 1.68%, sparsity = 95.87% , sparse_accuracy = 98.45, training_time = 805s
+Epoch 42: A_NQ = 98.48, H_NQ = 685861, A_Q = 98.56, H_Q = 18204, zstd_ratio = 2.12%, sparse_ratio = 1.56%, sparsity = 96.30% , sparse_accuracy = 98.56, training_time = 758s
+Epoch 43: A_NQ = 98.3, H_NQ = 685763, A_Q = 98.46, H_Q = 21951, zstd_ratio = 2.42%, sparse_ratio = 1.80%, sparsity = 95.07% , sparse_accuracy = 98.46, training_time = 727s
+Epoch 44: A_NQ = 98.41, H_NQ = 685783, A_Q = 98.54, H_Q = 19091, zstd_ratio = 2.18%, sparse_ratio = 1.61%, sparsity = 96.00% , sparse_accuracy = 98.53, training_time = 701s
+Epoch 45: A_NQ = 98.18, H_NQ = 685638, A_Q = 98.23, H_Q = 24016, zstd_ratio = 2.61%, sparse_ratio = 1.96%, sparsity = 94.24% , sparse_accuracy = 98.23, training_time = 626s
+Epoch 46: A_NQ = 98.37, H_NQ = 685769, A_Q = 98.72, H_Q = 19759, zstd_ratio = 2.21%, sparse_ratio = 1.64%, sparsity = 95.79% , sparse_accuracy = 98.72, training_time = 733s
+Epoch 47: A_NQ = 98.31, H_NQ = 685707, A_Q = 98.54, H_Q = 17820, zstd_ratio = 2.09%, sparse_ratio = 1.52%, sparsity = 96.36% , sparse_accuracy = 98.55, training_time = 624s
+Epoch 48: A_NQ = 98.21, H_NQ = 685857, A_Q = 98.53, H_Q = 16265, zstd_ratio = 1.92%, sparse_ratio = 1.41%, sparsity = 96.78% , sparse_accuracy = 98.54, training_time = 738s
+Epoch 49: A_NQ = 98.43, H_NQ = 685855, A_Q = 98.6, H_Q = 19384, zstd_ratio = 2.18%, sparse_ratio = 1.62%, sparsity = 95.87% , sparse_accuracy = 98.59, training_time = 501s
+Epoch 50: A_NQ = 98.39, H_NQ = 685697, A_Q = 98.58, H_Q = 18726, zstd_ratio = 2.12%, sparse_ratio = 1.57%, sparsity = 96.07% , sparse_accuracy = 98.57, training_time = 643s
+Epoch 51: A_NQ = 98.29, H_NQ = 685871, A_Q = 98.46, H_Q = 17017, zstd_ratio = 1.98%, sparse_ratio = 1.46%, sparsity = 96.58% , sparse_accuracy = 98.49, training_time = 742s
+Epoch 52: A_NQ = 98.4, H_NQ = 685759, A_Q = 98.53, H_Q = 17441, zstd_ratio = 2.03%, sparse_ratio = 1.49%, sparsity = 96.47% , sparse_accuracy = 98.53, training_time = 769s
+Epoch 53: A_NQ = 98.38, H_NQ = 685793, A_Q = 98.5, H_Q = 21313, zstd_ratio = 2.34%, sparse_ratio = 1.73%, sparsity = 95.22% , sparse_accuracy = 98.51, training_time = 460s
+Epoch 54: A_NQ = 98.41, H_NQ = 685667, A_Q = 98.67, H_Q = 18382, zstd_ratio = 2.09%, sparse_ratio = 1.55%, sparsity = 96.16% , sparse_accuracy = 98.69, training_time = 598s
+Epoch 55: A_NQ = 98.42, H_NQ = 685803, A_Q = 98.54, H_Q = 16894, zstd_ratio = 1.98%, sparse_ratio = 1.44%, sparsity = 96.61% , sparse_accuracy = 98.55, training_time = 575s
+Epoch 56: A_NQ = 98.44, H_NQ = 685873, A_Q = 98.67, H_Q = 19199, zstd_ratio = 2.13%, sparse_ratio = 1.60%, sparsity = 95.89% , sparse_accuracy = 98.66, training_time = 759s
+Epoch 57: A_NQ = 98.47, H_NQ = 685801, A_Q = 98.68, H_Q = 17550, zstd_ratio = 2.02%, sparse_ratio = 1.49%, sparsity = 96.43% , sparse_accuracy = 98.68, training_time = 468s
+Epoch 58: A_NQ = 98.24, H_NQ = 685810, A_Q = 98.53, H_Q = 16731, zstd_ratio = 1.94%, sparse_ratio = 1.43%, sparsity = 96.65% , sparse_accuracy = 98.52, training_time = 807s
+Epoch 59: A_NQ = 98.52, H_NQ = 685759, A_Q = 98.61, H_Q = 19813, zstd_ratio = 2.19%, sparse_ratio = 1.63%, sparsity = 95.70% , sparse_accuracy = 98.6, training_time = 632s
+Epoch 60: A_NQ = 98.4, H_NQ = 685869, A_Q = 98.66, H_Q = 18054, zstd_ratio = 2.04%, sparse_ratio = 1.52%, sparsity = 96.28% , sparse_accuracy = 98.66, training_time = 681s
+Epoch 61: A_NQ = 98.57, H_NQ = 685559, A_Q = 98.61, H_Q = 16805, zstd_ratio = 1.94%, sparse_ratio = 1.44%, sparsity = 96.64% , sparse_accuracy = 98.6, training_time = 632s
+Epoch 62: A_NQ = 98.44, H_NQ = 685861, A_Q = 98.62, H_Q = 17864, zstd_ratio = 2.02%, sparse_ratio = 1.50%, sparsity = 96.32% , sparse_accuracy = 98.61, training_time = 760s
+Epoch 63: A_NQ = 98.07, H_NQ = 685723, A_Q = 98.64, H_Q = 17985, zstd_ratio = 2.05%, sparse_ratio = 1.50%, sparsity = 96.28% , sparse_accuracy = 98.64, training_time = 809s
+Epoch 64: A_NQ = 98.48, H_NQ = 685873, A_Q = 98.68, H_Q = 19659, zstd_ratio = 2.17%, sparse_ratio = 1.62%, sparsity = 95.74% , sparse_accuracy = 98.69, training_time = 774s
+Epoch 65: A_NQ = 98.16, H_NQ = 685787, A_Q = 98.29, H_Q = 21235, zstd_ratio = 2.30%, sparse_ratio = 1.72%, sparsity = 95.18% , sparse_accuracy = 98.29, training_time = 652s
+Epoch 66: A_NQ = 98.25, H_NQ = 685801, A_Q = 98.6, H_Q = 18785, zstd_ratio = 2.10%, sparse_ratio = 1.56%, sparsity = 96.05% , sparse_accuracy = 98.61, training_time = 658s
+Epoch 67: A_NQ = 98.52, H_NQ = 685791, A_Q = 98.68, H_Q = 21352, zstd_ratio = 2.28%, sparse_ratio = 1.72%, sparsity = 95.14% , sparse_accuracy = 98.68, training_time = 666s
+Epoch 68: A_NQ = 98.55, H_NQ = 685855, A_Q = 98.72, H_Q = 19606, zstd_ratio = 2.18%, sparse_ratio = 1.61%, sparsity = 95.75% , sparse_accuracy = 98.7, training_time = 815s
+Epoch 69: A_NQ = 98.35, H_NQ = 685861, A_Q = 98.53, H_Q = 19529, zstd_ratio = 2.16%, sparse_ratio = 1.60%, sparsity = 95.80% , sparse_accuracy = 98.54, training_time = 1065s
+Epoch 70: A_NQ = 98.6, H_NQ = 685840, A_Q = 98.71, H_Q = 18992, zstd_ratio = 2.13%, sparse_ratio = 1.57%, sparsity = 96.01% , sparse_accuracy = 98.71, training_time = 1017s
+💥💥💥 ...AIN'T SAVING THE MODEL... JUST CHECKING... 💥💥💥
+	➡️ delta = 10.53, Epoch 70:
+	Quantization at C=32, Accuracy from 98.6 to 98.44
+	H_Q = 16133, zstd_ratio = 1.75%
+	sparse_ratio = 1.76%, sparse_accuracy = 98.44, sparsity = 0.00%
+------------------------------------------------------------
+💥💥💥 ...AIN'T SAVING THE MODEL... JUST CHECKING... 💥💥💥
+	➡️ delta = 10.53, Epoch 70:
+	Quantization at C=34, Accuracy from 98.6 to 98.45
+	H_Q = 16351, zstd_ratio = 1.76%
+	sparse_ratio = 1.77%, sparse_accuracy = 98.45, sparsity = 0.00%
+------------------------------------------------------------
+💥💥💥 ...AIN'T SAVING THE MODEL... JUST CHECKING... 💥💥💥
+	➡️ delta = 10.53, Epoch 70:
+	Quantization at C=36, Accuracy from 98.6 to 98.64
+	H_Q = 16554, zstd_ratio = 1.81%
+	sparse_ratio = 1.82%, sparse_accuracy = 98.64, sparsity = 0.00%
+------------------------------------------------------------
+💥💥💥 ...AIN'T SAVING THE MODEL... JUST CHECKING... 💥💥💥
+	➡️ delta = 10.53, Epoch 70:
+	Quantization at C=38, Accuracy from 98.6 to 98.6
+	H_Q = 16755, zstd_ratio = 1.82%
+	sparse_ratio = 1.84%, sparse_accuracy = 98.6, sparsity = 0.00%
+------------------------------------------------------------
+💥💥💥 ...AIN'T SAVING THE MODEL... JUST CHECKING... 💥💥💥
+	➡️ delta = 10.53, Epoch 70:
+	Quantization at C=44, Accuracy from 98.6 to 98.49
+	H_Q = 17238, zstd_ratio = 1.92%
+	sparse_ratio = 1.93%, sparse_accuracy = 98.49, sparsity = 0.00%
+------------------------------------------------------------
+💥💥💥 ...AIN'T SAVING THE MODEL... JUST CHECKING... 💥💥💥
+	➡️ delta = 10.53, Epoch 70:
+	Quantization at C=46, Accuracy from 98.6 to 98.61
+	H_Q = 17440, zstd_ratio = 1.93%
+	sparse_ratio = 1.94%, sparse_accuracy = 98.61, sparsity = 0.00%
+------------------------------------------------------------
+💥💥💥 ...AIN'T SAVING THE MODEL... JUST CHECKING... 💥💥💥
+	➡️ delta = 10.53, Epoch 70:
+	Quantization at C=48, Accuracy from 98.6 to 98.65
+	H_Q = 17643, zstd_ratio = 1.93%
+	sparse_ratio = 1.95%, sparse_accuracy = 98.65, sparsity = 0.00%
+------------------------------------------------------------
+💥💥💥 ...AIN'T SAVING THE MODEL... JUST CHECKING... 💥💥💥
+	➡️ delta = 10.53, Epoch 70:
+	Quantization at C=50, Accuracy from 98.6 to 98.56
+	H_Q = 17764, zstd_ratio = 1.96%
+	sparse_ratio = 1.98%, sparse_accuracy = 98.56, sparsity = 0.00%
+------------------------------------------------------------
+💥💥💥 ...AIN'T SAVING THE MODEL... JUST CHECKING... 💥💥💥
+	➡️ delta = 10.53, Epoch 70:
+	Quantization at C=52, Accuracy from 98.6 to 98.69
+	H_Q = 17911, zstd_ratio = 1.98%
+	sparse_ratio = 1.99%, sparse_accuracy = 98.69, sparsity = 0.00%
+------------------------------------------------------------
+💥💥💥 ...AIN'T SAVING THE MODEL... JUST CHECKING... 💥💥💥
+	➡️ delta = 10.53, Epoch 70:
+	Quantization at C=54, Accuracy from 98.6 to 98.68
+	H_Q = 18084, zstd_ratio = 2.00%
+	sparse_ratio = 2.01%, sparse_accuracy = 98.68, sparsity = 0.00%
+------------------------------------------------------------
+💥💥💥 ...AIN'T SAVING THE MODEL... JUST CHECKING... 💥💥💥
+	➡️ delta = 10.53, Epoch 70:
+	Quantization at C=56, Accuracy from 98.6 to 98.56
+	H_Q = 18242, zstd_ratio = 2.04%
+	sparse_ratio = 2.05%, sparse_accuracy = 98.56, sparsity = 0.00%
+------------------------------------------------------------
+💥💥💥 ...AIN'T SAVING THE MODEL... JUST CHECKING... 💥💥💥
+	➡️ delta = 10.53, Epoch 70:
+	Quantization at C=58, Accuracy from 98.6 to 98.68
+	H_Q = 18381, zstd_ratio = 2.05%
+	sparse_ratio = 2.06%, sparse_accuracy = 98.68, sparsity = 0.00%
+------------------------------------------------------------
+💥💥💥 ...AIN'T SAVING THE MODEL... JUST CHECKING... 💥💥💥
+	➡️ delta = 10.53, Epoch 70:
+	Quantization at C=60, Accuracy from 98.6 to 98.72
+	H_Q = 18551, zstd_ratio = 2.06%
+	sparse_ratio = 2.07%, sparse_accuracy = 98.72, sparsity = 0.00%
+------------------------------------------------------------
+💥💥💥 ...AIN'T SAVING THE MODEL... JUST CHECKING... 💥💥💥
+	➡️ delta = 10.53, Epoch 70:
+	Quantization at C=62, Accuracy from 98.6 to 98.69
+	H_Q = 18783, zstd_ratio = 2.10%
+	sparse_ratio = 1.55%, sparse_accuracy = 98.69, sparsity = 96.05%
+------------------------------------------------------------
+💥💥💥 ...AIN'T SAVING THE MODEL... JUST CHECKING... 💥💥💥
+	➡️ delta = 10.53, Epoch 70:
+	Quantization at C=64, Accuracy from 98.6 to 98.71
+	H_Q = 18992, zstd_ratio = 2.13%
+	sparse_ratio = 1.57%, sparse_accuracy = 98.71, sparsity = 96.01%
+------------------------------------------------------------
+💥💥💥 ...AIN'T SAVING THE MODEL... JUST CHECKING... 💥💥💥
+	➡️ delta = 10.53, Epoch 70:
+	Quantization at C=66, Accuracy from 98.6 to 98.77
+	H_Q = 19307, zstd_ratio = 2.16%
+	sparse_ratio = 1.59%, sparse_accuracy = 98.76, sparsity = 95.95%
+------------------------------------------------------------
+💥💥💥 ...AIN'T SAVING THE MODEL... JUST CHECKING... 💥💥💥
+	➡️ delta = 10.53, Epoch 70:
+	Quantization at C=68, Accuracy from 98.6 to 98.7
+	H_Q = 19589, zstd_ratio = 2.20%
+	sparse_ratio = 1.63%, sparse_accuracy = 98.69, sparsity = 95.89%
+------------------------------------------------------------
+💥💥💥 ...AIN'T SAVING THE MODEL... JUST CHECKING... 💥💥💥
+	➡️ delta = 10.53, Epoch 70:
+	Quantization at C=70, Accuracy from 98.6 to 98.77
+	H_Q = 19960, zstd_ratio = 2.23%
+	sparse_ratio = 2.24%, sparse_accuracy = 98.77, sparsity = 0.00%
+------------------------------------------------------------
+💥💥💥 ...AIN'T SAVING THE MODEL... JUST CHECKING... 💥💥💥
+	➡️ delta = 10.53, Epoch 70:
+	Quantization at C=72, Accuracy from 98.6 to 98.69
+	H_Q = 20281, zstd_ratio = 2.26%
+	sparse_ratio = 2.27%, sparse_accuracy = 98.69, sparsity = 0.00%
+------------------------------------------------------------
+💥💥💥 ...AIN'T SAVING THE MODEL... JUST CHECKING... 💥💥💥
+	➡️ delta = 10.53, Epoch 70:
+	Quantization at C=74, Accuracy from 98.6 to 98.63
+	H_Q = 20740, zstd_ratio = 2.31%
+	sparse_ratio = 2.32%, sparse_accuracy = 98.63, sparsity = 0.00%
+------------------------------------------------------------
+Epoch 71: A_NQ = 98.26, H_NQ = 685841, A_Q = 98.57, H_Q = 21265, zstd_ratio = 2.30%, sparse_ratio = 1.72%, sparsity = 95.27% , sparse_accuracy = 98.57, training_time = 949s
+Epoch 72: A_NQ = 98.47, H_NQ = 685795, A_Q = 98.53, H_Q = 28605, zstd_ratio = 3.27%, sparse_ratio = 2.44%, sparsity = 92.09% , sparse_accuracy = 98.52, training_time = 884s
+Epoch 73: A_NQ = 98.29, H_NQ = 685869, A_Q = 98.5, H_Q = 18652, zstd_ratio = 2.08%, sparse_ratio = 1.56%, sparsity = 96.11% , sparse_accuracy = 98.49, training_time = 683s
+Epoch 74: A_NQ = 98.46, H_NQ = 685797, A_Q = 98.72, H_Q = 17319, zstd_ratio = 1.98%, sparse_ratio = 1.46%, sparsity = 96.48% , sparse_accuracy = 98.72, training_time = 667s
+Epoch 75: A_NQ = 98.36, H_NQ = 685837, A_Q = 98.66, H_Q = 18526, zstd_ratio = 2.08%, sparse_ratio = 1.55%, sparsity = 96.11% , sparse_accuracy = 98.66, training_time = 539s
+Epoch 76: A_NQ = 98.43, H_NQ = 685699, A_Q = 98.57, H_Q = 18536, zstd_ratio = 2.08%, sparse_ratio = 1.54%, sparsity = 96.06% , sparse_accuracy = 98.57, training_time = 563s
+Epoch 77: A_NQ = 98.49, H_NQ = 685739, A_Q = 98.59, H_Q = 15796, zstd_ratio = 1.84%, sparse_ratio = 1.36%, sparsity = 96.88% , sparse_accuracy = 98.59, training_time = 765s
+Epoch 78: A_NQ = 98.53, H_NQ = 685871, A_Q = 98.59, H_Q = 18877, zstd_ratio = 2.10%, sparse_ratio = 1.56%, sparsity = 95.91% , sparse_accuracy = 98.58, training_time = 700s
+Epoch 79: A_NQ = 98.46, H_NQ = 685845, A_Q = 98.62, H_Q = 16977, zstd_ratio = 1.93%, sparse_ratio = 1.43%, sparsity = 96.56% , sparse_accuracy = 98.62, training_time = 747s
+Epoch 80: A_NQ = 98.17, H_NQ = 685765, A_Q = 98.33, H_Q = 19914, zstd_ratio = 2.15%, sparse_ratio = 1.61%, sparsity = 95.62% , sparse_accuracy = 98.34, training_time = 755s
+Epoch 81: A_NQ = 98.55, H_NQ = 685769, A_Q = 98.55, H_Q = 17998, zstd_ratio = 2.01%, sparse_ratio = 1.49%, sparsity = 96.26% , sparse_accuracy = 98.56, training_time = 749s
+Epoch 82: A_NQ = 98.34, H_NQ = 685592, A_Q = 98.43, H_Q = 22133, zstd_ratio = 2.59%, sparse_ratio = 1.92%, sparsity = 94.80% , sparse_accuracy = 98.43, training_time = 722s
+Epoch 83: A_NQ = 98.57, H_NQ = 685117, A_Q = 98.69, H_Q = 16784, zstd_ratio = 1.92%, sparse_ratio = 1.42%, sparsity = 96.63% , sparse_accuracy = 98.69, training_time = 697s
+Epoch 84: A_NQ = 98.35, H_NQ = 685875, A_Q = 98.64, H_Q = 15951, zstd_ratio = 1.85%, sparse_ratio = 1.36%, sparsity = 96.84% , sparse_accuracy = 98.65, training_time = 737s
+Epoch 85: A_NQ = 98.3, H_NQ = 685802, A_Q = 98.59, H_Q = 18080, zstd_ratio = 2.03%, sparse_ratio = 1.50%, sparsity = 96.21% , sparse_accuracy = 98.58, training_time = 458s
+Epoch 86: A_NQ = 98.46, H_NQ = 685703, A_Q = 98.67, H_Q = 15965, zstd_ratio = 1.84%, sparse_ratio = 1.36%, sparsity = 96.83% , sparse_accuracy = 98.67, training_time = 726s
+Epoch 87: A_NQ = 98.31, H_NQ = 685759, A_Q = 98.69, H_Q = 18205, zstd_ratio = 2.03%, sparse_ratio = 1.50%, sparsity = 96.18% , sparse_accuracy = 98.68, training_time = 708s
+Epoch 88: A_NQ = 98.5, H_NQ = 685731, A_Q = 98.62, H_Q = 17962, zstd_ratio = 2.01%, sparse_ratio = 1.48%, sparsity = 96.23% , sparse_accuracy = 98.63, training_time = 733s
+Epoch 89: A_NQ = 98.39, H_NQ = 685731, A_Q = 98.66, H_Q = 16504, zstd_ratio = 1.89%, sparse_ratio = 1.38%, sparsity = 96.67% , sparse_accuracy = 98.65, training_time = 480s
+Epoch 90: A_NQ = 98.36, H_NQ = 685667, A_Q = 98.6, H_Q = 16307, zstd_ratio = 1.90%, sparse_ratio = 1.38%, sparsity = 96.72% , sparse_accuracy = 98.62, training_time = 832s
+Epoch 91: A_NQ = 98.42, H_NQ = 685795, A_Q = 98.54, H_Q = 16970, zstd_ratio = 1.93%, sparse_ratio = 1.42%, sparsity = 96.55% , sparse_accuracy = 98.55, training_time = 853s
+Epoch 92: A_NQ = 98.38, H_NQ = 685855, A_Q = 98.71, H_Q = 18596, zstd_ratio = 2.06%, sparse_ratio = 1.53%, sparsity = 96.07% , sparse_accuracy = 98.71, training_time = 706s
+Epoch 93: A_NQ = 98.34, H_NQ = 685795, A_Q = 98.57, H_Q = 17674, zstd_ratio = 1.99%, sparse_ratio = 1.47%, sparsity = 96.34% , sparse_accuracy = 98.57, training_time = 720s
+Epoch 94: A_NQ = 98.2, H_NQ = 685653, A_Q = 98.6, H_Q = 16009, zstd_ratio = 1.86%, sparse_ratio = 1.36%, sparsity = 96.82% , sparse_accuracy = 98.6, training_time = 845s
+Epoch 95: A_NQ = 98.45, H_NQ = 685690, A_Q = 98.59, H_Q = 16389, zstd_ratio = 1.89%, sparse_ratio = 1.40%, sparsity = 96.72% , sparse_accuracy = 98.59, training_time = 791s
+Epoch 96: A_NQ = 98.6, H_NQ = 685773, A_Q = 98.71, H_Q = 16172, zstd_ratio = 1.86%, sparse_ratio = 1.36%, sparsity = 96.78% , sparse_accuracy = 98.72, training_time = 854s
+💥💥💥 ...AIN'T SAVING THE MODEL... JUST CHECKING... 💥💥💥
+	➡️ delta = 10.53, Epoch 96:
+	Quantization at C=32, Accuracy from 98.6 to 98.52
+	H_Q = 13607, zstd_ratio = 1.52%
+	sparse_ratio = 1.53%, sparse_accuracy = 98.52, sparsity = 0.00%
+------------------------------------------------------------
+💥💥💥 ...AIN'T SAVING THE MODEL... JUST CHECKING... 💥💥💥
+	➡️ delta = 10.53, Epoch 96:
+	Quantization at C=34, Accuracy from 98.6 to 98.59
+	H_Q = 13752, zstd_ratio = 1.54%
+	sparse_ratio = 1.55%, sparse_accuracy = 98.59, sparsity = 0.00%
+------------------------------------------------------------
+💥💥💥 ...AIN'T SAVING THE MODEL... JUST CHECKING... 💥💥💥
+	➡️ delta = 10.53, Epoch 96:
+	Quantization at C=36, Accuracy from 98.6 to 98.53
+	H_Q = 13910, zstd_ratio = 1.56%
+	sparse_ratio = 1.57%, sparse_accuracy = 98.53, sparsity = 0.00%
+------------------------------------------------------------
+💥💥💥 ...AIN'T SAVING THE MODEL... JUST CHECKING... 💥💥💥
+	➡️ delta = 10.53, Epoch 96:
+	Quantization at C=38, Accuracy from 98.6 to 98.56
+	H_Q = 14046, zstd_ratio = 1.59%
+	sparse_ratio = 1.60%, sparse_accuracy = 98.56, sparsity = 0.00%
+------------------------------------------------------------
+💥💥💥 ...AIN'T SAVING THE MODEL... JUST CHECKING... 💥💥💥
+	➡️ delta = 10.53, Epoch 96:
+	Quantization at C=40, Accuracy from 98.6 to 98.63
+	H_Q = 14220, zstd_ratio = 1.60%
+	sparse_ratio = 1.61%, sparse_accuracy = 98.63, sparsity = 0.00%
+------------------------------------------------------------
+💥💥💥 ...AIN'T SAVING THE MODEL... JUST CHECKING... 💥💥💥
+	➡️ delta = 10.53, Epoch 96:
+	Quantization at C=42, Accuracy from 98.6 to 98.69
+	H_Q = 14403, zstd_ratio = 1.62%
+	sparse_ratio = 1.63%, sparse_accuracy = 98.69, sparsity = 0.00%
+------------------------------------------------------------
+💥💥💥 ...AIN'T SAVING THE MODEL... JUST CHECKING... 💥💥💥
+	➡️ delta = 10.53, Epoch 96:
+	Quantization at C=44, Accuracy from 98.6 to 98.56
+	H_Q = 14519, zstd_ratio = 1.65%
+	sparse_ratio = 1.66%, sparse_accuracy = 98.56, sparsity = 0.00%
+------------------------------------------------------------
+💥💥💥 ...AIN'T SAVING THE MODEL... JUST CHECKING... 💥💥💥
+	➡️ delta = 10.53, Epoch 96:
+	Quantization at C=46, Accuracy from 98.6 to 98.71
+	H_Q = 14666, zstd_ratio = 1.69%
+	sparse_ratio = 1.70%, sparse_accuracy = 98.71, sparsity = 0.00%
+------------------------------------------------------------
+💥💥💥 ...AIN'T SAVING THE MODEL... JUST CHECKING... 💥💥💥
+	➡️ delta = 10.53, Epoch 96:
+	Quantization at C=48, Accuracy from 98.6 to 98.67
+	H_Q = 14822, zstd_ratio = 1.69%
+	sparse_ratio = 1.70%, sparse_accuracy = 98.67, sparsity = 0.00%
+------------------------------------------------------------
+💥💥💥 ...AIN'T SAVING THE MODEL... JUST CHECKING... 💥💥💥
+	➡️ delta = 10.53, Epoch 96:
+	Quantization at C=50, Accuracy from 98.6 to 98.59
+	H_Q = 14956, zstd_ratio = 1.70%
+	sparse_ratio = 1.71%, sparse_accuracy = 98.59, sparsity = 0.00%
+------------------------------------------------------------
+💥💥💥 ...AIN'T SAVING THE MODEL... JUST CHECKING... 💥💥💥
+	➡️ delta = 10.53, Epoch 96:
+	Quantization at C=52, Accuracy from 98.6 to 98.59
+	H_Q = 15101, zstd_ratio = 1.73%
+	sparse_ratio = 1.74%, sparse_accuracy = 98.59, sparsity = 0.00%
+------------------------------------------------------------
+💥💥💥 ...AIN'T SAVING THE MODEL... JUST CHECKING... 💥💥💥
+	➡️ delta = 10.53, Epoch 96:
+	Quantization at C=54, Accuracy from 98.6 to 98.74
+	H_Q = 15280, zstd_ratio = 1.74%
+	sparse_ratio = 1.75%, sparse_accuracy = 98.74, sparsity = 0.00%
+------------------------------------------------------------
+💥💥💥 ...AIN'T SAVING THE MODEL... JUST CHECKING... 💥💥💥
+	➡️ delta = 10.53, Epoch 96:
+	Quantization at C=56, Accuracy from 98.6 to 98.74
+	H_Q = 15424, zstd_ratio = 1.77%
+	sparse_ratio = 1.78%, sparse_accuracy = 98.74, sparsity = 0.00%
+------------------------------------------------------------
+💥💥💥 ...AIN'T SAVING THE MODEL... JUST CHECKING... 💥💥💥
+	➡️ delta = 10.53, Epoch 96:
+	Quantization at C=58, Accuracy from 98.6 to 98.71
+	H_Q = 15576, zstd_ratio = 1.79%
+	sparse_ratio = 1.80%, sparse_accuracy = 98.71, sparsity = 0.00%
+------------------------------------------------------------
+💥💥💥 ...AIN'T SAVING THE MODEL... JUST CHECKING... 💥💥💥
+	➡️ delta = 10.53, Epoch 96:
+	Quantization at C=60, Accuracy from 98.6 to 98.73
+	H_Q = 15781, zstd_ratio = 1.82%
+	sparse_ratio = 1.83%, sparse_accuracy = 98.73, sparsity = 0.00%
+------------------------------------------------------------
+💥💥💥 ...AIN'T SAVING THE MODEL... JUST CHECKING... 💥💥💥
+	➡️ delta = 10.53, Epoch 96:
+	Quantization at C=62, Accuracy from 98.6 to 98.68
+	H_Q = 15944, zstd_ratio = 1.83%
+	sparse_ratio = 1.34%, sparse_accuracy = 98.7, sparsity = 96.82%
+------------------------------------------------------------
+💥💥💥 ...AIN'T SAVING THE MODEL... JUST CHECKING... 💥💥💥
+	➡️ delta = 10.53, Epoch 96:
+	Quantization at C=64, Accuracy from 98.6 to 98.71
+	H_Q = 16172, zstd_ratio = 1.86%
+	sparse_ratio = 1.36%, sparse_accuracy = 98.72, sparsity = 96.78%
+------------------------------------------------------------
+💥💥💥 ...AIN'T SAVING THE MODEL... JUST CHECKING... 💥💥💥
+	➡️ delta = 10.53, Epoch 96:
+	Quantization at C=66, Accuracy from 98.6 to 98.64
+	H_Q = 16357, zstd_ratio = 1.88%
+	sparse_ratio = 1.39%, sparse_accuracy = 98.64, sparsity = 96.74%
+------------------------------------------------------------
+💥💥💥 ...AIN'T SAVING THE MODEL... JUST CHECKING... 💥💥💥
+	➡️ delta = 10.53, Epoch 96:
+	Quantization at C=68, Accuracy from 98.6 to 98.69
+	H_Q = 16510, zstd_ratio = 1.89%
+	sparse_ratio = 1.40%, sparse_accuracy = 98.7, sparsity = 96.71%
+------------------------------------------------------------
+💥💥💥 ...AIN'T SAVING THE MODEL... JUST CHECKING... 💥💥💥
+	➡️ delta = 10.53, Epoch 96:
+	Quantization at C=70, Accuracy from 98.6 to 98.58
+	H_Q = 16717, zstd_ratio = 1.91%
+	sparse_ratio = 1.92%, sparse_accuracy = 98.58, sparsity = 0.00%
+------------------------------------------------------------
+Epoch 97: A_NQ = 98.35, H_NQ = 685839, A_Q = 98.57, H_Q = 15230, zstd_ratio = 1.79%, sparse_ratio = 1.31%, sparsity = 97.03% , sparse_accuracy = 98.57, training_time = 879s
+Epoch 98: A_NQ = 98.31, H_NQ = 685793, A_Q = 98.57, H_Q = 16088, zstd_ratio = 1.88%, sparse_ratio = 1.36%, sparsity = 96.79% , sparse_accuracy = 98.56, training_time = 880s
+Epoch 99: A_NQ = 98.57, H_NQ = 685745, A_Q = 98.64, H_Q = 15942, zstd_ratio = 1.84%, sparse_ratio = 1.35%, sparsity = 96.83% , sparse_accuracy = 98.63, training_time = 824s
+Epoch 100: A_NQ = 98.3, H_NQ = 685585, A_Q = 98.58, H_Q = 17977, zstd_ratio = 2.02%, sparse_ratio = 1.49%, sparsity = 96.24% , sparse_accuracy = 98.57, training_time = 909s
+------------------------------------------------------------
