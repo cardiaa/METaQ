@@ -2,7 +2,7 @@ import argparse
 import torch
 import os
 from utils.trainer import train_and_evaluate
-from utils.networks import LeNet5
+from utils.networks import LeNet5, LeNet5_enhanced
 from torchvision import datasets, transforms
 from torch.nn import CrossEntropyLoss
 
@@ -48,13 +48,13 @@ if __name__ == "__main__":
     trainset, testset = load_data()
     
     # Create data loaders for training and testing, with specific batch sizes and no parallel data loading (num_workers=0)
-    trainloader = torch.utils.data.DataLoader(trainset, batch_size=128, shuffle=True, num_workers=0)
+    trainloader = torch.utils.data.DataLoader(trainset, batch_size=64, shuffle=True, num_workers=0)
     testloader = torch.utils.data.DataLoader(testset, batch_size=1000, shuffle=False, num_workers=0)
 
     device = torch.device("cpu")
 
     # Define fixed hyperparameters for the model and training process
-    model, model_name = LeNet5().to(device), "LeNet-5 enhanced"
+    model, model_name = LeNet5().to(device), "LeNet-5"
     criterion, criterion_name = CrossEntropyLoss(), "CrossEntropy" 
     C = 64
     lr = 0.0007  
