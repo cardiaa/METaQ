@@ -54,7 +54,7 @@ if __name__ == "__main__":
     device = torch.device("cpu")
 
     # Define fixed hyperparameters for the model and training process
-    model, model_name = LeNet5().to(device), "LeNet-5"
+    model, model_name = LeNet5().to(device), "LeNet-5 (rotated)"
     criterion, criterion_name = CrossEntropyLoss(), "CrossEntropy" 
     C = 128
     lr = 0.0007  
@@ -66,7 +66,7 @@ if __name__ == "__main__":
     w0 = round(r - (bucket_zero + 0.5) * 2 * r * (1 - 1/C) / (C - 1), 3)
     BestQuantization_target_acc = 98.6
     final_target_acc = 99
-    target_zstd_ratio = 0.0297 
+    target_zstd_ratio = 0.02
     min_xi = 0  
     max_xi = 1  
     upper_c = sum(p.numel() for p in LeNet5().parameters())
@@ -77,7 +77,7 @@ if __name__ == "__main__":
     accuracy_tollerance = 0.2
     zeta = 50000
     l = 0.5
-    n_epochs = 100 # To be increased as soon as I find good configurations
+    n_epochs = 50 # To be increased as soon as I find good configurations
     max_iterations = 15
     train_optimizer = "ADAM"  
     entropy_optimizer = "FISTA"  
