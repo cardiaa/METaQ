@@ -2,7 +2,7 @@ nohup: ignoring input
 =================================================================
 ==================== PARAMETER CONFIGURATION ====================
 =================================================================
-model=LeNet-5
+model=LeNet-5 (rotated)
 criterion=CrossEntropy
 C=64
 lr=0.0007
