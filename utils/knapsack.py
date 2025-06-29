@@ -125,6 +125,7 @@ def knapsack_specialized_pruning(xi, v, w, C, device, delta):
     b_list.append(C - 1)
     x_plus = torch.zeros(C, dtype=torch.int32)
     x_plus[torch.tensor(b_list)] = 1
+    x_plus = x_plus.to(device)
 
     # === Step 2: Precompute ===
     ratio = xi / v
