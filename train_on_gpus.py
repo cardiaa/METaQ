@@ -51,10 +51,16 @@ if __name__ == "__main__":
     trainloader = torch.utils.data.DataLoader(trainset, batch_size=64, shuffle=True, num_workers=0)
     testloader = torch.utils.data.DataLoader(testset, batch_size=1000, shuffle=False, num_workers=0)
 
-    device = torch.device("cpu")
+    if torch.cuda.is_available():
+        device = torch.device("cuda:0")
+        print(f"Using device {device} ({torch.cuda.get_device_name(device)})", flush=True)
+    else:
+        device = torch.device("cpu")
+        print("Using CPU.", flush=True)
 
     # Define fixed hyperparameters for the model and training process
     model, model_name = LeNet5().to(device), "LeNet-5 (rotated)"
+    model = model.to(device) 
     criterion, criterion_name = CrossEntropyLoss(), "CrossEntropy" 
     C = 128
     lr = 0.0007  
