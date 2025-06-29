@@ -41,6 +41,7 @@ def train_and_evaluate(model, criterion, C, lr, lambda_reg, alpha, subgradient_s
 
         for i, data in enumerate(trainloader, 0):
             inputs, targets = data
+            inputs, targets = inputs.to(device), targets.to(device)
             optimizer.zero_grad()
 
             outputs = model(inputs)
