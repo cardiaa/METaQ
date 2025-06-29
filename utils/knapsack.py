@@ -133,6 +133,7 @@ def knapsack_specialized_pruning(xi, v, w, C, device, delta):
     neg_sorted = neg_indices[torch.argsort(ratio[neg_indices], descending=True)]
     pos_sorted = pos_indices[torch.argsort(ratio[pos_indices])]
     b_vector = torch.cat([neg_sorted, pos_sorted], dim=0)
+    b_vector = b_vector.to(device)
 
     # === Step 3: Masks ===
     mask_small = w < v[0]
