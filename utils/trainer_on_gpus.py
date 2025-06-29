@@ -38,7 +38,7 @@ def train_and_evaluate(model, criterion, C, lr, lambda_reg, alpha, subgradient_s
     # Training loop
     for epoch in range(n_epochs):
         start_time = time.time()
-
+        print(f"Epoch {epoch + 1}", flush=True)
         for i, data in enumerate(trainloader, 0):
             inputs, targets = data
             inputs, targets = inputs.to(device), targets.to(device)
