@@ -48,7 +48,7 @@ if __name__ == "__main__":
     trainset, testset = load_data()
     
     # Create data loaders for training and testing, with specific batch sizes and no parallel data loading (num_workers=0)
-    trainloader = torch.utils.data.DataLoader(trainset, batch_size=64, shuffle=True, num_workers=0)
+    trainloader = torch.utils.data.DataLoader(trainset, batch_size=128, shuffle=True, num_workers=0)
     testloader = torch.utils.data.DataLoader(testset, batch_size=1000, shuffle=False, num_workers=0)
 
     if torch.cuda.is_available():
@@ -63,7 +63,7 @@ if __name__ == "__main__":
     model = model.to(device) 
     criterion, criterion_name = CrossEntropyLoss(), "CrossEntropy" 
     C = 64
-    lr = 0.0007  
+    lr = 0.001
     lambda_reg = 0.0015
     alpha = 0.533
     subgradient_step = 1e5 
