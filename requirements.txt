@@ -3,7 +3,7 @@ torchvision
 numpy
 matplotlib
 #json
-heapq
+#heapq
 decimal
 gzip
 zstandard
