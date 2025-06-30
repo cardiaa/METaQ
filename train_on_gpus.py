@@ -62,7 +62,7 @@ if __name__ == "__main__":
     model, model_name = LeNet5_enhanced().to(device), "LeNet-5_enhanced (rotated)"
     model = model.to(device) 
     criterion, criterion_name = CrossEntropyLoss(), "CrossEntropy" 
-    C = 128
+    C = 64
     lr = 0.0007  
     lambda_reg = 0.0015
     alpha = 0.533
