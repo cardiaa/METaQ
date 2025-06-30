@@ -61,6 +61,8 @@ def quantize_weights_center(weights, v, v_centers, device):
     Function for weight quantization using central value.
     Quantizes weights based on the central value of the buckets in vector v.
     """
+    weights = weights.to(device=device)  # Ensure weights are on the correct device
+    v = v.to(device=device)  # Ensure quantization vector is on the correct device
     indices = torch.bucketize(weights, v, right=False) - 1
     indices = torch.clamp(indices, min=0, max=len(v_centers) - 1)  # Ensure indices are valid
     indices = indices.to(device=device)
