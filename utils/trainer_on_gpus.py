@@ -40,6 +40,7 @@ def train_and_evaluate(model, criterion, C, lr, lambda_reg, alpha, subgradient_s
         start_time = time.time()
         print(f"Epoch {epoch + 1}", flush=True)
         for i, data in enumerate(trainloader, 0):
+            print("i:", i, flush=True)
             inputs, targets = data
             inputs, targets = inputs.to(device), targets.to(device)
             optimizer.zero_grad()
