@@ -247,6 +247,7 @@ def train_and_evaluate(model, criterion, C, lr, lambda_reg, alpha, subgradient_s
         elif(pruning == "Y"):
             # Entropy exit conditions
             # After the tenth epoch I must have entropy below 200000
+            """
             if(epoch >= 0 and quantized_entropy >= 400000):
                 log += (
                     f"Entropy is not decreasing enough! (E1.1), delta: {delta}\n"
@@ -255,7 +256,7 @@ def train_and_evaluate(model, criterion, C, lr, lambda_reg, alpha, subgradient_s
 
                 print(log, flush = True)
                 return
-            
+            """
             # ---------------------------------------------------------------------------------------------------------
             # Accuracy exit condition
             # After the first epoch I must have accuracy above 30%

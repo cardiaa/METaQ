@@ -65,7 +65,7 @@ if __name__ == "__main__":
     C = 64
     lr = 0.001
     lambda_reg = 0.0015
-    alpha = 0.533
+    alpha = 1
     subgradient_step = 1e5 
     bucket_zero = round((C-1)/2) #it must range from 0 to C-2
     r = 1.1    
@@ -92,7 +92,8 @@ if __name__ == "__main__":
     QuantizationType = "center"
     sparsity_threshold = 1e-3
 
-    if(args.delta == 10.400 or args.delta == 10.560):
+    #if(args.delta == 10.400 or args.delta == 10.560):
+    if(True):
         print("=================================================================", flush = True)
         print("==================== PARAMETER CONFIGURATION ====================", flush = True)
         print("=================================================================", flush = True)
