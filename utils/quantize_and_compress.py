@@ -260,7 +260,7 @@ def BestQuantization(log, C, r, delta, epoch, min_w, max_w, w, c1, c2, final_tar
 
         if((QuantAcc[i] >= final_target_acc and zstd_ratio <= target_zstd_ratio) or 
            (sparse_accuracy >= final_target_acc and sparse_ratio <= target_zstd_ratio)):
-            torch.save(model.state_dict(), f"BestModelsJune2025/Test2June2025_C{C_tmp}_delta{delta}_epoch{epoch}.pth")
+            torch.save(model.state_dict(), f"BestModelsJuly2025/Test1July2025_C{C_tmp}_delta{delta}_epoch{epoch}.pth")
             log += "✅"*18+"\n"
             log += "✅✅✅✅✅✅ MODEL SAVED ✅✅✅✅✅✅\n"
             log += "✅"*18+"\n"
