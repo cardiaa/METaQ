@@ -149,7 +149,7 @@ def train_and_evaluate(model, criterion, C, lr, lambda_reg, alpha, subgradient_s
         sparse_accuracy = test_accuracy(model_sparse, testloader, device)
 
         training_time = round(time.time() - start_time)
-
+        print(f"Training time for epoch {epoch + 1}: {training_time} seconds", flush=True)
         if(epoch == 0):
             log += f"delta = {delta}\n"
     
