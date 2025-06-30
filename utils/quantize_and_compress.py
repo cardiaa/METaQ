@@ -56,13 +56,14 @@ def compute_entropy_new(string, pruning_threshold):
 
     return entropy_new_formula
 
-def quantize_weights_center(weights, v, v_centers):
+def quantize_weights_center(weights, v, v_centers, device):
     """
     Function for weight quantization using central value.
     Quantizes weights based on the central value of the buckets in vector v.
     """
     indices = torch.bucketize(weights, v, right=False) - 1
     indices = torch.clamp(indices, min=0, max=len(v_centers) - 1)  # Ensure indices are valid
+    indices = indices.to(device=device)
     return v_centers[indices]
 
 def encode(symb2freq):
@@ -178,7 +179,7 @@ def BestQuantization(log, C, r, delta, epoch, min_w, max_w, w, c1, c2, final_tar
         if(QuantizationType == 'center'): # Quantize weights using central values
             v_centers = (v_tmp[:-1] + v_tmp[1:]) / 2
             v_centers = torch.cat([v_centers, v_tmp[-1:]])  # Add final value to handle the last bucket
-            w_quantized = quantize_weights_center(w, v_tmp, v_centers)
+            w_quantized = quantize_weights_center(w, v_tmp, v_centers, device)
         model_quantized = copy.deepcopy(model).to(device)
         # Replace quantized weights in the quantized model
         start_idx = 0
