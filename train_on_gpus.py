@@ -59,7 +59,7 @@ if __name__ == "__main__":
         print("Using CPU.", flush=True)
 
     # Define fixed hyperparameters for the model and training process
-    model, model_name = LeNet5().to(device), "LeNet-5 (rotated)"
+    model, model_name = LeNet5_enhanced().to(device), "LeNet-5_enhanced (rotated)"
     model = model.to(device) 
     criterion, criterion_name = CrossEntropyLoss(), "CrossEntropy" 
     C = 128
