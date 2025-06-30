@@ -26,7 +26,7 @@ def train_and_evaluate(model, criterion, C, lr, lambda_reg, alpha, subgradient_s
     # Weights Initialization
     min_w, max_w = w0 - r, w0 + r
     v = torch.linspace(min_w, max_w - (max_w - min_w)/C, steps=C, device=device)
-    initialize_weights(model, min_w, max_w)
+    #initialize_weights(model, min_w, max_w)
     w = torch.cat([param.data.view(-1) for param in model.parameters()]).to(device)
     xi = min_xi + (max_xi - min_xi) * torch.rand(C, device=device)
     xi = torch.sort(xi)[0]   
