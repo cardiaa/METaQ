@@ -33,7 +33,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     
     # Add argument for 'delta', which is required for the training
-    parser.add_argument("--r", type=float, required=True, help="Value of r")
+    parser.add_argument("--w0", type=float, required=True, help="Value of w0")
     
     # Parse the command-line arguments
     args = parser.parse_args()
@@ -69,7 +69,8 @@ if __name__ == "__main__":
     subgradient_step = 1e5 
     bucket_zero = round((C-1)/2) #it must range from 0 to C-2
     #r = 1.1    
-    w0 = round(args.r - (bucket_zero + 0.5) * 2 * args.r * (1 - 1/C) / (C - 1), 3)
+    r = args.w0/(1-2*(bucket_zero + 0.5)*(1 - 1/C)/(C - 1))  
+    #w0 = round(args.r - (bucket_zero + 0.5) * 2 * args.r * (1 - 1/C) / (C - 1), 3)
     BestQuantization_target_acc = 98.6
     final_target_acc = 99
     target_zstd_ratio = 0.02
@@ -106,8 +107,8 @@ if __name__ == "__main__":
         print(f"[T1=lambda_reg*alpha={round(lambda_reg*alpha, 6)}]", flush=True)
         print(f"[T2=lambda_reg*(1-alpha)={round(lambda_reg*(1-alpha), 6)}]", flush=True)
         print(f"subgradient_step={subgradient_step}", flush=True)    
-        print(f"w0={w0}", flush=True)    
-        #print(f"r={r}", flush=True)  
+        #print(f"w0={w0}", flush=True)    
+        print(f"r={r}", flush=True)  
         print(f"bucket_zero={bucket_zero}", flush=True)  
         print(f"BestQuantization_target_acc={BestQuantization_target_acc}", flush=True)    
         print(f"final_target_acc={final_target_acc}", flush=True)
@@ -134,7 +135,7 @@ if __name__ == "__main__":
     
     train_and_evaluate(
         model=model, criterion=criterion, C=C, lr=lr, lambda_reg=lambda_reg, alpha=alpha,
-        subgradient_step=subgradient_step, w0=w0, r=args.r, first_best_indices=first_best_indices,
+        subgradient_step=subgradient_step, w0=args.w0, r=args.r, first_best_indices=first_best_indices,
         BestQuantization_target_acc=BestQuantization_target_acc, final_target_acc=final_target_acc, 
         target_zstd_ratio=target_zstd_ratio, min_xi=min_xi, max_xi=max_xi, upper_c=upper_c, lower_c=lower_c, c1=c1, c2=c2, 
         zeta=zeta, l=l, n_epochs=n_epochs, max_iterations=max_iterations, device=device, train_optimizer=train_optimizer,

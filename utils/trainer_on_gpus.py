@@ -152,7 +152,7 @@ def train_and_evaluate(model, criterion, C, lr, lambda_reg, alpha, subgradient_s
         training_time = round(time.time() - start_time)
         print(f"Training time for epoch {epoch + 1}: {training_time} seconds", flush=True)
         if(epoch == 0):
-            log += f"r = {r}\n"
+            log += f"w0 = {w0}\n"
     
         log += (
             f"Epoch {epoch + 1}: "
