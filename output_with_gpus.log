@@ -1,0 +1,53 @@
+Using device cuda:0 (NVIDIA H100 80GB HBM3)
+=================================================================
+==================== PARAMETER CONFIGURATION ====================
+=================================================================
+model=LeNet-5_enhanced (rotated)
+criterion=CrossEntropy
+C=64
+lr=0.0007
+lambda_reg=0.0015
+alpha=0.533
+[T1=lambda_reg*alpha=0.0008]
+[T2=lambda_reg*(1-alpha)=0.0007]
+subgradient_step=100000.0
+w0=-0.017
+r=1.1
+bucket_zero=32
+BestQuantization_target_acc=98.6
+final_target_acc=99
+target_zstd_ratio=0.02
+min_xi=0
+max_xi=1
+upper_c=44426
+lower_c=0.01
+c1=10
+c2=1000
+first_best_indices=20
+accuracy_tollerance=0.2
+zeta=50000
+l=0.5
+n_epochs=100
+max_iterations=15
+train_optimizer=ADAM
+entropy_optimizer=FISTA
+pruning=Y
+QuantizationType=center
+sparsity_threshold=0.001
+------------------------------------------------------------
+Epoch 1
+Batch 0 of epoch 1
+Batch 100 of epoch 1
+Batch 200 of epoch 1
+Batch 300 of epoch 1
+Batch 400 of epoch 1
+Batch 500 of epoch 1
+Batch 600 of epoch 1
+Batch 700 of epoch 1
+Batch 800 of epoch 1
+Batch 900 of epoch 1
+Training time for epoch 1: 485 seconds
+delta = 10.4
+Epoch 1: A_NQ = 28.6, H_NQ = 34353941, A_Q = 45.37, H_Q = 6400250, zstd_ratio = 15.26%, sparse_ratio = 13.75%, sparsity = 50.72% , sparse_accuracy = 43.43, training_time = 485s
+Entropy is not decreasing enough! (E1.1), delta: 10.4
+------------------------------------------------------------

@@ -5,10 +5,10 @@ matplotlib
 #json
 #heapq
 #decimal
-gzip
+#gzip
 zstandard
-struct
-collections
-math
-os
-time
+#struct
+#collections
+#math
+#os
+#time
