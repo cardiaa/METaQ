@@ -33,6 +33,7 @@ def train_and_evaluate(model, criterion, C, lr, lambda_reg, alpha, subgradient_s
     entropy, accuracy = 0, 0
     accuracies, entropies = [], []
 
+
     log = ""
 
     # Training loop
