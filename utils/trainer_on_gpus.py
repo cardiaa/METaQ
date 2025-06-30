@@ -103,7 +103,7 @@ def train_and_evaluate(model, criterion, C, lr, lambda_reg, alpha, subgradient_s
         if(QuantizationType == "center"): # Quantize weights using central values
             v_centers = (v[:-1] + v[1:]) / 2
             v_centers = torch.cat([v_centers, v[-1:]]) # Add final value to handle the last bucket
-            w_quantized = quantize_weights_center(w, v, v_centers)
+            w_quantized = quantize_weights_center(w, v, v_centers, device)
         
         model_quantized = copy.deepcopy(model).to(device)
         start_idx = 0

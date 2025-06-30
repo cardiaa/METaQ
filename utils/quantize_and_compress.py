@@ -213,7 +213,7 @@ def BestQuantization(log, C, r, delta, epoch, min_w, max_w, w, c1, c2, final_tar
             v_centers = (v_tmp[:-1] + v_tmp[1:]) / 2
             v_centers = torch.cat([v_centers, v_tmp[-1:]])
             # Quantize weights using central values
-            w_quantized = quantize_weights_center(w_saved, v_tmp, v_centers)
+            w_quantized = quantize_weights_center(w_saved, v_tmp, v_centers, device)
         encoded_list = [float(elem) if float(elem) != -0.0 else 0.0 for elem in w_quantized]
         quantized_entropy = round(compute_entropy(encoded_list)) + 1
         # Converts float list in byte
