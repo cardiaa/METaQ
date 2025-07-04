@@ -2,20 +2,22 @@ import argparse
 import torch
 import os
 from utils.trainer_on_gpus import train_and_evaluate
-from utils.networks import LeNet5, LeNet5_enhanced
+from utils.networks import LeNet5, LeNet5_enhanced, LeNet5_Original
 from torchvision import datasets, transforms
 from torch.nn import CrossEntropyLoss
 
 # Function to load the MNIST dataset
 def load_data():
-    # Define a transformation to convert images to tensors
-    transform_train = transforms.Compose([ 
+    # Data Augmentation + Resizing images to 32x32
+    transform_train = transforms.Compose([
+        transforms.Resize(32),
         transforms.RandomRotation(10),
         transforms.RandomAffine(0, translate=(0.1, 0.1)),
         transforms.ToTensor(),
     ])
 
-    transform_test = transforms.Compose([ 
+    transform_test = transforms.Compose([
+        transforms.Resize(32),
         transforms.ToTensor(),
     ])
     
@@ -48,7 +50,7 @@ if __name__ == "__main__":
     trainset, testset = load_data()
     
     # Create data loaders for training and testing, with specific batch sizes and no parallel data loading (num_workers=0)
-    trainloader = torch.utils.data.DataLoader(trainset, batch_size=128, shuffle=True, num_workers=0)
+    trainloader = torch.utils.data.DataLoader(trainset, batch_size=64, shuffle=True, num_workers=0)
     testloader = torch.utils.data.DataLoader(testset, batch_size=1000, shuffle=False, num_workers=0)
 
     if torch.cuda.is_available():
@@ -59,7 +61,7 @@ if __name__ == "__main__":
         print("Using CPU.", flush=True)
 
     # Define fixed hyperparameters for the model and training process
-    model, model_name = LeNet5_enhanced().to(device), "LeNet-5_enhanced (rotated)"
+    model, model_name = LeNet5_Original().to(device), "LeNet5_Original (rotated)"
     model = model.to(device) 
     criterion, criterion_name = CrossEntropyLoss(), "CrossEntropy" 
     C = 64

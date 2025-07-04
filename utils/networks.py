@@ -1,6 +1,7 @@
 import torch.nn as nn
 import torch
 import json
+import torch.nn.functional as F 
 
 # Define the LeNet-5 architecture
 class LeNet5_enhanced(nn.Module):
@@ -93,6 +94,26 @@ class LeNet5(nn.Module):
         x = torch.tanh(self.fc1(x))
         x = torch.tanh(self.fc2(x))
         # Output layer without activation (raw scores for classification)
+        x = self.fc3(x)
+        return x
+    
+class LeNet5_Original(nn.Module):
+    def __init__(self):
+        super(LeNet5_Original, self).__init__()
+        self.conv1 = nn.Conv2d(1, 6, kernel_size=5)
+        self.conv2 = nn.Conv2d(6, 16, kernel_size=5)
+        self.fc1 = nn.Linear(16 * 5 * 5, 120)
+        self.fc2 = nn.Linear(120, 84)
+        self.fc3 = nn.Linear(84, 10)
+
+    def forward(self, x):
+        x = F.relu(self.conv1(x))
+        x = F.avg_pool2d(x, 2)
+        x = F.relu(self.conv2(x))
+        x = F.avg_pool2d(x, 2)
+        x = x.view(-1, 16 * 5 * 5)
+        x = F.relu(self.fc1(x))
+        x = F.relu(self.fc2(x))
         x = self.fc3(x)
         return x
 
