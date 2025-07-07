@@ -1,0 +1,1339 @@
+Using device cuda:0 (NVIDIA H100 80GB HBM3)
+=================================================================
+==================== PARAMETER CONFIGURATION ====================
+=================================================================
+model=LeNet5_Original (rotated)
+criterion=CrossEntropy
+C=64
+lr=0.001
+lambda_reg=0
+alpha=1
+[T1=lambda_reg*alpha=0]
+[T2=lambda_reg*(1-alpha)=0]
+subgradient_step=100000.0
+w0=-0.031
+bucket_zero=32
+BestQuantization_target_acc=99.8
+final_target_acc=99.7
+target_zstd_ratio=0.0179
+min_xi=0
+max_xi=1
+upper_c=1663370
+lower_c=0.01
+c1=10
+c2=1000
+first_best_indices=20
+accuracy_tollerance=0.2
+zeta=50000
+l=0.5
+n_epochs=100
+max_iterations=15
+train_optimizer=ADAM
+entropy_optimizer=FISTA
+delta=11
+pruning=Y
+QuantizationType=center
+sparsity_threshold=0.001
+------------------------------------------------------------
+Batch 0 of epoch 1
+Batch 100 of epoch 1
+Batch 200 of epoch 1
+Batch 300 of epoch 1
+Batch 400 of epoch 1
+Batch 500 of epoch 1
+Batch 600 of epoch 1
+Batch 700 of epoch 1
+Batch 800 of epoch 1
+Batch 900 of epoch 1
+Epoch 1: A_NQ = 97.21, H_NQ = 981886, A_Q = 96.74, H_Q = 139282, zstd_ratio = 9.23%, sparse_ratio = 8.39%, sparsity = 40.40% , sparse_accuracy = 96.79, training_time = 63s
+
+Batch 0 of epoch 2
+Batch 100 of epoch 2
+Batch 200 of epoch 2
+Batch 300 of epoch 2
+Batch 400 of epoch 2
+Batch 500 of epoch 2
+Batch 600 of epoch 2
+Batch 700 of epoch 2
+Batch 800 of epoch 2
+Batch 900 of epoch 2
+Epoch 2: A_NQ = 98.35, H_NQ = 981898, A_Q = 98.25, H_Q = 152863, zstd_ratio = 10.12%, sparse_ratio = 9.30%, sparsity = 36.73% , sparse_accuracy = 98.27, training_time = 62s
+
+Batch 0 of epoch 3
+Batch 100 of epoch 3
+Batch 200 of epoch 3
+Batch 300 of epoch 3
+Batch 400 of epoch 3
+Batch 500 of epoch 3
+Batch 600 of epoch 3
+Batch 700 of epoch 3
+Batch 800 of epoch 3
+Batch 900 of epoch 3
+Epoch 3: A_NQ = 98.75, H_NQ = 981890, A_Q = 98.43, H_Q = 164190, zstd_ratio = 10.83%, sparse_ratio = 10.05%, sparsity = 33.67% , sparse_accuracy = 98.43, training_time = 62s
+
+Batch 0 of epoch 4
+Batch 100 of epoch 4
+Batch 200 of epoch 4
+Batch 300 of epoch 4
+Batch 400 of epoch 4
+Batch 500 of epoch 4
+Batch 600 of epoch 4
+Batch 700 of epoch 4
+Batch 800 of epoch 4
+Batch 900 of epoch 4
+Epoch 4: A_NQ = 98.67, H_NQ = 981894, A_Q = 98.63, H_Q = 173207, zstd_ratio = 11.43%, sparse_ratio = 10.64%, sparsity = 31.26% , sparse_accuracy = 98.63, training_time = 61s
+
+Batch 0 of epoch 5
+Batch 100 of epoch 5
+Batch 200 of epoch 5
+Batch 300 of epoch 5
+Batch 400 of epoch 5
+Batch 500 of epoch 5
+Batch 600 of epoch 5
+Batch 700 of epoch 5
+Batch 800 of epoch 5
+Batch 900 of epoch 5
+Epoch 5: A_NQ = 98.85, H_NQ = 981892, A_Q = 98.67, H_Q = 180532, zstd_ratio = 11.89%, sparse_ratio = 11.15%, sparsity = 29.72% , sparse_accuracy = 98.67, training_time = 62s
+
+Batch 0 of epoch 6
+Batch 100 of epoch 6
+Batch 200 of epoch 6
+Batch 300 of epoch 6
+Batch 400 of epoch 6
+Batch 500 of epoch 6
+Batch 600 of epoch 6
+Batch 700 of epoch 6
+Batch 800 of epoch 6
+Batch 900 of epoch 6
+Epoch 6: A_NQ = 98.81, H_NQ = 981902, A_Q = 98.52, H_Q = 186705, zstd_ratio = 12.27%, sparse_ratio = 11.57%, sparsity = 28.60% , sparse_accuracy = 98.51, training_time = 62s
+
+Batch 0 of epoch 7
+Batch 100 of epoch 7
+Batch 200 of epoch 7
+Batch 300 of epoch 7
+Batch 400 of epoch 7
+Batch 500 of epoch 7
+Batch 600 of epoch 7
+Batch 700 of epoch 7
+Batch 800 of epoch 7
+Batch 900 of epoch 7
+Epoch 7: A_NQ = 99.12, H_NQ = 981892, A_Q = 99.03, H_Q = 192774, zstd_ratio = 12.67%, sparse_ratio = 11.96%, sparsity = 27.49% , sparse_accuracy = 99.02, training_time = 62s
+
+Batch 0 of epoch 8
+Batch 100 of epoch 8
+Batch 200 of epoch 8
+Batch 300 of epoch 8
+Batch 400 of epoch 8
+Batch 500 of epoch 8
+Batch 600 of epoch 8
+Batch 700 of epoch 8
+Batch 800 of epoch 8
+Batch 900 of epoch 8
+Epoch 8: A_NQ = 99.0, H_NQ = 981890, A_Q = 98.99, H_Q = 197370, zstd_ratio = 13.01%, sparse_ratio = 12.27%, sparsity = 26.55% , sparse_accuracy = 98.99, training_time = 62s
+
+Batch 0 of epoch 9
+Batch 100 of epoch 9
+Batch 200 of epoch 9
+Batch 300 of epoch 9
+Batch 400 of epoch 9
+Batch 500 of epoch 9
+Batch 600 of epoch 9
+Batch 700 of epoch 9
+Batch 800 of epoch 9
+Batch 900 of epoch 9
+Epoch 9: A_NQ = 98.98, H_NQ = 981892, A_Q = 98.95, H_Q = 201744, zstd_ratio = 13.29%, sparse_ratio = 12.58%, sparsity = 25.81% , sparse_accuracy = 98.97, training_time = 62s
+
+Batch 0 of epoch 10
+Batch 100 of epoch 10
+Batch 200 of epoch 10
+Batch 300 of epoch 10
+Batch 400 of epoch 10
+Batch 500 of epoch 10
+Batch 600 of epoch 10
+Batch 700 of epoch 10
+Batch 800 of epoch 10
+Batch 900 of epoch 10
+Epoch 10: A_NQ = 98.96, H_NQ = 981890, A_Q = 98.82, H_Q = 205659, zstd_ratio = 13.52%, sparse_ratio = 12.82%, sparsity = 25.31% , sparse_accuracy = 98.82, training_time = 62s
+
+Batch 0 of epoch 11
+Batch 100 of epoch 11
+Batch 200 of epoch 11
+Batch 300 of epoch 11
+Batch 400 of epoch 11
+Batch 500 of epoch 11
+Batch 600 of epoch 11
+Batch 700 of epoch 11
+Batch 800 of epoch 11
+Batch 900 of epoch 11
+Epoch 11: A_NQ = 98.94, H_NQ = 981886, A_Q = 99.02, H_Q = 209756, zstd_ratio = 13.80%, sparse_ratio = 13.15%, sparsity = 24.27% , sparse_accuracy = 99.01, training_time = 62s
+
+Batch 0 of epoch 12
+Batch 100 of epoch 12
+Batch 200 of epoch 12
+Batch 300 of epoch 12
+Batch 400 of epoch 12
+Batch 500 of epoch 12
+Batch 600 of epoch 12
+Batch 700 of epoch 12
+Batch 800 of epoch 12
+Batch 900 of epoch 12
+Epoch 12: A_NQ = 99.12, H_NQ = 981888, A_Q = 99.08, H_Q = 212946, zstd_ratio = 14.02%, sparse_ratio = 13.35%, sparsity = 23.77% , sparse_accuracy = 99.06, training_time = 62s
+
+Batch 0 of epoch 13
+Batch 100 of epoch 13
+Batch 200 of epoch 13
+Batch 300 of epoch 13
+Batch 400 of epoch 13
+Batch 500 of epoch 13
+Batch 600 of epoch 13
+Batch 700 of epoch 13
+Batch 800 of epoch 13
+Batch 900 of epoch 13
+Epoch 13: A_NQ = 99.19, H_NQ = 981904, A_Q = 99.21, H_Q = 216294, zstd_ratio = 14.24%, sparse_ratio = 13.60%, sparsity = 23.12% , sparse_accuracy = 99.21, training_time = 62s
+
+Batch 0 of epoch 14
+Batch 100 of epoch 14
+Batch 200 of epoch 14
+Batch 300 of epoch 14
+Batch 400 of epoch 14
+Batch 500 of epoch 14
+Batch 600 of epoch 14
+Batch 700 of epoch 14
+Batch 800 of epoch 14
+Batch 900 of epoch 14
+Epoch 14: A_NQ = 99.12, H_NQ = 981884, A_Q = 98.76, H_Q = 219204, zstd_ratio = 14.44%, sparse_ratio = 13.76%, sparsity = 22.73% , sparse_accuracy = 98.75, training_time = 61s
+
+Batch 0 of epoch 15
+Batch 100 of epoch 15
+Batch 200 of epoch 15
+Batch 300 of epoch 15
+Batch 400 of epoch 15
+Batch 500 of epoch 15
+Batch 600 of epoch 15
+Batch 700 of epoch 15
+Batch 800 of epoch 15
+Batch 900 of epoch 15
+Epoch 15: A_NQ = 99.23, H_NQ = 981888, A_Q = 99.02, H_Q = 221829, zstd_ratio = 14.57%, sparse_ratio = 13.93%, sparsity = 22.43% , sparse_accuracy = 99.01, training_time = 62s
+
+Batch 0 of epoch 16
+Batch 100 of epoch 16
+Batch 200 of epoch 16
+Batch 300 of epoch 16
+Batch 400 of epoch 16
+Batch 500 of epoch 16
+Batch 600 of epoch 16
+Batch 700 of epoch 16
+Batch 800 of epoch 16
+Batch 900 of epoch 16
+Epoch 16: A_NQ = 99.08, H_NQ = 981884, A_Q = 99.13, H_Q = 224496, zstd_ratio = 14.80%, sparse_ratio = 14.14%, sparsity = 21.95% , sparse_accuracy = 99.12, training_time = 62s
+
+Batch 0 of epoch 17
+Batch 100 of epoch 17
+Batch 200 of epoch 17
+Batch 300 of epoch 17
+Batch 400 of epoch 17
+Batch 500 of epoch 17
+Batch 600 of epoch 17
+Batch 700 of epoch 17
+Batch 800 of epoch 17
+Batch 900 of epoch 17
+Epoch 17: A_NQ = 99.24, H_NQ = 981878, A_Q = 99.24, H_Q = 226837, zstd_ratio = 14.94%, sparse_ratio = 14.30%, sparsity = 21.87% , sparse_accuracy = 99.24, training_time = 62s
+
+Batch 0 of epoch 18
+Batch 100 of epoch 18
+Batch 200 of epoch 18
+Batch 300 of epoch 18
+Batch 400 of epoch 18
+Batch 500 of epoch 18
+Batch 600 of epoch 18
+Batch 700 of epoch 18
+Batch 800 of epoch 18
+Batch 900 of epoch 18
+Epoch 18: A_NQ = 99.02, H_NQ = 981884, A_Q = 99.06, H_Q = 228966, zstd_ratio = 15.06%, sparse_ratio = 14.41%, sparsity = 21.65% , sparse_accuracy = 99.06, training_time = 62s
+
+Batch 0 of epoch 19
+Batch 100 of epoch 19
+Batch 200 of epoch 19
+Batch 300 of epoch 19
+Batch 400 of epoch 19
+Batch 500 of epoch 19
+Batch 600 of epoch 19
+Batch 700 of epoch 19
+Batch 800 of epoch 19
+Batch 900 of epoch 19
+Epoch 19: A_NQ = 98.98, H_NQ = 981902, A_Q = 99.01, H_Q = 230911, zstd_ratio = 15.19%, sparse_ratio = 14.56%, sparsity = 21.48% , sparse_accuracy = 99.02, training_time = 62s
+
+Batch 0 of epoch 20
+Batch 100 of epoch 20
+Batch 200 of epoch 20
+Batch 300 of epoch 20
+Batch 400 of epoch 20
+Batch 500 of epoch 20
+Batch 600 of epoch 20
+Batch 700 of epoch 20
+Batch 800 of epoch 20
+Batch 900 of epoch 20
+Epoch 20: A_NQ = 99.28, H_NQ = 981892, A_Q = 99.26, H_Q = 232944, zstd_ratio = 15.33%, sparse_ratio = 14.73%, sparsity = 21.30% , sparse_accuracy = 99.26, training_time = 62s
+
+Batch 0 of epoch 21
+Batch 100 of epoch 21
+Batch 200 of epoch 21
+Batch 300 of epoch 21
+Batch 400 of epoch 21
+Batch 500 of epoch 21
+Batch 600 of epoch 21
+Batch 700 of epoch 21
+Batch 800 of epoch 21
+Batch 900 of epoch 21
+Epoch 21: A_NQ = 99.12, H_NQ = 981902, A_Q = 99.15, H_Q = 234797, zstd_ratio = 15.47%, sparse_ratio = 14.86%, sparsity = 21.11% , sparse_accuracy = 99.15, training_time = 63s
+
+Batch 0 of epoch 22
+Batch 100 of epoch 22
+Batch 200 of epoch 22
+Batch 300 of epoch 22
+Batch 400 of epoch 22
+Batch 500 of epoch 22
+Batch 600 of epoch 22
+Batch 700 of epoch 22
+Batch 800 of epoch 22
+Batch 900 of epoch 22
+Epoch 22: A_NQ = 99.17, H_NQ = 981904, A_Q = 99.08, H_Q = 236875, zstd_ratio = 15.61%, sparse_ratio = 15.01%, sparsity = 20.64% , sparse_accuracy = 99.08, training_time = 69s
+
+Batch 0 of epoch 23
+Batch 100 of epoch 23
+Batch 200 of epoch 23
+Batch 300 of epoch 23
+Batch 400 of epoch 23
+Batch 500 of epoch 23
+Batch 600 of epoch 23
+Batch 700 of epoch 23
+Batch 800 of epoch 23
+Batch 900 of epoch 23
+Epoch 23: A_NQ = 99.31, H_NQ = 981892, A_Q = 99.36, H_Q = 238284, zstd_ratio = 15.72%, sparse_ratio = 15.08%, sparsity = 20.47% , sparse_accuracy = 99.35, training_time = 69s
+
+Batch 0 of epoch 24
+Batch 100 of epoch 24
+Batch 200 of epoch 24
+Batch 300 of epoch 24
+Batch 400 of epoch 24
+Batch 500 of epoch 24
+Batch 600 of epoch 24
+Batch 700 of epoch 24
+Batch 800 of epoch 24
+Batch 900 of epoch 24
+Epoch 24: A_NQ = 99.23, H_NQ = 981892, A_Q = 99.21, H_Q = 240033, zstd_ratio = 15.83%, sparse_ratio = 15.21%, sparsity = 20.25% , sparse_accuracy = 99.21, training_time = 69s
+
+Batch 0 of epoch 25
+Batch 100 of epoch 25
+Batch 200 of epoch 25
+Batch 300 of epoch 25
+Batch 400 of epoch 25
+Batch 500 of epoch 25
+Batch 600 of epoch 25
+Batch 700 of epoch 25
+Batch 800 of epoch 25
+Batch 900 of epoch 25
+Epoch 25: A_NQ = 99.26, H_NQ = 981914, A_Q = 99.07, H_Q = 241507, zstd_ratio = 15.93%, sparse_ratio = 15.32%, sparsity = 20.21% , sparse_accuracy = 99.07, training_time = 69s
+
+Batch 0 of epoch 26
+Batch 100 of epoch 26
+Batch 200 of epoch 26
+Batch 300 of epoch 26
+Batch 400 of epoch 26
+Batch 500 of epoch 26
+Batch 600 of epoch 26
+Batch 700 of epoch 26
+Batch 800 of epoch 26
+Batch 900 of epoch 26
+Epoch 26: A_NQ = 99.27, H_NQ = 981898, A_Q = 99.19, H_Q = 243121, zstd_ratio = 16.00%, sparse_ratio = 15.42%, sparsity = 20.13% , sparse_accuracy = 99.19, training_time = 69s
+
+Batch 0 of epoch 27
+Batch 100 of epoch 27
+Batch 200 of epoch 27
+Batch 300 of epoch 27
+Batch 400 of epoch 27
+Batch 500 of epoch 27
+Batch 600 of epoch 27
+Batch 700 of epoch 27
+Batch 800 of epoch 27
+Batch 900 of epoch 27
+Epoch 27: A_NQ = 99.25, H_NQ = 981898, A_Q = 99.2, H_Q = 244533, zstd_ratio = 16.12%, sparse_ratio = 15.53%, sparsity = 20.02% , sparse_accuracy = 99.2, training_time = 69s
+
+Batch 0 of epoch 28
+Batch 100 of epoch 28
+Batch 200 of epoch 28
+Batch 300 of epoch 28
+Batch 400 of epoch 28
+Batch 500 of epoch 28
+Batch 600 of epoch 28
+Batch 700 of epoch 28
+Batch 800 of epoch 28
+Batch 900 of epoch 28
+Epoch 28: A_NQ = 99.25, H_NQ = 981896, A_Q = 99.28, H_Q = 245870, zstd_ratio = 16.20%, sparse_ratio = 15.61%, sparsity = 19.77% , sparse_accuracy = 99.27, training_time = 69s
+
+Batch 0 of epoch 29
+Batch 100 of epoch 29
+Batch 200 of epoch 29
+Batch 300 of epoch 29
+Batch 400 of epoch 29
+Batch 500 of epoch 29
+Batch 600 of epoch 29
+Batch 700 of epoch 29
+Batch 800 of epoch 29
+Batch 900 of epoch 29
+Epoch 29: A_NQ = 99.27, H_NQ = 981890, A_Q = 99.28, H_Q = 247509, zstd_ratio = 16.33%, sparse_ratio = 15.74%, sparsity = 19.46% , sparse_accuracy = 99.28, training_time = 69s
+
+Batch 0 of epoch 30
+Batch 100 of epoch 30
+Batch 200 of epoch 30
+Batch 300 of epoch 30
+Batch 400 of epoch 30
+Batch 500 of epoch 30
+Batch 600 of epoch 30
+Batch 700 of epoch 30
+Batch 800 of epoch 30
+Batch 900 of epoch 30
+Epoch 30: A_NQ = 99.27, H_NQ = 981894, A_Q = 99.24, H_Q = 249988, zstd_ratio = 16.54%, sparse_ratio = 15.98%, sparsity = 17.96% , sparse_accuracy = 99.24, training_time = 69s
+
+Batch 0 of epoch 31
+Batch 100 of epoch 31
+Batch 200 of epoch 31
+Batch 300 of epoch 31
+Batch 400 of epoch 31
+Batch 500 of epoch 31
+Batch 600 of epoch 31
+Batch 700 of epoch 31
+Batch 800 of epoch 31
+Batch 900 of epoch 31
+Epoch 31: A_NQ = 99.18, H_NQ = 981892, A_Q = 99.16, H_Q = 251169, zstd_ratio = 16.62%, sparse_ratio = 16.06%, sparsity = 17.97% , sparse_accuracy = 99.16, training_time = 69s
+
+Batch 0 of epoch 32
+Batch 100 of epoch 32
+Batch 200 of epoch 32
+Batch 300 of epoch 32
+Batch 400 of epoch 32
+Batch 500 of epoch 32
+Batch 600 of epoch 32
+Batch 700 of epoch 32
+Batch 800 of epoch 32
+Batch 900 of epoch 32
+Epoch 32: A_NQ = 99.18, H_NQ = 981908, A_Q = 99.15, H_Q = 252307, zstd_ratio = 16.69%, sparse_ratio = 16.12%, sparsity = 17.88% , sparse_accuracy = 99.16, training_time = 70s
+
+Batch 0 of epoch 33
+Batch 100 of epoch 33
+Batch 200 of epoch 33
+Batch 300 of epoch 33
+Batch 400 of epoch 33
+Batch 500 of epoch 33
+Batch 600 of epoch 33
+Batch 700 of epoch 33
+Batch 800 of epoch 33
+Batch 900 of epoch 33
+Epoch 33: A_NQ = 99.32, H_NQ = 981890, A_Q = 99.32, H_Q = 253393, zstd_ratio = 16.76%, sparse_ratio = 16.19%, sparsity = 17.77% , sparse_accuracy = 99.32, training_time = 70s
+
+Batch 0 of epoch 34
+Batch 100 of epoch 34
+Batch 200 of epoch 34
+Batch 300 of epoch 34
+Batch 400 of epoch 34
+Batch 500 of epoch 34
+Batch 600 of epoch 34
+Batch 700 of epoch 34
+Batch 800 of epoch 34
+Batch 900 of epoch 34
+Epoch 34: A_NQ = 99.43, H_NQ = 981904, A_Q = 99.34, H_Q = 254738, zstd_ratio = 16.87%, sparse_ratio = 16.30%, sparsity = 17.49% , sparse_accuracy = 99.34, training_time = 70s
+
+Batch 0 of epoch 35
+Batch 100 of epoch 35
+Batch 200 of epoch 35
+Batch 300 of epoch 35
+Batch 400 of epoch 35
+Batch 500 of epoch 35
+Batch 600 of epoch 35
+Batch 700 of epoch 35
+Batch 800 of epoch 35
+Batch 900 of epoch 35
+Epoch 35: A_NQ = 99.34, H_NQ = 981896, A_Q = 99.23, H_Q = 256093, zstd_ratio = 16.95%, sparse_ratio = 16.41%, sparsity = 17.18% , sparse_accuracy = 99.23, training_time = 70s
+
+Batch 0 of epoch 36
+Batch 100 of epoch 36
+Batch 200 of epoch 36
+Batch 300 of epoch 36
+Batch 400 of epoch 36
+Batch 500 of epoch 36
+Batch 600 of epoch 36
+Batch 700 of epoch 36
+Batch 800 of epoch 36
+Batch 900 of epoch 36
+Epoch 36: A_NQ = 99.19, H_NQ = 981894, A_Q = 99.18, H_Q = 257073, zstd_ratio = 17.04%, sparse_ratio = 16.49%, sparsity = 17.18% , sparse_accuracy = 99.18, training_time = 70s
+
+Batch 0 of epoch 37
+Batch 100 of epoch 37
+Batch 200 of epoch 37
+Batch 300 of epoch 37
+Batch 400 of epoch 37
+Batch 500 of epoch 37
+Batch 600 of epoch 37
+Batch 700 of epoch 37
+Batch 800 of epoch 37
+Batch 900 of epoch 37
+Epoch 37: A_NQ = 99.25, H_NQ = 981898, A_Q = 99.31, H_Q = 258219, zstd_ratio = 17.11%, sparse_ratio = 16.56%, sparsity = 17.01% , sparse_accuracy = 99.31, training_time = 71s
+
+Batch 0 of epoch 38
+Batch 100 of epoch 38
+Batch 200 of epoch 38
+Batch 300 of epoch 38
+Batch 400 of epoch 38
+Batch 500 of epoch 38
+Batch 600 of epoch 38
+Batch 700 of epoch 38
+Batch 800 of epoch 38
+Batch 900 of epoch 38
+Epoch 38: A_NQ = 99.34, H_NQ = 981894, A_Q = 99.26, H_Q = 259331, zstd_ratio = 17.15%, sparse_ratio = 16.59%, sparsity = 16.94% , sparse_accuracy = 99.26, training_time = 71s
+
+Batch 0 of epoch 39
+Batch 100 of epoch 39
+Batch 200 of epoch 39
+Batch 300 of epoch 39
+Batch 400 of epoch 39
+Batch 500 of epoch 39
+Batch 600 of epoch 39
+Batch 700 of epoch 39
+Batch 800 of epoch 39
+Batch 900 of epoch 39
+Epoch 39: A_NQ = 99.31, H_NQ = 981896, A_Q = 99.26, H_Q = 260239, zstd_ratio = 17.25%, sparse_ratio = 16.69%, sparsity = 16.87% , sparse_accuracy = 99.26, training_time = 71s
+
+Batch 0 of epoch 40
+Batch 100 of epoch 40
+Batch 200 of epoch 40
+Batch 300 of epoch 40
+Batch 400 of epoch 40
+Batch 500 of epoch 40
+Batch 600 of epoch 40
+Batch 700 of epoch 40
+Batch 800 of epoch 40
+Batch 900 of epoch 40
+Epoch 40: A_NQ = 99.3, H_NQ = 981900, A_Q = 99.29, H_Q = 261406, zstd_ratio = 17.32%, sparse_ratio = 16.76%, sparsity = 16.68% , sparse_accuracy = 99.29, training_time = 71s
+
+Batch 0 of epoch 41
+Batch 100 of epoch 41
+Batch 200 of epoch 41
+Batch 300 of epoch 41
+Batch 400 of epoch 41
+Batch 500 of epoch 41
+Batch 600 of epoch 41
+Batch 700 of epoch 41
+Batch 800 of epoch 41
+Batch 900 of epoch 41
+Epoch 41: A_NQ = 99.31, H_NQ = 981904, A_Q = 99.26, H_Q = 262354, zstd_ratio = 17.40%, sparse_ratio = 16.84%, sparsity = 16.51% , sparse_accuracy = 99.26, training_time = 70s
+
+Batch 0 of epoch 42
+Batch 100 of epoch 42
+Batch 200 of epoch 42
+Batch 300 of epoch 42
+Batch 400 of epoch 42
+Batch 500 of epoch 42
+Batch 600 of epoch 42
+Batch 700 of epoch 42
+Batch 800 of epoch 42
+Batch 900 of epoch 42
+Epoch 42: A_NQ = 99.31, H_NQ = 981894, A_Q = 99.2, H_Q = 263317, zstd_ratio = 17.45%, sparse_ratio = 16.92%, sparsity = 16.42% , sparse_accuracy = 99.19, training_time = 71s
+
+Batch 0 of epoch 43
+Batch 100 of epoch 43
+Batch 200 of epoch 43
+Batch 300 of epoch 43
+Batch 400 of epoch 43
+Batch 500 of epoch 43
+Batch 600 of epoch 43
+Batch 700 of epoch 43
+Batch 800 of epoch 43
+Batch 900 of epoch 43
+Epoch 43: A_NQ = 99.37, H_NQ = 981888, A_Q = 99.29, H_Q = 264242, zstd_ratio = 17.54%, sparse_ratio = 16.96%, sparsity = 16.40% , sparse_accuracy = 99.29, training_time = 70s
+
+Batch 0 of epoch 44
+Batch 100 of epoch 44
+Batch 200 of epoch 44
+Batch 300 of epoch 44
+Batch 400 of epoch 44
+Batch 500 of epoch 44
+Batch 600 of epoch 44
+Batch 700 of epoch 44
+Batch 800 of epoch 44
+Batch 900 of epoch 44
+Epoch 44: A_NQ = 99.22, H_NQ = 981904, A_Q = 99.16, H_Q = 265084, zstd_ratio = 17.56%, sparse_ratio = 17.03%, sparsity = 16.27% , sparse_accuracy = 99.16, training_time = 70s
+
+Batch 0 of epoch 45
+Batch 100 of epoch 45
+Batch 200 of epoch 45
+Batch 300 of epoch 45
+Batch 400 of epoch 45
+Batch 500 of epoch 45
+Batch 600 of epoch 45
+Batch 700 of epoch 45
+Batch 800 of epoch 45
+Batch 900 of epoch 45
+Epoch 45: A_NQ = 99.34, H_NQ = 981894, A_Q = 99.37, H_Q = 265945, zstd_ratio = 17.64%, sparse_ratio = 17.08%, sparsity = 16.24% , sparse_accuracy = 99.37, training_time = 70s
+
+Batch 0 of epoch 46
+Batch 100 of epoch 46
+Batch 200 of epoch 46
+Batch 300 of epoch 46
+Batch 400 of epoch 46
+Batch 500 of epoch 46
+Batch 600 of epoch 46
+Batch 700 of epoch 46
+Batch 800 of epoch 46
+Batch 900 of epoch 46
+Epoch 46: A_NQ = 99.26, H_NQ = 981902, A_Q = 99.28, H_Q = 266809, zstd_ratio = 17.66%, sparse_ratio = 17.13%, sparsity = 16.16% , sparse_accuracy = 99.28, training_time = 71s
+
+Batch 0 of epoch 47
+Batch 100 of epoch 47
+Batch 200 of epoch 47
+Batch 300 of epoch 47
+Batch 400 of epoch 47
+Batch 500 of epoch 47
+Batch 600 of epoch 47
+Batch 700 of epoch 47
+Batch 800 of epoch 47
+Batch 900 of epoch 47
+Epoch 47: A_NQ = 99.31, H_NQ = 981892, A_Q = 99.31, H_Q = 267593, zstd_ratio = 17.73%, sparse_ratio = 17.17%, sparsity = 16.11% , sparse_accuracy = 99.3, training_time = 71s
+
+Batch 0 of epoch 48
+Batch 100 of epoch 48
+Batch 200 of epoch 48
+Batch 300 of epoch 48
+Batch 400 of epoch 48
+Batch 500 of epoch 48
+Batch 600 of epoch 48
+Batch 700 of epoch 48
+Batch 800 of epoch 48
+Batch 900 of epoch 48
+Epoch 48: A_NQ = 99.39, H_NQ = 981880, A_Q = 99.41, H_Q = 268340, zstd_ratio = 17.81%, sparse_ratio = 17.26%, sparsity = 16.01% , sparse_accuracy = 99.41, training_time = 72s
+
+Batch 0 of epoch 49
+Batch 100 of epoch 49
+Batch 200 of epoch 49
+Batch 300 of epoch 49
+Batch 400 of epoch 49
+Batch 500 of epoch 49
+Batch 600 of epoch 49
+Batch 700 of epoch 49
+Batch 800 of epoch 49
+Batch 900 of epoch 49
+Epoch 49: A_NQ = 99.32, H_NQ = 981890, A_Q = 99.23, H_Q = 269225, zstd_ratio = 17.82%, sparse_ratio = 17.30%, sparsity = 15.84% , sparse_accuracy = 99.23, training_time = 72s
+
+Batch 0 of epoch 50
+Batch 100 of epoch 50
+Batch 200 of epoch 50
+Batch 300 of epoch 50
+Batch 400 of epoch 50
+Batch 500 of epoch 50
+Batch 600 of epoch 50
+Batch 700 of epoch 50
+Batch 800 of epoch 50
+Batch 900 of epoch 50
+Epoch 50: A_NQ = 99.29, H_NQ = 981890, A_Q = 99.26, H_Q = 269785, zstd_ratio = 17.90%, sparse_ratio = 17.35%, sparsity = 16.04% , sparse_accuracy = 99.26, training_time = 71s
+
+Batch 0 of epoch 51
+Batch 100 of epoch 51
+Batch 200 of epoch 51
+Batch 300 of epoch 51
+Batch 400 of epoch 51
+Batch 500 of epoch 51
+Batch 600 of epoch 51
+Batch 700 of epoch 51
+Batch 800 of epoch 51
+Batch 900 of epoch 51
+Epoch 51: A_NQ = 99.34, H_NQ = 981910, A_Q = 99.17, H_Q = 270698, zstd_ratio = 18.00%, sparse_ratio = 17.46%, sparsity = 15.80% , sparse_accuracy = 99.17, training_time = 71s
+
+Batch 0 of epoch 52
+Batch 100 of epoch 52
+Batch 200 of epoch 52
+Batch 300 of epoch 52
+Batch 400 of epoch 52
+Batch 500 of epoch 52
+Batch 600 of epoch 52
+Batch 700 of epoch 52
+Batch 800 of epoch 52
+Batch 900 of epoch 52
+Epoch 52: A_NQ = 99.22, H_NQ = 981894, A_Q = 99.25, H_Q = 271332, zstd_ratio = 18.01%, sparse_ratio = 17.49%, sparsity = 15.81% , sparse_accuracy = 99.25, training_time = 71s
+
+Batch 0 of epoch 53
+Batch 100 of epoch 53
+Batch 200 of epoch 53
+Batch 300 of epoch 53
+Batch 400 of epoch 53
+Batch 500 of epoch 53
+Batch 600 of epoch 53
+Batch 700 of epoch 53
+Batch 800 of epoch 53
+Batch 900 of epoch 53
+Epoch 53: A_NQ = 99.06, H_NQ = 981888, A_Q = 99.04, H_Q = 272060, zstd_ratio = 18.04%, sparse_ratio = 17.53%, sparsity = 15.78% , sparse_accuracy = 99.04, training_time = 71s
+
+Batch 0 of epoch 54
+Batch 100 of epoch 54
+Batch 200 of epoch 54
+Batch 300 of epoch 54
+Batch 400 of epoch 54
+Batch 500 of epoch 54
+Batch 600 of epoch 54
+Batch 700 of epoch 54
+Batch 800 of epoch 54
+Batch 900 of epoch 54
+Epoch 54: A_NQ = 99.39, H_NQ = 981904, A_Q = 99.27, H_Q = 272623, zstd_ratio = 18.07%, sparse_ratio = 17.55%, sparsity = 15.59% , sparse_accuracy = 99.28, training_time = 71s
+
+Batch 0 of epoch 55
+Batch 100 of epoch 55
+Batch 200 of epoch 55
+Batch 300 of epoch 55
+Batch 400 of epoch 55
+Batch 500 of epoch 55
+Batch 600 of epoch 55
+Batch 700 of epoch 55
+Batch 800 of epoch 55
+Batch 900 of epoch 55
+Epoch 55: A_NQ = 99.2, H_NQ = 981884, A_Q = 99.15, H_Q = 273397, zstd_ratio = 18.13%, sparse_ratio = 17.62%, sparsity = 15.70% , sparse_accuracy = 99.17, training_time = 71s
+
+Batch 0 of epoch 56
+Batch 100 of epoch 56
+Batch 200 of epoch 56
+Batch 300 of epoch 56
+Batch 400 of epoch 56
+Batch 500 of epoch 56
+Batch 600 of epoch 56
+Batch 700 of epoch 56
+Batch 800 of epoch 56
+Batch 900 of epoch 56
+Epoch 56: A_NQ = 99.37, H_NQ = 981904, A_Q = 99.24, H_Q = 274065, zstd_ratio = 18.19%, sparse_ratio = 17.67%, sparsity = 15.61% , sparse_accuracy = 99.24, training_time = 71s
+
+Batch 0 of epoch 57
+Batch 100 of epoch 57
+Batch 200 of epoch 57
+Batch 300 of epoch 57
+Batch 400 of epoch 57
+Batch 500 of epoch 57
+Batch 600 of epoch 57
+Batch 700 of epoch 57
+Batch 800 of epoch 57
+Batch 900 of epoch 57
+Epoch 57: A_NQ = 99.23, H_NQ = 981904, A_Q = 99.14, H_Q = 274690, zstd_ratio = 18.23%, sparse_ratio = 17.70%, sparsity = 15.65% , sparse_accuracy = 99.13, training_time = 73s
+
+Batch 0 of epoch 58
+Batch 100 of epoch 58
+Batch 200 of epoch 58
+Batch 300 of epoch 58
+Batch 400 of epoch 58
+Batch 500 of epoch 58
+Batch 600 of epoch 58
+Batch 700 of epoch 58
+Batch 800 of epoch 58
+Batch 900 of epoch 58
+Epoch 58: A_NQ = 99.38, H_NQ = 981898, A_Q = 99.3, H_Q = 275389, zstd_ratio = 18.26%, sparse_ratio = 17.70%, sparsity = 15.53% , sparse_accuracy = 99.3, training_time = 71s
+
+Batch 0 of epoch 59
+Batch 100 of epoch 59
+Batch 200 of epoch 59
+Batch 300 of epoch 59
+Batch 400 of epoch 59
+Batch 500 of epoch 59
+Batch 600 of epoch 59
+Batch 700 of epoch 59
+Batch 800 of epoch 59
+Batch 900 of epoch 59
+Epoch 59: A_NQ = 99.43, H_NQ = 981890, A_Q = 99.43, H_Q = 275996, zstd_ratio = 18.32%, sparse_ratio = 17.76%, sparsity = 15.44% , sparse_accuracy = 99.43, training_time = 73s
+
+Batch 0 of epoch 60
+Batch 100 of epoch 60
+Batch 200 of epoch 60
+Batch 300 of epoch 60
+Batch 400 of epoch 60
+Batch 500 of epoch 60
+Batch 600 of epoch 60
+Batch 700 of epoch 60
+Batch 800 of epoch 60
+Batch 900 of epoch 60
+Epoch 60: A_NQ = 99.38, H_NQ = 981874, A_Q = 99.34, H_Q = 276560, zstd_ratio = 18.34%, sparse_ratio = 17.78%, sparsity = 15.49% , sparse_accuracy = 99.33, training_time = 73s
+
+Batch 0 of epoch 61
+Batch 100 of epoch 61
+Batch 200 of epoch 61
+Batch 300 of epoch 61
+Batch 400 of epoch 61
+Batch 500 of epoch 61
+Batch 600 of epoch 61
+Batch 700 of epoch 61
+Batch 800 of epoch 61
+Batch 900 of epoch 61
+Epoch 61: A_NQ = 99.23, H_NQ = 981910, A_Q = 99.28, H_Q = 277133, zstd_ratio = 18.41%, sparse_ratio = 17.87%, sparsity = 15.40% , sparse_accuracy = 99.28, training_time = 71s
+
+Batch 0 of epoch 62
+Batch 100 of epoch 62
+Batch 200 of epoch 62
+Batch 300 of epoch 62
+Batch 400 of epoch 62
+Batch 500 of epoch 62
+Batch 600 of epoch 62
+Batch 700 of epoch 62
+Batch 800 of epoch 62
+Batch 900 of epoch 62
+Epoch 62: A_NQ = 99.39, H_NQ = 981880, A_Q = 99.36, H_Q = 277741, zstd_ratio = 18.44%, sparse_ratio = 17.89%, sparsity = 15.36% , sparse_accuracy = 99.36, training_time = 71s
+
+Batch 0 of epoch 63
+Batch 100 of epoch 63
+Batch 200 of epoch 63
+Batch 300 of epoch 63
+Batch 400 of epoch 63
+Batch 500 of epoch 63
+Batch 600 of epoch 63
+Batch 700 of epoch 63
+Batch 800 of epoch 63
+Batch 900 of epoch 63
+Epoch 63: A_NQ = 99.15, H_NQ = 981894, A_Q = 98.47, H_Q = 278243, zstd_ratio = 18.46%, sparse_ratio = 17.94%, sparsity = 15.45% , sparse_accuracy = 98.48, training_time = 71s
+
+Batch 0 of epoch 64
+Batch 100 of epoch 64
+Batch 200 of epoch 64
+Batch 300 of epoch 64
+Batch 400 of epoch 64
+Batch 500 of epoch 64
+Batch 600 of epoch 64
+Batch 700 of epoch 64
+Batch 800 of epoch 64
+Batch 900 of epoch 64
+Epoch 64: A_NQ = 99.4, H_NQ = 981906, A_Q = 99.35, H_Q = 278823, zstd_ratio = 18.50%, sparse_ratio = 17.95%, sparsity = 15.36% , sparse_accuracy = 99.35, training_time = 72s
+
+Batch 0 of epoch 65
+Batch 100 of epoch 65
+Batch 200 of epoch 65
+Batch 300 of epoch 65
+Batch 400 of epoch 65
+Batch 500 of epoch 65
+Batch 600 of epoch 65
+Batch 700 of epoch 65
+Batch 800 of epoch 65
+Batch 900 of epoch 65
+Epoch 65: A_NQ = 99.4, H_NQ = 981896, A_Q = 99.25, H_Q = 279301, zstd_ratio = 18.55%, sparse_ratio = 18.01%, sparsity = 15.30% , sparse_accuracy = 99.25, training_time = 71s
+
+Batch 0 of epoch 66
+Batch 100 of epoch 66
+Batch 200 of epoch 66
+Batch 300 of epoch 66
+Batch 400 of epoch 66
+Batch 500 of epoch 66
+Batch 600 of epoch 66
+Batch 700 of epoch 66
+Batch 800 of epoch 66
+Batch 900 of epoch 66
+Epoch 66: A_NQ = 99.12, H_NQ = 981896, A_Q = 99.21, H_Q = 279867, zstd_ratio = 18.56%, sparse_ratio = 18.02%, sparsity = 15.25% , sparse_accuracy = 99.21, training_time = 71s
+
+Batch 0 of epoch 67
+Batch 100 of epoch 67
+Batch 200 of epoch 67
+Batch 300 of epoch 67
+Batch 400 of epoch 67
+Batch 500 of epoch 67
+Batch 600 of epoch 67
+Batch 700 of epoch 67
+Batch 800 of epoch 67
+Batch 900 of epoch 67
+Epoch 67: A_NQ = 99.18, H_NQ = 981910, A_Q = 98.99, H_Q = 280554, zstd_ratio = 18.59%, sparse_ratio = 18.06%, sparsity = 15.18% , sparse_accuracy = 99.0, training_time = 74s
+
+Batch 0 of epoch 68
+Batch 100 of epoch 68
+Batch 200 of epoch 68
+Batch 300 of epoch 68
+Batch 400 of epoch 68
+Batch 500 of epoch 68
+Batch 600 of epoch 68
+Batch 700 of epoch 68
+Batch 800 of epoch 68
+Batch 900 of epoch 68
+Epoch 68: A_NQ = 99.28, H_NQ = 981906, A_Q = 99.18, H_Q = 280998, zstd_ratio = 18.59%, sparse_ratio = 18.06%, sparsity = 15.27% , sparse_accuracy = 99.18, training_time = 74s
+
+Batch 0 of epoch 69
+Batch 100 of epoch 69
+Batch 200 of epoch 69
+Batch 300 of epoch 69
+Batch 400 of epoch 69
+Batch 500 of epoch 69
+Batch 600 of epoch 69
+Batch 700 of epoch 69
+Batch 800 of epoch 69
+Batch 900 of epoch 69
+Epoch 69: A_NQ = 99.2, H_NQ = 981896, A_Q = 99.1, H_Q = 281596, zstd_ratio = 18.68%, sparse_ratio = 18.14%, sparsity = 15.09% , sparse_accuracy = 99.1, training_time = 71s
+
+Batch 0 of epoch 70
+Batch 100 of epoch 70
+Batch 200 of epoch 70
+Batch 300 of epoch 70
+Batch 400 of epoch 70
+Batch 500 of epoch 70
+Batch 600 of epoch 70
+Batch 700 of epoch 70
+Batch 800 of epoch 70
+Batch 900 of epoch 70
+Epoch 70: A_NQ = 99.4, H_NQ = 981894, A_Q = 99.3, H_Q = 282093, zstd_ratio = 18.74%, sparse_ratio = 18.18%, sparsity = 15.19% , sparse_accuracy = 99.3, training_time = 74s
+
+Batch 0 of epoch 71
+Batch 100 of epoch 71
+Batch 200 of epoch 71
+Batch 300 of epoch 71
+Batch 400 of epoch 71
+Batch 500 of epoch 71
+Batch 600 of epoch 71
+Batch 700 of epoch 71
+Batch 800 of epoch 71
+Batch 900 of epoch 71
+Epoch 71: A_NQ = 99.29, H_NQ = 981900, A_Q = 99.22, H_Q = 282530, zstd_ratio = 18.73%, sparse_ratio = 18.16%, sparsity = 15.14% , sparse_accuracy = 99.22, training_time = 72s
+
+Batch 0 of epoch 72
+Batch 100 of epoch 72
+Batch 200 of epoch 72
+Batch 300 of epoch 72
+Batch 400 of epoch 72
+Batch 500 of epoch 72
+Batch 600 of epoch 72
+Batch 700 of epoch 72
+Batch 800 of epoch 72
+Batch 900 of epoch 72
+Epoch 72: A_NQ = 99.21, H_NQ = 981898, A_Q = 99.21, H_Q = 283088, zstd_ratio = 18.74%, sparse_ratio = 18.20%, sparsity = 14.91% , sparse_accuracy = 99.21, training_time = 73s
+
+Batch 0 of epoch 73
+Batch 100 of epoch 73
+Batch 200 of epoch 73
+Batch 300 of epoch 73
+Batch 400 of epoch 73
+Batch 500 of epoch 73
+Batch 600 of epoch 73
+Batch 700 of epoch 73
+Batch 800 of epoch 73
+Batch 900 of epoch 73
+Epoch 73: A_NQ = 99.27, H_NQ = 981900, A_Q = 99.21, H_Q = 283555, zstd_ratio = 18.78%, sparse_ratio = 18.23%, sparsity = 15.01% , sparse_accuracy = 99.21, training_time = 72s
+
+Batch 0 of epoch 74
+Batch 100 of epoch 74
+Batch 200 of epoch 74
+Batch 300 of epoch 74
+Batch 400 of epoch 74
+Batch 500 of epoch 74
+Batch 600 of epoch 74
+Batch 700 of epoch 74
+Batch 800 of epoch 74
+Batch 900 of epoch 74
+Epoch 74: A_NQ = 99.3, H_NQ = 981896, A_Q = 99.15, H_Q = 284083, zstd_ratio = 18.80%, sparse_ratio = 18.27%, sparsity = 14.91% , sparse_accuracy = 99.15, training_time = 73s
+
+Batch 0 of epoch 75
+Batch 100 of epoch 75
+Batch 200 of epoch 75
+Batch 300 of epoch 75
+Batch 400 of epoch 75
+Batch 500 of epoch 75
+Batch 600 of epoch 75
+Batch 700 of epoch 75
+Batch 800 of epoch 75
+Batch 900 of epoch 75
+Epoch 75: A_NQ = 99.32, H_NQ = 981888, A_Q = 99.26, H_Q = 284505, zstd_ratio = 18.84%, sparse_ratio = 18.33%, sparsity = 14.97% , sparse_accuracy = 99.27, training_time = 73s
+
+Batch 0 of epoch 76
+Batch 100 of epoch 76
+Batch 200 of epoch 76
+Batch 300 of epoch 76
+Batch 400 of epoch 76
+Batch 500 of epoch 76
+Batch 600 of epoch 76
+Batch 700 of epoch 76
+Batch 800 of epoch 76
+Batch 900 of epoch 76
+Epoch 76: A_NQ = 99.2, H_NQ = 981882, A_Q = 99.1, H_Q = 284920, zstd_ratio = 18.92%, sparse_ratio = 18.36%, sparsity = 15.01% , sparse_accuracy = 99.09, training_time = 73s
+
+Batch 0 of epoch 77
+Batch 100 of epoch 77
+Batch 200 of epoch 77
+Batch 300 of epoch 77
+Batch 400 of epoch 77
+Batch 500 of epoch 77
+Batch 600 of epoch 77
+Batch 700 of epoch 77
+Batch 800 of epoch 77
+Batch 900 of epoch 77
+Epoch 77: A_NQ = 99.34, H_NQ = 981912, A_Q = 99.3, H_Q = 285307, zstd_ratio = 18.92%, sparse_ratio = 18.40%, sparsity = 15.00% , sparse_accuracy = 99.3, training_time = 72s
+
+Batch 0 of epoch 78
+Batch 100 of epoch 78
+Batch 200 of epoch 78
+Batch 300 of epoch 78
+Batch 400 of epoch 78
+Batch 500 of epoch 78
+Batch 600 of epoch 78
+Batch 700 of epoch 78
+Batch 800 of epoch 78
+Batch 900 of epoch 78
+Epoch 78: A_NQ = 99.19, H_NQ = 981878, A_Q = 99.29, H_Q = 285842, zstd_ratio = 18.99%, sparse_ratio = 18.41%, sparsity = 14.99% , sparse_accuracy = 99.29, training_time = 73s
+
+Batch 0 of epoch 79
+Batch 100 of epoch 79
+Batch 200 of epoch 79
+Batch 300 of epoch 79
+Batch 400 of epoch 79
+Batch 500 of epoch 79
+Batch 600 of epoch 79
+Batch 700 of epoch 79
+Batch 800 of epoch 79
+Batch 900 of epoch 79
+Epoch 79: A_NQ = 99.42, H_NQ = 981888, A_Q = 99.35, H_Q = 286379, zstd_ratio = 19.02%, sparse_ratio = 18.47%, sparsity = 14.75% , sparse_accuracy = 99.35, training_time = 75s
+
+Batch 0 of epoch 80
+Batch 100 of epoch 80
+Batch 200 of epoch 80
+Batch 300 of epoch 80
+Batch 400 of epoch 80
+Batch 500 of epoch 80
+Batch 600 of epoch 80
+Batch 700 of epoch 80
+Batch 800 of epoch 80
+Batch 900 of epoch 80
+Epoch 80: A_NQ = 99.23, H_NQ = 981904, A_Q = 99.07, H_Q = 286651, zstd_ratio = 19.02%, sparse_ratio = 18.47%, sparsity = 14.96% , sparse_accuracy = 99.07, training_time = 75s
+
+Batch 0 of epoch 81
+Batch 100 of epoch 81
+Batch 200 of epoch 81
+Batch 300 of epoch 81
+Batch 400 of epoch 81
+Batch 500 of epoch 81
+Batch 600 of epoch 81
+Batch 700 of epoch 81
+Batch 800 of epoch 81
+Batch 900 of epoch 81
+Epoch 81: A_NQ = 99.31, H_NQ = 981896, A_Q = 99.05, H_Q = 287061, zstd_ratio = 19.05%, sparse_ratio = 18.51%, sparsity = 14.77% , sparse_accuracy = 99.05, training_time = 73s
+
+Batch 0 of epoch 82
+Batch 100 of epoch 82
+Batch 200 of epoch 82
+Batch 300 of epoch 82
+Batch 400 of epoch 82
+Batch 500 of epoch 82
+Batch 600 of epoch 82
+Batch 700 of epoch 82
+Batch 800 of epoch 82
+Batch 900 of epoch 82
+Epoch 82: A_NQ = 99.35, H_NQ = 981904, A_Q = 99.33, H_Q = 287404, zstd_ratio = 19.06%, sparse_ratio = 18.52%, sparsity = 14.99% , sparse_accuracy = 99.33, training_time = 72s
+
+Batch 0 of epoch 83
+Batch 100 of epoch 83
+Batch 200 of epoch 83
+Batch 300 of epoch 83
+Batch 400 of epoch 83
+Batch 500 of epoch 83
+Batch 600 of epoch 83
+Batch 700 of epoch 83
+Batch 800 of epoch 83
+Batch 900 of epoch 83
+Epoch 83: A_NQ = 99.2, H_NQ = 981894, A_Q = 99.16, H_Q = 287844, zstd_ratio = 19.06%, sparse_ratio = 18.50%, sparsity = 14.89% , sparse_accuracy = 99.16, training_time = 73s
+
+Batch 0 of epoch 84
+Batch 100 of epoch 84
+Batch 200 of epoch 84
+Batch 300 of epoch 84
+Batch 400 of epoch 84
+Batch 500 of epoch 84
+Batch 600 of epoch 84
+Batch 700 of epoch 84
+Batch 800 of epoch 84
+Batch 900 of epoch 84
+Epoch 84: A_NQ = 99.21, H_NQ = 981896, A_Q = 99.31, H_Q = 288279, zstd_ratio = 19.12%, sparse_ratio = 18.58%, sparsity = 14.77% , sparse_accuracy = 99.32, training_time = 73s
+
+Batch 0 of epoch 85
+Batch 100 of epoch 85
+Batch 200 of epoch 85
+Batch 300 of epoch 85
+Batch 400 of epoch 85
+Batch 500 of epoch 85
+Batch 600 of epoch 85
+Batch 700 of epoch 85
+Batch 800 of epoch 85
+Batch 900 of epoch 85
+Epoch 85: A_NQ = 99.33, H_NQ = 981912, A_Q = 99.34, H_Q = 288693, zstd_ratio = 19.15%, sparse_ratio = 18.59%, sparsity = 14.82% , sparse_accuracy = 99.34, training_time = 73s
+
+Batch 0 of epoch 86
+Batch 100 of epoch 86
+Batch 200 of epoch 86
+Batch 300 of epoch 86
+Batch 400 of epoch 86
+Batch 500 of epoch 86
+Batch 600 of epoch 86
+Batch 700 of epoch 86
+Batch 800 of epoch 86
+Batch 900 of epoch 86
+Epoch 86: A_NQ = 99.17, H_NQ = 981906, A_Q = 99.03, H_Q = 289138, zstd_ratio = 19.18%, sparse_ratio = 18.65%, sparsity = 14.76% , sparse_accuracy = 99.04, training_time = 74s
+
+Batch 0 of epoch 87
+Batch 100 of epoch 87
+Batch 200 of epoch 87
+Batch 300 of epoch 87
+Batch 400 of epoch 87
+Batch 500 of epoch 87
+Batch 600 of epoch 87
+Batch 700 of epoch 87
+Batch 800 of epoch 87
+Batch 900 of epoch 87
+Epoch 87: A_NQ = 99.29, H_NQ = 981898, A_Q = 99.28, H_Q = 289553, zstd_ratio = 19.21%, sparse_ratio = 18.69%, sparsity = 14.69% , sparse_accuracy = 99.28, training_time = 73s
+
+Batch 0 of epoch 88
+Batch 100 of epoch 88
+Batch 200 of epoch 88
+Batch 300 of epoch 88
+Batch 400 of epoch 88
+Batch 500 of epoch 88
+Batch 600 of epoch 88
+Batch 700 of epoch 88
+Batch 800 of epoch 88
+Batch 900 of epoch 88
+Epoch 88: A_NQ = 99.18, H_NQ = 981898, A_Q = 99.35, H_Q = 289842, zstd_ratio = 19.22%, sparse_ratio = 18.70%, sparsity = 14.78% , sparse_accuracy = 99.35, training_time = 72s
+
+Batch 0 of epoch 89
+Batch 100 of epoch 89
+Batch 200 of epoch 89
+Batch 300 of epoch 89
+Batch 400 of epoch 89
+Batch 500 of epoch 89
+Batch 600 of epoch 89
+Batch 700 of epoch 89
+Batch 800 of epoch 89
+Batch 900 of epoch 89
+Epoch 89: A_NQ = 99.23, H_NQ = 981904, A_Q = 99.2, H_Q = 290299, zstd_ratio = 19.22%, sparse_ratio = 18.71%, sparsity = 14.77% , sparse_accuracy = 99.2, training_time = 72s
+
+Batch 0 of epoch 90
+Batch 100 of epoch 90
+Batch 200 of epoch 90
+Batch 300 of epoch 90
+Batch 400 of epoch 90
+Batch 500 of epoch 90
+Batch 600 of epoch 90
+Batch 700 of epoch 90
+Batch 800 of epoch 90
+Batch 900 of epoch 90
+Epoch 90: A_NQ = 99.38, H_NQ = 981910, A_Q = 99.33, H_Q = 290758, zstd_ratio = 19.24%, sparse_ratio = 18.75%, sparsity = 14.69% , sparse_accuracy = 99.33, training_time = 73s
+
+Batch 0 of epoch 91
+Batch 100 of epoch 91
+Batch 200 of epoch 91
+Batch 300 of epoch 91
+Batch 400 of epoch 91
+Batch 500 of epoch 91
+Batch 600 of epoch 91
+Batch 700 of epoch 91
+Batch 800 of epoch 91
+Batch 900 of epoch 91
+Epoch 91: A_NQ = 99.27, H_NQ = 981904, A_Q = 99.3, H_Q = 291102, zstd_ratio = 19.29%, sparse_ratio = 18.78%, sparsity = 14.65% , sparse_accuracy = 99.3, training_time = 73s
+
+Batch 0 of epoch 92
+Batch 100 of epoch 92
+Batch 200 of epoch 92
+Batch 300 of epoch 92
+Batch 400 of epoch 92
+Batch 500 of epoch 92
+Batch 600 of epoch 92
+Batch 700 of epoch 92
+Batch 800 of epoch 92
+Batch 900 of epoch 92
+Epoch 92: A_NQ = 99.38, H_NQ = 981912, A_Q = 99.32, H_Q = 291545, zstd_ratio = 19.28%, sparse_ratio = 18.75%, sparsity = 14.66% , sparse_accuracy = 99.32, training_time = 73s
+
+Batch 0 of epoch 93
+Batch 100 of epoch 93
+Batch 200 of epoch 93
+Batch 300 of epoch 93
+Batch 400 of epoch 93
+Batch 500 of epoch 93
+Batch 600 of epoch 93
+Batch 700 of epoch 93
+Batch 800 of epoch 93
+Batch 900 of epoch 93
+Epoch 93: A_NQ = 99.44, H_NQ = 981896, A_Q = 99.32, H_Q = 291908, zstd_ratio = 19.34%, sparse_ratio = 18.81%, sparsity = 14.64% , sparse_accuracy = 99.32, training_time = 72s
+
+Batch 0 of epoch 94
+Batch 100 of epoch 94
+Batch 200 of epoch 94
+Batch 300 of epoch 94
+Batch 400 of epoch 94
+Batch 500 of epoch 94
+Batch 600 of epoch 94
+Batch 700 of epoch 94
+Batch 800 of epoch 94
+Batch 900 of epoch 94
+Epoch 94: A_NQ = 99.3, H_NQ = 981906, A_Q = 99.22, H_Q = 292181, zstd_ratio = 19.34%, sparse_ratio = 18.81%, sparsity = 14.78% , sparse_accuracy = 99.22, training_time = 73s
+
+Batch 0 of epoch 95
+Batch 100 of epoch 95
+Batch 200 of epoch 95
+Batch 300 of epoch 95
+Batch 400 of epoch 95
+Batch 500 of epoch 95
+Batch 600 of epoch 95
+Batch 700 of epoch 95
+Batch 800 of epoch 95
+Batch 900 of epoch 95
+Epoch 95: A_NQ = 99.33, H_NQ = 981896, A_Q = 99.23, H_Q = 292530, zstd_ratio = 19.39%, sparse_ratio = 18.85%, sparsity = 14.63% , sparse_accuracy = 99.23, training_time = 72s
+
+Batch 0 of epoch 96
+Batch 100 of epoch 96
+Batch 200 of epoch 96
+Batch 300 of epoch 96
+Batch 400 of epoch 96
+Batch 500 of epoch 96
+Batch 600 of epoch 96
+Batch 700 of epoch 96
+Batch 800 of epoch 96
+Batch 900 of epoch 96
+Epoch 96: A_NQ = 99.35, H_NQ = 981896, A_Q = 99.29, H_Q = 292855, zstd_ratio = 19.39%, sparse_ratio = 18.85%, sparsity = 14.57% , sparse_accuracy = 99.29, training_time = 72s
+
+Batch 0 of epoch 97
+Batch 100 of epoch 97
+Batch 200 of epoch 97
+Batch 300 of epoch 97
+Batch 400 of epoch 97
+Batch 500 of epoch 97
+Batch 600 of epoch 97
+Batch 700 of epoch 97
+Batch 800 of epoch 97
+Batch 900 of epoch 97
+Epoch 97: A_NQ = 99.47, H_NQ = 981878, A_Q = 99.45, H_Q = 293290, zstd_ratio = 19.41%, sparse_ratio = 18.91%, sparsity = 14.65% , sparse_accuracy = 99.45, training_time = 73s
+
+Batch 0 of epoch 98
+Batch 100 of epoch 98
+Batch 200 of epoch 98
+Batch 300 of epoch 98
+Batch 400 of epoch 98
+Batch 500 of epoch 98
+Batch 600 of epoch 98
+Batch 700 of epoch 98
+Batch 800 of epoch 98
+Batch 900 of epoch 98
+Epoch 98: A_NQ = 99.4, H_NQ = 981892, A_Q = 99.44, H_Q = 293587, zstd_ratio = 19.44%, sparse_ratio = 18.91%, sparsity = 14.62% , sparse_accuracy = 99.44, training_time = 74s
+
+Batch 0 of epoch 99
+Batch 100 of epoch 99
+Batch 200 of epoch 99
+Batch 300 of epoch 99
+Batch 400 of epoch 99
+Batch 500 of epoch 99
+Batch 600 of epoch 99
+Batch 700 of epoch 99
+Batch 800 of epoch 99
+Batch 900 of epoch 99
+Epoch 99: A_NQ = 99.41, H_NQ = 981902, A_Q = 99.44, H_Q = 293899, zstd_ratio = 19.44%, sparse_ratio = 18.94%, sparsity = 14.58% , sparse_accuracy = 99.44, training_time = 73s
+
+Batch 0 of epoch 100
+Batch 100 of epoch 100
+Batch 200 of epoch 100
+Batch 300 of epoch 100
+Batch 400 of epoch 100
+Batch 500 of epoch 100
+Batch 600 of epoch 100
+Batch 700 of epoch 100
+Batch 800 of epoch 100
+Batch 900 of epoch 100
+Epoch 100: A_NQ = 99.39, H_NQ = 981910, A_Q = 99.33, H_Q = 294353, zstd_ratio = 19.49%, sparse_ratio = 18.96%, sparsity = 14.50% , sparse_accuracy = 99.33, training_time = 75s
+
+r = 2.0
+Epoch 1: A_NQ = 97.21, H_NQ = 981886, A_Q = 96.74, H_Q = 139282, zstd_ratio = 9.23%, sparse_ratio = 8.39%, sparsity = 40.40% , sparse_accuracy = 96.79, training_time = 63s
+Epoch 2: A_NQ = 98.35, H_NQ = 981898, A_Q = 98.25, H_Q = 152863, zstd_ratio = 10.12%, sparse_ratio = 9.30%, sparsity = 36.73% , sparse_accuracy = 98.27, training_time = 62s
+Epoch 3: A_NQ = 98.75, H_NQ = 981890, A_Q = 98.43, H_Q = 164190, zstd_ratio = 10.83%, sparse_ratio = 10.05%, sparsity = 33.67% , sparse_accuracy = 98.43, training_time = 62s
+Epoch 4: A_NQ = 98.67, H_NQ = 981894, A_Q = 98.63, H_Q = 173207, zstd_ratio = 11.43%, sparse_ratio = 10.64%, sparsity = 31.26% , sparse_accuracy = 98.63, training_time = 61s
+Epoch 5: A_NQ = 98.85, H_NQ = 981892, A_Q = 98.67, H_Q = 180532, zstd_ratio = 11.89%, sparse_ratio = 11.15%, sparsity = 29.72% , sparse_accuracy = 98.67, training_time = 62s
+Epoch 6: A_NQ = 98.81, H_NQ = 981902, A_Q = 98.52, H_Q = 186705, zstd_ratio = 12.27%, sparse_ratio = 11.57%, sparsity = 28.60% , sparse_accuracy = 98.51, training_time = 62s
+Epoch 7: A_NQ = 99.12, H_NQ = 981892, A_Q = 99.03, H_Q = 192774, zstd_ratio = 12.67%, sparse_ratio = 11.96%, sparsity = 27.49% , sparse_accuracy = 99.02, training_time = 62s
+Epoch 8: A_NQ = 99.0, H_NQ = 981890, A_Q = 98.99, H_Q = 197370, zstd_ratio = 13.01%, sparse_ratio = 12.27%, sparsity = 26.55% , sparse_accuracy = 98.99, training_time = 62s
+Epoch 9: A_NQ = 98.98, H_NQ = 981892, A_Q = 98.95, H_Q = 201744, zstd_ratio = 13.29%, sparse_ratio = 12.58%, sparsity = 25.81% , sparse_accuracy = 98.97, training_time = 62s
+Epoch 10: A_NQ = 98.96, H_NQ = 981890, A_Q = 98.82, H_Q = 205659, zstd_ratio = 13.52%, sparse_ratio = 12.82%, sparsity = 25.31% , sparse_accuracy = 98.82, training_time = 62s
+Epoch 11: A_NQ = 98.94, H_NQ = 981886, A_Q = 99.02, H_Q = 209756, zstd_ratio = 13.80%, sparse_ratio = 13.15%, sparsity = 24.27% , sparse_accuracy = 99.01, training_time = 62s
+Epoch 12: A_NQ = 99.12, H_NQ = 981888, A_Q = 99.08, H_Q = 212946, zstd_ratio = 14.02%, sparse_ratio = 13.35%, sparsity = 23.77% , sparse_accuracy = 99.06, training_time = 62s
+Epoch 13: A_NQ = 99.19, H_NQ = 981904, A_Q = 99.21, H_Q = 216294, zstd_ratio = 14.24%, sparse_ratio = 13.60%, sparsity = 23.12% , sparse_accuracy = 99.21, training_time = 62s
+Epoch 14: A_NQ = 99.12, H_NQ = 981884, A_Q = 98.76, H_Q = 219204, zstd_ratio = 14.44%, sparse_ratio = 13.76%, sparsity = 22.73% , sparse_accuracy = 98.75, training_time = 61s
+Epoch 15: A_NQ = 99.23, H_NQ = 981888, A_Q = 99.02, H_Q = 221829, zstd_ratio = 14.57%, sparse_ratio = 13.93%, sparsity = 22.43% , sparse_accuracy = 99.01, training_time = 62s
+Epoch 16: A_NQ = 99.08, H_NQ = 981884, A_Q = 99.13, H_Q = 224496, zstd_ratio = 14.80%, sparse_ratio = 14.14%, sparsity = 21.95% , sparse_accuracy = 99.12, training_time = 62s
+Epoch 17: A_NQ = 99.24, H_NQ = 981878, A_Q = 99.24, H_Q = 226837, zstd_ratio = 14.94%, sparse_ratio = 14.30%, sparsity = 21.87% , sparse_accuracy = 99.24, training_time = 62s
+Epoch 18: A_NQ = 99.02, H_NQ = 981884, A_Q = 99.06, H_Q = 228966, zstd_ratio = 15.06%, sparse_ratio = 14.41%, sparsity = 21.65% , sparse_accuracy = 99.06, training_time = 62s
+Epoch 19: A_NQ = 98.98, H_NQ = 981902, A_Q = 99.01, H_Q = 230911, zstd_ratio = 15.19%, sparse_ratio = 14.56%, sparsity = 21.48% , sparse_accuracy = 99.02, training_time = 62s
+Epoch 20: A_NQ = 99.28, H_NQ = 981892, A_Q = 99.26, H_Q = 232944, zstd_ratio = 15.33%, sparse_ratio = 14.73%, sparsity = 21.30% , sparse_accuracy = 99.26, training_time = 62s
+Epoch 21: A_NQ = 99.12, H_NQ = 981902, A_Q = 99.15, H_Q = 234797, zstd_ratio = 15.47%, sparse_ratio = 14.86%, sparsity = 21.11% , sparse_accuracy = 99.15, training_time = 63s
+Epoch 22: A_NQ = 99.17, H_NQ = 981904, A_Q = 99.08, H_Q = 236875, zstd_ratio = 15.61%, sparse_ratio = 15.01%, sparsity = 20.64% , sparse_accuracy = 99.08, training_time = 69s
+Epoch 23: A_NQ = 99.31, H_NQ = 981892, A_Q = 99.36, H_Q = 238284, zstd_ratio = 15.72%, sparse_ratio = 15.08%, sparsity = 20.47% , sparse_accuracy = 99.35, training_time = 69s
+Epoch 24: A_NQ = 99.23, H_NQ = 981892, A_Q = 99.21, H_Q = 240033, zstd_ratio = 15.83%, sparse_ratio = 15.21%, sparsity = 20.25% , sparse_accuracy = 99.21, training_time = 69s
+Epoch 25: A_NQ = 99.26, H_NQ = 981914, A_Q = 99.07, H_Q = 241507, zstd_ratio = 15.93%, sparse_ratio = 15.32%, sparsity = 20.21% , sparse_accuracy = 99.07, training_time = 69s
+Epoch 26: A_NQ = 99.27, H_NQ = 981898, A_Q = 99.19, H_Q = 243121, zstd_ratio = 16.00%, sparse_ratio = 15.42%, sparsity = 20.13% , sparse_accuracy = 99.19, training_time = 69s
+Epoch 27: A_NQ = 99.25, H_NQ = 981898, A_Q = 99.2, H_Q = 244533, zstd_ratio = 16.12%, sparse_ratio = 15.53%, sparsity = 20.02% , sparse_accuracy = 99.2, training_time = 69s
+Epoch 28: A_NQ = 99.25, H_NQ = 981896, A_Q = 99.28, H_Q = 245870, zstd_ratio = 16.20%, sparse_ratio = 15.61%, sparsity = 19.77% , sparse_accuracy = 99.27, training_time = 69s
+Epoch 29: A_NQ = 99.27, H_NQ = 981890, A_Q = 99.28, H_Q = 247509, zstd_ratio = 16.33%, sparse_ratio = 15.74%, sparsity = 19.46% , sparse_accuracy = 99.28, training_time = 69s
+Epoch 30: A_NQ = 99.27, H_NQ = 981894, A_Q = 99.24, H_Q = 249988, zstd_ratio = 16.54%, sparse_ratio = 15.98%, sparsity = 17.96% , sparse_accuracy = 99.24, training_time = 69s
+Epoch 31: A_NQ = 99.18, H_NQ = 981892, A_Q = 99.16, H_Q = 251169, zstd_ratio = 16.62%, sparse_ratio = 16.06%, sparsity = 17.97% , sparse_accuracy = 99.16, training_time = 69s
+Epoch 32: A_NQ = 99.18, H_NQ = 981908, A_Q = 99.15, H_Q = 252307, zstd_ratio = 16.69%, sparse_ratio = 16.12%, sparsity = 17.88% , sparse_accuracy = 99.16, training_time = 70s
+Epoch 33: A_NQ = 99.32, H_NQ = 981890, A_Q = 99.32, H_Q = 253393, zstd_ratio = 16.76%, sparse_ratio = 16.19%, sparsity = 17.77% , sparse_accuracy = 99.32, training_time = 70s
+Epoch 34: A_NQ = 99.43, H_NQ = 981904, A_Q = 99.34, H_Q = 254738, zstd_ratio = 16.87%, sparse_ratio = 16.30%, sparsity = 17.49% , sparse_accuracy = 99.34, training_time = 70s
+Epoch 35: A_NQ = 99.34, H_NQ = 981896, A_Q = 99.23, H_Q = 256093, zstd_ratio = 16.95%, sparse_ratio = 16.41%, sparsity = 17.18% , sparse_accuracy = 99.23, training_time = 70s
+Epoch 36: A_NQ = 99.19, H_NQ = 981894, A_Q = 99.18, H_Q = 257073, zstd_ratio = 17.04%, sparse_ratio = 16.49%, sparsity = 17.18% , sparse_accuracy = 99.18, training_time = 70s
+Epoch 37: A_NQ = 99.25, H_NQ = 981898, A_Q = 99.31, H_Q = 258219, zstd_ratio = 17.11%, sparse_ratio = 16.56%, sparsity = 17.01% , sparse_accuracy = 99.31, training_time = 71s
+Epoch 38: A_NQ = 99.34, H_NQ = 981894, A_Q = 99.26, H_Q = 259331, zstd_ratio = 17.15%, sparse_ratio = 16.59%, sparsity = 16.94% , sparse_accuracy = 99.26, training_time = 71s
+Epoch 39: A_NQ = 99.31, H_NQ = 981896, A_Q = 99.26, H_Q = 260239, zstd_ratio = 17.25%, sparse_ratio = 16.69%, sparsity = 16.87% , sparse_accuracy = 99.26, training_time = 71s
+Epoch 40: A_NQ = 99.3, H_NQ = 981900, A_Q = 99.29, H_Q = 261406, zstd_ratio = 17.32%, sparse_ratio = 16.76%, sparsity = 16.68% , sparse_accuracy = 99.29, training_time = 71s
+Epoch 41: A_NQ = 99.31, H_NQ = 981904, A_Q = 99.26, H_Q = 262354, zstd_ratio = 17.40%, sparse_ratio = 16.84%, sparsity = 16.51% , sparse_accuracy = 99.26, training_time = 70s
+Epoch 42: A_NQ = 99.31, H_NQ = 981894, A_Q = 99.2, H_Q = 263317, zstd_ratio = 17.45%, sparse_ratio = 16.92%, sparsity = 16.42% , sparse_accuracy = 99.19, training_time = 71s
+Epoch 43: A_NQ = 99.37, H_NQ = 981888, A_Q = 99.29, H_Q = 264242, zstd_ratio = 17.54%, sparse_ratio = 16.96%, sparsity = 16.40% , sparse_accuracy = 99.29, training_time = 70s
+Epoch 44: A_NQ = 99.22, H_NQ = 981904, A_Q = 99.16, H_Q = 265084, zstd_ratio = 17.56%, sparse_ratio = 17.03%, sparsity = 16.27% , sparse_accuracy = 99.16, training_time = 70s
+Epoch 45: A_NQ = 99.34, H_NQ = 981894, A_Q = 99.37, H_Q = 265945, zstd_ratio = 17.64%, sparse_ratio = 17.08%, sparsity = 16.24% , sparse_accuracy = 99.37, training_time = 70s
+Epoch 46: A_NQ = 99.26, H_NQ = 981902, A_Q = 99.28, H_Q = 266809, zstd_ratio = 17.66%, sparse_ratio = 17.13%, sparsity = 16.16% , sparse_accuracy = 99.28, training_time = 71s
+Epoch 47: A_NQ = 99.31, H_NQ = 981892, A_Q = 99.31, H_Q = 267593, zstd_ratio = 17.73%, sparse_ratio = 17.17%, sparsity = 16.11% , sparse_accuracy = 99.3, training_time = 71s
+Epoch 48: A_NQ = 99.39, H_NQ = 981880, A_Q = 99.41, H_Q = 268340, zstd_ratio = 17.81%, sparse_ratio = 17.26%, sparsity = 16.01% , sparse_accuracy = 99.41, training_time = 72s
+Epoch 49: A_NQ = 99.32, H_NQ = 981890, A_Q = 99.23, H_Q = 269225, zstd_ratio = 17.82%, sparse_ratio = 17.30%, sparsity = 15.84% , sparse_accuracy = 99.23, training_time = 72s
+Epoch 50: A_NQ = 99.29, H_NQ = 981890, A_Q = 99.26, H_Q = 269785, zstd_ratio = 17.90%, sparse_ratio = 17.35%, sparsity = 16.04% , sparse_accuracy = 99.26, training_time = 71s
+Epoch 51: A_NQ = 99.34, H_NQ = 981910, A_Q = 99.17, H_Q = 270698, zstd_ratio = 18.00%, sparse_ratio = 17.46%, sparsity = 15.80% , sparse_accuracy = 99.17, training_time = 71s
+Epoch 52: A_NQ = 99.22, H_NQ = 981894, A_Q = 99.25, H_Q = 271332, zstd_ratio = 18.01%, sparse_ratio = 17.49%, sparsity = 15.81% , sparse_accuracy = 99.25, training_time = 71s
+Epoch 53: A_NQ = 99.06, H_NQ = 981888, A_Q = 99.04, H_Q = 272060, zstd_ratio = 18.04%, sparse_ratio = 17.53%, sparsity = 15.78% , sparse_accuracy = 99.04, training_time = 71s
+Epoch 54: A_NQ = 99.39, H_NQ = 981904, A_Q = 99.27, H_Q = 272623, zstd_ratio = 18.07%, sparse_ratio = 17.55%, sparsity = 15.59% , sparse_accuracy = 99.28, training_time = 71s
+Epoch 55: A_NQ = 99.2, H_NQ = 981884, A_Q = 99.15, H_Q = 273397, zstd_ratio = 18.13%, sparse_ratio = 17.62%, sparsity = 15.70% , sparse_accuracy = 99.17, training_time = 71s
+Epoch 56: A_NQ = 99.37, H_NQ = 981904, A_Q = 99.24, H_Q = 274065, zstd_ratio = 18.19%, sparse_ratio = 17.67%, sparsity = 15.61% , sparse_accuracy = 99.24, training_time = 71s
+Epoch 57: A_NQ = 99.23, H_NQ = 981904, A_Q = 99.14, H_Q = 274690, zstd_ratio = 18.23%, sparse_ratio = 17.70%, sparsity = 15.65% , sparse_accuracy = 99.13, training_time = 73s
+Epoch 58: A_NQ = 99.38, H_NQ = 981898, A_Q = 99.3, H_Q = 275389, zstd_ratio = 18.26%, sparse_ratio = 17.70%, sparsity = 15.53% , sparse_accuracy = 99.3, training_time = 71s
+Epoch 59: A_NQ = 99.43, H_NQ = 981890, A_Q = 99.43, H_Q = 275996, zstd_ratio = 18.32%, sparse_ratio = 17.76%, sparsity = 15.44% , sparse_accuracy = 99.43, training_time = 73s
+Epoch 60: A_NQ = 99.38, H_NQ = 981874, A_Q = 99.34, H_Q = 276560, zstd_ratio = 18.34%, sparse_ratio = 17.78%, sparsity = 15.49% , sparse_accuracy = 99.33, training_time = 73s
+Epoch 61: A_NQ = 99.23, H_NQ = 981910, A_Q = 99.28, H_Q = 277133, zstd_ratio = 18.41%, sparse_ratio = 17.87%, sparsity = 15.40% , sparse_accuracy = 99.28, training_time = 71s
+Epoch 62: A_NQ = 99.39, H_NQ = 981880, A_Q = 99.36, H_Q = 277741, zstd_ratio = 18.44%, sparse_ratio = 17.89%, sparsity = 15.36% , sparse_accuracy = 99.36, training_time = 71s
+Epoch 63: A_NQ = 99.15, H_NQ = 981894, A_Q = 98.47, H_Q = 278243, zstd_ratio = 18.46%, sparse_ratio = 17.94%, sparsity = 15.45% , sparse_accuracy = 98.48, training_time = 71s
+Epoch 64: A_NQ = 99.4, H_NQ = 981906, A_Q = 99.35, H_Q = 278823, zstd_ratio = 18.50%, sparse_ratio = 17.95%, sparsity = 15.36% , sparse_accuracy = 99.35, training_time = 72s
+Epoch 65: A_NQ = 99.4, H_NQ = 981896, A_Q = 99.25, H_Q = 279301, zstd_ratio = 18.55%, sparse_ratio = 18.01%, sparsity = 15.30% , sparse_accuracy = 99.25, training_time = 71s
+Epoch 66: A_NQ = 99.12, H_NQ = 981896, A_Q = 99.21, H_Q = 279867, zstd_ratio = 18.56%, sparse_ratio = 18.02%, sparsity = 15.25% , sparse_accuracy = 99.21, training_time = 71s
+Epoch 67: A_NQ = 99.18, H_NQ = 981910, A_Q = 98.99, H_Q = 280554, zstd_ratio = 18.59%, sparse_ratio = 18.06%, sparsity = 15.18% , sparse_accuracy = 99.0, training_time = 74s
+Epoch 68: A_NQ = 99.28, H_NQ = 981906, A_Q = 99.18, H_Q = 280998, zstd_ratio = 18.59%, sparse_ratio = 18.06%, sparsity = 15.27% , sparse_accuracy = 99.18, training_time = 74s
+Epoch 69: A_NQ = 99.2, H_NQ = 981896, A_Q = 99.1, H_Q = 281596, zstd_ratio = 18.68%, sparse_ratio = 18.14%, sparsity = 15.09% , sparse_accuracy = 99.1, training_time = 71s
+Epoch 70: A_NQ = 99.4, H_NQ = 981894, A_Q = 99.3, H_Q = 282093, zstd_ratio = 18.74%, sparse_ratio = 18.18%, sparsity = 15.19% , sparse_accuracy = 99.3, training_time = 74s
+Epoch 71: A_NQ = 99.29, H_NQ = 981900, A_Q = 99.22, H_Q = 282530, zstd_ratio = 18.73%, sparse_ratio = 18.16%, sparsity = 15.14% , sparse_accuracy = 99.22, training_time = 72s
+Epoch 72: A_NQ = 99.21, H_NQ = 981898, A_Q = 99.21, H_Q = 283088, zstd_ratio = 18.74%, sparse_ratio = 18.20%, sparsity = 14.91% , sparse_accuracy = 99.21, training_time = 73s
+Epoch 73: A_NQ = 99.27, H_NQ = 981900, A_Q = 99.21, H_Q = 283555, zstd_ratio = 18.78%, sparse_ratio = 18.23%, sparsity = 15.01% , sparse_accuracy = 99.21, training_time = 72s
+Epoch 74: A_NQ = 99.3, H_NQ = 981896, A_Q = 99.15, H_Q = 284083, zstd_ratio = 18.80%, sparse_ratio = 18.27%, sparsity = 14.91% , sparse_accuracy = 99.15, training_time = 73s
+Epoch 75: A_NQ = 99.32, H_NQ = 981888, A_Q = 99.26, H_Q = 284505, zstd_ratio = 18.84%, sparse_ratio = 18.33%, sparsity = 14.97% , sparse_accuracy = 99.27, training_time = 73s
+Epoch 76: A_NQ = 99.2, H_NQ = 981882, A_Q = 99.1, H_Q = 284920, zstd_ratio = 18.92%, sparse_ratio = 18.36%, sparsity = 15.01% , sparse_accuracy = 99.09, training_time = 73s
+Epoch 77: A_NQ = 99.34, H_NQ = 981912, A_Q = 99.3, H_Q = 285307, zstd_ratio = 18.92%, sparse_ratio = 18.40%, sparsity = 15.00% , sparse_accuracy = 99.3, training_time = 72s
+Epoch 78: A_NQ = 99.19, H_NQ = 981878, A_Q = 99.29, H_Q = 285842, zstd_ratio = 18.99%, sparse_ratio = 18.41%, sparsity = 14.99% , sparse_accuracy = 99.29, training_time = 73s
+Epoch 79: A_NQ = 99.42, H_NQ = 981888, A_Q = 99.35, H_Q = 286379, zstd_ratio = 19.02%, sparse_ratio = 18.47%, sparsity = 14.75% , sparse_accuracy = 99.35, training_time = 75s
+Epoch 80: A_NQ = 99.23, H_NQ = 981904, A_Q = 99.07, H_Q = 286651, zstd_ratio = 19.02%, sparse_ratio = 18.47%, sparsity = 14.96% , sparse_accuracy = 99.07, training_time = 75s
+Epoch 81: A_NQ = 99.31, H_NQ = 981896, A_Q = 99.05, H_Q = 287061, zstd_ratio = 19.05%, sparse_ratio = 18.51%, sparsity = 14.77% , sparse_accuracy = 99.05, training_time = 73s
+Epoch 82: A_NQ = 99.35, H_NQ = 981904, A_Q = 99.33, H_Q = 287404, zstd_ratio = 19.06%, sparse_ratio = 18.52%, sparsity = 14.99% , sparse_accuracy = 99.33, training_time = 72s
+Epoch 83: A_NQ = 99.2, H_NQ = 981894, A_Q = 99.16, H_Q = 287844, zstd_ratio = 19.06%, sparse_ratio = 18.50%, sparsity = 14.89% , sparse_accuracy = 99.16, training_time = 73s
+Epoch 84: A_NQ = 99.21, H_NQ = 981896, A_Q = 99.31, H_Q = 288279, zstd_ratio = 19.12%, sparse_ratio = 18.58%, sparsity = 14.77% , sparse_accuracy = 99.32, training_time = 73s
+Epoch 85: A_NQ = 99.33, H_NQ = 981912, A_Q = 99.34, H_Q = 288693, zstd_ratio = 19.15%, sparse_ratio = 18.59%, sparsity = 14.82% , sparse_accuracy = 99.34, training_time = 73s
+Epoch 86: A_NQ = 99.17, H_NQ = 981906, A_Q = 99.03, H_Q = 289138, zstd_ratio = 19.18%, sparse_ratio = 18.65%, sparsity = 14.76% , sparse_accuracy = 99.04, training_time = 74s
+Epoch 87: A_NQ = 99.29, H_NQ = 981898, A_Q = 99.28, H_Q = 289553, zstd_ratio = 19.21%, sparse_ratio = 18.69%, sparsity = 14.69% , sparse_accuracy = 99.28, training_time = 73s
+Epoch 88: A_NQ = 99.18, H_NQ = 981898, A_Q = 99.35, H_Q = 289842, zstd_ratio = 19.22%, sparse_ratio = 18.70%, sparsity = 14.78% , sparse_accuracy = 99.35, training_time = 72s
+Epoch 89: A_NQ = 99.23, H_NQ = 981904, A_Q = 99.2, H_Q = 290299, zstd_ratio = 19.22%, sparse_ratio = 18.71%, sparsity = 14.77% , sparse_accuracy = 99.2, training_time = 72s
+Epoch 90: A_NQ = 99.38, H_NQ = 981910, A_Q = 99.33, H_Q = 290758, zstd_ratio = 19.24%, sparse_ratio = 18.75%, sparsity = 14.69% , sparse_accuracy = 99.33, training_time = 73s
+Epoch 91: A_NQ = 99.27, H_NQ = 981904, A_Q = 99.3, H_Q = 291102, zstd_ratio = 19.29%, sparse_ratio = 18.78%, sparsity = 14.65% , sparse_accuracy = 99.3, training_time = 73s
+Epoch 92: A_NQ = 99.38, H_NQ = 981912, A_Q = 99.32, H_Q = 291545, zstd_ratio = 19.28%, sparse_ratio = 18.75%, sparsity = 14.66% , sparse_accuracy = 99.32, training_time = 73s
+Epoch 93: A_NQ = 99.44, H_NQ = 981896, A_Q = 99.32, H_Q = 291908, zstd_ratio = 19.34%, sparse_ratio = 18.81%, sparsity = 14.64% , sparse_accuracy = 99.32, training_time = 72s
+Epoch 94: A_NQ = 99.3, H_NQ = 981906, A_Q = 99.22, H_Q = 292181, zstd_ratio = 19.34%, sparse_ratio = 18.81%, sparsity = 14.78% , sparse_accuracy = 99.22, training_time = 73s
+Epoch 95: A_NQ = 99.33, H_NQ = 981896, A_Q = 99.23, H_Q = 292530, zstd_ratio = 19.39%, sparse_ratio = 18.85%, sparsity = 14.63% , sparse_accuracy = 99.23, training_time = 72s
+Epoch 96: A_NQ = 99.35, H_NQ = 981896, A_Q = 99.29, H_Q = 292855, zstd_ratio = 19.39%, sparse_ratio = 18.85%, sparsity = 14.57% , sparse_accuracy = 99.29, training_time = 72s
+Epoch 97: A_NQ = 99.47, H_NQ = 981878, A_Q = 99.45, H_Q = 293290, zstd_ratio = 19.41%, sparse_ratio = 18.91%, sparsity = 14.65% , sparse_accuracy = 99.45, training_time = 73s
+Epoch 98: A_NQ = 99.4, H_NQ = 981892, A_Q = 99.44, H_Q = 293587, zstd_ratio = 19.44%, sparse_ratio = 18.91%, sparsity = 14.62% , sparse_accuracy = 99.44, training_time = 74s
+Epoch 99: A_NQ = 99.41, H_NQ = 981902, A_Q = 99.44, H_Q = 293899, zstd_ratio = 19.44%, sparse_ratio = 18.94%, sparsity = 14.58% , sparse_accuracy = 99.44, training_time = 73s
+Epoch 100: A_NQ = 99.39, H_NQ = 981910, A_Q = 99.33, H_Q = 294353, zstd_ratio = 19.49%, sparse_ratio = 18.96%, sparsity = 14.50% , sparse_accuracy = 99.33, training_time = 75s
+------------------------------------------------------------

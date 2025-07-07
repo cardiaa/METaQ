@@ -66,8 +66,8 @@ if __name__ == "__main__":
     criterion, criterion_name = CrossEntropyLoss(), "CrossEntropy" 
     C = 64
     lr = 0.001
-    lambda_reg = 0
-    alpha = 1
+    lambda_reg = 0.0015
+    alpha = 0.533
     subgradient_step = 1e5 
     bucket_zero = round((C-1)/2) #it must range from 0 to C-2
     #r = 1.1    
