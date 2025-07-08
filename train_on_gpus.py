@@ -67,7 +67,7 @@ if __name__ == "__main__":
     C = 64
     lr = 0.001
     lambda_reg = 0.0002
-    alpha = 0.8
+    alpha = 0.6
     subgradient_step = 1e5 
     bucket_zero = round((C-1)/2) #it must range from 0 to C-2
     #r = 1.1    
