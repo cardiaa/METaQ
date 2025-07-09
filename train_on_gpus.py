@@ -55,10 +55,10 @@ if __name__ == "__main__":
 
     if torch.cuda.is_available():
         device = torch.device("cuda:0")
-        print(f"Using device {device} ({torch.cuda.get_device_name(device)})", flush=True)
+        #print(f"Using device {device} ({torch.cuda.get_device_name(device)})", flush=True)
     else:
         device = torch.device("cpu")
-        print("Using CPU.", flush=True)
+        #print("Using CPU.", flush=True)
 
     # Define fixed hyperparameters for the model and training process
     model, model_name = LeNet5_Original().to(device), "LeNet5_Original (rotated)"
