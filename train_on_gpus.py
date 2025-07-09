@@ -71,7 +71,7 @@ if __name__ == "__main__":
     subgradient_step = 1e5 
     bucket_zero = round((C-1)/2) #it must range from 0 to C-2
     r = 2
-    w0 = round(args.r - (bucket_zero + 0.5) * 2 * args.r * (1 - 1/C) / (C - 1), 3)
+    w0 = round(r - (bucket_zero + 0.5) * 2 * r * (1 - 1/C) / (C - 1), 3)
     BestQuantization_target_acc = 99.8
     final_target_acc = 99.7
     target_zstd_ratio = 0.0179
