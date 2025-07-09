@@ -136,7 +136,7 @@ if __name__ == "__main__":
     
     train_and_evaluate(
         model=model, criterion=criterion, C=C, lr=lr, lambda_reg=lambda_reg, alpha=alpha,
-        subgradient_step=subgradient_step, w0=w0, r=args.r, first_best_indices=first_best_indices,
+        subgradient_step=subgradient_step, w0=w0, r=r, first_best_indices=first_best_indices,
         BestQuantization_target_acc=BestQuantization_target_acc, final_target_acc=final_target_acc, 
         target_zstd_ratio=target_zstd_ratio, min_xi=min_xi, max_xi=max_xi, upper_c=upper_c, lower_c=lower_c, c1=c1, c2=c2, 
         zeta=zeta, l=l, n_epochs=n_epochs, max_iterations=max_iterations, device=device, train_optimizer=train_optimizer,
