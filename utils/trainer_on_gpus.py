@@ -40,8 +40,8 @@ def train_and_evaluate(model, criterion, C, lr, lambda_reg, alpha, subgradient_s
     for epoch in range(n_epochs):
         start_time = time.time()
         for i, data in enumerate(trainloader, 0):
-            #if i % 100 == 0:
-            #    print(f"Batch {i} of epoch {epoch + 1}", flush=True)
+            if i % 100 == 0:
+                print(f"Batch {i} of epoch {epoch + 1}", flush=True)
             inputs, targets = data
             inputs, targets = inputs.to(device), targets.to(device)
             optimizer.zero_grad()
@@ -162,13 +162,13 @@ def train_and_evaluate(model, criterion, C, lr, lambda_reg, alpha, subgradient_s
             f"sparsity = {sparsity:.2%} , sparse_accuracy = {sparse_accuracy}, training_time = {training_time}s\n"     
         )
 
-        #print(
-        #    f"Epoch {epoch + 1}: "
-        #    f"A_NQ = {accuracy}, H_NQ = {entropy}, "
-        #    f"A_Q = {quantized_accuracy}, H_Q = {quantized_entropy}, "
-        #    f"zstd_ratio = {zstd_ratio:.2%}, sparse_ratio = {sparse_ratio:.2%}, "
-        #    f"sparsity = {sparsity:.2%} , sparse_accuracy = {sparse_accuracy}, training_time = {training_time}s\n"                
-        #)
+        print(
+            f"Epoch {epoch + 1}: "
+            f"A_NQ = {accuracy}, H_NQ = {entropy}, "
+            f"A_Q = {quantized_accuracy}, H_Q = {quantized_entropy}, "
+            f"zstd_ratio = {zstd_ratio:.2%}, sparse_ratio = {sparse_ratio:.2%}, "
+            f"sparsity = {sparsity:.2%} , sparse_accuracy = {sparse_accuracy}, training_time = {training_time}s\n"                
+        )
 
         # Saving a better model
         if(accuracies[-1] >= BestQuantization_target_acc):

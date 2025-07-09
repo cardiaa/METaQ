@@ -55,10 +55,10 @@ if __name__ == "__main__":
 
     if torch.cuda.is_available():
         device = torch.device("cuda:0")
-        #print(f"Using device {device} ({torch.cuda.get_device_name(device)})", flush=True)
+        print(f"Using device {device} ({torch.cuda.get_device_name(device)})", flush=True)
     else:
         device = torch.device("cpu")
-        #print("Using CPU.", flush=True)
+        print("Using CPU.", flush=True)
 
     # Define fixed hyperparameters for the model and training process
     model, model_name = LeNet5_Original().to(device), "LeNet5_Original (rotated)"
@@ -94,8 +94,8 @@ if __name__ == "__main__":
     QuantizationType = "center"
     sparsity_threshold = 1e-3
 
-    if(args.delta == 6 or args.delta == 6):
-    #if(True):
+    #if(args.delta == 6 or args.delta == 6): # Quando faccio i test singoli questa è la terza cosa da uncommentare. Nell'altro file altre due.
+    if(True):
         print("=================================================================", flush = True)
         print("==================== PARAMETER CONFIGURATION ====================", flush = True)
         print("=================================================================", flush = True)
