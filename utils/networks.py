@@ -117,6 +117,34 @@ class LeNet5_Original(nn.Module):
         x = self.fc3(x)
         return x
 
+class LeNet300_100_DeepCompression(nn.Module):
+    def __init__(self):
+        super(LeNet300_100_DeepCompression, self).__init__()
+        self.fc1 = nn.Linear(28 * 28, 300)
+        self.fc2 = nn.Linear(300, 100)
+        self.fc3 = nn.Linear(100, 10)
+
+    def forward(self, x):
+        x = x.view(-1, 28 * 28)  # Flatten the image
+        x = F.relu(self.fc1(x))
+        x = F.relu(self.fc2(x))
+        x = self.fc3(x)  # Output logits (no softmax, use CrossEntropyLoss)
+        return x
+    
+class LeNet300_100_Original(nn.Module):
+    def __init__(self):
+        super(LeNet300_100_Original, self).__init__()
+        self.fc1 = nn.Linear(28 * 28, 300)
+        self.fc2 = nn.Linear(300, 100)
+        self.fc3 = nn.Linear(100, 10)
+
+    def forward(self, x):
+        x = x.view(-1, 28 * 28)         # Flatten input
+        x = torch.sigmoid(self.fc1(x))  # Original activation
+        x = torch.sigmoid(self.fc2(x))
+        x = self.fc3(x)                 # Output logits (no softmax)
+        return x
+
 def model_to_json(model):
     """
     Function to convert a PyTorch model to a JSON representation
