@@ -7,25 +7,43 @@ from torchvision import datasets, transforms
 from torch.nn import CrossEntropyLoss
 
 # Function to load the MNIST dataset
-def load_data():
-    # Data Augmentation + Resizing images to 32x32
-    transform_train = transforms.Compose([
-        transforms.Resize(32),
-        transforms.RandomRotation(10),
-        transforms.RandomAffine(0, translate=(0.1, 0.1)),
-        transforms.ToTensor(),
-    ])
+def load_data(model_name):
 
-    transform_test = transforms.Compose([
-        transforms.Resize(32),
-        transforms.ToTensor(),
-    ])
-    
-    # Load the training set of MNIST dataset with the specified transformation
-    trainset = datasets.MNIST(root='./data', train=True, download=True, transform=transform_train)
-    
-    # Load the test set of MNIST dataset with the specified transformation
-    testset = datasets.MNIST(root='./data', train=False, download=True, transform=transform_test)
+    if(model_name[:7] == "LeNet-5"):
+        if(model_name[-9:] == "(rotated)"):
+            # Data Augmentation + Resizing images to 32x32
+            transform_train = transforms.Compose([
+                transforms.Resize(32),
+                transforms.RandomRotation(10),
+                transforms.RandomAffine(0, translate=(0.1, 0.1)),
+                transforms.ToTensor(),
+            ])
+
+            transform_test = transforms.Compose([
+                transforms.Resize(32),
+                transforms.ToTensor(),
+            ])
+            # Load the training set of MNIST dataset with the specified transformation
+            trainset = datasets.MNIST(root='./data', train=True, download=True, transform=transform_train)
+            # Load the test set of MNIST dataset with the specified transformation
+            testset = datasets.MNIST(root='./data', train=False, download=True, transform=transform_test)     
+        else:
+            # No Data Augmentation + Resizing images to 32x32
+            transform = transforms.Compose([
+                transforms.Resize(32),
+                transforms.ToTensor(),
+            ])
+            # Load the training set of MNIST dataset with the specified transformation
+            trainset = datasets.MNIST(root='./data', train=True, download=True, transform=transform)
+            # Load the test set of MNIST dataset with the specified transformation
+            testset = datasets.MNIST(root='./data', train=False, download=True, transform=transform)   
+    elif(model_name[:12] == "LeNet300_100"):
+        transform = transforms.Compose([
+            transforms.ToTensor(),
+            transforms.Normalize((0.1307,), (0.3081,))  # Media e dev. std di MNIST
+        ])
+        trainset = datasets.MNIST(root='./data', train=True, download=True, transform=transform)
+        testset = datasets.MNIST(root='./data', train=False, download=True, transform=transform)
     
     # Return the loaded training and test datasets
     return trainset, testset
@@ -45,13 +63,6 @@ if __name__ == "__main__":
     
     # Set the OpenMP number of threads to 1 for parallel processing on CPU
     os.environ["OMP_NUM_THREADS"] = "1"
-
-    # Load the training and test datasets using the load_data function
-    trainset, testset = load_data()
-    
-    # Create data loaders for training and testing, with specific batch sizes and no parallel data loading (num_workers=0)
-    trainloader = torch.utils.data.DataLoader(trainset, batch_size=64, shuffle=True, num_workers=0)
-    testloader = torch.utils.data.DataLoader(testset, batch_size=1000, shuffle=False, num_workers=0)
 
     if torch.cuda.is_available():
         device = torch.device("cuda:0")
@@ -93,6 +104,12 @@ if __name__ == "__main__":
     pruning = "Y"
     QuantizationType = "center"
     sparsity_threshold = 1e-3
+
+    # Load the training and test datasets using the load_data function
+    trainset, testset = load_data(model_name)
+    # Create data loaders for training and testing, with specific batch sizes and no parallel data loading (num_workers=0)
+    trainloader = torch.utils.data.DataLoader(trainset, batch_size=64, shuffle=True, num_workers=0)
+    testloader = torch.utils.data.DataLoader(testset, batch_size=1000, shuffle=False, num_workers=0)
 
     #if(args.delta == 6 or args.delta == 6): # Quando faccio i test singoli questa è la terza cosa da uncommentare. Nell'altro file altre due.
     if(True):
