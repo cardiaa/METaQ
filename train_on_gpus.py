@@ -88,7 +88,7 @@ if __name__ == "__main__":
     target_zstd_ratio = 0.0179
     min_xi = 0  
     max_xi = 1  
-    upper_c = sum(p.numel() for p in LeNet5_enhanced().parameters())
+    upper_c = sum(p.numel() for p in LeNet300_100_DeepCompression().parameters())
     lower_c = 1e-2
     c1 = 10
     c2 = 1000
