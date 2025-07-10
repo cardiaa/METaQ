@@ -2,7 +2,7 @@ import argparse
 import torch
 import os
 from utils.trainer_on_gpus import train_and_evaluate
-from utils.networks import LeNet5, LeNet5_enhanced, LeNet5_Original
+from utils.networks import LeNet5, LeNet5_enhanced, LeNet5_Original, LeNet300_100_DeepCompression
 from torchvision import datasets, transforms
 from torch.nn import CrossEntropyLoss
 
@@ -61,7 +61,7 @@ if __name__ == "__main__":
         print("Using CPU.", flush=True)
 
     # Define fixed hyperparameters for the model and training process
-    model, model_name = LeNet5_Original().to(device), "LeNet5_Original (rotated)"
+    model, model_name = LeNet300_100_DeepCompression().to(device), "LeNet300_100_DeepCompression"
     model = model.to(device) 
     criterion, criterion_name = CrossEntropyLoss(), "CrossEntropy" 
     C = 64
