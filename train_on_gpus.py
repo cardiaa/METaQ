@@ -90,7 +90,7 @@ if __name__ == "__main__":
         print("Using CPU.", flush=True)
 
     # Define fixed hyperparameters for the model and training process
-    model, model_name = models.alexnet(pretrained=False).to(device), "AlexNet"
+    model, model_name = models.alexnet(weights=None).to(device), "AlexNet"
     model = model.to(device) 
     if(model_name[:7] == "LeNet-5"):
         criterion, criterion_name = nn.CrossEntropyLoss(), "CrossEntropy" 
