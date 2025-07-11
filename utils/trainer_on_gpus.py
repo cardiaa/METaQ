@@ -42,7 +42,8 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, s
     # Training loop
     for epoch in range(n_epochs):
         start_time = time.time()
-        for i, data in enumerate(trainloader, 0):
+        start_index = 0 if model_name != "AlexNet" else None
+        for i, data in enumerate(trainloader, start=start_index):
             if i % 100 == 0:
                 print(f"Batch {i} of epoch {epoch + 1}", flush=True)
             inputs, targets = data
