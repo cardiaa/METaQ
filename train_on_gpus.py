@@ -180,7 +180,7 @@ if __name__ == "__main__":
         l = 0.5
         n_epochs = 100 # To be increased as soon as I find good configurations
         max_iterations = 15
-        train_optimizer = "ADAM"  
+        train_optimizer = "SGD"  
         entropy_optimizer = "FISTA"  
         #delta = 11
         pruning = "Y"
