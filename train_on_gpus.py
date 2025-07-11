@@ -189,9 +189,12 @@ if __name__ == "__main__":
 
     # Load the training and test datasets using the load_data function
     trainset, testset = load_data(model_name)
-    # Create data loaders for training and testing, with specific batch sizes and no parallel data loading (num_workers=0)
-    trainloader = torch.utils.data.DataLoader(trainset, batch_size=64, shuffle=True, num_workers=0)
-    testloader = torch.utils.data.DataLoader(testset, batch_size=1000, shuffle=False, num_workers=0)
+    if(model_name == "AlexNet"):
+        trainloader = trainset
+        testloader = testset
+    else:
+        trainloader = torch.utils.data.DataLoader(trainset, batch_size=64, shuffle=True, num_workers=0)
+        testloader = torch.utils.data.DataLoader(testset, batch_size=1000, shuffle=False, num_workers=0)
 
     #if(args.delta == 6 or args.delta == 6): # Quando faccio i test singoli questa è la terza cosa da uncommentare. Nell'altro file altre due.
     if(True):
