@@ -61,7 +61,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, s
             outputs = model(inputs)
             loss = criterion(outputs, labels)
             
-            w = torch.cat([param.data.view(-1) for param in model.parameters()])
+            w = torch.cat([param.data.to(device).view(-1) for param in model.parameters()])
             #unique_weights = torch.unique(w).numel() # Alternative version
             #indices = torch.searchsorted(v, w, right=True) - 1
             #indices = torch.clamp(indices, min=0)

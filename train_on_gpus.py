@@ -155,7 +155,8 @@ if __name__ == "__main__":
         QuantizationType = "center"
         sparsity_threshold = 1e-3  
     elif(model_name == "AlexNet"):
-        model.classifier[6] = nn.Linear(4096, 1000)      
+        model.classifier[6] = nn.Linear(4096, 1000)
+        model = model.to(device)       
         criterion, criterion_name = nn.CrossEntropyLoss(), "CrossEntropy" 
         C = 64
         lr = 0.001
