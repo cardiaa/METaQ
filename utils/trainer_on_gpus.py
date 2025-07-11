@@ -4,13 +4,14 @@ import numpy as np
 import copy
 import struct
 import sys
-from torch.optim import Adam, SGD
+import torch.optim as optim
 from utils.quantize_and_compress import compute_entropy, quantize_weights_center
 from utils.optimization import FISTA, ProximalBM, test_accuracy
 from utils.weight_utils import initialize_weights
 from utils.quantize_and_compress import compress_zstd, BestQuantization, pack_bitmask
 
-def train_and_evaluate(model, criterion, C, lr, lambda_reg, alpha, subgradient_step, w0, r, first_best_indices,
+
+def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, subgradient_step, w0, r, first_best_indices,
                         BestQuantization_target_acc, final_target_acc, target_zstd_ratio, min_xi, max_xi, upper_c, lower_c, 
                         c1, c2, zeta, l, n_epochs, max_iterations, device, train_optimizer, entropy_optimizer, 
                         trainloader, testloader, delta, pruning, QuantizationType, sparsity_threshold, accuracy_tollerance):
@@ -19,9 +20,12 @@ def train_and_evaluate(model, criterion, C, lr, lambda_reg, alpha, subgradient_s
     
     # Selection of the optimizer based on the chosen type.
     if train_optimizer == 'ADAM':
-        optimizer = Adam(model.parameters(), lr=lr, betas=(0.9, 0.999), eps=1e-08, weight_decay=lambda_reg * alpha)
+        optimizer = optim.Adam(model.parameters(), lr=lr, betas=(0.9, 0.999), eps=1e-08, weight_decay=lambda_reg * alpha)
     elif train_optimizer == 'SGD':
-        optimizer = SGD(model.parameters(), lr=lr, momentum=0.9, weight_decay=lambda_reg * alpha)
+        optimizer = optim.SGD(model.parameters(), lr=lr, momentum=0.9, weight_decay=lambda_reg * alpha)
+
+    if(model_name == "AlexNet"):
+        scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=30, gamma=0.1)
     
     # Weights Initialization
     min_w, max_w = w0 - r, w0 + r
@@ -32,7 +36,6 @@ def train_and_evaluate(model, criterion, C, lr, lambda_reg, alpha, subgradient_s
     xi = torch.sort(xi)[0]   
     entropy, accuracy = 0, 0
     accuracies, entropies = [], []
-
 
     log = ""
 

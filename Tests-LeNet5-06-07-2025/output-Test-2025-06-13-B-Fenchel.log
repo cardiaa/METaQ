@@ -1,0 +1,970 @@
+nohup: ignoring input
+=================================================================
+==================== PARAMETER CONFIGURATION ====================
+=================================================================
+model=LeNet-5
+criterion=CrossEntropy
+C=64
+lr=0.0007
+lambda_reg=0.0015
+alpha=0.533
+[T1=lambda_reg*alpha=0.0008]
+[T2=lambda_reg*(1-alpha)=0.0007]
+subgradient_step=100000.0
+w0=-0.11
+target_acc=98.8
+target_zstd_ratio=0.0297
+min_xi=0
+max_xi=1
+upper_c=44426
+lower_c=0.01
+zeta=50000
+l=0.5
+n_epochs=30
+max_iterations=15
+train_optimizer=ADAM
+entropy_optimizer=FISTA
+delta=1000
+pruning=Y
+QuantizationType=center
+------------------------------------------------------------
+r = 1.1008
+Epoch 1: A_NQ = 18.29, H_NQ = 684408, A_Q = 20.12, H_Q = 140992, zstd_ratio = 14.17%, training_time = 358s
+Accuracy is too low! (A1.1), r: 1.1008
+------------------------------------------------------------
+r = 1.1019
+Epoch 1: A_NQ = 23.98, H_NQ = 684724, A_Q = 23.91, H_Q = 142762, zstd_ratio = 14.13%, training_time = 391s
+Accuracy is too low! (A1.1), r: 1.1019
+------------------------------------------------------------
+r = 1.1029
+Epoch 1: A_NQ = 9.58, H_NQ = 684565, A_Q = 10.1, H_Q = 135824, zstd_ratio = 13.56%, training_time = 636s
+Accuracy is too low! (A1.1), r: 1.1029
+------------------------------------------------------------
+r = 1.1025
+Epoch 1: A_NQ = 89.58, H_NQ = 685638, A_Q = 89.44, H_Q = 223850, zstd_ratio = 21.23%, training_time = 345s
+Epoch 2: A_NQ = 93.85, H_NQ = 665953, A_Q = 93.79, H_Q = 165898, zstd_ratio = 14.53%, training_time = 334s
+Epoch 3: A_NQ = 95.1, H_NQ = 605126, A_Q = 94.85, H_Q = 136018, zstd_ratio = 10.91%, training_time = 327s
+Epoch 4: A_NQ = 95.76, H_NQ = 559403, A_Q = 95.22, H_Q = 121737, zstd_ratio = 9.48%, training_time = 327s
+Epoch 5: A_NQ = 94.55, H_NQ = 499891, A_Q = 93.62, H_Q = 115030, zstd_ratio = 8.75%, training_time = 321s
+Epoch 6: A_NQ = 96.93, H_NQ = 457931, A_Q = 96.52, H_Q = 111427, zstd_ratio = 8.32%, training_time = 320s
+Epoch 7: A_NQ = 97.35, H_NQ = 484187, A_Q = 96.25, H_Q = 107162, zstd_ratio = 7.93%, training_time = 319s
+Epoch 8: A_NQ = 97.62, H_NQ = 512267, A_Q = 96.7, H_Q = 103860, zstd_ratio = 7.49%, training_time = 326s
+Epoch 9: A_NQ = 97.54, H_NQ = 529101, A_Q = 97.04, H_Q = 101086, zstd_ratio = 7.26%, training_time = 316s
+Epoch 10: A_NQ = 97.66, H_NQ = 561269, A_Q = 97.43, H_Q = 99317, zstd_ratio = 7.05%, training_time = 354s
+Epoch 11: A_NQ = 97.17, H_NQ = 572487, A_Q = 95.85, H_Q = 97186, zstd_ratio = 6.84%, training_time = 315s
+Epoch 12: A_NQ = 98.32, H_NQ = 587592, A_Q = 98.13, H_Q = 95920, zstd_ratio = 6.69%, training_time = 328s
+Epoch 13: A_NQ = 97.77, H_NQ = 583746, A_Q = 97.93, H_Q = 94358, zstd_ratio = 6.54%, training_time = 314s
+Epoch 14: A_NQ = 97.92, H_NQ = 588664, A_Q = 97.75, H_Q = 93076, zstd_ratio = 6.39%, training_time = 329s
+Epoch 15: A_NQ = 98.38, H_NQ = 673861, A_Q = 97.85, H_Q = 91854, zstd_ratio = 6.22%, training_time = 305s
+Epoch 16: A_NQ = 98.15, H_NQ = 639156, A_Q = 97.98, H_Q = 91260, zstd_ratio = 6.10%, training_time = 317s
+Epoch 17: A_NQ = 97.86, H_NQ = 667858, A_Q = 97.73, H_Q = 90490, zstd_ratio = 6.00%, training_time = 382s
+Epoch 18: A_NQ = 98.06, H_NQ = 651585, A_Q = 98.0, H_Q = 89940, zstd_ratio = 5.90%, training_time = 380s
+Epoch 19: A_NQ = 98.33, H_NQ = 666459, A_Q = 98.37, H_Q = 88902, zstd_ratio = 5.77%, training_time = 374s
+Epoch 20: A_NQ = 98.36, H_NQ = 670404, A_Q = 98.48, H_Q = 88404, zstd_ratio = 5.70%, training_time = 305s
+Epoch 21: A_NQ = 98.35, H_NQ = 675549, A_Q = 98.21, H_Q = 87432, zstd_ratio = 5.63%, training_time = 296s
+Epoch 22: A_NQ = 98.09, H_NQ = 665445, A_Q = 97.83, H_Q = 87285, zstd_ratio = 5.50%, training_time = 369s
+Epoch 23: A_NQ = 97.9, H_NQ = 659064, A_Q = 97.22, H_Q = 86820, zstd_ratio = 5.40%, training_time = 300s
+Epoch 24: A_NQ = 97.93, H_NQ = 670553, A_Q = 97.69, H_Q = 86375, zstd_ratio = 5.40%, training_time = 379s
+Epoch 25: A_NQ = 98.59, H_NQ = 653799, A_Q = 98.38, H_Q = 85521, zstd_ratio = 5.28%, training_time = 321s
+Epoch 26: A_NQ = 98.3, H_NQ = 654204, A_Q = 98.34, H_Q = 85392, zstd_ratio = 5.21%, training_time = 318s
+Epoch 27: A_NQ = 97.69, H_NQ = 653474, A_Q = 96.11, H_Q = 84816, zstd_ratio = 5.15%, training_time = 317s
+Epoch 28: A_NQ = 98.32, H_NQ = 647514, A_Q = 98.31, H_Q = 84332, zstd_ratio = 5.13%, training_time = 316s
+Epoch 29: A_NQ = 98.26, H_NQ = 655000, A_Q = 98.09, H_Q = 83347, zstd_ratio = 5.04%, training_time = 313s
+Epoch 30: A_NQ = 98.5, H_NQ = 655291, A_Q = 98.3, H_Q = 83004, zstd_ratio = 4.96%, training_time = 310s
+------------------------------------------------------------
+r = 1.1026
+Epoch 1: A_NQ = 80.6, H_NQ = 685012, A_Q = 80.33, H_Q = 168844, zstd_ratio = 16.52%, training_time = 345s
+Epoch 2: A_NQ = 89.17, H_NQ = 637717, A_Q = 88.37, H_Q = 82690, zstd_ratio = 7.49%, training_time = 343s
+Epoch 3: A_NQ = 89.55, H_NQ = 459778, A_Q = 87.81, H_Q = 61397, zstd_ratio = 4.59%, training_time = 335s
+Epoch 4: A_NQ = 93.01, H_NQ = 497458, A_Q = 92.66, H_Q = 60311, zstd_ratio = 4.45%, training_time = 330s
+Epoch 5: A_NQ = 93.23, H_NQ = 275645, A_Q = 92.57, H_Q = 60024, zstd_ratio = 4.41%, training_time = 340s
+Epoch 6: A_NQ = 93.93, H_NQ = 281883, A_Q = 93.94, H_Q = 59488, zstd_ratio = 4.37%, training_time = 375s
+Epoch 7: A_NQ = 94.92, H_NQ = 247449, A_Q = 93.95, H_Q = 58948, zstd_ratio = 4.32%, training_time = 375s
+Epoch 8: A_NQ = 93.94, H_NQ = 163600, A_Q = 93.96, H_Q = 58582, zstd_ratio = 4.24%, training_time = 373s
+Epoch 9: A_NQ = 95.75, H_NQ = 141046, A_Q = 95.4, H_Q = 57959, zstd_ratio = 4.19%, training_time = 370s
+Epoch 10: A_NQ = 95.76, H_NQ = 112543, A_Q = 95.42, H_Q = 57613, zstd_ratio = 4.14%, training_time = 361s
+Epoch 11: A_NQ = 95.7, H_NQ = 112387, A_Q = 95.63, H_Q = 57093, zstd_ratio = 4.08%, training_time = 362s
+Epoch 12: A_NQ = 96.39, H_NQ = 112387, A_Q = 96.33, H_Q = 56745, zstd_ratio = 4.05%, training_time = 559s
+Epoch 13: A_NQ = 96.3, H_NQ = 112389, A_Q = 95.41, H_Q = 56268, zstd_ratio = 4.00%, training_time = 337s
+Epoch 14: A_NQ = 96.87, H_NQ = 112391, A_Q = 96.29, H_Q = 55947, zstd_ratio = 3.95%, training_time = 344s
+Epoch 15: A_NQ = 95.78, H_NQ = 112391, A_Q = 95.79, H_Q = 55862, zstd_ratio = 3.88%, training_time = 328s
+Epoch 16: A_NQ = 96.79, H_NQ = 112391, A_Q = 96.43, H_Q = 54871, zstd_ratio = 3.84%, training_time = 314s
+Epoch 17: A_NQ = 97.53, H_NQ = 112387, A_Q = 97.34, H_Q = 54731, zstd_ratio = 3.82%, training_time = 323s
+Epoch 18: A_NQ = 97.01, H_NQ = 112391, A_Q = 96.71, H_Q = 54458, zstd_ratio = 3.78%, training_time = 329s
+Epoch 19: A_NQ = 97.22, H_NQ = 112391, A_Q = 96.84, H_Q = 53915, zstd_ratio = 3.71%, training_time = 325s
+Epoch 20: A_NQ = 97.48, H_NQ = 112391, A_Q = 96.92, H_Q = 53741, zstd_ratio = 3.68%, training_time = 375s
+Epoch 21: A_NQ = 96.99, H_NQ = 112389, A_Q = 96.39, H_Q = 53062, zstd_ratio = 3.63%, training_time = 357s
+Epoch 22: A_NQ = 98.01, H_NQ = 112391, A_Q = 97.84, H_Q = 53850, zstd_ratio = 3.58%, training_time = 314s
+Epoch 23: A_NQ = 97.8, H_NQ = 112391, A_Q = 97.33, H_Q = 53761, zstd_ratio = 3.54%, training_time = 337s
+Epoch 24: A_NQ = 98.08, H_NQ = 112385, A_Q = 97.73, H_Q = 52871, zstd_ratio = 3.52%, training_time = 352s
+Epoch 25: A_NQ = 97.57, H_NQ = 112389, A_Q = 97.01, H_Q = 52811, zstd_ratio = 3.48%, training_time = 352s
+Epoch 26: A_NQ = 97.55, H_NQ = 112391, A_Q = 97.52, H_Q = 52482, zstd_ratio = 3.40%, training_time = 345s
+Epoch 27: A_NQ = 98.02, H_NQ = 112389, A_Q = 97.93, H_Q = 51981, zstd_ratio = 3.38%, training_time = 356s
+Epoch 28: A_NQ = 97.88, H_NQ = 112389, A_Q = 97.85, H_Q = 51978, zstd_ratio = 3.35%, training_time = 347s
+Epoch 29: A_NQ = 98.11, H_NQ = 112391, A_Q = 98.19, H_Q = 51666, zstd_ratio = 3.32%, training_time = 333s
+Epoch 30: A_NQ = 98.02, H_NQ = 112391, A_Q = 97.32, H_Q = 50634, zstd_ratio = 3.24%, training_time = 322s
+------------------------------------------------------------
+r = 1.102
+Epoch 1: A_NQ = 78.4, H_NQ = 684914, A_Q = 77.52, H_Q = 163918, zstd_ratio = 16.05%, training_time = 374s
+Epoch 2: A_NQ = 90.6, H_NQ = 623424, A_Q = 90.41, H_Q = 75929, zstd_ratio = 6.82%, training_time = 347s
+Epoch 3: A_NQ = 92.99, H_NQ = 544607, A_Q = 92.23, H_Q = 62707, zstd_ratio = 4.95%, training_time = 347s
+Epoch 4: A_NQ = 94.2, H_NQ = 299304, A_Q = 94.2, H_Q = 58919, zstd_ratio = 4.24%, training_time = 545s
+Epoch 5: A_NQ = 94.91, H_NQ = 278299, A_Q = 94.85, H_Q = 57924, zstd_ratio = 4.15%, training_time = 317s
+Epoch 6: A_NQ = 95.34, H_NQ = 291456, A_Q = 95.18, H_Q = 56781, zstd_ratio = 4.07%, training_time = 344s
+Epoch 7: A_NQ = 95.78, H_NQ = 232086, A_Q = 95.65, H_Q = 56416, zstd_ratio = 4.03%, training_time = 345s
+Epoch 8: A_NQ = 95.96, H_NQ = 142283, A_Q = 96.01, H_Q = 55985, zstd_ratio = 3.96%, training_time = 319s
+Epoch 9: A_NQ = 96.61, H_NQ = 147072, A_Q = 96.57, H_Q = 55576, zstd_ratio = 3.93%, training_time = 333s
+Epoch 10: A_NQ = 95.78, H_NQ = 105151, A_Q = 95.82, H_Q = 55066, zstd_ratio = 3.86%, training_time = 311s
+Epoch 11: A_NQ = 96.69, H_NQ = 197686, A_Q = 96.7, H_Q = 54529, zstd_ratio = 3.81%, training_time = 311s
+Epoch 12: A_NQ = 97.03, H_NQ = 175633, A_Q = 97.17, H_Q = 54215, zstd_ratio = 3.75%, training_time = 311s
+Epoch 13: A_NQ = 97.24, H_NQ = 111964, A_Q = 97.16, H_Q = 53597, zstd_ratio = 3.73%, training_time = 552s
+Epoch 14: A_NQ = 96.93, H_NQ = 153476, A_Q = 96.74, H_Q = 52985, zstd_ratio = 3.64%, training_time = 309s
+Epoch 15: A_NQ = 97.23, H_NQ = 170160, A_Q = 97.01, H_Q = 52408, zstd_ratio = 3.60%, training_time = 314s
+Epoch 16: A_NQ = 97.01, H_NQ = 243654, A_Q = 96.74, H_Q = 51968, zstd_ratio = 3.54%, training_time = 319s
+Epoch 17: A_NQ = 97.7, H_NQ = 232034, A_Q = 97.66, H_Q = 51420, zstd_ratio = 3.51%, training_time = 560s
+Epoch 18: A_NQ = 97.5, H_NQ = 515960, A_Q = 97.18, H_Q = 50979, zstd_ratio = 3.46%, training_time = 556s
+Epoch 19: A_NQ = 97.52, H_NQ = 398989, A_Q = 97.42, H_Q = 50620, zstd_ratio = 3.41%, training_time = 560s
+Epoch 20: A_NQ = 97.38, H_NQ = 631494, A_Q = 97.2, H_Q = 50088, zstd_ratio = 3.35%, training_time = 313s
+Epoch 21: A_NQ = 97.84, H_NQ = 452150, A_Q = 97.61, H_Q = 49626, zstd_ratio = 3.31%, training_time = 307s
+Epoch 22: A_NQ = 96.4, H_NQ = 662172, A_Q = 96.59, H_Q = 49243, zstd_ratio = 3.28%, training_time = 309s
+Epoch 23: A_NQ = 98.25, H_NQ = 595366, A_Q = 98.22, H_Q = 48697, zstd_ratio = 3.21%, training_time = 310s
+Epoch 24: A_NQ = 97.71, H_NQ = 572439, A_Q = 97.36, H_Q = 48384, zstd_ratio = 3.17%, training_time = 310s
+Epoch 25: A_NQ = 98.04, H_NQ = 557035, A_Q = 98.11, H_Q = 47957, zstd_ratio = 3.15%, training_time = 308s
+Epoch 26: A_NQ = 98.0, H_NQ = 546249, A_Q = 98.1, H_Q = 47549, zstd_ratio = 3.10%, training_time = 309s
+Epoch 27: A_NQ = 97.5, H_NQ = 561991, A_Q = 96.87, H_Q = 46979, zstd_ratio = 3.05%, training_time = 309s
+Epoch 28: A_NQ = 97.89, H_NQ = 616995, A_Q = 97.52, H_Q = 46486, zstd_ratio = 3.02%, training_time = 307s
+Epoch 29: A_NQ = 97.62, H_NQ = 598448, A_Q = 97.2, H_Q = 46443, zstd_ratio = 3.00%, training_time = 306s
+Epoch 30: A_NQ = 97.97, H_NQ = 553105, A_Q = 97.43, H_Q = 46201, zstd_ratio = 2.96%, training_time = 305s
+------------------------------------------------------------
+r = 1.1006
+Epoch 1: A_NQ = 56.27, H_NQ = 684560, A_Q = 55.16, H_Q = 148694, zstd_ratio = 14.79%, training_time = 355s
+Epoch 2: A_NQ = 63.42, H_NQ = 623464, A_Q = 61.49, H_Q = 56065, zstd_ratio = 5.36%, training_time = 345s
+Epoch 3: A_NQ = 69.03, H_NQ = 532723, A_Q = 67.37, H_Q = 44538, zstd_ratio = 3.71%, training_time = 332s
+Epoch 4: A_NQ = 71.33, H_NQ = 442201, A_Q = 67.91, H_Q = 38418, zstd_ratio = 2.77%, training_time = 318s
+Epoch 5: A_NQ = 75.95, H_NQ = 338985, A_Q = 60.86, H_Q = 37926, zstd_ratio = 2.74%, training_time = 553s
+Epoch 6: A_NQ = 73.25, H_NQ = 263988, A_Q = 63.24, H_Q = 37785, zstd_ratio = 2.72%, training_time = 343s
+Epoch 7: A_NQ = 79.76, H_NQ = 168952, A_Q = 75.86, H_Q = 37756, zstd_ratio = 2.71%, training_time = 347s
+Epoch 8: A_NQ = 80.69, H_NQ = 156198, A_Q = 69.22, H_Q = 37633, zstd_ratio = 2.70%, training_time = 313s
+Epoch 9: A_NQ = 74.92, H_NQ = 115459, A_Q = 65.23, H_Q = 37526, zstd_ratio = 2.68%, training_time = 340s
+Epoch 10: A_NQ = 83.16, H_NQ = 85852, A_Q = 71.48, H_Q = 37342, zstd_ratio = 2.66%, training_time = 344s
+Epoch 11: A_NQ = 83.83, H_NQ = 85177, A_Q = 71.32, H_Q = 37257, zstd_ratio = 2.65%, training_time = 308s
+Epoch 12: A_NQ = 87.29, H_NQ = 76663, A_Q = 71.63, H_Q = 37228, zstd_ratio = 2.64%, training_time = 307s
+Epoch 13: A_NQ = 86.11, H_NQ = 77992, A_Q = 74.05, H_Q = 36981, zstd_ratio = 2.61%, training_time = 304s
+Epoch 14: A_NQ = 87.31, H_NQ = 78289, A_Q = 71.3, H_Q = 36772, zstd_ratio = 2.61%, training_time = 305s
+Epoch 15: A_NQ = 89.93, H_NQ = 78275, A_Q = 65.58, H_Q = 36603, zstd_ratio = 2.59%, training_time = 308s
+Epoch 16: A_NQ = 88.13, H_NQ = 79097, A_Q = 76.56, H_Q = 36566, zstd_ratio = 2.57%, training_time = 304s
+Epoch 17: A_NQ = 88.31, H_NQ = 79123, A_Q = 66.88, H_Q = 36517, zstd_ratio = 2.55%, training_time = 665s
+Epoch 18: A_NQ = 90.56, H_NQ = 79613, A_Q = 62.62, H_Q = 36452, zstd_ratio = 2.56%, training_time = 338s
+Epoch 19: A_NQ = 92.04, H_NQ = 79733, A_Q = 69.55, H_Q = 36283, zstd_ratio = 2.54%, training_time = 331s
+Epoch 20: A_NQ = 85.76, H_NQ = 79942, A_Q = 65.48, H_Q = 36094, zstd_ratio = 2.51%, training_time = 306s
+Epoch 21: A_NQ = 91.76, H_NQ = 80171, A_Q = 63.26, H_Q = 35989, zstd_ratio = 2.50%, training_time = 661s
+Epoch 22: A_NQ = 92.58, H_NQ = 80060, A_Q = 68.6, H_Q = 35918, zstd_ratio = 2.48%, training_time = 656s
+Epoch 23: A_NQ = 92.78, H_NQ = 80256, A_Q = 60.57, H_Q = 35706, zstd_ratio = 2.48%, training_time = 308s
+Epoch 24: A_NQ = 92.47, H_NQ = 80292, A_Q = 67.89, H_Q = 35648, zstd_ratio = 2.46%, training_time = 309s
+Epoch 25: A_NQ = 92.07, H_NQ = 80351, A_Q = 61.6, H_Q = 35514, zstd_ratio = 2.45%, training_time = 307s
+Epoch 26: A_NQ = 91.01, H_NQ = 80422, A_Q = 55.58, H_Q = 35358, zstd_ratio = 2.43%, training_time = 311s
+Epoch 27: A_NQ = 92.72, H_NQ = 80449, A_Q = 55.78, H_Q = 35270, zstd_ratio = 2.40%, training_time = 305s
+Epoch 28: A_NQ = 93.0, H_NQ = 80469, A_Q = 62.26, H_Q = 35088, zstd_ratio = 2.40%, training_time = 303s
+Epoch 29: A_NQ = 91.8, H_NQ = 80514, A_Q = 62.02, H_Q = 34983, zstd_ratio = 2.38%, training_time = 302s
+Epoch 30: A_NQ = 91.83, H_NQ = 80540, A_Q = 63.53, H_Q = 34845, zstd_ratio = 2.38%, training_time = 301s
+------------------------------------------------------------
+r = 1.1031
+Epoch 1: A_NQ = 87.06, H_NQ = 685837, A_Q = 86.74, H_Q = 244757, zstd_ratio = 23.28%, training_time = 730s
+Epoch 2: A_NQ = 92.53, H_NQ = 682156, A_Q = 92.47, H_Q = 192116, zstd_ratio = 17.31%, training_time = 401s
+Epoch 3: A_NQ = 94.5, H_NQ = 670678, A_Q = 94.28, H_Q = 140508, zstd_ratio = 11.74%, training_time = 405s
+Epoch 4: A_NQ = 95.02, H_NQ = 575668, A_Q = 94.51, H_Q = 116962, zstd_ratio = 9.20%, training_time = 579s
+Epoch 5: A_NQ = 95.89, H_NQ = 577797, A_Q = 95.83, H_Q = 109470, zstd_ratio = 8.40%, training_time = 342s
+Epoch 6: A_NQ = 96.2, H_NQ = 572480, A_Q = 95.29, H_Q = 105511, zstd_ratio = 7.99%, training_time = 349s
+Epoch 7: A_NQ = 96.74, H_NQ = 563864, A_Q = 96.35, H_Q = 102727, zstd_ratio = 7.65%, training_time = 342s
+Epoch 8: A_NQ = 97.38, H_NQ = 529475, A_Q = 97.31, H_Q = 99639, zstd_ratio = 7.39%, training_time = 337s
+Epoch 9: A_NQ = 97.82, H_NQ = 540230, A_Q = 97.78, H_Q = 97275, zstd_ratio = 7.17%, training_time = 328s
+Epoch 10: A_NQ = 97.46, H_NQ = 512411, A_Q = 97.23, H_Q = 95074, zstd_ratio = 6.93%, training_time = 341s
+Epoch 11: A_NQ = 97.82, H_NQ = 570080, A_Q = 97.25, H_Q = 93441, zstd_ratio = 6.72%, training_time = 344s
+Epoch 12: A_NQ = 97.92, H_NQ = 568665, A_Q = 97.97, H_Q = 92121, zstd_ratio = 6.59%, training_time = 403s
+Epoch 13: A_NQ = 98.1, H_NQ = 579032, A_Q = 97.64, H_Q = 90824, zstd_ratio = 6.44%, training_time = 366s
+Epoch 14: A_NQ = 94.4, H_NQ = 573874, A_Q = 90.52, H_Q = 89562, zstd_ratio = 6.34%, training_time = 382s
+Epoch 15: A_NQ = 98.14, H_NQ = 569139, A_Q = 96.95, H_Q = 88133, zstd_ratio = 6.22%, training_time = 376s
+Epoch 16: A_NQ = 97.79, H_NQ = 579234, A_Q = 97.21, H_Q = 86719, zstd_ratio = 6.05%, training_time = 368s
+Epoch 17: A_NQ = 98.24, H_NQ = 573276, A_Q = 98.08, H_Q = 85745, zstd_ratio = 5.95%, training_time = 362s
+Epoch 18: A_NQ = 97.96, H_NQ = 577235, A_Q = 97.74, H_Q = 85065, zstd_ratio = 5.86%, training_time = 326s
+Epoch 19: A_NQ = 97.22, H_NQ = 579139, A_Q = 97.68, H_Q = 84338, zstd_ratio = 5.75%, training_time = 363s
+Epoch 20: A_NQ = 97.73, H_NQ = 591232, A_Q = 97.22, H_Q = 83707, zstd_ratio = 5.78%, training_time = 377s
+Epoch 21: A_NQ = 97.96, H_NQ = 626294, A_Q = 97.92, H_Q = 83799, zstd_ratio = 5.79%, training_time = 346s
+Epoch 22: A_NQ = 98.37, H_NQ = 667539, A_Q = 98.19, H_Q = 81744, zstd_ratio = 5.52%, training_time = 354s
+Epoch 23: A_NQ = 98.28, H_NQ = 636130, A_Q = 97.95, H_Q = 83193, zstd_ratio = 5.69%, training_time = 364s
+Epoch 24: A_NQ = 98.25, H_NQ = 678492, A_Q = 97.87, H_Q = 81360, zstd_ratio = 5.56%, training_time = 353s
+Epoch 25: A_NQ = 97.65, H_NQ = 674265, A_Q = 94.98, H_Q = 81916, zstd_ratio = 5.50%, training_time = 332s
+Epoch 26: A_NQ = 98.29, H_NQ = 681217, A_Q = 96.96, H_Q = 80442, zstd_ratio = 5.46%, training_time = 322s
+Epoch 27: A_NQ = 98.21, H_NQ = 635433, A_Q = 91.51, H_Q = 80286, zstd_ratio = 5.45%, training_time = 333s
+Epoch 28: A_NQ = 98.1, H_NQ = 673282, A_Q = 97.76, H_Q = 78982, zstd_ratio = 5.28%, training_time = 545s
+Epoch 29: A_NQ = 98.4, H_NQ = 667734, A_Q = 98.2, H_Q = 77891, zstd_ratio = 5.16%, training_time = 484s
+Epoch 30: A_NQ = 98.56, H_NQ = 666337, A_Q = 98.47, H_Q = 80259, zstd_ratio = 5.55%, training_time = 316s
+------------------------------------------------------------
+r = 1.1009
+Epoch 1: A_NQ = 87.77, H_NQ = 685861, A_Q = 87.54, H_Q = 242618, zstd_ratio = 23.18%, training_time = 363s
+Epoch 2: A_NQ = 92.83, H_NQ = 685252, A_Q = 92.56, H_Q = 181914, zstd_ratio = 16.45%, training_time = 335s
+Epoch 3: A_NQ = 94.41, H_NQ = 673929, A_Q = 94.39, H_Q = 124603, zstd_ratio = 10.37%, training_time = 327s
+Epoch 4: A_NQ = 95.46, H_NQ = 637959, A_Q = 95.53, H_Q = 101478, zstd_ratio = 7.84%, training_time = 326s
+Epoch 5: A_NQ = 95.94, H_NQ = 571113, A_Q = 95.71, H_Q = 95469, zstd_ratio = 7.16%, training_time = 323s
+Epoch 6: A_NQ = 96.71, H_NQ = 479241, A_Q = 96.6, H_Q = 91940, zstd_ratio = 6.87%, training_time = 323s
+Epoch 7: A_NQ = 96.24, H_NQ = 399716, A_Q = 95.89, H_Q = 90090, zstd_ratio = 6.63%, training_time = 322s
+Epoch 8: A_NQ = 97.03, H_NQ = 354629, A_Q = 97.0, H_Q = 87665, zstd_ratio = 6.39%, training_time = 331s
+Epoch 9: A_NQ = 97.61, H_NQ = 328445, A_Q = 97.27, H_Q = 84479, zstd_ratio = 6.11%, training_time = 336s
+Epoch 10: A_NQ = 97.64, H_NQ = 363556, A_Q = 97.16, H_Q = 83026, zstd_ratio = 5.96%, training_time = 331s
+Epoch 11: A_NQ = 97.87, H_NQ = 461250, A_Q = 97.83, H_Q = 81033, zstd_ratio = 5.78%, training_time = 329s
+Epoch 12: A_NQ = 97.78, H_NQ = 496702, A_Q = 98.17, H_Q = 79406, zstd_ratio = 5.65%, training_time = 329s
+Epoch 13: A_NQ = 96.95, H_NQ = 519510, A_Q = 97.44, H_Q = 78404, zstd_ratio = 5.50%, training_time = 319s
+Epoch 14: A_NQ = 97.75, H_NQ = 546719, A_Q = 97.05, H_Q = 77642, zstd_ratio = 5.38%, training_time = 366s
+Epoch 15: A_NQ = 97.84, H_NQ = 565170, A_Q = 97.7, H_Q = 77205, zstd_ratio = 5.32%, training_time = 375s
+Epoch 16: A_NQ = 98.08, H_NQ = 650402, A_Q = 98.14, H_Q = 76239, zstd_ratio = 5.23%, training_time = 462s
+Epoch 17: A_NQ = 98.62, H_NQ = 625363, A_Q = 98.51, H_Q = 76029, zstd_ratio = 5.15%, training_time = 594s
+Epoch 18: A_NQ = 98.28, H_NQ = 639937, A_Q = 96.45, H_Q = 74900, zstd_ratio = 5.02%, training_time = 600s
+Epoch 19: A_NQ = 97.62, H_NQ = 671784, A_Q = 97.72, H_Q = 74564, zstd_ratio = 4.97%, training_time = 596s
+Epoch 20: A_NQ = 98.35, H_NQ = 648850, A_Q = 97.54, H_Q = 73949, zstd_ratio = 4.88%, training_time = 427s
+Epoch 21: A_NQ = 98.04, H_NQ = 645966, A_Q = 95.87, H_Q = 73571, zstd_ratio = 4.80%, training_time = 341s
+Epoch 22: A_NQ = 98.3, H_NQ = 659278, A_Q = 97.84, H_Q = 74353, zstd_ratio = 4.85%, training_time = 438s
+Epoch 23: A_NQ = 98.1, H_NQ = 659824, A_Q = 98.07, H_Q = 73311, zstd_ratio = 4.73%, training_time = 419s
+Epoch 24: A_NQ = 98.63, H_NQ = 662904, A_Q = 98.49, H_Q = 72768, zstd_ratio = 4.67%, training_time = 411s
+Epoch 25: A_NQ = 98.17, H_NQ = 669972, A_Q = 98.16, H_Q = 72754, zstd_ratio = 4.67%, training_time = 358s
+Epoch 26: A_NQ = 97.89, H_NQ = 658273, A_Q = 98.15, H_Q = 72143, zstd_ratio = 4.59%, training_time = 396s
+Epoch 27: A_NQ = 98.3, H_NQ = 667676, A_Q = 98.14, H_Q = 72362, zstd_ratio = 4.55%, training_time = 380s
+Epoch 28: A_NQ = 98.18, H_NQ = 650466, A_Q = 97.49, H_Q = 70001, zstd_ratio = 4.41%, training_time = 438s
+Epoch 29: A_NQ = 98.27, H_NQ = 670688, A_Q = 97.12, H_Q = 70556, zstd_ratio = 4.38%, training_time = 411s
+Epoch 30: A_NQ = 98.35, H_NQ = 655045, A_Q = 98.42, H_Q = 69621, zstd_ratio = 4.30%, training_time = 415s
+------------------------------------------------------------
+r = 1.1018
+Epoch 1: A_NQ = 87.64, H_NQ = 685851, A_Q = 87.34, H_Q = 255506, zstd_ratio = 24.42%, training_time = 366s
+Epoch 2: A_NQ = 92.33, H_NQ = 685753, A_Q = 92.54, H_Q = 223348, zstd_ratio = 20.70%, training_time = 351s
+Epoch 3: A_NQ = 94.65, H_NQ = 683193, A_Q = 94.62, H_Q = 167751, zstd_ratio = 14.45%, training_time = 384s
+Epoch 4: A_NQ = 95.15, H_NQ = 684479, A_Q = 95.56, H_Q = 138145, zstd_ratio = 11.12%, training_time = 336s
+Epoch 5: A_NQ = 96.42, H_NQ = 684002, A_Q = 96.45, H_Q = 123723, zstd_ratio = 9.52%, training_time = 337s
+Epoch 6: A_NQ = 96.63, H_NQ = 683639, A_Q = 96.28, H_Q = 115487, zstd_ratio = 8.76%, training_time = 362s
+Epoch 7: A_NQ = 97.03, H_NQ = 684902, A_Q = 96.87, H_Q = 121510, zstd_ratio = 9.36%, training_time = 393s
+Epoch 8: A_NQ = 97.48, H_NQ = 681789, A_Q = 97.16, H_Q = 122172, zstd_ratio = 9.29%, training_time = 320s
+Epoch 9: A_NQ = 97.17, H_NQ = 678345, A_Q = 96.29, H_Q = 110740, zstd_ratio = 8.55%, training_time = 371s
+Epoch 10: A_NQ = 97.58, H_NQ = 680352, A_Q = 97.53, H_Q = 100962, zstd_ratio = 7.49%, training_time = 367s
+Epoch 11: A_NQ = 97.39, H_NQ = 685161, A_Q = 97.46, H_Q = 111938, zstd_ratio = 8.68%, training_time = 377s
+Epoch 12: A_NQ = 97.38, H_NQ = 683072, A_Q = 97.91, H_Q = 97523, zstd_ratio = 7.22%, training_time = 322s
+Epoch 13: A_NQ = 97.75, H_NQ = 683994, A_Q = 97.83, H_Q = 97690, zstd_ratio = 7.35%, training_time = 546s
+Epoch 14: A_NQ = 97.4, H_NQ = 684868, A_Q = 96.53, H_Q = 100952, zstd_ratio = 7.60%, training_time = 456s
+Epoch 15: A_NQ = 97.81, H_NQ = 684658, A_Q = 97.61, H_Q = 101234, zstd_ratio = 7.74%, training_time = 534s
+Epoch 16: A_NQ = 97.77, H_NQ = 682915, A_Q = 97.46, H_Q = 95805, zstd_ratio = 7.12%, training_time = 336s
+Epoch 17: A_NQ = 98.3, H_NQ = 684109, A_Q = 97.99, H_Q = 99849, zstd_ratio = 7.55%, training_time = 416s
+Epoch 18: A_NQ = 98.25, H_NQ = 685222, A_Q = 98.1, H_Q = 101199, zstd_ratio = 7.90%, training_time = 383s
+Epoch 19: A_NQ = 98.33, H_NQ = 684293, A_Q = 98.34, H_Q = 101248, zstd_ratio = 7.73%, training_time = 403s
+Epoch 20: A_NQ = 98.24, H_NQ = 685247, A_Q = 97.51, H_Q = 100914, zstd_ratio = 7.72%, training_time = 565s
+Epoch 21: A_NQ = 97.82, H_NQ = 684838, A_Q = 98.04, H_Q = 97051, zstd_ratio = 7.18%, training_time = 304s
+Epoch 22: A_NQ = 98.26, H_NQ = 684097, A_Q = 97.9, H_Q = 89561, zstd_ratio = 6.42%, training_time = 456s
+Epoch 23: A_NQ = 97.5, H_NQ = 684738, A_Q = 98.08, H_Q = 94721, zstd_ratio = 7.08%, training_time = 478s
+Epoch 24: A_NQ = 97.77, H_NQ = 684647, A_Q = 98.21, H_Q = 95912, zstd_ratio = 7.15%, training_time = 409s
+Epoch 25: A_NQ = 98.08, H_NQ = 684525, A_Q = 98.19, H_Q = 97320, zstd_ratio = 7.07%, training_time = 436s
+Epoch 26: A_NQ = 98.24, H_NQ = 683737, A_Q = 98.0, H_Q = 92490, zstd_ratio = 6.88%, training_time = 492s
+Epoch 27: A_NQ = 98.05, H_NQ = 682321, A_Q = 97.35, H_Q = 95839, zstd_ratio = 6.99%, training_time = 477s
+Epoch 28: A_NQ = 98.33, H_NQ = 683859, A_Q = 95.96, H_Q = 91039, zstd_ratio = 6.59%, training_time = 338s
+Epoch 29: A_NQ = 98.13, H_NQ = 684663, A_Q = 97.57, H_Q = 89874, zstd_ratio = 6.41%, training_time = 406s
+Epoch 30: A_NQ = 98.41, H_NQ = 684200, A_Q = 98.26, H_Q = 87847, zstd_ratio = 6.19%, training_time = 420s
+------------------------------------------------------------
+r = 1.1002
+Epoch 1: A_NQ = 86.99, H_NQ = 685875, A_Q = 86.74, H_Q = 259641, zstd_ratio = 24.63%, training_time = 560s
+Epoch 2: A_NQ = 91.85, H_NQ = 685855, A_Q = 91.8, H_Q = 244539, zstd_ratio = 22.92%, training_time = 389s
+Epoch 3: A_NQ = 93.24, H_NQ = 685825, A_Q = 92.47, H_Q = 218253, zstd_ratio = 19.59%, training_time = 393s
+Epoch 4: A_NQ = 95.51, H_NQ = 685738, A_Q = 95.43, H_Q = 196253, zstd_ratio = 16.49%, training_time = 481s
+Epoch 5: A_NQ = 96.2, H_NQ = 685466, A_Q = 96.28, H_Q = 178145, zstd_ratio = 14.22%, training_time = 339s
+Epoch 6: A_NQ = 96.78, H_NQ = 685153, A_Q = 96.71, H_Q = 173120, zstd_ratio = 13.25%, training_time = 332s
+Epoch 7: A_NQ = 97.39, H_NQ = 684969, A_Q = 97.46, H_Q = 167158, zstd_ratio = 12.49%, training_time = 333s
+Epoch 8: A_NQ = 97.23, H_NQ = 684260, A_Q = 97.06, H_Q = 160125, zstd_ratio = 11.39%, training_time = 461s
+Epoch 9: A_NQ = 97.5, H_NQ = 683700, A_Q = 97.39, H_Q = 156710, zstd_ratio = 10.97%, training_time = 468s
+Epoch 10: A_NQ = 97.95, H_NQ = 683197, A_Q = 97.87, H_Q = 149994, zstd_ratio = 10.55%, training_time = 448s
+Epoch 11: A_NQ = 98.01, H_NQ = 683028, A_Q = 98.21, H_Q = 144956, zstd_ratio = 9.94%, training_time = 583s
+Epoch 12: A_NQ = 96.8, H_NQ = 683253, A_Q = 94.98, H_Q = 142274, zstd_ratio = 9.75%, training_time = 563s
+Epoch 13: A_NQ = 98.3, H_NQ = 682593, A_Q = 97.84, H_Q = 134492, zstd_ratio = 9.09%, training_time = 486s
+Epoch 14: A_NQ = 98.0, H_NQ = 682703, A_Q = 97.72, H_Q = 136139, zstd_ratio = 9.08%, training_time = 474s
+Epoch 15: A_NQ = 97.7, H_NQ = 682315, A_Q = 97.74, H_Q = 130706, zstd_ratio = 8.57%, training_time = 467s
+Epoch 16: A_NQ = 97.7, H_NQ = 681722, A_Q = 96.85, H_Q = 127988, zstd_ratio = 8.15%, training_time = 459s
+Epoch 17: A_NQ = 98.27, H_NQ = 681923, A_Q = 98.29, H_Q = 127216, zstd_ratio = 8.10%, training_time = 512s
+Epoch 18: A_NQ = 97.34, H_NQ = 681284, A_Q = 97.79, H_Q = 125204, zstd_ratio = 7.91%, training_time = 520s
+Epoch 19: A_NQ = 98.09, H_NQ = 681116, A_Q = 98.06, H_Q = 125498, zstd_ratio = 7.90%, training_time = 483s
+Epoch 20: A_NQ = 97.7, H_NQ = 680846, A_Q = 97.45, H_Q = 125632, zstd_ratio = 7.59%, training_time = 555s
+Epoch 21: A_NQ = 98.3, H_NQ = 681062, A_Q = 98.36, H_Q = 127718, zstd_ratio = 7.48%, training_time = 370s
+Epoch 22: A_NQ = 98.36, H_NQ = 680495, A_Q = 98.23, H_Q = 121758, zstd_ratio = 7.19%, training_time = 440s
+Epoch 23: A_NQ = 97.85, H_NQ = 680335, A_Q = 97.66, H_Q = 119101, zstd_ratio = 7.17%, training_time = 342s
+Epoch 24: A_NQ = 98.07, H_NQ = 680016, A_Q = 97.83, H_Q = 119171, zstd_ratio = 6.95%, training_time = 312s
+Epoch 25: A_NQ = 98.14, H_NQ = 680125, A_Q = 97.75, H_Q = 119729, zstd_ratio = 6.88%, training_time = 320s
+Epoch 26: A_NQ = 98.26, H_NQ = 680016, A_Q = 98.19, H_Q = 119273, zstd_ratio = 6.66%, training_time = 420s
+Epoch 27: A_NQ = 98.03, H_NQ = 679656, A_Q = 97.67, H_Q = 121246, zstd_ratio = 6.64%, training_time = 321s
+Epoch 28: A_NQ = 97.8, H_NQ = 679205, A_Q = 96.9, H_Q = 115271, zstd_ratio = 6.50%, training_time = 321s
+Epoch 29: A_NQ = 98.34, H_NQ = 678580, A_Q = 97.71, H_Q = 115589, zstd_ratio = 6.36%, training_time = 389s
+Epoch 30: A_NQ = 98.05, H_NQ = 677757, A_Q = 97.95, H_Q = 114880, zstd_ratio = 6.23%, training_time = 375s
+------------------------------------------------------------
+r = 1.103
+Epoch 1: A_NQ = 87.55, H_NQ = 685222, A_Q = 86.9, H_Q = 181756, zstd_ratio = 17.59%, training_time = 346s
+Epoch 2: A_NQ = 93.08, H_NQ = 633179, A_Q = 92.72, H_Q = 104748, zstd_ratio = 9.21%, training_time = 312s
+Epoch 3: A_NQ = 94.61, H_NQ = 581273, A_Q = 94.44, H_Q = 85405, zstd_ratio = 6.56%, training_time = 306s
+Epoch 4: A_NQ = 95.81, H_NQ = 473737, A_Q = 95.58, H_Q = 81781, zstd_ratio = 6.22%, training_time = 305s
+Epoch 5: A_NQ = 95.58, H_NQ = 386721, A_Q = 95.51, H_Q = 80601, zstd_ratio = 6.09%, training_time = 531s
+Epoch 6: A_NQ = 96.8, H_NQ = 351579, A_Q = 96.42, H_Q = 79405, zstd_ratio = 5.97%, training_time = 384s
+Epoch 7: A_NQ = 96.9, H_NQ = 252718, A_Q = 96.81, H_Q = 78806, zstd_ratio = 5.86%, training_time = 399s
+Epoch 8: A_NQ = 96.91, H_NQ = 222362, A_Q = 96.86, H_Q = 78026, zstd_ratio = 5.75%, training_time = 404s
+Epoch 9: A_NQ = 97.1, H_NQ = 173965, A_Q = 97.18, H_Q = 77386, zstd_ratio = 5.66%, training_time = 424s
+Epoch 10: A_NQ = 97.55, H_NQ = 172676, A_Q = 97.27, H_Q = 76137, zstd_ratio = 5.56%, training_time = 393s
+Epoch 11: A_NQ = 96.94, H_NQ = 159740, A_Q = 96.91, H_Q = 75768, zstd_ratio = 5.44%, training_time = 300s
+Epoch 12: A_NQ = 97.96, H_NQ = 158792, A_Q = 97.87, H_Q = 75287, zstd_ratio = 5.35%, training_time = 416s
+Epoch 13: A_NQ = 97.0, H_NQ = 158794, A_Q = 96.74, H_Q = 74373, zstd_ratio = 5.26%, training_time = 461s
+Epoch 14: A_NQ = 97.72, H_NQ = 158796, A_Q = 97.82, H_Q = 72686, zstd_ratio = 5.12%, training_time = 534s
+Epoch 15: A_NQ = 97.32, H_NQ = 158774, A_Q = 97.17, H_Q = 71878, zstd_ratio = 5.03%, training_time = 544s
+Epoch 16: A_NQ = 97.56, H_NQ = 158669, A_Q = 97.48, H_Q = 71040, zstd_ratio = 4.99%, training_time = 497s
+Epoch 17: A_NQ = 97.31, H_NQ = 158422, A_Q = 96.8, H_Q = 69074, zstd_ratio = 4.81%, training_time = 501s
+Epoch 18: A_NQ = 98.16, H_NQ = 158112, A_Q = 97.97, H_Q = 68646, zstd_ratio = 4.75%, training_time = 494s
+Epoch 19: A_NQ = 97.87, H_NQ = 156293, A_Q = 98.03, H_Q = 68248, zstd_ratio = 4.67%, training_time = 431s
+Epoch 20: A_NQ = 97.92, H_NQ = 155957, A_Q = 97.9, H_Q = 67874, zstd_ratio = 4.60%, training_time = 447s
+Epoch 21: A_NQ = 98.39, H_NQ = 155100, A_Q = 98.3, H_Q = 67365, zstd_ratio = 4.54%, training_time = 539s
+Epoch 22: A_NQ = 97.09, H_NQ = 185725, A_Q = 96.72, H_Q = 66656, zstd_ratio = 4.49%, training_time = 534s
+Epoch 23: A_NQ = 97.93, H_NQ = 168524, A_Q = 98.07, H_Q = 66598, zstd_ratio = 4.42%, training_time = 545s
+Epoch 24: A_NQ = 97.91, H_NQ = 194933, A_Q = 97.92, H_Q = 66016, zstd_ratio = 4.38%, training_time = 534s
+Epoch 25: A_NQ = 98.0, H_NQ = 279859, A_Q = 97.92, H_Q = 65865, zstd_ratio = 4.35%, training_time = 535s
+Epoch 26: A_NQ = 97.87, H_NQ = 312193, A_Q = 97.59, H_Q = 65581, zstd_ratio = 4.29%, training_time = 520s
+Epoch 27: A_NQ = 98.18, H_NQ = 340445, A_Q = 98.2, H_Q = 65076, zstd_ratio = 4.22%, training_time = 532s
+Epoch 28: A_NQ = 98.17, H_NQ = 381290, A_Q = 98.31, H_Q = 64947, zstd_ratio = 4.19%, training_time = 508s
+Epoch 29: A_NQ = 98.1, H_NQ = 390561, A_Q = 97.71, H_Q = 64327, zstd_ratio = 4.15%, training_time = 502s
+Epoch 30: A_NQ = 98.27, H_NQ = 501511, A_Q = 97.94, H_Q = 64172, zstd_ratio = 4.10%, training_time = 507s
+------------------------------------------------------------
+r = 1.101
+Epoch 1: A_NQ = 88.99, H_NQ = 685851, A_Q = 88.48, H_Q = 258649, zstd_ratio = 24.58%, training_time = 462s
+Epoch 2: A_NQ = 92.98, H_NQ = 685871, A_Q = 92.96, H_Q = 244094, zstd_ratio = 22.85%, training_time = 518s
+Epoch 3: A_NQ = 94.64, H_NQ = 685830, A_Q = 94.79, H_Q = 223412, zstd_ratio = 20.30%, training_time = 351s
+Epoch 4: A_NQ = 95.1, H_NQ = 685807, A_Q = 95.05, H_Q = 206198, zstd_ratio = 18.28%, training_time = 346s
+Epoch 5: A_NQ = 96.21, H_NQ = 685773, A_Q = 96.0, H_Q = 190864, zstd_ratio = 16.63%, training_time = 328s
+Epoch 6: A_NQ = 96.67, H_NQ = 685769, A_Q = 96.62, H_Q = 179287, zstd_ratio = 15.64%, training_time = 336s
+Epoch 7: A_NQ = 96.74, H_NQ = 685719, A_Q = 97.07, H_Q = 168311, zstd_ratio = 14.27%, training_time = 333s
+Epoch 8: A_NQ = 95.45, H_NQ = 685672, A_Q = 95.82, H_Q = 159604, zstd_ratio = 13.39%, training_time = 330s
+Epoch 9: A_NQ = 97.6, H_NQ = 685614, A_Q = 97.48, H_Q = 154454, zstd_ratio = 12.98%, training_time = 445s
+Epoch 10: A_NQ = 97.71, H_NQ = 685492, A_Q = 97.59, H_Q = 147872, zstd_ratio = 12.17%, training_time = 441s
+Epoch 11: A_NQ = 97.9, H_NQ = 685403, A_Q = 97.12, H_Q = 142624, zstd_ratio = 11.51%, training_time = 332s
+Epoch 12: A_NQ = 96.31, H_NQ = 685192, A_Q = 96.67, H_Q = 141770, zstd_ratio = 11.06%, training_time = 511s
+Epoch 13: A_NQ = 97.99, H_NQ = 685146, A_Q = 97.84, H_Q = 136248, zstd_ratio = 10.62%, training_time = 380s
+Epoch 14: A_NQ = 97.94, H_NQ = 684717, A_Q = 97.77, H_Q = 135451, zstd_ratio = 10.18%, training_time = 442s
+Epoch 15: A_NQ = 97.72, H_NQ = 684816, A_Q = 96.98, H_Q = 129981, zstd_ratio = 9.92%, training_time = 575s
+Epoch 16: A_NQ = 97.62, H_NQ = 684361, A_Q = 97.56, H_Q = 129950, zstd_ratio = 9.51%, training_time = 582s
+Epoch 17: A_NQ = 97.9, H_NQ = 684751, A_Q = 97.58, H_Q = 129743, zstd_ratio = 9.29%, training_time = 579s
+Epoch 18: A_NQ = 97.76, H_NQ = 683995, A_Q = 97.49, H_Q = 125644, zstd_ratio = 8.96%, training_time = 547s
+Epoch 19: A_NQ = 98.01, H_NQ = 684043, A_Q = 97.63, H_Q = 123365, zstd_ratio = 8.80%, training_time = 564s
+Epoch 20: A_NQ = 97.92, H_NQ = 683880, A_Q = 97.04, H_Q = 123002, zstd_ratio = 8.74%, training_time = 577s
+Epoch 21: A_NQ = 98.2, H_NQ = 683674, A_Q = 97.0, H_Q = 123351, zstd_ratio = 8.39%, training_time = 564s
+Epoch 22: A_NQ = 97.91, H_NQ = 683350, A_Q = 97.6, H_Q = 123556, zstd_ratio = 8.34%, training_time = 558s
+Epoch 23: A_NQ = 98.31, H_NQ = 683408, A_Q = 96.57, H_Q = 123080, zstd_ratio = 8.26%, training_time = 582s
+Epoch 24: A_NQ = 98.11, H_NQ = 683112, A_Q = 97.83, H_Q = 122286, zstd_ratio = 8.03%, training_time = 511s
+Epoch 25: A_NQ = 98.18, H_NQ = 683409, A_Q = 97.55, H_Q = 121236, zstd_ratio = 7.83%, training_time = 446s
+Epoch 26: A_NQ = 96.87, H_NQ = 682822, A_Q = 97.67, H_Q = 117159, zstd_ratio = 7.53%, training_time = 551s
+Epoch 27: A_NQ = 98.46, H_NQ = 682534, A_Q = 98.38, H_Q = 117514, zstd_ratio = 7.54%, training_time = 522s
+Epoch 28: A_NQ = 98.2, H_NQ = 682316, A_Q = 97.83, H_Q = 118728, zstd_ratio = 7.44%, training_time = 382s
+Epoch 29: A_NQ = 97.87, H_NQ = 682230, A_Q = 98.14, H_Q = 118261, zstd_ratio = 7.98%, training_time = 543s
+Epoch 30: A_NQ = 98.31, H_NQ = 681641, A_Q = 98.05, H_Q = 114939, zstd_ratio = 7.21%, training_time = 451s
+------------------------------------------------------------
+r = 1.1017
+Epoch 1: A_NQ = 82.57, H_NQ = 685308, A_Q = 82.38, H_Q = 190344, zstd_ratio = 18.32%, training_time = 457s
+Epoch 2: A_NQ = 89.64, H_NQ = 643753, A_Q = 89.88, H_Q = 120501, zstd_ratio = 10.63%, training_time = 606s
+Epoch 3: A_NQ = 91.02, H_NQ = 548468, A_Q = 91.16, H_Q = 94009, zstd_ratio = 7.27%, training_time = 596s
+Epoch 4: A_NQ = 92.48, H_NQ = 452062, A_Q = 92.44, H_Q = 86839, zstd_ratio = 6.61%, training_time = 554s
+Epoch 5: A_NQ = 93.98, H_NQ = 413147, A_Q = 93.35, H_Q = 83509, zstd_ratio = 6.28%, training_time = 540s
+Epoch 6: A_NQ = 95.54, H_NQ = 318005, A_Q = 95.37, H_Q = 81881, zstd_ratio = 6.11%, training_time = 558s
+Epoch 7: A_NQ = 95.92, H_NQ = 287883, A_Q = 95.9, H_Q = 81079, zstd_ratio = 6.00%, training_time = 551s
+Epoch 8: A_NQ = 96.19, H_NQ = 239147, A_Q = 96.08, H_Q = 80460, zstd_ratio = 5.89%, training_time = 553s
+Epoch 9: A_NQ = 96.39, H_NQ = 206416, A_Q = 96.43, H_Q = 79480, zstd_ratio = 5.80%, training_time = 647s
+Epoch 10: A_NQ = 96.74, H_NQ = 184411, A_Q = 96.65, H_Q = 78563, zstd_ratio = 5.72%, training_time = 390s
+Epoch 11: A_NQ = 96.95, H_NQ = 166997, A_Q = 96.27, H_Q = 77704, zstd_ratio = 5.62%, training_time = 333s
+Epoch 12: A_NQ = 96.62, H_NQ = 165989, A_Q = 96.09, H_Q = 76916, zstd_ratio = 5.53%, training_time = 427s
+Epoch 13: A_NQ = 96.9, H_NQ = 162548, A_Q = 96.96, H_Q = 76206, zstd_ratio = 5.45%, training_time = 352s
+Epoch 14: A_NQ = 96.77, H_NQ = 162548, A_Q = 96.4, H_Q = 75310, zstd_ratio = 5.37%, training_time = 525s
+Epoch 15: A_NQ = 97.46, H_NQ = 162544, A_Q = 97.2, H_Q = 75289, zstd_ratio = 5.31%, training_time = 355s
+Epoch 16: A_NQ = 97.46, H_NQ = 162546, A_Q = 97.37, H_Q = 73844, zstd_ratio = 5.20%, training_time = 490s
+Epoch 17: A_NQ = 97.73, H_NQ = 162546, A_Q = 97.65, H_Q = 73350, zstd_ratio = 5.09%, training_time = 564s
+Epoch 18: A_NQ = 96.94, H_NQ = 162542, A_Q = 95.56, H_Q = 72748, zstd_ratio = 5.05%, training_time = 461s
+Epoch 19: A_NQ = 97.79, H_NQ = 162544, A_Q = 96.98, H_Q = 72109, zstd_ratio = 4.99%, training_time = 437s
+Epoch 20: A_NQ = 97.11, H_NQ = 162548, A_Q = 96.98, H_Q = 71790, zstd_ratio = 4.92%, training_time = 454s
+Epoch 21: A_NQ = 97.98, H_NQ = 162544, A_Q = 97.6, H_Q = 71234, zstd_ratio = 4.84%, training_time = 395s
+Epoch 22: A_NQ = 98.24, H_NQ = 162546, A_Q = 97.87, H_Q = 70777, zstd_ratio = 4.80%, training_time = 471s
+Epoch 23: A_NQ = 98.3, H_NQ = 162544, A_Q = 97.9, H_Q = 70835, zstd_ratio = 4.76%, training_time = 299s
+Epoch 24: A_NQ = 97.84, H_NQ = 162548, A_Q = 97.46, H_Q = 70759, zstd_ratio = 4.69%, training_time = 430s
+Epoch 25: A_NQ = 98.16, H_NQ = 162539, A_Q = 98.21, H_Q = 70314, zstd_ratio = 4.61%, training_time = 489s
+Epoch 26: A_NQ = 97.87, H_NQ = 162544, A_Q = 96.62, H_Q = 69935, zstd_ratio = 4.56%, training_time = 327s
+Epoch 27: A_NQ = 98.16, H_NQ = 162544, A_Q = 97.98, H_Q = 69768, zstd_ratio = 4.50%, training_time = 515s
+Epoch 28: A_NQ = 97.43, H_NQ = 162540, A_Q = 95.64, H_Q = 69488, zstd_ratio = 4.45%, training_time = 423s
+Epoch 29: A_NQ = 98.25, H_NQ = 162544, A_Q = 97.76, H_Q = 69179, zstd_ratio = 4.39%, training_time = 620s
+Epoch 30: A_NQ = 97.83, H_NQ = 162544, A_Q = 97.54, H_Q = 68709, zstd_ratio = 4.36%, training_time = 605s
+------------------------------------------------------------
+r = 1.1022
+Epoch 1: A_NQ = 83.13, H_NQ = 685867, A_Q = 83.17, H_Q = 249009, zstd_ratio = 23.77%, training_time = 541s
+Epoch 2: A_NQ = 90.24, H_NQ = 685440, A_Q = 89.95, H_Q = 200578, zstd_ratio = 18.18%, training_time = 467s
+Epoch 3: A_NQ = 93.74, H_NQ = 678124, A_Q = 93.62, H_Q = 143479, zstd_ratio = 12.09%, training_time = 462s
+Epoch 4: A_NQ = 94.66, H_NQ = 643667, A_Q = 94.51, H_Q = 110579, zstd_ratio = 8.58%, training_time = 318s
+Epoch 5: A_NQ = 95.99, H_NQ = 556102, A_Q = 95.85, H_Q = 101223, zstd_ratio = 7.70%, training_time = 338s
+Epoch 6: A_NQ = 96.49, H_NQ = 499505, A_Q = 96.18, H_Q = 94006, zstd_ratio = 7.12%, training_time = 470s
+Epoch 7: A_NQ = 96.75, H_NQ = 413403, A_Q = 96.64, H_Q = 90148, zstd_ratio = 6.75%, training_time = 492s
+Epoch 8: A_NQ = 96.82, H_NQ = 329575, A_Q = 96.89, H_Q = 88718, zstd_ratio = 6.57%, training_time = 498s
+Epoch 9: A_NQ = 97.42, H_NQ = 281500, A_Q = 97.29, H_Q = 86896, zstd_ratio = 6.39%, training_time = 524s
+Epoch 10: A_NQ = 97.58, H_NQ = 239436, A_Q = 97.51, H_Q = 84581, zstd_ratio = 6.17%, training_time = 573s
+Epoch 11: A_NQ = 97.12, H_NQ = 237564, A_Q = 96.87, H_Q = 83073, zstd_ratio = 6.00%, training_time = 529s
+Epoch 12: A_NQ = 97.8, H_NQ = 195270, A_Q = 97.82, H_Q = 81915, zstd_ratio = 5.85%, training_time = 593s
+Epoch 13: A_NQ = 98.12, H_NQ = 189364, A_Q = 97.76, H_Q = 80318, zstd_ratio = 5.74%, training_time = 575s
+Epoch 14: A_NQ = 97.67, H_NQ = 181590, A_Q = 97.11, H_Q = 79405, zstd_ratio = 5.59%, training_time = 602s
+Epoch 15: A_NQ = 97.52, H_NQ = 217351, A_Q = 97.47, H_Q = 78496, zstd_ratio = 5.50%, training_time = 629s
+Epoch 16: A_NQ = 98.11, H_NQ = 331649, A_Q = 97.62, H_Q = 77590, zstd_ratio = 5.39%, training_time = 500s
+Epoch 17: A_NQ = 98.11, H_NQ = 371972, A_Q = 98.04, H_Q = 77254, zstd_ratio = 5.32%, training_time = 506s
+Epoch 18: A_NQ = 98.26, H_NQ = 255254, A_Q = 98.14, H_Q = 75824, zstd_ratio = 5.18%, training_time = 556s
+Epoch 19: A_NQ = 97.78, H_NQ = 287489, A_Q = 97.63, H_Q = 75188, zstd_ratio = 5.04%, training_time = 526s
+Epoch 20: A_NQ = 97.85, H_NQ = 287175, A_Q = 97.93, H_Q = 74636, zstd_ratio = 4.96%, training_time = 577s
+Epoch 21: A_NQ = 97.7, H_NQ = 293326, A_Q = 97.76, H_Q = 74221, zstd_ratio = 4.90%, training_time = 583s
+Epoch 22: A_NQ = 97.91, H_NQ = 472631, A_Q = 98.04, H_Q = 74062, zstd_ratio = 4.84%, training_time = 712s
+Epoch 23: A_NQ = 98.02, H_NQ = 415191, A_Q = 97.29, H_Q = 73367, zstd_ratio = 4.75%, training_time = 550s
+Epoch 24: A_NQ = 98.28, H_NQ = 391470, A_Q = 98.22, H_Q = 72104, zstd_ratio = 4.67%, training_time = 330s
+Epoch 25: A_NQ = 98.3, H_NQ = 445996, A_Q = 98.31, H_Q = 71338, zstd_ratio = 4.59%, training_time = 355s
+Epoch 26: A_NQ = 98.02, H_NQ = 401293, A_Q = 97.07, H_Q = 71279, zstd_ratio = 4.55%, training_time = 291s
+Epoch 27: A_NQ = 98.55, H_NQ = 530467, A_Q = 98.51, H_Q = 70931, zstd_ratio = 4.49%, training_time = 382s
+Epoch 28: A_NQ = 98.19, H_NQ = 433819, A_Q = 98.09, H_Q = 70652, zstd_ratio = 4.43%, training_time = 348s
+Epoch 29: A_NQ = 98.54, H_NQ = 470729, A_Q = 98.38, H_Q = 70053, zstd_ratio = 4.40%, training_time = 289s
+Epoch 30: A_NQ = 98.67, H_NQ = 468293, A_Q = 98.23, H_Q = 69805, zstd_ratio = 4.35%, training_time = 447s
+------------------------------------------------------------
+r = 1.1016
+Epoch 1: A_NQ = 85.28, H_NQ = 685867, A_Q = 85.53, H_Q = 251361, zstd_ratio = 23.98%, training_time = 387s
+Epoch 2: A_NQ = 91.28, H_NQ = 685735, A_Q = 90.94, H_Q = 209418, zstd_ratio = 19.19%, training_time = 710s
+Epoch 3: A_NQ = 93.64, H_NQ = 679180, A_Q = 93.16, H_Q = 151202, zstd_ratio = 12.94%, training_time = 585s
+Epoch 4: A_NQ = 95.19, H_NQ = 658391, A_Q = 94.99, H_Q = 119039, zstd_ratio = 9.38%, training_time = 577s
+Epoch 5: A_NQ = 95.97, H_NQ = 555746, A_Q = 96.04, H_Q = 111537, zstd_ratio = 8.54%, training_time = 589s
+Epoch 6: A_NQ = 96.47, H_NQ = 450173, A_Q = 96.35, H_Q = 103815, zstd_ratio = 7.89%, training_time = 589s
+Epoch 7: A_NQ = 96.74, H_NQ = 487780, A_Q = 96.52, H_Q = 99961, zstd_ratio = 7.46%, training_time = 590s
+Epoch 8: A_NQ = 97.02, H_NQ = 419099, A_Q = 96.81, H_Q = 97328, zstd_ratio = 7.16%, training_time = 586s
+Epoch 9: A_NQ = 97.48, H_NQ = 518778, A_Q = 97.46, H_Q = 94872, zstd_ratio = 6.92%, training_time = 592s
+Epoch 10: A_NQ = 97.37, H_NQ = 438353, A_Q = 96.95, H_Q = 91661, zstd_ratio = 6.66%, training_time = 588s
+Epoch 11: A_NQ = 96.1, H_NQ = 417228, A_Q = 94.59, H_Q = 89659, zstd_ratio = 6.49%, training_time = 594s
+Epoch 12: A_NQ = 97.59, H_NQ = 490685, A_Q = 97.41, H_Q = 88421, zstd_ratio = 6.35%, training_time = 594s
+Epoch 13: A_NQ = 97.78, H_NQ = 397732, A_Q = 97.71, H_Q = 87661, zstd_ratio = 6.23%, training_time = 483s
+Epoch 14: A_NQ = 97.33, H_NQ = 342102, A_Q = 97.41, H_Q = 86463, zstd_ratio = 6.10%, training_time = 343s
+Epoch 15: A_NQ = 96.88, H_NQ = 407706, A_Q = 96.94, H_Q = 85781, zstd_ratio = 6.00%, training_time = 435s
+Epoch 16: A_NQ = 97.81, H_NQ = 379019, A_Q = 97.22, H_Q = 84894, zstd_ratio = 5.91%, training_time = 452s
+Epoch 17: A_NQ = 98.39, H_NQ = 407713, A_Q = 97.77, H_Q = 84273, zstd_ratio = 5.82%, training_time = 609s
+Epoch 18: A_NQ = 97.89, H_NQ = 481276, A_Q = 97.68, H_Q = 83336, zstd_ratio = 5.73%, training_time = 589s
+Epoch 19: A_NQ = 97.74, H_NQ = 437445, A_Q = 97.72, H_Q = 83183, zstd_ratio = 5.65%, training_time = 582s
+Epoch 20: A_NQ = 98.28, H_NQ = 452485, A_Q = 97.19, H_Q = 82646, zstd_ratio = 5.56%, training_time = 576s
+Epoch 21: A_NQ = 96.74, H_NQ = 433249, A_Q = 94.34, H_Q = 81928, zstd_ratio = 5.52%, training_time = 568s
+Epoch 22: A_NQ = 98.06, H_NQ = 450907, A_Q = 97.45, H_Q = 81447, zstd_ratio = 5.42%, training_time = 537s
+Epoch 23: A_NQ = 97.93, H_NQ = 476769, A_Q = 97.91, H_Q = 81040, zstd_ratio = 5.36%, training_time = 530s
+Epoch 24: A_NQ = 97.75, H_NQ = 562603, A_Q = 97.56, H_Q = 80630, zstd_ratio = 5.29%, training_time = 524s
+Epoch 25: A_NQ = 98.23, H_NQ = 506401, A_Q = 98.1, H_Q = 80074, zstd_ratio = 5.23%, training_time = 524s
+Epoch 26: A_NQ = 98.02, H_NQ = 492619, A_Q = 97.76, H_Q = 79617, zstd_ratio = 5.17%, training_time = 630s
+Epoch 27: A_NQ = 98.0, H_NQ = 540387, A_Q = 97.85, H_Q = 78900, zstd_ratio = 5.08%, training_time = 533s
+Epoch 28: A_NQ = 98.05, H_NQ = 535244, A_Q = 97.64, H_Q = 78633, zstd_ratio = 5.04%, training_time = 301s
+Epoch 29: A_NQ = 98.33, H_NQ = 552067, A_Q = 95.36, H_Q = 78170, zstd_ratio = 4.98%, training_time = 368s
+Epoch 30: A_NQ = 98.03, H_NQ = 553484, A_Q = 95.39, H_Q = 77792, zstd_ratio = 4.92%, training_time = 362s
+------------------------------------------------------------
+r = 1.1012
+Epoch 1: A_NQ = 70.54, H_NQ = 684981, A_Q = 69.63, H_Q = 167208, zstd_ratio = 16.26%, training_time = 492s
+Epoch 2: A_NQ = 85.05, H_NQ = 631011, A_Q = 85.37, H_Q = 81848, zstd_ratio = 7.14%, training_time = 353s
+Epoch 3: A_NQ = 88.4, H_NQ = 461161, A_Q = 88.66, H_Q = 61666, zstd_ratio = 4.54%, training_time = 348s
+Epoch 4: A_NQ = 92.28, H_NQ = 399497, A_Q = 92.45, H_Q = 55331, zstd_ratio = 4.03%, training_time = 328s
+Epoch 5: A_NQ = 93.31, H_NQ = 366271, A_Q = 92.64, H_Q = 53894, zstd_ratio = 3.90%, training_time = 359s
+Epoch 6: A_NQ = 94.45, H_NQ = 229646, A_Q = 94.21, H_Q = 53712, zstd_ratio = 3.88%, training_time = 327s
+Epoch 7: A_NQ = 94.1, H_NQ = 217849, A_Q = 93.35, H_Q = 53242, zstd_ratio = 3.84%, training_time = 360s
+Epoch 8: A_NQ = 95.26, H_NQ = 167388, A_Q = 95.14, H_Q = 52902, zstd_ratio = 3.81%, training_time = 355s
+Epoch 9: A_NQ = 95.37, H_NQ = 131746, A_Q = 95.21, H_Q = 52580, zstd_ratio = 3.78%, training_time = 324s
+Epoch 10: A_NQ = 96.34, H_NQ = 142623, A_Q = 96.35, H_Q = 52340, zstd_ratio = 3.73%, training_time = 324s
+Epoch 11: A_NQ = 96.52, H_NQ = 110013, A_Q = 96.0, H_Q = 52641, zstd_ratio = 3.73%, training_time = 324s
+Epoch 12: A_NQ = 96.23, H_NQ = 101327, A_Q = 95.92, H_Q = 51464, zstd_ratio = 3.64%, training_time = 325s
+Epoch 13: A_NQ = 96.54, H_NQ = 101311, A_Q = 96.43, H_Q = 51688, zstd_ratio = 3.62%, training_time = 322s
+Epoch 14: A_NQ = 96.53, H_NQ = 101344, A_Q = 96.49, H_Q = 50741, zstd_ratio = 3.58%, training_time = 848s
+Epoch 15: A_NQ = 96.88, H_NQ = 101313, A_Q = 96.67, H_Q = 50314, zstd_ratio = 3.53%, training_time = 782s
+Epoch 16: A_NQ = 97.09, H_NQ = 101313, A_Q = 97.09, H_Q = 50382, zstd_ratio = 3.52%, training_time = 817s
+Epoch 17: A_NQ = 96.74, H_NQ = 101311, A_Q = 96.84, H_Q = 50413, zstd_ratio = 3.47%, training_time = 874s
+Epoch 18: A_NQ = 97.54, H_NQ = 101313, A_Q = 96.92, H_Q = 50494, zstd_ratio = 3.45%, training_time = 802s
+Epoch 19: A_NQ = 97.09, H_NQ = 101313, A_Q = 97.2, H_Q = 49535, zstd_ratio = 3.40%, training_time = 862s
+Epoch 20: A_NQ = 96.28, H_NQ = 101313, A_Q = 96.05, H_Q = 49445, zstd_ratio = 3.37%, training_time = 637s
+Epoch 21: A_NQ = 97.65, H_NQ = 101311, A_Q = 97.54, H_Q = 49209, zstd_ratio = 3.34%, training_time = 764s
+Epoch 22: A_NQ = 97.37, H_NQ = 101313, A_Q = 97.33, H_Q = 49374, zstd_ratio = 3.29%, training_time = 882s
+Epoch 23: A_NQ = 97.43, H_NQ = 101313, A_Q = 97.46, H_Q = 48672, zstd_ratio = 3.26%, training_time = 894s
+Epoch 24: A_NQ = 97.86, H_NQ = 101313, A_Q = 97.74, H_Q = 48319, zstd_ratio = 3.23%, training_time = 838s
+Epoch 25: A_NQ = 97.77, H_NQ = 101313, A_Q = 97.44, H_Q = 48304, zstd_ratio = 3.19%, training_time = 828s
+Epoch 26: A_NQ = 97.65, H_NQ = 101313, A_Q = 97.71, H_Q = 48017, zstd_ratio = 3.15%, training_time = 805s
+Epoch 27: A_NQ = 97.04, H_NQ = 101309, A_Q = 96.81, H_Q = 47773, zstd_ratio = 3.11%, training_time = 846s
+Epoch 28: A_NQ = 97.69, H_NQ = 101311, A_Q = 96.59, H_Q = 47312, zstd_ratio = 3.07%, training_time = 794s
+Epoch 29: A_NQ = 97.53, H_NQ = 101313, A_Q = 97.72, H_Q = 47397, zstd_ratio = 3.05%, training_time = 785s
+Epoch 30: A_NQ = 96.51, H_NQ = 101313, A_Q = 95.59, H_Q = 46826, zstd_ratio = 3.01%, training_time = 792s
+------------------------------------------------------------
+r = 1.1021
+Epoch 1: A_NQ = 86.73, H_NQ = 685841, A_Q = 86.12, H_Q = 255943, zstd_ratio = 24.35%, training_time = 625s
+Epoch 2: A_NQ = 91.49, H_NQ = 685302, A_Q = 91.16, H_Q = 233827, zstd_ratio = 21.65%, training_time = 655s
+Epoch 3: A_NQ = 94.12, H_NQ = 682002, A_Q = 93.85, H_Q = 199353, zstd_ratio = 17.49%, training_time = 674s
+Epoch 4: A_NQ = 95.18, H_NQ = 678623, A_Q = 95.26, H_Q = 169209, zstd_ratio = 13.86%, training_time = 802s
+Epoch 5: A_NQ = 96.67, H_NQ = 671739, A_Q = 96.31, H_Q = 157564, zstd_ratio = 12.28%, training_time = 762s
+Epoch 6: A_NQ = 96.58, H_NQ = 674857, A_Q = 96.43, H_Q = 152100, zstd_ratio = 11.53%, training_time = 829s
+Epoch 7: A_NQ = 96.83, H_NQ = 671122, A_Q = 96.16, H_Q = 159495, zstd_ratio = 11.69%, training_time = 850s
+Epoch 8: A_NQ = 97.51, H_NQ = 680012, A_Q = 97.16, H_Q = 141090, zstd_ratio = 10.08%, training_time = 694s
+Epoch 9: A_NQ = 97.43, H_NQ = 681186, A_Q = 97.39, H_Q = 136943, zstd_ratio = 9.46%, training_time = 672s
+Epoch 10: A_NQ = 97.07, H_NQ = 679025, A_Q = 96.68, H_Q = 133898, zstd_ratio = 9.09%, training_time = 811s
+Epoch 11: A_NQ = 97.84, H_NQ = 681374, A_Q = 97.9, H_Q = 138901, zstd_ratio = 9.26%, training_time = 802s
+Epoch 12: A_NQ = 97.93, H_NQ = 681046, A_Q = 97.87, H_Q = 134256, zstd_ratio = 8.93%, training_time = 783s
+Epoch 13: A_NQ = 97.81, H_NQ = 680861, A_Q = 97.71, H_Q = 133486, zstd_ratio = 8.57%, training_time = 779s
+Epoch 14: A_NQ = 98.22, H_NQ = 681081, A_Q = 97.4, H_Q = 127029, zstd_ratio = 8.35%, training_time = 785s
+Epoch 15: A_NQ = 97.65, H_NQ = 680124, A_Q = 97.6, H_Q = 127654, zstd_ratio = 8.06%, training_time = 668s
+Epoch 16: A_NQ = 97.66, H_NQ = 678383, A_Q = 97.49, H_Q = 118452, zstd_ratio = 7.80%, training_time = 655s
+Epoch 17: A_NQ = 97.82, H_NQ = 680531, A_Q = 97.78, H_Q = 127595, zstd_ratio = 7.62%, training_time = 624s
+Epoch 18: A_NQ = 97.89, H_NQ = 679699, A_Q = 96.7, H_Q = 124019, zstd_ratio = 7.66%, training_time = 643s
+Epoch 19: A_NQ = 98.2, H_NQ = 677712, A_Q = 97.93, H_Q = 121520, zstd_ratio = 7.51%, training_time = 652s
+Epoch 20: A_NQ = 96.63, H_NQ = 680026, A_Q = 95.41, H_Q = 116036, zstd_ratio = 7.35%, training_time = 625s
+Epoch 21: A_NQ = 97.73, H_NQ = 680049, A_Q = 89.72, H_Q = 123608, zstd_ratio = 6.98%, training_time = 602s
+Epoch 22: A_NQ = 98.01, H_NQ = 679961, A_Q = 95.31, H_Q = 121850, zstd_ratio = 6.87%, training_time = 620s
+Epoch 23: A_NQ = 97.88, H_NQ = 679376, A_Q = 93.18, H_Q = 116143, zstd_ratio = 6.94%, training_time = 609s
+Epoch 24: A_NQ = 97.12, H_NQ = 679496, A_Q = 97.03, H_Q = 118994, zstd_ratio = 6.76%, training_time = 602s
+Epoch 25: A_NQ = 97.68, H_NQ = 679672, A_Q = 97.59, H_Q = 119757, zstd_ratio = 6.69%, training_time = 591s
+Epoch 26: A_NQ = 97.87, H_NQ = 677208, A_Q = 97.83, H_Q = 116748, zstd_ratio = 6.56%, training_time = 754s
+Epoch 27: A_NQ = 98.0, H_NQ = 678286, A_Q = 96.37, H_Q = 118379, zstd_ratio = 6.48%, training_time = 744s
+Epoch 28: A_NQ = 97.91, H_NQ = 679209, A_Q = 97.23, H_Q = 116375, zstd_ratio = 6.45%, training_time = 604s
+Epoch 29: A_NQ = 98.16, H_NQ = 677691, A_Q = 97.62, H_Q = 115454, zstd_ratio = 6.34%, training_time = 612s
+Epoch 30: A_NQ = 97.2, H_NQ = 674997, A_Q = 93.26, H_Q = 113929, zstd_ratio = 6.19%, training_time = 600s
+------------------------------------------------------------
+r = 1.1015
+Epoch 1: A_NQ = 89.49, H_NQ = 685501, A_Q = 88.97, H_Q = 208086, zstd_ratio = 19.90%, training_time = 635s
+Epoch 2: A_NQ = 92.75, H_NQ = 651626, A_Q = 92.27, H_Q = 148121, zstd_ratio = 13.01%, training_time = 706s
+Epoch 3: A_NQ = 94.25, H_NQ = 525768, A_Q = 94.07, H_Q = 125173, zstd_ratio = 10.20%, training_time = 697s
+Epoch 4: A_NQ = 94.87, H_NQ = 541591, A_Q = 94.43, H_Q = 116443, zstd_ratio = 9.08%, training_time = 727s
+Epoch 5: A_NQ = 96.08, H_NQ = 463902, A_Q = 96.02, H_Q = 113449, zstd_ratio = 8.70%, training_time = 705s
+Epoch 6: A_NQ = 96.78, H_NQ = 422149, A_Q = 96.72, H_Q = 111307, zstd_ratio = 8.41%, training_time = 769s
+Epoch 7: A_NQ = 96.76, H_NQ = 387974, A_Q = 97.12, H_Q = 109090, zstd_ratio = 8.16%, training_time = 781s
+Epoch 8: A_NQ = 97.27, H_NQ = 365237, A_Q = 97.4, H_Q = 106584, zstd_ratio = 7.87%, training_time = 793s
+Epoch 9: A_NQ = 96.59, H_NQ = 427689, A_Q = 94.38, H_Q = 104583, zstd_ratio = 7.66%, training_time = 775s
+Epoch 10: A_NQ = 97.38, H_NQ = 471516, A_Q = 96.94, H_Q = 102024, zstd_ratio = 7.37%, training_time = 810s
+Epoch 11: A_NQ = 97.33, H_NQ = 511997, A_Q = 96.66, H_Q = 100548, zstd_ratio = 7.17%, training_time = 820s
+Epoch 12: A_NQ = 96.37, H_NQ = 549694, A_Q = 97.75, H_Q = 98722, zstd_ratio = 6.99%, training_time = 833s
+Epoch 13: A_NQ = 97.42, H_NQ = 585832, A_Q = 97.45, H_Q = 97498, zstd_ratio = 6.81%, training_time = 788s
+Epoch 14: A_NQ = 98.08, H_NQ = 579036, A_Q = 98.1, H_Q = 97120, zstd_ratio = 6.67%, training_time = 777s
+Epoch 15: A_NQ = 97.02, H_NQ = 655433, A_Q = 96.12, H_Q = 96654, zstd_ratio = 6.51%, training_time = 747s
+Epoch 16: A_NQ = 98.24, H_NQ = 638384, A_Q = 97.95, H_Q = 95869, zstd_ratio = 6.36%, training_time = 798s
+Epoch 17: A_NQ = 97.88, H_NQ = 680430, A_Q = 97.9, H_Q = 96970, zstd_ratio = 6.37%, training_time = 710s
+Epoch 18: A_NQ = 97.7, H_NQ = 662669, A_Q = 97.68, H_Q = 107334, zstd_ratio = 6.74%, training_time = 807s
+Epoch 19: A_NQ = 98.32, H_NQ = 681467, A_Q = 97.62, H_Q = 94152, zstd_ratio = 6.15%, training_time = 780s
+Epoch 20: A_NQ = 98.5, H_NQ = 680453, A_Q = 98.11, H_Q = 99700, zstd_ratio = 6.21%, training_time = 768s
+Epoch 21: A_NQ = 98.06, H_NQ = 675852, A_Q = 96.78, H_Q = 93465, zstd_ratio = 5.99%, training_time = 677s
+Epoch 22: A_NQ = 98.08, H_NQ = 682178, A_Q = 97.5, H_Q = 109662, zstd_ratio = 6.21%, training_time = 584s
+Epoch 23: A_NQ = 97.38, H_NQ = 682280, A_Q = 97.69, H_Q = 108143, zstd_ratio = 6.19%, training_time = 658s
+Epoch 24: A_NQ = 98.13, H_NQ = 674217, A_Q = 98.12, H_Q = 106733, zstd_ratio = 6.07%, training_time = 564s
+Epoch 25: A_NQ = 97.65, H_NQ = 679676, A_Q = 97.85, H_Q = 89504, zstd_ratio = 5.55%, training_time = 582s
+Epoch 26: A_NQ = 98.29, H_NQ = 681038, A_Q = 96.29, H_Q = 94768, zstd_ratio = 5.64%, training_time = 654s
+Epoch 27: A_NQ = 98.28, H_NQ = 648629, A_Q = 98.14, H_Q = 88867, zstd_ratio = 5.38%, training_time = 575s
+Epoch 28: A_NQ = 97.75, H_NQ = 672762, A_Q = 95.8, H_Q = 88185, zstd_ratio = 5.32%, training_time = 648s
+Epoch 29: A_NQ = 98.23, H_NQ = 631790, A_Q = 97.4, H_Q = 103912, zstd_ratio = 5.82%, training_time = 647s
+Epoch 30: A_NQ = 98.48, H_NQ = 677847, A_Q = 98.32, H_Q = 102200, zstd_ratio = 5.55%, training_time = 642s
+------------------------------------------------------------
+r = 1.1013
+Epoch 1: A_NQ = 83.88, H_NQ = 685857, A_Q = 83.46, H_Q = 263037, zstd_ratio = 25.24%, training_time = 522s
+Epoch 2: A_NQ = 90.96, H_NQ = 685873, A_Q = 91.05, H_Q = 256084, zstd_ratio = 24.51%, training_time = 759s
+Epoch 3: A_NQ = 93.75, H_NQ = 685857, A_Q = 92.87, H_Q = 245273, zstd_ratio = 23.33%, training_time = 759s
+Epoch 4: A_NQ = 94.64, H_NQ = 685855, A_Q = 94.25, H_Q = 230728, zstd_ratio = 21.57%, training_time = 744s
+Epoch 5: A_NQ = 95.87, H_NQ = 685849, A_Q = 95.95, H_Q = 214740, zstd_ratio = 19.41%, training_time = 752s
+Epoch 6: A_NQ = 96.69, H_NQ = 685851, A_Q = 96.11, H_Q = 199577, zstd_ratio = 17.44%, training_time = 761s
+Epoch 7: A_NQ = 97.17, H_NQ = 685819, A_Q = 97.13, H_Q = 186808, zstd_ratio = 15.72%, training_time = 781s
+Epoch 8: A_NQ = 96.7, H_NQ = 685777, A_Q = 95.0, H_Q = 175409, zstd_ratio = 14.61%, training_time = 791s
+Epoch 9: A_NQ = 97.07, H_NQ = 685775, A_Q = 97.12, H_Q = 166720, zstd_ratio = 13.56%, training_time = 765s
+Epoch 10: A_NQ = 97.25, H_NQ = 685749, A_Q = 96.94, H_Q = 157206, zstd_ratio = 12.60%, training_time = 792s
+Epoch 11: A_NQ = 96.83, H_NQ = 685749, A_Q = 96.91, H_Q = 151295, zstd_ratio = 11.98%, training_time = 794s
+Epoch 12: A_NQ = 97.44, H_NQ = 685699, A_Q = 96.9, H_Q = 147517, zstd_ratio = 11.45%, training_time = 766s
+Epoch 13: A_NQ = 97.21, H_NQ = 685703, A_Q = 95.91, H_Q = 141198, zstd_ratio = 10.88%, training_time = 764s
+Epoch 14: A_NQ = 97.24, H_NQ = 685689, A_Q = 97.07, H_Q = 138660, zstd_ratio = 10.29%, training_time = 766s
+Epoch 15: A_NQ = 97.76, H_NQ = 685638, A_Q = 97.23, H_Q = 134689, zstd_ratio = 9.85%, training_time = 763s
+Epoch 16: A_NQ = 98.29, H_NQ = 685573, A_Q = 98.2, H_Q = 129640, zstd_ratio = 9.51%, training_time = 753s
+Epoch 17: A_NQ = 96.63, H_NQ = 685370, A_Q = 86.22, H_Q = 128524, zstd_ratio = 9.26%, training_time = 737s
+Epoch 18: A_NQ = 97.74, H_NQ = 685274, A_Q = 97.73, H_Q = 124842, zstd_ratio = 8.96%, training_time = 731s
+Epoch 19: A_NQ = 98.24, H_NQ = 684908, A_Q = 98.05, H_Q = 125674, zstd_ratio = 8.49%, training_time = 714s
+Epoch 20: A_NQ = 94.72, H_NQ = 684394, A_Q = 97.65, H_Q = 123984, zstd_ratio = 8.38%, training_time = 722s
+Epoch 21: A_NQ = 98.06, H_NQ = 684059, A_Q = 97.88, H_Q = 120003, zstd_ratio = 8.02%, training_time = 684s
+Epoch 22: A_NQ = 97.93, H_NQ = 683689, A_Q = 96.19, H_Q = 116999, zstd_ratio = 7.80%, training_time = 713s
+Epoch 23: A_NQ = 97.93, H_NQ = 683037, A_Q = 98.12, H_Q = 117678, zstd_ratio = 7.54%, training_time = 683s
+Epoch 24: A_NQ = 97.99, H_NQ = 682588, A_Q = 96.98, H_Q = 115598, zstd_ratio = 7.60%, training_time = 685s
+Epoch 25: A_NQ = 96.35, H_NQ = 682189, A_Q = 97.52, H_Q = 118844, zstd_ratio = 7.73%, training_time = 687s
+Epoch 26: A_NQ = 98.26, H_NQ = 681989, A_Q = 97.12, H_Q = 117063, zstd_ratio = 7.22%, training_time = 678s
+Epoch 27: A_NQ = 97.68, H_NQ = 681271, A_Q = 97.16, H_Q = 119187, zstd_ratio = 7.16%, training_time = 672s
+Epoch 28: A_NQ = 97.55, H_NQ = 681351, A_Q = 96.93, H_Q = 112340, zstd_ratio = 6.95%, training_time = 677s
+Epoch 29: A_NQ = 98.32, H_NQ = 680477, A_Q = 97.47, H_Q = 111950, zstd_ratio = 6.87%, training_time = 672s
+Epoch 30: A_NQ = 98.17, H_NQ = 679996, A_Q = 96.48, H_Q = 113572, zstd_ratio = 6.88%, training_time = 664s
+------------------------------------------------------------
+r = 1.1001
+Epoch 1: A_NQ = 86.1, H_NQ = 685762, A_Q = 86.29, H_Q = 238272, zstd_ratio = 22.45%, training_time = 694s
+Epoch 2: A_NQ = 91.21, H_NQ = 676984, A_Q = 90.77, H_Q = 200470, zstd_ratio = 17.73%, training_time = 729s
+Epoch 3: A_NQ = 94.4, H_NQ = 635660, A_Q = 93.75, H_Q = 171587, zstd_ratio = 14.31%, training_time = 723s
+Epoch 4: A_NQ = 95.08, H_NQ = 603099, A_Q = 94.97, H_Q = 150859, zstd_ratio = 11.94%, training_time = 744s
+Epoch 5: A_NQ = 96.09, H_NQ = 560430, A_Q = 95.83, H_Q = 139693, zstd_ratio = 10.68%, training_time = 755s
+Epoch 6: A_NQ = 95.78, H_NQ = 526392, A_Q = 95.6, H_Q = 135318, zstd_ratio = 10.04%, training_time = 766s
+Epoch 7: A_NQ = 97.08, H_NQ = 499503, A_Q = 96.81, H_Q = 132246, zstd_ratio = 9.66%, training_time = 738s
+Epoch 8: A_NQ = 96.75, H_NQ = 432477, A_Q = 96.86, H_Q = 128311, zstd_ratio = 9.21%, training_time = 758s
+Epoch 9: A_NQ = 97.47, H_NQ = 468328, A_Q = 96.92, H_Q = 125156, zstd_ratio = 8.84%, training_time = 778s
+Epoch 10: A_NQ = 97.69, H_NQ = 522107, A_Q = 97.65, H_Q = 122651, zstd_ratio = 8.57%, training_time = 785s
+Epoch 11: A_NQ = 97.57, H_NQ = 544448, A_Q = 96.39, H_Q = 120360, zstd_ratio = 8.25%, training_time = 747s
+Epoch 12: A_NQ = 97.38, H_NQ = 590942, A_Q = 96.23, H_Q = 118189, zstd_ratio = 8.11%, training_time = 772s
+Epoch 13: A_NQ = 97.93, H_NQ = 581327, A_Q = 95.74, H_Q = 116156, zstd_ratio = 7.81%, training_time = 764s
+Epoch 14: A_NQ = 98.12, H_NQ = 608218, A_Q = 98.04, H_Q = 113963, zstd_ratio = 7.58%, training_time = 783s
+Epoch 15: A_NQ = 97.72, H_NQ = 597148, A_Q = 97.69, H_Q = 112478, zstd_ratio = 7.39%, training_time = 764s
+Epoch 16: A_NQ = 97.6, H_NQ = 614544, A_Q = 97.77, H_Q = 110565, zstd_ratio = 7.14%, training_time = 738s
+Epoch 17: A_NQ = 98.23, H_NQ = 642877, A_Q = 98.26, H_Q = 125382, zstd_ratio = 7.30%, training_time = 729s
+Epoch 18: A_NQ = 97.89, H_NQ = 606445, A_Q = 97.87, H_Q = 107063, zstd_ratio = 6.77%, training_time = 732s
+Epoch 19: A_NQ = 98.25, H_NQ = 625296, A_Q = 96.48, H_Q = 105417, zstd_ratio = 6.59%, training_time = 712s
+Epoch 20: A_NQ = 97.98, H_NQ = 620578, A_Q = 97.5, H_Q = 104399, zstd_ratio = 6.47%, training_time = 679s
+Epoch 21: A_NQ = 98.28, H_NQ = 635118, A_Q = 97.94, H_Q = 103381, zstd_ratio = 6.36%, training_time = 648s
+Epoch 22: A_NQ = 98.14, H_NQ = 678907, A_Q = 97.7, H_Q = 101904, zstd_ratio = 6.24%, training_time = 642s
+Epoch 23: A_NQ = 98.44, H_NQ = 680058, A_Q = 98.29, H_Q = 101413, zstd_ratio = 6.13%, training_time = 658s
+Epoch 24: A_NQ = 98.35, H_NQ = 655841, A_Q = 97.51, H_Q = 99646, zstd_ratio = 5.98%, training_time = 695s
+Epoch 25: A_NQ = 98.23, H_NQ = 646741, A_Q = 97.17, H_Q = 99968, zstd_ratio = 5.90%, training_time = 682s
+Epoch 26: A_NQ = 98.45, H_NQ = 619638, A_Q = 98.15, H_Q = 99098, zstd_ratio = 5.85%, training_time = 734s
+Epoch 27: A_NQ = 98.68, H_NQ = 667396, A_Q = 96.53, H_Q = 97485, zstd_ratio = 5.70%, training_time = 740s
+Epoch 28: A_NQ = 97.8, H_NQ = 632259, A_Q = 97.26, H_Q = 96314, zstd_ratio = 5.52%, training_time = 730s
+Epoch 29: A_NQ = 97.96, H_NQ = 608337, A_Q = 89.92, H_Q = 96665, zstd_ratio = 5.41%, training_time = 747s
+Epoch 30: A_NQ = 98.28, H_NQ = 619526, A_Q = 98.1, H_Q = 96185, zstd_ratio = 5.35%, training_time = 664s
+------------------------------------------------------------
+r = 1.1003
+Epoch 1: A_NQ = 87.45, H_NQ = 685515, A_Q = 86.99, H_Q = 218019, zstd_ratio = 20.77%, training_time = 846s
+Epoch 2: A_NQ = 92.28, H_NQ = 662279, A_Q = 92.06, H_Q = 156970, zstd_ratio = 13.69%, training_time = 746s
+Epoch 3: A_NQ = 94.01, H_NQ = 627148, A_Q = 94.0, H_Q = 130041, zstd_ratio = 10.42%, training_time = 818s
+Epoch 4: A_NQ = 95.3, H_NQ = 575311, A_Q = 95.06, H_Q = 120700, zstd_ratio = 9.42%, training_time = 803s
+Epoch 5: A_NQ = 95.84, H_NQ = 504782, A_Q = 95.09, H_Q = 117683, zstd_ratio = 9.05%, training_time = 830s
+Epoch 6: A_NQ = 96.83, H_NQ = 501112, A_Q = 97.01, H_Q = 114803, zstd_ratio = 8.63%, training_time = 859s
+Epoch 7: A_NQ = 96.99, H_NQ = 552016, A_Q = 96.43, H_Q = 112003, zstd_ratio = 8.37%, training_time = 868s
+Epoch 8: A_NQ = 97.38, H_NQ = 568486, A_Q = 97.29, H_Q = 108589, zstd_ratio = 8.09%, training_time = 844s
+Epoch 9: A_NQ = 97.77, H_NQ = 580450, A_Q = 97.53, H_Q = 105459, zstd_ratio = 7.75%, training_time = 821s
+Epoch 10: A_NQ = 97.71, H_NQ = 674482, A_Q = 97.34, H_Q = 103801, zstd_ratio = 7.60%, training_time = 828s
+Epoch 11: A_NQ = 97.71, H_NQ = 676347, A_Q = 97.72, H_Q = 102457, zstd_ratio = 7.48%, training_time = 819s
+Epoch 12: A_NQ = 96.84, H_NQ = 683587, A_Q = 97.59, H_Q = 105761, zstd_ratio = 8.06%, training_time = 824s
+Epoch 13: A_NQ = 98.07, H_NQ = 682915, A_Q = 97.5, H_Q = 99214, zstd_ratio = 7.30%, training_time = 822s
+Epoch 14: A_NQ = 98.23, H_NQ = 684085, A_Q = 98.24, H_Q = 97339, zstd_ratio = 7.20%, training_time = 775s
+Epoch 15: A_NQ = 97.73, H_NQ = 684783, A_Q = 97.61, H_Q = 104481, zstd_ratio = 7.77%, training_time = 753s
+Epoch 16: A_NQ = 97.81, H_NQ = 684711, A_Q = 97.85, H_Q = 104504, zstd_ratio = 8.15%, training_time = 744s
+Epoch 17: A_NQ = 98.13, H_NQ = 684063, A_Q = 97.06, H_Q = 95220, zstd_ratio = 6.96%, training_time = 751s
+Epoch 18: A_NQ = 97.72, H_NQ = 683656, A_Q = 97.83, H_Q = 96490, zstd_ratio = 7.10%, training_time = 720s
+Epoch 19: A_NQ = 98.18, H_NQ = 683601, A_Q = 98.31, H_Q = 100233, zstd_ratio = 7.64%, training_time = 699s
+Epoch 20: A_NQ = 98.55, H_NQ = 684051, A_Q = 97.54, H_Q = 100905, zstd_ratio = 7.31%, training_time = 698s
+Epoch 21: A_NQ = 97.85, H_NQ = 684366, A_Q = 98.03, H_Q = 97347, zstd_ratio = 7.34%, training_time = 701s
+Epoch 22: A_NQ = 98.28, H_NQ = 684479, A_Q = 98.15, H_Q = 104547, zstd_ratio = 7.72%, training_time = 691s
+Epoch 23: A_NQ = 98.41, H_NQ = 684165, A_Q = 97.99, H_Q = 104447, zstd_ratio = 7.67%, training_time = 692s
+Epoch 24: A_NQ = 98.44, H_NQ = 683941, A_Q = 98.28, H_Q = 93865, zstd_ratio = 6.85%, training_time = 721s
+Epoch 25: A_NQ = 97.98, H_NQ = 683846, A_Q = 95.14, H_Q = 98415, zstd_ratio = 7.11%, training_time = 673s
+Epoch 26: A_NQ = 98.23, H_NQ = 683650, A_Q = 98.22, H_Q = 98249, zstd_ratio = 7.14%, training_time = 693s
+Epoch 27: A_NQ = 97.83, H_NQ = 683882, A_Q = 96.38, H_Q = 98536, zstd_ratio = 7.06%, training_time = 700s
+Epoch 28: A_NQ = 98.42, H_NQ = 683953, A_Q = 96.92, H_Q = 90120, zstd_ratio = 6.42%, training_time = 675s
+Epoch 29: A_NQ = 98.47, H_NQ = 683043, A_Q = 98.0, H_Q = 95555, zstd_ratio = 6.73%, training_time = 673s
+Epoch 30: A_NQ = 98.26, H_NQ = 684590, A_Q = 98.45, H_Q = 97472, zstd_ratio = 7.11%, training_time = 650s
+------------------------------------------------------------
+r = 1.1032
+Epoch 1: A_NQ = 86.7, H_NQ = 685205, A_Q = 86.13, H_Q = 201763, zstd_ratio = 19.38%, training_time = 864s
+Epoch 2: A_NQ = 92.78, H_NQ = 649972, A_Q = 92.81, H_Q = 126991, zstd_ratio = 11.14%, training_time = 865s
+Epoch 3: A_NQ = 94.72, H_NQ = 562524, A_Q = 94.62, H_Q = 97194, zstd_ratio = 7.58%, training_time = 833s
+Epoch 4: A_NQ = 95.53, H_NQ = 540348, A_Q = 95.27, H_Q = 88212, zstd_ratio = 6.72%, training_time = 882s
+Epoch 5: A_NQ = 96.7, H_NQ = 403208, A_Q = 96.74, H_Q = 84840, zstd_ratio = 6.40%, training_time = 908s
+Epoch 6: A_NQ = 96.5, H_NQ = 396361, A_Q = 96.53, H_Q = 83911, zstd_ratio = 6.19%, training_time = 970s
+Epoch 7: A_NQ = 97.55, H_NQ = 265206, A_Q = 97.26, H_Q = 82184, zstd_ratio = 6.09%, training_time = 986s
+Epoch 8: A_NQ = 97.51, H_NQ = 245196, A_Q = 97.09, H_Q = 80992, zstd_ratio = 5.88%, training_time = 952s
+Epoch 9: A_NQ = 98.03, H_NQ = 214916, A_Q = 97.93, H_Q = 80020, zstd_ratio = 5.78%, training_time = 887s
+Epoch 10: A_NQ = 97.74, H_NQ = 177913, A_Q = 97.19, H_Q = 78768, zstd_ratio = 5.64%, training_time = 356s
+Epoch 11: A_NQ = 97.43, H_NQ = 176651, A_Q = 97.18, H_Q = 77698, zstd_ratio = 5.55%, training_time = 351s
+Epoch 12: A_NQ = 98.35, H_NQ = 168360, A_Q = 98.15, H_Q = 76757, zstd_ratio = 5.41%, training_time = 895s
+Epoch 13: A_NQ = 98.32, H_NQ = 186769, A_Q = 98.23, H_Q = 75744, zstd_ratio = 5.33%, training_time = 893s
+Epoch 14: A_NQ = 97.34, H_NQ = 218656, A_Q = 95.68, H_Q = 75490, zstd_ratio = 5.22%, training_time = 880s
+Epoch 15: A_NQ = 98.36, H_NQ = 268369, A_Q = 98.1, H_Q = 74230, zstd_ratio = 5.13%, training_time = 821s
+Epoch 16: A_NQ = 98.28, H_NQ = 346810, A_Q = 98.14, H_Q = 73796, zstd_ratio = 5.06%, training_time = 772s
+Epoch 17: A_NQ = 98.35, H_NQ = 338683, A_Q = 98.18, H_Q = 72977, zstd_ratio = 4.95%, training_time = 804s
+Epoch 18: A_NQ = 98.24, H_NQ = 451801, A_Q = 97.95, H_Q = 71346, zstd_ratio = 4.84%, training_time = 806s
+Epoch 19: A_NQ = 97.79, H_NQ = 390720, A_Q = 97.88, H_Q = 70853, zstd_ratio = 4.73%, training_time = 751s
+Epoch 20: A_NQ = 98.29, H_NQ = 432048, A_Q = 97.59, H_Q = 70508, zstd_ratio = 4.68%, training_time = 771s
+Epoch 21: A_NQ = 98.79, H_NQ = 437170, A_Q = 97.44, H_Q = 69938, zstd_ratio = 4.61%, training_time = 746s
+Epoch 22: A_NQ = 98.55, H_NQ = 466386, A_Q = 97.45, H_Q = 69625, zstd_ratio = 4.55%, training_time = 759s
+Epoch 23: A_NQ = 98.64, H_NQ = 469608, A_Q = 98.59, H_Q = 69407, zstd_ratio = 4.50%, training_time = 789s
+Epoch 24: A_NQ = 98.67, H_NQ = 467545, A_Q = 98.55, H_Q = 68832, zstd_ratio = 4.45%, training_time = 744s
+Epoch 25: A_NQ = 98.79, H_NQ = 490380, A_Q = 97.36, H_Q = 68580, zstd_ratio = 4.40%, training_time = 743s
+Epoch 26: A_NQ = 98.13, H_NQ = 493798, A_Q = 98.04, H_Q = 67974, zstd_ratio = 4.33%, training_time = 745s
+Epoch 27: A_NQ = 98.15, H_NQ = 524400, A_Q = 98.02, H_Q = 67778, zstd_ratio = 4.29%, training_time = 729s
+Epoch 28: A_NQ = 98.59, H_NQ = 490224, A_Q = 96.8, H_Q = 67488, zstd_ratio = 4.25%, training_time = 546s
+Epoch 29: A_NQ = 97.74, H_NQ = 487240, A_Q = 98.33, H_Q = 67053, zstd_ratio = 4.20%, training_time = 666s
+Epoch 30: A_NQ = 98.39, H_NQ = 491224, A_Q = 98.48, H_Q = 67036, zstd_ratio = 4.16%, training_time = 652s
+------------------------------------------------------------
+r = 1.1005
+Epoch 1: A_NQ = 86.14, H_NQ = 685642, A_Q = 85.77, H_Q = 225386, zstd_ratio = 21.42%, training_time = 540s
+Epoch 2: A_NQ = 91.28, H_NQ = 665140, A_Q = 91.08, H_Q = 166775, zstd_ratio = 14.58%, training_time = 666s
+Epoch 3: A_NQ = 93.95, H_NQ = 601156, A_Q = 93.72, H_Q = 136278, zstd_ratio = 11.15%, training_time = 769s
+Epoch 4: A_NQ = 94.74, H_NQ = 510583, A_Q = 94.38, H_Q = 117183, zstd_ratio = 9.13%, training_time = 604s
+Epoch 5: A_NQ = 96.28, H_NQ = 499215, A_Q = 96.18, H_Q = 111529, zstd_ratio = 8.52%, training_time = 769s
+Epoch 6: A_NQ = 96.04, H_NQ = 464908, A_Q = 96.02, H_Q = 108479, zstd_ratio = 8.25%, training_time = 811s
+Epoch 7: A_NQ = 96.63, H_NQ = 370809, A_Q = 94.83, H_Q = 105580, zstd_ratio = 7.93%, training_time = 867s
+Epoch 8: A_NQ = 97.25, H_NQ = 323687, A_Q = 97.4, H_Q = 103232, zstd_ratio = 7.63%, training_time = 844s
+Epoch 9: A_NQ = 96.95, H_NQ = 290066, A_Q = 96.22, H_Q = 100030, zstd_ratio = 7.31%, training_time = 891s
+Epoch 10: A_NQ = 97.76, H_NQ = 268283, A_Q = 97.53, H_Q = 97421, zstd_ratio = 7.05%, training_time = 715s
+Epoch 11: A_NQ = 97.9, H_NQ = 333530, A_Q = 97.81, H_Q = 95920, zstd_ratio = 6.83%, training_time = 877s
+Epoch 12: A_NQ = 97.95, H_NQ = 375996, A_Q = 97.99, H_Q = 94260, zstd_ratio = 6.72%, training_time = 846s
+Epoch 13: A_NQ = 98.08, H_NQ = 446175, A_Q = 97.85, H_Q = 93053, zstd_ratio = 6.54%, training_time = 861s
+Epoch 14: A_NQ = 98.25, H_NQ = 536450, A_Q = 98.0, H_Q = 91616, zstd_ratio = 6.39%, training_time = 851s
+Epoch 15: A_NQ = 97.87, H_NQ = 554103, A_Q = 97.37, H_Q = 89977, zstd_ratio = 6.27%, training_time = 865s
+Epoch 16: A_NQ = 98.05, H_NQ = 550013, A_Q = 97.46, H_Q = 88308, zstd_ratio = 6.07%, training_time = 826s
+Epoch 17: A_NQ = 97.87, H_NQ = 668371, A_Q = 98.37, H_Q = 87741, zstd_ratio = 6.03%, training_time = 837s
+Epoch 18: A_NQ = 97.45, H_NQ = 620601, A_Q = 97.53, H_Q = 87126, zstd_ratio = 5.92%, training_time = 805s
+Epoch 19: A_NQ = 98.37, H_NQ = 601258, A_Q = 97.91, H_Q = 86281, zstd_ratio = 5.82%, training_time = 789s
+Epoch 20: A_NQ = 98.22, H_NQ = 601709, A_Q = 97.64, H_Q = 85721, zstd_ratio = 5.73%, training_time = 771s
+Epoch 21: A_NQ = 98.12, H_NQ = 682325, A_Q = 97.71, H_Q = 85332, zstd_ratio = 5.83%, training_time = 772s
+Epoch 22: A_NQ = 98.14, H_NQ = 680949, A_Q = 97.61, H_Q = 84280, zstd_ratio = 5.62%, training_time = 810s
+Epoch 23: A_NQ = 98.47, H_NQ = 658560, A_Q = 98.05, H_Q = 83373, zstd_ratio = 5.52%, training_time = 755s
+Epoch 24: A_NQ = 97.54, H_NQ = 673381, A_Q = 94.23, H_Q = 83053, zstd_ratio = 5.46%, training_time = 803s
+Epoch 25: A_NQ = 98.46, H_NQ = 677301, A_Q = 98.34, H_Q = 82781, zstd_ratio = 5.45%, training_time = 794s
+Epoch 26: A_NQ = 98.14, H_NQ = 665685, A_Q = 98.2, H_Q = 82483, zstd_ratio = 5.37%, training_time = 793s
+Epoch 27: A_NQ = 98.25, H_NQ = 673195, A_Q = 98.22, H_Q = 81718, zstd_ratio = 5.31%, training_time = 755s
+Epoch 28: A_NQ = 98.02, H_NQ = 680052, A_Q = 98.12, H_Q = 79909, zstd_ratio = 5.18%, training_time = 744s
+Epoch 29: A_NQ = 98.28, H_NQ = 672928, A_Q = 92.94, H_Q = 80387, zstd_ratio = 5.22%, training_time = 729s
+Epoch 30: A_NQ = 98.2, H_NQ = 671888, A_Q = 94.69, H_Q = 81565, zstd_ratio = 5.31%, training_time = 714s
+------------------------------------------------------------
+r = 1.1004
+Epoch 1: A_NQ = 86.68, H_NQ = 685837, A_Q = 86.38, H_Q = 243791, zstd_ratio = 23.16%, training_time = 763s
+Epoch 2: A_NQ = 92.58, H_NQ = 683221, A_Q = 92.31, H_Q = 195445, zstd_ratio = 17.53%, training_time = 770s
+Epoch 3: A_NQ = 93.88, H_NQ = 671287, A_Q = 93.89, H_Q = 147558, zstd_ratio = 12.42%, training_time = 729s
+Epoch 4: A_NQ = 95.42, H_NQ = 653548, A_Q = 95.04, H_Q = 120985, zstd_ratio = 9.39%, training_time = 570s
+Epoch 5: A_NQ = 96.12, H_NQ = 612496, A_Q = 96.24, H_Q = 110612, zstd_ratio = 8.46%, training_time = 915s
+Epoch 6: A_NQ = 96.59, H_NQ = 647198, A_Q = 96.23, H_Q = 106468, zstd_ratio = 8.00%, training_time = 905s
+Epoch 7: A_NQ = 97.1, H_NQ = 622271, A_Q = 96.86, H_Q = 103647, zstd_ratio = 7.66%, training_time = 947s
+Epoch 8: A_NQ = 97.51, H_NQ = 614046, A_Q = 97.5, H_Q = 104626, zstd_ratio = 7.58%, training_time = 929s
+Epoch 9: A_NQ = 97.33, H_NQ = 615751, A_Q = 97.37, H_Q = 98917, zstd_ratio = 7.33%, training_time = 940s
+Epoch 10: A_NQ = 97.99, H_NQ = 683646, A_Q = 97.9, H_Q = 100406, zstd_ratio = 7.46%, training_time = 946s
+Epoch 11: A_NQ = 97.65, H_NQ = 654666, A_Q = 97.69, H_Q = 92216, zstd_ratio = 6.73%, training_time = 940s
+Epoch 12: A_NQ = 97.97, H_NQ = 675920, A_Q = 97.76, H_Q = 91434, zstd_ratio = 6.61%, training_time = 929s
+Epoch 13: A_NQ = 97.29, H_NQ = 684453, A_Q = 97.62, H_Q = 94123, zstd_ratio = 6.94%, training_time = 908s
+Epoch 14: A_NQ = 98.34, H_NQ = 680011, A_Q = 98.41, H_Q = 90956, zstd_ratio = 6.75%, training_time = 870s
+Epoch 15: A_NQ = 97.64, H_NQ = 685033, A_Q = 97.84, H_Q = 91966, zstd_ratio = 6.72%, training_time = 844s
+Epoch 16: A_NQ = 97.63, H_NQ = 684301, A_Q = 97.28, H_Q = 93904, zstd_ratio = 7.00%, training_time = 849s
+Epoch 17: A_NQ = 98.44, H_NQ = 684619, A_Q = 98.42, H_Q = 93314, zstd_ratio = 6.98%, training_time = 826s
+Epoch 18: A_NQ = 98.62, H_NQ = 684385, A_Q = 98.59, H_Q = 85096, zstd_ratio = 6.07%, training_time = 787s
+Epoch 19: A_NQ = 98.53, H_NQ = 677082, A_Q = 98.53, H_Q = 84422, zstd_ratio = 5.94%, training_time = 791s
+Epoch 20: A_NQ = 98.61, H_NQ = 684623, A_Q = 98.04, H_Q = 89536, zstd_ratio = 6.47%, training_time = 799s
+Epoch 21: A_NQ = 98.4, H_NQ = 684443, A_Q = 98.42, H_Q = 81931, zstd_ratio = 5.72%, training_time = 649s
+Epoch 22: A_NQ = 98.42, H_NQ = 680230, A_Q = 98.01, H_Q = 79759, zstd_ratio = 5.32%, training_time = 675s
+Epoch 23: A_NQ = 96.68, H_NQ = 680423, A_Q = 97.29, H_Q = 77404, zstd_ratio = 5.13%, training_time = 721s
+Epoch 24: A_NQ = 98.22, H_NQ = 683069, A_Q = 98.29, H_Q = 77956, zstd_ratio = 5.13%, training_time = 737s
+Epoch 25: A_NQ = 98.59, H_NQ = 680126, A_Q = 98.5, H_Q = 90350, zstd_ratio = 6.09%, training_time = 638s
+Epoch 26: A_NQ = 98.78, H_NQ = 683142, A_Q = 98.64, H_Q = 76253, zstd_ratio = 4.95%, training_time = 648s
+Epoch 27: A_NQ = 97.82, H_NQ = 678643, A_Q = 97.72, H_Q = 76567, zstd_ratio = 5.12%, training_time = 704s
+Epoch 28: A_NQ = 98.27, H_NQ = 683213, A_Q = 97.14, H_Q = 74918, zstd_ratio = 4.83%, training_time = 696s
+Epoch 29: A_NQ = 98.77, H_NQ = 675271, A_Q = 98.6, H_Q = 74466, zstd_ratio = 4.78%, training_time = 682s
+Epoch 30: A_NQ = 98.55, H_NQ = 674566, A_Q = 98.55, H_Q = 74307, zstd_ratio = 4.77%, training_time = 651s
+------------------------------------------------------------
+r = 1.1014
+Epoch 1: A_NQ = 38.32, H_NQ = 684955, A_Q = 37.86, H_Q = 152450, zstd_ratio = 15.13%, training_time = 657s
+Epoch 2: A_NQ = 39.28, H_NQ = 621590, A_Q = 37.77, H_Q = 64083, zstd_ratio = 6.15%, training_time = 884s
+Epoch 3: A_NQ = 40.95, H_NQ = 477947, A_Q = 38.29, H_Q = 44612, zstd_ratio = 3.65%, training_time = 863s
+Epoch 4: A_NQ = 41.43, H_NQ = 436123, A_Q = 39.44, H_Q = 38386, zstd_ratio = 2.70%, training_time = 878s
+Epoch 5: A_NQ = 44.53, H_NQ = 258021, A_Q = 28.18, H_Q = 37186, zstd_ratio = 2.59%, training_time = 860s
+Epoch 6: A_NQ = 48.17, H_NQ = 207220, A_Q = 28.67, H_Q = 36986, zstd_ratio = 2.58%, training_time = 886s
+Epoch 7: A_NQ = 49.47, H_NQ = 202889, A_Q = 26.29, H_Q = 36872, zstd_ratio = 2.56%, training_time = 884s
+Epoch 8: A_NQ = 54.84, H_NQ = 131071, A_Q = 19.04, H_Q = 36664, zstd_ratio = 2.56%, training_time = 894s
+Epoch 9: A_NQ = 57.44, H_NQ = 74182, A_Q = 19.09, H_Q = 36503, zstd_ratio = 2.53%, training_time = 939s
+Epoch 10: A_NQ = 56.65, H_NQ = 80099, A_Q = 19.06, H_Q = 36255, zstd_ratio = 2.50%, training_time = 873s
+Epoch 11: A_NQ = 57.15, H_NQ = 66724, A_Q = 27.38, H_Q = 36198, zstd_ratio = 2.50%, training_time = 869s
+Epoch 12: A_NQ = 58.32, H_NQ = 64335, A_Q = 19.17, H_Q = 36174, zstd_ratio = 2.47%, training_time = 866s
+Epoch 13: A_NQ = 58.41, H_NQ = 66412, A_Q = 19.02, H_Q = 36075, zstd_ratio = 2.46%, training_time = 913s
+Epoch 14: A_NQ = 58.24, H_NQ = 66317, A_Q = 19.07, H_Q = 35928, zstd_ratio = 2.45%, training_time = 851s
+Epoch 15: A_NQ = 58.48, H_NQ = 68374, A_Q = 19.07, H_Q = 35742, zstd_ratio = 2.42%, training_time = 828s
+Epoch 16: A_NQ = 56.75, H_NQ = 67360, A_Q = 19.15, H_Q = 35582, zstd_ratio = 2.40%, training_time = 829s
+Epoch 17: A_NQ = 57.09, H_NQ = 68584, A_Q = 19.18, H_Q = 35480, zstd_ratio = 2.40%, training_time = 820s
+Epoch 18: A_NQ = 57.68, H_NQ = 68987, A_Q = 28.28, H_Q = 35278, zstd_ratio = 2.39%, training_time = 750s
+Epoch 19: A_NQ = 58.58, H_NQ = 69499, A_Q = 19.26, H_Q = 35158, zstd_ratio = 2.39%, training_time = 748s
+Epoch 20: A_NQ = 57.33, H_NQ = 70009, A_Q = 27.92, H_Q = 35060, zstd_ratio = 2.37%, training_time = 750s
+Epoch 21: A_NQ = 58.19, H_NQ = 69888, A_Q = 26.01, H_Q = 34869, zstd_ratio = 2.33%, training_time = 785s
+Epoch 22: A_NQ = 58.28, H_NQ = 70203, A_Q = 19.16, H_Q = 34715, zstd_ratio = 2.35%, training_time = 743s
+Epoch 23: A_NQ = 56.73, H_NQ = 70890, A_Q = 21.06, H_Q = 34707, zstd_ratio = 2.33%, training_time = 734s
+Epoch 24: A_NQ = 58.28, H_NQ = 71234, A_Q = 19.19, H_Q = 34546, zstd_ratio = 2.31%, training_time = 740s
+Epoch 25: A_NQ = 56.95, H_NQ = 71294, A_Q = 24.67, H_Q = 34540, zstd_ratio = 2.30%, training_time = 773s
+Epoch 26: A_NQ = 57.95, H_NQ = 71537, A_Q = 24.98, H_Q = 34345, zstd_ratio = 2.28%, training_time = 723s
+Epoch 27: A_NQ = 55.65, H_NQ = 71683, A_Q = 19.07, H_Q = 34244, zstd_ratio = 2.27%, training_time = 706s
+Epoch 28: A_NQ = 57.77, H_NQ = 71825, A_Q = 27.76, H_Q = 34107, zstd_ratio = 2.26%, training_time = 697s
+Epoch 29: A_NQ = 58.08, H_NQ = 71769, A_Q = 27.77, H_Q = 34060, zstd_ratio = 2.25%, training_time = 721s
+Epoch 30: A_NQ = 58.8, H_NQ = 71920, A_Q = 27.71, H_Q = 33823, zstd_ratio = 2.24%, training_time = 654s
+------------------------------------------------------------
+r = 1.1023
+Epoch 1: A_NQ = 72.69, H_NQ = 684982, A_Q = 74.1, H_Q = 165596, zstd_ratio = 16.24%, training_time = 880s
+Epoch 2: A_NQ = 82.99, H_NQ = 623231, A_Q = 83.7, H_Q = 80709, zstd_ratio = 7.27%, training_time = 845s
+Epoch 3: A_NQ = 89.33, H_NQ = 495728, A_Q = 89.55, H_Q = 62683, zstd_ratio = 4.66%, training_time = 835s
+Epoch 4: A_NQ = 91.55, H_NQ = 427649, A_Q = 91.33, H_Q = 60401, zstd_ratio = 4.37%, training_time = 839s
+Epoch 5: A_NQ = 93.02, H_NQ = 414176, A_Q = 92.87, H_Q = 59729, zstd_ratio = 4.26%, training_time = 851s
+Epoch 6: A_NQ = 92.94, H_NQ = 263172, A_Q = 92.81, H_Q = 58338, zstd_ratio = 4.17%, training_time = 929s
+Epoch 7: A_NQ = 93.91, H_NQ = 227595, A_Q = 93.82, H_Q = 58259, zstd_ratio = 4.14%, training_time = 887s
+Epoch 8: A_NQ = 94.72, H_NQ = 180324, A_Q = 94.34, H_Q = 57544, zstd_ratio = 4.08%, training_time = 883s
+Epoch 9: A_NQ = 94.82, H_NQ = 155389, A_Q = 94.26, H_Q = 57251, zstd_ratio = 4.03%, training_time = 890s
+Epoch 10: A_NQ = 93.64, H_NQ = 126722, A_Q = 92.76, H_Q = 56717, zstd_ratio = 4.00%, training_time = 913s
+Epoch 11: A_NQ = 94.98, H_NQ = 108408, A_Q = 95.36, H_Q = 56642, zstd_ratio = 3.96%, training_time = 869s
+Epoch 12: A_NQ = 95.98, H_NQ = 106855, A_Q = 95.68, H_Q = 56156, zstd_ratio = 3.89%, training_time = 868s
+Epoch 13: A_NQ = 96.13, H_NQ = 108784, A_Q = 96.02, H_Q = 55695, zstd_ratio = 3.85%, training_time = 846s
+Epoch 14: A_NQ = 96.67, H_NQ = 106999, A_Q = 96.58, H_Q = 55053, zstd_ratio = 3.80%, training_time = 885s
+Epoch 15: A_NQ = 96.65, H_NQ = 105846, A_Q = 96.21, H_Q = 54847, zstd_ratio = 3.78%, training_time = 848s
+Epoch 16: A_NQ = 96.26, H_NQ = 105846, A_Q = 96.0, H_Q = 54725, zstd_ratio = 3.73%, training_time = 833s
+Epoch 17: A_NQ = 96.86, H_NQ = 105842, A_Q = 96.78, H_Q = 54205, zstd_ratio = 3.68%, training_time = 803s
+Epoch 18: A_NQ = 96.74, H_NQ = 105844, A_Q = 96.93, H_Q = 53757, zstd_ratio = 3.61%, training_time = 812s
+Epoch 19: A_NQ = 96.65, H_NQ = 105846, A_Q = 96.88, H_Q = 53090, zstd_ratio = 3.59%, training_time = 748s
+Epoch 20: A_NQ = 96.82, H_NQ = 105844, A_Q = 96.51, H_Q = 52758, zstd_ratio = 3.55%, training_time = 793s
+Epoch 21: A_NQ = 97.29, H_NQ = 105844, A_Q = 97.23, H_Q = 52285, zstd_ratio = 3.52%, training_time = 772s
+Epoch 22: A_NQ = 97.13, H_NQ = 105846, A_Q = 96.99, H_Q = 51851, zstd_ratio = 3.48%, training_time = 811s
+Epoch 23: A_NQ = 96.48, H_NQ = 105846, A_Q = 95.53, H_Q = 51772, zstd_ratio = 3.45%, training_time = 776s
+Epoch 24: A_NQ = 96.95, H_NQ = 105842, A_Q = 97.24, H_Q = 51329, zstd_ratio = 3.42%, training_time = 788s
+Epoch 25: A_NQ = 97.1, H_NQ = 105846, A_Q = 96.09, H_Q = 51008, zstd_ratio = 3.37%, training_time = 772s
+Epoch 26: A_NQ = 97.08, H_NQ = 105840, A_Q = 97.08, H_Q = 50704, zstd_ratio = 3.34%, training_time = 774s
+Epoch 27: A_NQ = 97.48, H_NQ = 105844, A_Q = 97.12, H_Q = 50132, zstd_ratio = 3.32%, training_time = 739s
+Epoch 28: A_NQ = 97.55, H_NQ = 105844, A_Q = 97.53, H_Q = 50140, zstd_ratio = 3.29%, training_time = 738s
+Epoch 29: A_NQ = 97.31, H_NQ = 105846, A_Q = 96.66, H_Q = 49498, zstd_ratio = 3.26%, training_time = 707s
+Epoch 30: A_NQ = 97.09, H_NQ = 105846, A_Q = 96.99, H_Q = 49542, zstd_ratio = 3.25%, training_time = 698s
+------------------------------------------------------------
+r = 1.1028
+Epoch 1: A_NQ = 88.68, H_NQ = 685453, A_Q = 88.53, H_Q = 210286, zstd_ratio = 19.99%, training_time = 654s
+Epoch 2: A_NQ = 92.72, H_NQ = 648011, A_Q = 92.36, H_Q = 151989, zstd_ratio = 13.30%, training_time = 929s
+Epoch 3: A_NQ = 93.82, H_NQ = 591082, A_Q = 93.06, H_Q = 126456, zstd_ratio = 10.03%, training_time = 908s
+Epoch 4: A_NQ = 95.35, H_NQ = 544184, A_Q = 95.35, H_Q = 117820, zstd_ratio = 9.10%, training_time = 932s
+Epoch 5: A_NQ = 95.78, H_NQ = 475252, A_Q = 95.87, H_Q = 114877, zstd_ratio = 8.76%, training_time = 936s
+Epoch 6: A_NQ = 96.56, H_NQ = 424515, A_Q = 96.53, H_Q = 112757, zstd_ratio = 8.52%, training_time = 927s
+Epoch 7: A_NQ = 96.19, H_NQ = 348355, A_Q = 96.01, H_Q = 110365, zstd_ratio = 8.17%, training_time = 954s
+Epoch 8: A_NQ = 97.31, H_NQ = 312408, A_Q = 96.25, H_Q = 108384, zstd_ratio = 7.97%, training_time = 935s
+Epoch 9: A_NQ = 97.25, H_NQ = 267944, A_Q = 97.1, H_Q = 106667, zstd_ratio = 7.76%, training_time = 932s
+Epoch 10: A_NQ = 97.19, H_NQ = 256711, A_Q = 96.91, H_Q = 105032, zstd_ratio = 7.53%, training_time = 903s
+Epoch 11: A_NQ = 97.55, H_NQ = 259649, A_Q = 97.23, H_Q = 103138, zstd_ratio = 7.34%, training_time = 927s
+Epoch 12: A_NQ = 97.98, H_NQ = 294712, A_Q = 98.16, H_Q = 101923, zstd_ratio = 7.17%, training_time = 903s
+Epoch 13: A_NQ = 98.16, H_NQ = 288313, A_Q = 97.67, H_Q = 100346, zstd_ratio = 7.05%, training_time = 893s
+Epoch 14: A_NQ = 98.2, H_NQ = 341554, A_Q = 98.19, H_Q = 98478, zstd_ratio = 6.86%, training_time = 883s
+Epoch 15: A_NQ = 98.11, H_NQ = 393517, A_Q = 97.99, H_Q = 97629, zstd_ratio = 6.73%, training_time = 866s
+Epoch 16: A_NQ = 97.9, H_NQ = 455320, A_Q = 97.61, H_Q = 96194, zstd_ratio = 6.59%, training_time = 856s
+Epoch 17: A_NQ = 98.29, H_NQ = 436397, A_Q = 98.03, H_Q = 95391, zstd_ratio = 6.49%, training_time = 819s
+Epoch 18: A_NQ = 97.32, H_NQ = 516276, A_Q = 97.27, H_Q = 94612, zstd_ratio = 6.41%, training_time = 809s
+Epoch 19: A_NQ = 98.18, H_NQ = 470264, A_Q = 98.37, H_Q = 93783, zstd_ratio = 6.30%, training_time = 811s
+Epoch 20: A_NQ = 98.21, H_NQ = 546245, A_Q = 97.87, H_Q = 93156, zstd_ratio = 6.17%, training_time = 800s
+Epoch 21: A_NQ = 98.37, H_NQ = 524131, A_Q = 98.24, H_Q = 92298, zstd_ratio = 6.09%, training_time = 813s
+Epoch 22: A_NQ = 98.37, H_NQ = 563731, A_Q = 98.32, H_Q = 91752, zstd_ratio = 5.98%, training_time = 791s
+Epoch 23: A_NQ = 98.4, H_NQ = 585115, A_Q = 98.14, H_Q = 90771, zstd_ratio = 5.88%, training_time = 797s
+Epoch 24: A_NQ = 98.34, H_NQ = 557968, A_Q = 96.83, H_Q = 89971, zstd_ratio = 5.71%, training_time = 778s
+Epoch 25: A_NQ = 98.57, H_NQ = 570637, A_Q = 98.52, H_Q = 90233, zstd_ratio = 5.70%, training_time = 762s
+Epoch 26: A_NQ = 97.85, H_NQ = 575574, A_Q = 96.72, H_Q = 88974, zstd_ratio = 5.61%, training_time = 752s
+Epoch 27: A_NQ = 97.36, H_NQ = 577942, A_Q = 96.88, H_Q = 89440, zstd_ratio = 5.56%, training_time = 751s
+Epoch 28: A_NQ = 98.08, H_NQ = 582168, A_Q = 98.14, H_Q = 89135, zstd_ratio = 5.54%, training_time = 716s
+Epoch 29: A_NQ = 98.36, H_NQ = 576485, A_Q = 96.27, H_Q = 86635, zstd_ratio = 5.39%, training_time = 687s
+Epoch 30: A_NQ = 98.56, H_NQ = 580050, A_Q = 98.32, H_Q = 87230, zstd_ratio = 5.35%, training_time = 668s
+------------------------------------------------------------
+r = 1.1011
+Epoch 1: A_NQ = 69.54, H_NQ = 685029, A_Q = 70.97, H_Q = 164747, zstd_ratio = 16.19%, training_time = 828s
+Epoch 2: A_NQ = 80.11, H_NQ = 632502, A_Q = 80.0, H_Q = 78177, zstd_ratio = 7.00%, training_time = 914s
+Epoch 3: A_NQ = 84.34, H_NQ = 579068, A_Q = 81.51, H_Q = 66954, zstd_ratio = 5.45%, training_time = 916s
+Epoch 4: A_NQ = 86.05, H_NQ = 411453, A_Q = 83.04, H_Q = 59383, zstd_ratio = 4.26%, training_time = 896s
+Epoch 5: A_NQ = 93.02, H_NQ = 348450, A_Q = 93.29, H_Q = 58774, zstd_ratio = 4.21%, training_time = 958s
+Epoch 6: A_NQ = 93.01, H_NQ = 277720, A_Q = 92.86, H_Q = 58358, zstd_ratio = 4.16%, training_time = 898s
+Epoch 7: A_NQ = 95.54, H_NQ = 194606, A_Q = 95.14, H_Q = 58113, zstd_ratio = 4.13%, training_time = 911s
+Epoch 8: A_NQ = 95.49, H_NQ = 192521, A_Q = 94.41, H_Q = 57788, zstd_ratio = 4.10%, training_time = 923s
+Epoch 9: A_NQ = 95.88, H_NQ = 145734, A_Q = 95.53, H_Q = 57257, zstd_ratio = 4.04%, training_time = 931s
+Epoch 10: A_NQ = 96.37, H_NQ = 112615, A_Q = 96.03, H_Q = 56628, zstd_ratio = 3.98%, training_time = 915s
+Epoch 11: A_NQ = 96.65, H_NQ = 104079, A_Q = 96.19, H_Q = 56460, zstd_ratio = 3.93%, training_time = 921s
+Epoch 12: A_NQ = 96.21, H_NQ = 104079, A_Q = 95.5, H_Q = 55824, zstd_ratio = 3.87%, training_time = 907s
+Epoch 13: A_NQ = 96.89, H_NQ = 104079, A_Q = 96.52, H_Q = 55388, zstd_ratio = 3.82%, training_time = 910s
+Epoch 14: A_NQ = 96.68, H_NQ = 104079, A_Q = 96.55, H_Q = 55072, zstd_ratio = 3.79%, training_time = 887s
+Epoch 15: A_NQ = 96.91, H_NQ = 104079, A_Q = 96.2, H_Q = 54497, zstd_ratio = 3.74%, training_time = 859s
+Epoch 16: A_NQ = 96.92, H_NQ = 104079, A_Q = 95.61, H_Q = 54027, zstd_ratio = 3.69%, training_time = 854s
+Epoch 17: A_NQ = 97.45, H_NQ = 104079, A_Q = 96.91, H_Q = 53431, zstd_ratio = 3.64%, training_time = 792s
+Epoch 18: A_NQ = 97.23, H_NQ = 104077, A_Q = 97.03, H_Q = 53134, zstd_ratio = 3.62%, training_time = 785s
+Epoch 19: A_NQ = 97.85, H_NQ = 104079, A_Q = 97.67, H_Q = 52688, zstd_ratio = 3.55%, training_time = 792s
+Epoch 20: A_NQ = 97.48, H_NQ = 104079, A_Q = 97.27, H_Q = 52496, zstd_ratio = 3.53%, training_time = 827s
+Epoch 21: A_NQ = 97.31, H_NQ = 104079, A_Q = 97.09, H_Q = 52013, zstd_ratio = 3.46%, training_time = 782s
+Epoch 22: A_NQ = 97.67, H_NQ = 104077, A_Q = 97.48, H_Q = 51918, zstd_ratio = 3.43%, training_time = 761s
+Epoch 23: A_NQ = 97.23, H_NQ = 104079, A_Q = 97.51, H_Q = 51465, zstd_ratio = 3.39%, training_time = 768s
+Epoch 24: A_NQ = 97.86, H_NQ = 104079, A_Q = 97.87, H_Q = 50879, zstd_ratio = 3.34%, training_time = 803s
+Epoch 25: A_NQ = 97.63, H_NQ = 104077, A_Q = 97.74, H_Q = 50585, zstd_ratio = 3.31%, training_time = 780s
+Epoch 26: A_NQ = 97.41, H_NQ = 104077, A_Q = 97.65, H_Q = 50050, zstd_ratio = 3.26%, training_time = 755s
+Epoch 27: A_NQ = 98.2, H_NQ = 104077, A_Q = 97.48, H_Q = 49744, zstd_ratio = 3.23%, training_time = 744s
+Epoch 28: A_NQ = 97.46, H_NQ = 104075, A_Q = 96.98, H_Q = 49582, zstd_ratio = 3.19%, training_time = 728s
+Epoch 29: A_NQ = 97.84, H_NQ = 121829, A_Q = 97.82, H_Q = 48119, zstd_ratio = 3.12%, training_time = 699s
+Epoch 30: A_NQ = 97.68, H_NQ = 104079, A_Q = 97.93, H_Q = 47305, zstd_ratio = 3.03%, training_time = 677s
+------------------------------------------------------------
+r = 1.1024
+Epoch 1: A_NQ = 87.78, H_NQ = 685797, A_Q = 87.39, H_Q = 244829, zstd_ratio = 23.12%, training_time = 662s
+Epoch 2: A_NQ = 92.62, H_NQ = 681384, A_Q = 92.67, H_Q = 215177, zstd_ratio = 19.16%, training_time = 857s
+Epoch 3: A_NQ = 94.03, H_NQ = 669203, A_Q = 94.28, H_Q = 188289, zstd_ratio = 16.11%, training_time = 855s
+Epoch 4: A_NQ = 94.73, H_NQ = 645499, A_Q = 93.32, H_Q = 168420, zstd_ratio = 13.65%, training_time = 886s
+Epoch 5: A_NQ = 96.03, H_NQ = 648377, A_Q = 95.95, H_Q = 160387, zstd_ratio = 12.58%, training_time = 907s
+Epoch 6: A_NQ = 96.58, H_NQ = 660623, A_Q = 95.4, H_Q = 154385, zstd_ratio = 11.76%, training_time = 948s
+Epoch 7: A_NQ = 96.8, H_NQ = 671057, A_Q = 94.82, H_Q = 148981, zstd_ratio = 11.22%, training_time = 963s
+Epoch 8: A_NQ = 97.18, H_NQ = 678008, A_Q = 97.07, H_Q = 143482, zstd_ratio = 10.64%, training_time = 946s
+Epoch 9: A_NQ = 97.41, H_NQ = 681784, A_Q = 97.32, H_Q = 138559, zstd_ratio = 10.19%, training_time = 944s
+Epoch 10: A_NQ = 97.21, H_NQ = 681050, A_Q = 96.72, H_Q = 133784, zstd_ratio = 9.64%, training_time = 863s
+Epoch 11: A_NQ = 96.77, H_NQ = 682316, A_Q = 95.35, H_Q = 130668, zstd_ratio = 9.34%, training_time = 900s
+Epoch 12: A_NQ = 97.7, H_NQ = 682094, A_Q = 95.18, H_Q = 125835, zstd_ratio = 8.82%, training_time = 911s
+Epoch 13: A_NQ = 97.33, H_NQ = 682635, A_Q = 96.9, H_Q = 122409, zstd_ratio = 8.57%, training_time = 914s
+Epoch 14: A_NQ = 98.22, H_NQ = 682514, A_Q = 98.26, H_Q = 120457, zstd_ratio = 8.29%, training_time = 905s
+Epoch 15: A_NQ = 97.97, H_NQ = 682325, A_Q = 98.09, H_Q = 129606, zstd_ratio = 8.41%, training_time = 890s
+Epoch 16: A_NQ = 98.19, H_NQ = 682280, A_Q = 96.83, H_Q = 117050, zstd_ratio = 7.89%, training_time = 866s
+Epoch 17: A_NQ = 97.91, H_NQ = 681939, A_Q = 96.51, H_Q = 125771, zstd_ratio = 7.94%, training_time = 837s
+Epoch 18: A_NQ = 97.27, H_NQ = 681328, A_Q = 97.18, H_Q = 124147, zstd_ratio = 7.75%, training_time = 826s
+Epoch 19: A_NQ = 98.3, H_NQ = 680776, A_Q = 98.23, H_Q = 119912, zstd_ratio = 7.57%, training_time = 838s
+Epoch 20: A_NQ = 97.21, H_NQ = 681115, A_Q = 90.87, H_Q = 120536, zstd_ratio = 7.46%, training_time = 836s
+Epoch 21: A_NQ = 98.19, H_NQ = 681042, A_Q = 96.85, H_Q = 118517, zstd_ratio = 7.11%, training_time = 821s
+Epoch 22: A_NQ = 98.24, H_NQ = 679692, A_Q = 98.12, H_Q = 114422, zstd_ratio = 7.02%, training_time = 811s
+Epoch 23: A_NQ = 98.36, H_NQ = 680503, A_Q = 98.2, H_Q = 116892, zstd_ratio = 6.93%, training_time = 822s
+Epoch 24: A_NQ = 97.8, H_NQ = 679285, A_Q = 98.07, H_Q = 116332, zstd_ratio = 6.64%, training_time = 823s
+Epoch 25: A_NQ = 97.4, H_NQ = 679671, A_Q = 96.12, H_Q = 114396, zstd_ratio = 6.59%, training_time = 797s
+Epoch 26: A_NQ = 98.28, H_NQ = 676787, A_Q = 98.23, H_Q = 110837, zstd_ratio = 6.49%, training_time = 758s
+Epoch 27: A_NQ = 97.91, H_NQ = 679099, A_Q = 97.82, H_Q = 114305, zstd_ratio = 6.27%, training_time = 758s
+Epoch 28: A_NQ = 98.46, H_NQ = 676346, A_Q = 98.33, H_Q = 113228, zstd_ratio = 6.12%, training_time = 735s
+Epoch 29: A_NQ = 98.47, H_NQ = 675619, A_Q = 98.27, H_Q = 110493, zstd_ratio = 6.09%, training_time = 693s
+Epoch 30: A_NQ = 98.14, H_NQ = 679054, A_Q = 97.94, H_Q = 113437, zstd_ratio = 6.07%, training_time = 675s
+------------------------------------------------------------
+r = 1.1007
+Epoch 1: A_NQ = 88.44, H_NQ = 685859, A_Q = 88.32, H_Q = 250785, zstd_ratio = 23.84%, training_time = 889s
+Epoch 2: A_NQ = 92.89, H_NQ = 683801, A_Q = 92.68, H_Q = 214899, zstd_ratio = 19.47%, training_time = 943s
+Epoch 3: A_NQ = 95.16, H_NQ = 659683, A_Q = 94.64, H_Q = 173010, zstd_ratio = 14.60%, training_time = 849s
+Epoch 4: A_NQ = 96.15, H_NQ = 668963, A_Q = 95.97, H_Q = 145927, zstd_ratio = 11.71%, training_time = 898s
+Epoch 5: A_NQ = 96.54, H_NQ = 650176, A_Q = 96.86, H_Q = 133759, zstd_ratio = 10.27%, training_time = 881s
+Epoch 6: A_NQ = 97.27, H_NQ = 623437, A_Q = 97.27, H_Q = 128110, zstd_ratio = 9.71%, training_time = 911s
+Epoch 7: A_NQ = 96.37, H_NQ = 674834, A_Q = 96.45, H_Q = 125025, zstd_ratio = 9.34%, training_time = 927s
+Epoch 8: A_NQ = 97.45, H_NQ = 667734, A_Q = 95.96, H_Q = 121191, zstd_ratio = 8.91%, training_time = 946s
+Epoch 9: A_NQ = 98.17, H_NQ = 682878, A_Q = 98.31, H_Q = 118295, zstd_ratio = 8.62%, training_time = 920s
+Epoch 10: A_NQ = 98.3, H_NQ = 684070, A_Q = 97.11, H_Q = 121692, zstd_ratio = 9.04%, training_time = 906s
+Epoch 11: A_NQ = 98.23, H_NQ = 684404, A_Q = 97.93, H_Q = 123132, zstd_ratio = 8.98%, training_time = 909s
+Epoch 12: A_NQ = 97.48, H_NQ = 683300, A_Q = 97.79, H_Q = 113896, zstd_ratio = 8.48%, training_time = 917s
+Epoch 13: A_NQ = 98.3, H_NQ = 683900, A_Q = 97.27, H_Q = 115838, zstd_ratio = 8.51%, training_time = 912s
+Epoch 14: A_NQ = 98.11, H_NQ = 683322, A_Q = 97.39, H_Q = 109390, zstd_ratio = 7.91%, training_time = 891s
+Epoch 15: A_NQ = 98.19, H_NQ = 683848, A_Q = 98.6, H_Q = 111759, zstd_ratio = 7.96%, training_time = 848s
+Epoch 16: A_NQ = 98.27, H_NQ = 683442, A_Q = 98.19, H_Q = 109496, zstd_ratio = 7.79%, training_time = 858s
+Epoch 17: A_NQ = 96.98, H_NQ = 683824, A_Q = 92.59, H_Q = 115844, zstd_ratio = 8.16%, training_time = 807s
+Epoch 18: A_NQ = 98.14, H_NQ = 683793, A_Q = 98.16, H_Q = 111777, zstd_ratio = 7.66%, training_time = 804s
+Epoch 19: A_NQ = 98.45, H_NQ = 683586, A_Q = 98.45, H_Q = 112355, zstd_ratio = 7.61%, training_time = 797s
+Epoch 20: A_NQ = 98.06, H_NQ = 682870, A_Q = 97.93, H_Q = 108440, zstd_ratio = 7.26%, training_time = 814s
+Epoch 21: A_NQ = 97.77, H_NQ = 682966, A_Q = 87.72, H_Q = 107989, zstd_ratio = 7.28%, training_time = 797s
+Epoch 22: A_NQ = 98.53, H_NQ = 682929, A_Q = 98.36, H_Q = 113157, zstd_ratio = 7.16%, training_time = 816s
+Epoch 23: A_NQ = 95.48, H_NQ = 682694, A_Q = 97.9, H_Q = 111557, zstd_ratio = 7.09%, training_time = 808s
+Epoch 24: A_NQ = 98.25, H_NQ = 681703, A_Q = 97.44, H_Q = 99264, zstd_ratio = 6.53%, training_time = 802s
+Epoch 25: A_NQ = 97.07, H_NQ = 682706, A_Q = 91.59, H_Q = 111308, zstd_ratio = 6.94%, training_time = 800s
+Epoch 26: A_NQ = 98.3, H_NQ = 679784, A_Q = 97.15, H_Q = 105321, zstd_ratio = 6.80%, training_time = 762s
+Epoch 27: A_NQ = 98.58, H_NQ = 681932, A_Q = 98.36, H_Q = 109775, zstd_ratio = 6.55%, training_time = 763s
+Epoch 28: A_NQ = 98.24, H_NQ = 681655, A_Q = 97.27, H_Q = 104491, zstd_ratio = 6.42%, training_time = 742s
+Epoch 29: A_NQ = 98.42, H_NQ = 678962, A_Q = 98.24, H_Q = 108010, zstd_ratio = 6.51%, training_time = 698s
+Epoch 30: A_NQ = 98.52, H_NQ = 679832, A_Q = 98.16, H_Q = 107607, zstd_ratio = 6.41%, training_time = 671s
+------------------------------------------------------------
+r = 1.1027
+Epoch 1: A_NQ = 84.95, H_NQ = 685087, A_Q = 84.69, H_Q = 177539, zstd_ratio = 17.26%, training_time = 834s
+Epoch 2: A_NQ = 89.93, H_NQ = 634166, A_Q = 89.74, H_Q = 94869, zstd_ratio = 8.38%, training_time = 925s
+Epoch 3: A_NQ = 92.39, H_NQ = 546432, A_Q = 92.26, H_Q = 77318, zstd_ratio = 6.15%, training_time = 932s
+Epoch 4: A_NQ = 94.65, H_NQ = 431586, A_Q = 94.19, H_Q = 73284, zstd_ratio = 5.41%, training_time = 930s
+Epoch 5: A_NQ = 94.79, H_NQ = 359271, A_Q = 94.46, H_Q = 72523, zstd_ratio = 5.29%, training_time = 945s
+Epoch 6: A_NQ = 95.55, H_NQ = 311330, A_Q = 94.88, H_Q = 70890, zstd_ratio = 5.16%, training_time = 927s
+Epoch 7: A_NQ = 95.59, H_NQ = 245530, A_Q = 95.96, H_Q = 69481, zstd_ratio = 5.02%, training_time = 963s
+Epoch 8: A_NQ = 95.48, H_NQ = 203904, A_Q = 94.99, H_Q = 68484, zstd_ratio = 4.96%, training_time = 937s
+Epoch 9: A_NQ = 96.71, H_NQ = 166037, A_Q = 96.78, H_Q = 66427, zstd_ratio = 4.80%, training_time = 928s
+Epoch 10: A_NQ = 95.95, H_NQ = 159860, A_Q = 95.9, H_Q = 65720, zstd_ratio = 4.76%, training_time = 921s
+Epoch 11: A_NQ = 97.11, H_NQ = 131842, A_Q = 96.93, H_Q = 64652, zstd_ratio = 4.63%, training_time = 927s
+Epoch 12: A_NQ = 97.39, H_NQ = 130822, A_Q = 97.18, H_Q = 62790, zstd_ratio = 4.51%, training_time = 914s
+Epoch 13: A_NQ = 96.94, H_NQ = 129117, A_Q = 96.98, H_Q = 62006, zstd_ratio = 4.42%, training_time = 905s
+Epoch 14: A_NQ = 97.57, H_NQ = 127333, A_Q = 97.5, H_Q = 61174, zstd_ratio = 4.38%, training_time = 871s
+Epoch 15: A_NQ = 97.2, H_NQ = 126317, A_Q = 97.48, H_Q = 60542, zstd_ratio = 4.31%, training_time = 873s
+Epoch 16: A_NQ = 97.75, H_NQ = 126832, A_Q = 97.56, H_Q = 60010, zstd_ratio = 4.21%, training_time = 838s
+Epoch 17: A_NQ = 97.86, H_NQ = 124034, A_Q = 97.69, H_Q = 59405, zstd_ratio = 4.16%, training_time = 824s
+Epoch 18: A_NQ = 97.97, H_NQ = 123362, A_Q = 97.76, H_Q = 58741, zstd_ratio = 4.09%, training_time = 810s
+Epoch 19: A_NQ = 97.66, H_NQ = 122767, A_Q = 97.47, H_Q = 58223, zstd_ratio = 4.04%, training_time = 823s
+Epoch 20: A_NQ = 97.65, H_NQ = 120688, A_Q = 97.53, H_Q = 57774, zstd_ratio = 3.97%, training_time = 810s
+Epoch 21: A_NQ = 98.15, H_NQ = 120692, A_Q = 98.09, H_Q = 57238, zstd_ratio = 3.91%, training_time = 807s
+Epoch 22: A_NQ = 98.31, H_NQ = 120692, A_Q = 97.99, H_Q = 56922, zstd_ratio = 3.86%, training_time = 786s
+Epoch 23: A_NQ = 98.14, H_NQ = 120690, A_Q = 97.99, H_Q = 56457, zstd_ratio = 3.80%, training_time = 795s
+Epoch 24: A_NQ = 98.11, H_NQ = 120692, A_Q = 97.76, H_Q = 56377, zstd_ratio = 3.75%, training_time = 781s
+Epoch 25: A_NQ = 98.26, H_NQ = 120690, A_Q = 97.6, H_Q = 55903, zstd_ratio = 3.72%, training_time = 771s
+Epoch 26: A_NQ = 97.44, H_NQ = 120692, A_Q = 97.55, H_Q = 55538, zstd_ratio = 3.67%, training_time = 745s
+Epoch 27: A_NQ = 98.26, H_NQ = 120690, A_Q = 97.83, H_Q = 55170, zstd_ratio = 3.62%, training_time = 744s
+Epoch 28: A_NQ = 98.58, H_NQ = 120692, A_Q = 98.43, H_Q = 54768, zstd_ratio = 3.59%, training_time = 727s
+Epoch 29: A_NQ = 96.15, H_NQ = 224557, A_Q = 95.63, H_Q = 54104, zstd_ratio = 3.53%, training_time = 676s
+Epoch 30: A_NQ = 98.04, H_NQ = 120692, A_Q = 97.65, H_Q = 53981, zstd_ratio = 3.50%, training_time = 659s
+------------------------------------------------------------
