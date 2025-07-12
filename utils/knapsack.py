@@ -1,10 +1,5 @@
 import torch   
 
-def cleanup_gpu():
-    import gc
-    gc.collect()
-    torch.cuda.empty_cache()
-
 def knapsack_specialized(xi, v, w, C, device):
     """
     Solves a specialized knapsack problem using a specialized method in a vectorized way
@@ -91,8 +86,11 @@ def knapsack_specialized(xi, v, w, C, device):
 
     # Compute objective function values
     objective_values = torch.matmul(x_opt, xi)
-    
-    cleanup_gpu()
+
+    del (xi, v, w, x_plus, b_list, b_tensor, indices_breakpoints, 
+        w_idx, search_idx, idx_right, idx_left, x1, x2, numerator, 
+        denominator, theta, mask_equal, theta_expanded)
+    torch.cuda.empty_cache()    
 
     return x_opt, lambda_opt, objective_values
 
