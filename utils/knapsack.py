@@ -295,28 +295,23 @@ def knapsack_specialized_pruning(xi, v, w, C, device, delta):
     # === Step 9: Objective ===
     objective_values = delta + x @ xi
 
-    del (xi, v, w, b_list, b_vector, neg_indices, pos_indices,
-          neg_sorted, pos_sorted, mask_small, mask_large, mask_mid,
-          mask_edge, x_plus, x_edge, w_edge, ratio, neg_indices,
-          pos_indices, b_vector, x1_sol, x2_sol, i0_pos, i0,
-          v_i0, theta1, obj1, one_indices, i_right_mid,
-          idx_right_mid, idx_left_mid, v_left, v_right,
-          theta2, obj2, better_first_full)
-    del (final_x, i0_full, valid_i0, valid, x1_sol, x2_sol, 
-          i_right, idx_right, idx_left, denominator, 
-          denominator_zero_mask, lambda_opt_nonzero, 
-          lambda_opt_zero_full, lambda_opt_zero)
-    del (b, delta_xi, delta_v)
-    del (mask_cond_small, mask_else_small, mask_cond_large,
-          mask_else_large, w_small, div_mat, val_mat, i_min,
-          vals_min, x_edge, x1_sol, x2_sol, better_first,
-          final_x, M_mid, w_mid)
-    del (w_div_v0, w_div_v_last, edge_small, edge_large,        
-          mask_cond_small, mask_else_small, mask_cond_large,
-          mask_else_large, w_small, div_mat, val_mat, i_min,
-          vals_min, x_edge, x1_sol, x2_sol, better_first,
-          final_x, M_mid, w_mid)
-    torch.cuda.empty_cache()       
+    # Cleanup: delete intermediate tensors
+    del xi, v, w, mask_edge, mask_mid, mask_small, mask_large
+    del ratio, neg_indices, pos_indices, neg_sorted, pos_sorted, b_vector
+    del x_edge, x1_sol, x2_sol, val_mat, div_mat
+    del one_indices, idx_left, idx_right, idx_left_mid, idx_right_mid
+    del theta1, theta2, obj1, obj2, final_x
+    del i0, i0_pos, valid, valid_i0
+    del lambda_opt_nonzero, lambda_opt_zero, lambda_opt_zero_full
+    del denominator, denominator_zero_mask
+    del edge_small, edge_large, mask_cond_small, mask_else_small
+    del mask_cond_large, mask_else_large
+    del w_edge, w_mid
+
+    # Garbage collection & CUDA cache
+    import gc
+    gc.collect()
+    torch.cuda.empty_cache()  
 
     return x, lambda_opt, objective_values
 
