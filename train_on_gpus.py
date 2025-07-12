@@ -2,7 +2,7 @@ import argparse
 import torch
 import os
 from utils.trainer_on_gpus import train_and_evaluate
-from utils.networks import LeNet5, LeNet5_enhanced, LeNet5_Original, LeNet300_100_DeepCompression
+from utils.networks import LeNet5, LeNet5_enhanced, LeNet5_Original, LeNet300_100
 from torchvision import datasets, transforms, models
 import torch.nn as nn 
 from torch.utils.data import DataLoader
@@ -90,9 +90,10 @@ if __name__ == "__main__":
         print("Using CPU.", flush=True)
 
     # Define fixed hyperparameters for the model and training process
-    model, model_name = models.alexnet(weights=None).to(device), "AlexNet"
-    model = model.to(device) 
-    if(model_name[:7] == "LeNet-5"):
+    model_name = "AlexNet"
+    if(model_name == "LeNet-5"):
+        model = LeNet5()
+        model = model.to(device)         
         criterion, criterion_name = nn.CrossEntropyLoss(), "CrossEntropy" 
         C = 64
         lr = 0.001
@@ -107,7 +108,7 @@ if __name__ == "__main__":
         target_zstd_ratio = 0.0179
         min_xi = 0  
         max_xi = 1  
-        upper_c = sum(p.numel() for p in LeNet300_100_DeepCompression().parameters())
+        upper_c = sum(p.numel() for p in LeNet5().parameters())
         lower_c = 1e-2
         c1 = 10
         c2 = 1000
@@ -123,7 +124,9 @@ if __name__ == "__main__":
         pruning = "Y"
         QuantizationType = "center"
         sparsity_threshold = 1e-3
-    elif(model_name[:12] == "LeNet300_100"):
+    elif(model_name == "LeNet300_100"):
+        model = LeNet300_100()
+        model = model.to(device)            
         criterion, criterion_name = nn.CrossEntropyLoss(), "CrossEntropy" 
         C = 64
         lr = 0.001
@@ -138,7 +141,7 @@ if __name__ == "__main__":
         target_zstd_ratio = 0.0179
         min_xi = 0  
         max_xi = 1  
-        upper_c = sum(p.numel() for p in LeNet300_100_DeepCompression().parameters())
+        upper_c = sum(p.numel() for p in LeNet300_100().parameters())
         lower_c = 1e-2
         c1 = 10
         c2 = 1000
@@ -155,6 +158,7 @@ if __name__ == "__main__":
         QuantizationType = "center"
         sparsity_threshold = 1e-3  
     elif(model_name == "AlexNet"):
+        model = models.alexnet(weights=None)
         model.classifier[6] = nn.Linear(4096, 1000)
         model = model.to(device)       
         criterion, criterion_name = nn.CrossEntropyLoss(), "CrossEntropy" 
