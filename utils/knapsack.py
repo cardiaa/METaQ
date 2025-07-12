@@ -110,7 +110,7 @@ def knapsack_specialized_pruning(xi, v, w, C, device, delta):
 
     xi = xi - delta
     M = w.shape[0]
-    """
+    
     # === Step 1: Compute x_plus ===
     b_list = []
     b = 0
@@ -132,7 +132,7 @@ def knapsack_specialized_pruning(xi, v, w, C, device, delta):
     x_plus[0] = 1
     x_plus[-1] = 1
     x_plus = x_plus.to(device)
-
+    """
     # === Step 2: Precompute ===
     ratio = xi / v
     neg_indices = torch.where(v < 0)[0]
