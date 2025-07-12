@@ -72,11 +72,13 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, s
             if(entropy_optimizer == 'FISTA'):
                 #xi, beta_tensor = FISTA(xi, v, w_quantized, C, upper_c, lower_c, delta, 
                 #                        subgradient_step, device, max_iterations, pruning) # Alternative version
-                xi, beta_tensor = torch.zeros(C, dtype=torch.int32), torch.zeros(len(w), dtype=torch.int32)
-                xi = xi.to(device)
-                beta_tensor = beta_tensor.to(device)
-                #xi, beta_tensor = FISTA(xi, v, w, C, upper_c, lower_c, delta, 
-                #                        subgradient_step, device, max_iterations, pruning) 
+                
+                #xi, beta_tensor = torch.zeros(C, dtype=torch.int32), torch.zeros(len(w), dtype=torch.int32)
+                #xi = xi.to(device)
+                #beta_tensor = beta_tensor.to(device)
+                
+                xi, beta_tensor = FISTA(xi, v, w, C, upper_c, lower_c, delta, 
+                                        subgradient_step, device, max_iterations, pruning) 
                 
             elif(entropy_optimizer == 'PROXIMAL BM'):
                 #xi, beta_tensor = ProximalBM(xi, v, w_quantized, C, upper_c, lower_c, delta, 

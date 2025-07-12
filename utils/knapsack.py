@@ -110,10 +110,11 @@ def knapsack_specialized_pruning(xi, v, w, C, device, delta):
 
     xi = xi - delta
     M = w.shape[0]
-
+    """
     # === Step 1: Compute x_plus ===
     b_list = []
     b = 0
+    
     while True:
         delta_xi = xi[b + 1:] - xi[b]
         delta_v = v[b + 1:] - v[b]
@@ -125,6 +126,9 @@ def knapsack_specialized_pruning(xi, v, w, C, device, delta):
     b_list.append(C - 1)
     x_plus = torch.zeros(C, dtype=torch.int32)
     x_plus[torch.tensor(b_list)] = 1
+    x_plus = x_plus.to(device)
+    """
+    x_plus = torch.zeros(C, dtype=torch.int32)
     x_plus = x_plus.to(device)
 
     # === Step 2: Precompute ===
