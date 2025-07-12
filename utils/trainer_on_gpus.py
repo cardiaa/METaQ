@@ -5,6 +5,7 @@ import copy
 import struct
 import sys
 import torch.optim as optim
+import gc
 from utils.quantize_and_compress import compute_entropy, quantize_weights_center
 from utils.optimization import FISTA, ProximalBM, test_accuracy
 from utils.weight_utils import initialize_weights
@@ -304,6 +305,9 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, s
            
         # ---------------------------------------------------------------------------------------------------------
         
+        gc.collect()
+        torch.cuda.empty_cache()
+    
     log += "-"*60
     print(log, flush = True)
     return
