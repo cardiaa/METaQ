@@ -56,6 +56,9 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, s
             loss.backward()
             optimizer.step()
 
+            del inputs, targets, outputs, loss
+            torch.cuda.empty_cache()
+
             inputs, labels = data[0].to(device), data[1].to(device)
             optimizer.zero_grad()
             outputs = model(inputs)
