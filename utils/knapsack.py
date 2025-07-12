@@ -296,17 +296,19 @@ def knapsack_specialized_pruning(xi, v, w, C, device, delta):
     objective_values = delta + x @ xi
 
     # Cleanup: delete intermediate tensors
-    del xi, v, w, mask_edge, mask_mid, mask_small, mask_large
-    del ratio, neg_indices, pos_indices, neg_sorted, pos_sorted, b_vector
-    del x_edge, x1_sol, x2_sol, val_mat, div_mat
-    del one_indices, idx_left, idx_right, idx_left_mid, idx_right_mid
-    del theta1, theta2, obj1, obj2, final_x
-    del i0, i0_pos, valid, valid_i0
-    del lambda_opt_nonzero, lambda_opt_zero, lambda_opt_zero_full
-    del denominator, denominator_zero_mask
-    del edge_small, edge_large, mask_cond_small, mask_else_small
-    del mask_cond_large, mask_else_large
-    del w_edge, w_mid
+    for var in [
+        'x_edge', 'x1_sol', 'x2_sol', 'val_mat', 'div_mat', 'final_x', 
+        'ratio', 'neg_indices', 'pos_indices', 'neg_sorted', 'pos_sorted', 
+        'b_vector', 'one_indices', 'idx_left', 'idx_right', 'idx_left_mid', 'idx_right_mid',
+        'theta1', 'theta2', 'obj1', 'obj2', 'i0', 'i0_pos', 'valid', 'valid_i0',
+        'lambda_opt_nonzero', 'lambda_opt_zero', 'lambda_opt_zero_full',
+        'denominator', 'denominator_zero_mask',
+        'edge_small', 'edge_large', 'mask_cond_small', 'mask_else_small',
+        'mask_cond_large', 'mask_else_large', 'w_edge', 'w_mid',
+        'mask_edge', 'mask_mid', 'mask_small', 'mask_large'
+    ]:
+        if var in locals():
+            del locals()[var]
 
     # Garbage collection & CUDA cache
     import gc
