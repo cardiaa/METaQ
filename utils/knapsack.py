@@ -111,8 +111,8 @@ def knapsack_specialized_pruning(xi, v, w, C, device, delta):
         tuple: Optimal allocation (x), optimal multipliers (lambda_opt), and objective values.
     """
     #print("inside function", flush=True) # Debugging line
-    print("Begin knaspasck_specialized_pruning ...", flush=True) # Debugging line
-    print("debug 1", flush=True) # Debugging line
+    #print("Begin knaspasck_specialized_pruning ...", flush=True) # Debugging line
+    #print("debug 1", flush=True) # Debugging line
     xi = xi.to(dtype=torch.float32, device=device)
     v = v.to(dtype=torch.float32, device=device)
     w = w.to(dtype=torch.float32, device=device)
@@ -136,7 +136,7 @@ def knapsack_specialized_pruning(xi, v, w, C, device, delta):
     x_plus = torch.zeros(C, dtype=torch.int32)
     x_plus[torch.tensor(b_list)] = 1
     x_plus = x_plus.to(device)
-    print("debug 2", flush=True) # Debugging line
+    #print("debug 2", flush=True) # Debugging line
     #print("x_plus calculated")
     """
     x_plus = torch.zeros(C, dtype=torch.int32)
@@ -166,7 +166,7 @@ def knapsack_specialized_pruning(xi, v, w, C, device, delta):
 
     # === Step 5: Edge cases ===
     #print("Processing edge cases...") # Debugging line
-    print("debug 3", flush=True) # Debugging line
+    #print("debug 3", flush=True) # Debugging line
     if mask_edge.any():
         w_edge = w[mask_edge]
         x_edge = torch.zeros((w_edge.shape[0], C), device=device, dtype=torch.float32)
@@ -222,7 +222,7 @@ def knapsack_specialized_pruning(xi, v, w, C, device, delta):
             x_edge[mask_else_large, -1] = 1.0
 
         x[mask_edge] = x_edge
-    print("debug 4", flush=True) # Debugging line
+    #print("debug 4", flush=True) # Debugging line
     #print("end Processing edge cases...") # Debugging line
     #print("Processing mid cases A ...") # Debugging line
     # === Step 6: Intermediate Case ===
@@ -271,7 +271,7 @@ def knapsack_specialized_pruning(xi, v, w, C, device, delta):
 
     #print("end Processing mid cases A ...") # Debugging line
     # === Step 7: Compute idx_left and idx_right globally ===
-    print("debug 5", flush=True) # Debugging line
+    #print("debug 5", flush=True) # Debugging line
     one_indices = torch.nonzero(x_plus, as_tuple=True)[0]
 
     idx_left = torch.zeros_like(w, dtype=torch.long)
@@ -292,7 +292,7 @@ def knapsack_specialized_pruning(xi, v, w, C, device, delta):
 
         idx_left[mask_mid] = torch.where(better_first, i0, idx_left_mid)
         idx_right[mask_mid] = torch.where(better_first, i0, idx_right_mid)
-    print("debug 6", flush=True) # Debugging line
+    #print("debug 6", flush=True) # Debugging line
     #print("end Processing mid cases B ...") # Debugging line
     # Edge case
     #print("Calculating indices ...") # Debugging line
@@ -301,7 +301,7 @@ def knapsack_specialized_pruning(xi, v, w, C, device, delta):
         idx_edge = torch.nonzero(x_edge_masked, as_tuple=True)[1]  # colonna (indice lungo C)
         idx_left[mask_edge] = idx_edge
         idx_right[mask_edge] = idx_edge
-    print("debug 7", flush=True) # Debugging line
+    #print("debug 7", flush=True) # Debugging line
     #print("end Calculating indices ...") # Debugging line
     # === Step 8: Compute lambda_opt ===
     #print("Start part A ...") # Debugging line
@@ -326,7 +326,7 @@ def knapsack_specialized_pruning(xi, v, w, C, device, delta):
 
     # Cleanup: delete intermediate tensors
     #print("Start part A ...") # Debugging line
-    print("debug 8", flush=True) # Debugging line
+    #print("debug 8", flush=True) # Debugging line
     for var in [
         'x_edge', 'x1_sol', 'x2_sol', 'val_mat', 'div_mat', 'final_x', 
         'ratio', 'neg_indices', 'pos_indices', 'neg_sorted', 'pos_sorted', 
@@ -346,7 +346,7 @@ def knapsack_specialized_pruning(xi, v, w, C, device, delta):
     gc.collect()
     torch.cuda.empty_cache()  
     #print("End part B ...") # Debugging line
-    print("End knaspasck_specialized_pruning ...", flush=True) # Debugging line
+    #print("End knaspasck_specialized_pruning ...", flush=True) # Debugging line
     return x, lambda_opt, objective_values
 
 def knapsack_specialized_histo(xi, v, w, C, device):
