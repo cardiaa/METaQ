@@ -229,57 +229,46 @@ def knapsack_specialized_pruning(xi, v, w, C, device, delta):
     if mask_mid.any():
         w_mid = w[mask_mid]
         M_mid = w_mid.shape[0]
-        print("debug 4.1", flush=True) # Debugging line
+
         # First method
         ratio_b = w_mid[:, None] / v[b_vector]
-        print("debug 4.2", flush=True) # Debugging line
         valid = (ratio_b >= 0) & (ratio_b <= 1) & (x_plus[b_vector] == 1).unsqueeze(0)
-        print("debug 4.3", flush=True) # Debugging line
-        valid_i0 = torch.where(valid, torch.arange(C, device=device)[None, :], torch.tensor(float('inf'), device=device))
-        print("debug 4.4", flush=True) # Debugging line
+        valid_i0 = torch.where(
+            valid,
+            torch.arange(C, device=device)[None, :],
+            torch.tensor(float('inf'), device=device)
+        )
         i0_pos = valid_i0.argmin(dim=1)
-        print("debug 4.5", flush=True) # Debugging line
         i0 = b_vector[i0_pos]
-        print("debug 4.6", flush=True) # Debugging line
         v_i0 = v[i0]
-        x1_sol = torch.zeros(M_mid, C, device=device)
-        print("debug 4.7", flush=True)
+
         theta1 = w_mid / v_i0
-        print("debug 4.8", flush=True) # Debugging line
-        x1_sol[torch.arange(M_mid), i0] = theta1
-        print("debug 4.9", flush=True) # Debugging line
+        x1_sol = torch.zeros(M_mid, C, device=device)
+        x1_sol.scatter_(1, i0.unsqueeze(1), theta1.unsqueeze(1))
         obj1 = x1_sol @ xi
         obj1[theta1 < 0] = torch.tensor(float('inf'), device=device)
-        print("debug 4.9", flush=True) # Debugging line
+
         # Second method
-        one_indices = torch.nonzero(x_plus, as_tuple=True)[0]
-        one_indices = one_indices.to(device=device, dtype=torch.long)
-        print("debug 4.10", flush=True) # Debugging line
+        one_indices = torch.nonzero(x_plus, as_tuple=True)[0].to(device=device, dtype=torch.long)
         i_right = torch.searchsorted(v[one_indices], w_mid, right=False)
         i_right = i_right.clamp(min=1, max=one_indices.shape[0] - 1)
+
         idx_right_mid = one_indices[i_right]
-        print("debug 4.11", flush=True) # Debugging line
         idx_left_mid = one_indices[i_right - 1]
         v_left = v[idx_left_mid]
         v_right = v[idx_right_mid]
-        print("debug 4.12", flush=True) # Debugging line
         theta2 = (w_mid - v_right) / (v_left - v_right + 1e-8)
 
         x2_sol = torch.zeros(M_mid, C, device=device)
-        print("debug 4.13", flush=True) # Debugging line
-        x2_sol[torch.arange(M_mid), idx_left_mid] = theta2
-        print("debug 4.14", flush=True) # Debugging line
-        x2_sol[torch.arange(M_mid), idx_right_mid] = 1 - theta2
-        print("debug 4.15", flush=True) # Debugging line
+        x2_sol.scatter_(1, idx_left_mid.unsqueeze(1), theta2.unsqueeze(1))
+        x2_sol.scatter_(1, idx_right_mid.unsqueeze(1), (1 - theta2).unsqueeze(1))
         obj2 = x2_sol @ xi
-        print("debug 4.16", flush=True) # Debugging line
+
         # Choose better
-        
         better_first = obj1 < obj2
-        print("debug 4.17", flush=True) # Debugging line
         final_x = torch.where(better_first.unsqueeze(1), x1_sol, x2_sol)
-        print("debug 4.18", flush=True) # Debugging line
         x[mask_mid] = final_x
+
     #print("end Processing mid cases A ...") # Debugging line
     # === Step 7: Compute idx_left and idx_right globally ===
     print("debug 5", flush=True) # Debugging line
