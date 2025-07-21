@@ -290,17 +290,17 @@ def knapsack_specialized_pruning(xi, v, w, C, device, delta):
         idx_right[mask_edge] = idx_edge
     #print("end Calculating indices ...") # Debugging line
     # === Step 8: Compute lambda_opt ===
-    print("Start part A ...") # Debugging line
+    #print("Start part A ...") # Debugging line
     denominator = v[idx_right] - v[idx_left]
     denominator_zero_mask = denominator == 0
 
     lambda_opt_nonzero = -(xi[idx_right] - xi[idx_left]) / denominator
     lambda_opt_zero_full = -(xi + delta) / v
     lambda_opt_zero = lambda_opt_zero_full[idx_left]
-    print("End part A ...") # Debugging line
-    print("Start part B ...") # Debugging line
+    #print("End part A ...") # Debugging line
+    #print("Start part B ...") # Debugging line
     lambda_opt = torch.where(denominator_zero_mask, lambda_opt_zero, lambda_opt_nonzero)
-    print("End part B ...") # Debugging line
+    #print("End part B ...") # Debugging line
     # === Step 9: Objective ===
     objective_values = delta + x @ xi
 
@@ -311,6 +311,7 @@ def knapsack_specialized_pruning(xi, v, w, C, device, delta):
     #print("=====================")
 
     # Cleanup: delete intermediate tensors
+    print("Start part A ...") # Debugging line
     for var in [
         'x_edge', 'x1_sol', 'x2_sol', 'val_mat', 'div_mat', 'final_x', 
         'ratio', 'neg_indices', 'pos_indices', 'neg_sorted', 'pos_sorted', 
@@ -324,11 +325,12 @@ def knapsack_specialized_pruning(xi, v, w, C, device, delta):
     ]:
         if var in locals():
             del locals()[var]
-
+    print("End part A ...") # Debugging line
+    print("Start part B ...") # Debugging line
     # Garbage collection & CUDA cache
     gc.collect()
     torch.cuda.empty_cache()  
-
+    print("End part B ...") # Debugging line
     return x, lambda_opt, objective_values
 
 def knapsack_specialized_histo(xi, v, w, C, device):
