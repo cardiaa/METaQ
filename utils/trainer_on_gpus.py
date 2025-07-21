@@ -106,19 +106,20 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, s
             
             loss.backward()
             optimizer.step()
-        #print(f"Epoch {epoch + 1}: training_time = {training_time}s\n", flush=True)
+        print(f"Epoch {epoch + 1}: training_time = {training_time}s\n", flush=True)
         w = torch.cat([param.data.view(-1) for param in model.parameters()]).to(device)
-        
+        print("Debug 1", flush=True)
         accuracy = test_accuracy(model, testloader, device)
         accuracies.append(accuracy)
+        print("Debug 2", flush=True)
         entropy = round(compute_entropy(w.tolist())) + 1
         entropies.append(entropy)
-
+        print("Debug 3", flush=True)
         if(QuantizationType == "center"): # Quantize weights using central values
             v_centers = (v[:-1] + v[1:]) / 2
             v_centers = torch.cat([v_centers, v[-1:]]) # Add final value to handle the last bucket
             w_quantized = quantize_weights_center(w, v, v_centers, device)
-        
+        print("Debug 4", flush=True)
         model_quantized = copy.deepcopy(model).to(device)
         start_idx = 0
         for param in model_quantized.parameters():
@@ -127,7 +128,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, s
             start_idx += numel
         model_quantized.eval()
         quantized_accuracy = test_accuracy(model_quantized, testloader, device)
-
+        print("Debug 5", flush=True)
         encoded_list = [float(elem) if float(elem) != -0.0 else 0.0 for elem in w_quantized]
         quantized_entropy = round(compute_entropy(encoded_list)) + 1
         input_bytes = b''.join(struct.pack('f', num) for num in encoded_list)
@@ -135,7 +136,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, s
         original_size_bytes = len(input_bytes)
         zstd_size = len(zstd_compressed)
         zstd_ratio = zstd_size / original_size_bytes  
-
+        print("Debug 6", flush=True)
         # --- Sparse compression ---
         mask = [1 if abs(val) > sparsity_threshold else 0 for val in encoded_list]
         nonzero_values = [val for val in encoded_list if abs(val) > sparsity_threshold]
@@ -146,12 +147,12 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, s
         sparse_compressed_size = len(compressed_mask) + len(compressed_values)
         sparse_ratio = sparse_compressed_size / original_size_bytes
         sparsity = 1.0 - sum(mask) / len(mask) 
-
+        print("Debug 7", flush=True)
         # Applies the sparsity mask to quantized weights
         w_sparse = torch.tensor(encoded_list).to(device)
         sparse_mask_tensor = torch.tensor(mask, dtype=torch.bool).to(device)
         w_sparse[~sparse_mask_tensor] = 0.0
-
+        print("Debug 8", flush=True)
         # Build a new sparsified model
         model_sparse = copy.deepcopy(model).to(device)
         start_idx = 0
@@ -160,7 +161,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, s
             param.data = w_sparse[start_idx:start_idx + numel].view(param.data.size())
             start_idx += numel
         model_sparse.eval()
-
+        print("Debug 9", flush=True)
         # Evaluate the accuracy of the sparsified model
         sparse_accuracy = test_accuracy(model_sparse, testloader, device)
 
