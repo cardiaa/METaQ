@@ -299,11 +299,11 @@ def knapsack_specialized_pruning(xi, v, w, C, device, delta):
     # === Step 9: Objective ===
     objective_values = delta + x @ xi
 
-    print("=== Device Report ===")
-    for name, obj in locals().items():
-        if isinstance(obj, torch.Tensor):
-            print(f"{name:25s} -> {obj.device}")
-    print("=====================")
+    #print("=== Device Report ===")
+    #for name, obj in locals().items():
+    #    if isinstance(obj, torch.Tensor):
+    #        print(f"{name:25s} -> {obj.device}")
+    #print("=====================")
 
     # Cleanup: delete intermediate tensors
     for var in [
