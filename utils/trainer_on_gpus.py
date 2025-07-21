@@ -42,6 +42,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, s
 
     # Training loop
     for epoch in range(n_epochs):
+        print(f"Beginning epoch {epoch} at {time.time()}", flush=True)
         start_time = time.time()
         start_time2 = time.time()
         for i, data in enumerate(trainloader, 0):
