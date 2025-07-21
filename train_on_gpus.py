@@ -162,7 +162,7 @@ if __name__ == "__main__":
         model.classifier[6] = nn.Linear(4096, 1000)
         model = model.to(device)       
         criterion, criterion_name = nn.CrossEntropyLoss(), "CrossEntropy" 
-        C = 4
+        C = 64
         lr = 0.001
         lambda_reg = 0.0002
         alpha = 0.6
