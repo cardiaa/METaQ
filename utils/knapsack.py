@@ -282,23 +282,25 @@ def knapsack_specialized_pruning(xi, v, w, C, device, delta):
         idx_right[mask_mid] = torch.where(better_first, i0, idx_right_mid)
     #print("end Processing mid cases B ...") # Debugging line
     # Edge case
-    print("Calculating indices ...") # Debugging line
+    #print("Calculating indices ...") # Debugging line
     if mask_edge.any():
         x_edge_masked = x[mask_edge]  # (N_edge, C)
         idx_edge = torch.nonzero(x_edge_masked, as_tuple=True)[1]  # colonna (indice lungo C)
         idx_left[mask_edge] = idx_edge
         idx_right[mask_edge] = idx_edge
-    print("end Calculating indices ...") # Debugging line
+    #print("end Calculating indices ...") # Debugging line
     # === Step 8: Compute lambda_opt ===
+    print("Start part A ...") # Debugging line
     denominator = v[idx_right] - v[idx_left]
     denominator_zero_mask = denominator == 0
 
     lambda_opt_nonzero = -(xi[idx_right] - xi[idx_left]) / denominator
     lambda_opt_zero_full = -(xi + delta) / v
     lambda_opt_zero = lambda_opt_zero_full[idx_left]
-
+    print("End part A ...") # Debugging line
+    print("Start part B ...") # Debugging line
     lambda_opt = torch.where(denominator_zero_mask, lambda_opt_zero, lambda_opt_nonzero)
-
+    print("End part B ...") # Debugging line
     # === Step 9: Objective ===
     objective_values = delta + x @ xi
 
