@@ -265,11 +265,12 @@ def knapsack_specialized_pruning(xi, v, w, C, device, delta):
         x[mask_mid] = final_x
     #print("end Processing mid cases A ...") # Debugging line
     # === Step 7: Compute idx_left and idx_right globally ===
+    print("debug 5", flush=True) # Debugging line
     one_indices = torch.nonzero(x_plus, as_tuple=True)[0]
 
     idx_left = torch.zeros_like(w, dtype=torch.long)
     idx_right = torch.zeros_like(w, dtype=torch.long)
-    print("debug 5", flush=True) # Debugging line
+    
     # Mid case
     #print("Processing mid cases B ...") # Debugging line
     if mask_mid.any():
