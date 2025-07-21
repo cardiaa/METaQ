@@ -64,8 +64,8 @@ def load_data(model_name):
         train_dataset = datasets.ImageFolder('/disk1/a.cardia/imagenet/train', transform=transform_train)
         val_dataset = datasets.ImageFolder('/disk1/a.cardia/imagenet/val', transform=transform_val)
 
-        trainset = DataLoader(train_dataset, batch_size=2048, shuffle=True, num_workers=8, pin_memory=True)
-        testset = DataLoader(val_dataset, batch_size=2048, shuffle=False, num_workers=8, pin_memory=True)
+        trainset = DataLoader(train_dataset, batch_size=4096, shuffle=True, num_workers=8, pin_memory=True)
+        testset = DataLoader(val_dataset, batch_size=4096, shuffle=False, num_workers=8, pin_memory=True)
 
     # Return the loaded training and test datasets
     return trainset, testset
