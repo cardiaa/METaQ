@@ -199,6 +199,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, s
             BestQuantization_target_acc = accuracies[-1] 
         
         # ---------------------------------------------------------------------------------------------------------
+        """
         # No-pruning exit conditions
         if(pruning == "N"):
             # Entropy exit conditions
@@ -274,7 +275,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, s
         elif(pruning == "Y"):
             # Entropy exit conditions
             # After the tenth epoch I must have entropy below 200000
-            """
+            
             if(epoch >= 0 and quantized_entropy >= 400000):
                 log += (
                     f"Entropy is not decreasing enough! (E1.1), delta: {delta}\n"
@@ -283,7 +284,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, s
 
                 print(log, flush = True)
                 return
-            """
+            
             # ---------------------------------------------------------------------------------------------------------
             # Accuracy exit condition
             # After the first epoch I must have accuracy above 30%
@@ -295,7 +296,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, s
 
                 print(log, flush = True)
                 return
-            """
+            
             # After the 10th epoch I must have accuracy above 94%
             if(epoch >= 9 and accuracies[-1] <= 94):
                 log += (
