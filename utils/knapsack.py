@@ -332,7 +332,7 @@ def knapsack_specialized_pruning(xi, v, w, C, device, delta):
     gc.collect()
     torch.cuda.empty_cache()  
     #print("End part B ...") # Debugging line
-    #print("End knaspasck_specialized_pruning ...") # Debugging line
+    print("End knaspasck_specialized_pruning ...") # Debugging line
     return x, lambda_opt, objective_values
 
 def knapsack_specialized_histo(xi, v, w, C, device):
