@@ -1,4 +1,5 @@
 import torch   
+import gc
 
 def knapsack_specialized(xi, v, w, C, device):
     """
@@ -109,9 +110,10 @@ def knapsack_specialized_pruning(xi, v, w, C, device, delta):
     Returns:
         tuple: Optimal allocation (x), optimal multipliers (lambda_opt), and objective values.
     """
-    xi = xi.to(device)
-    v = v.to(device)
-    w = w.to(device)
+
+    xi = xi.to(dtype=torch.float32, device=device)
+    v = v.to(dtype=torch.float32, device=device)
+    w = w.to(dtype=torch.float32, device=device)
 
     xi = xi - delta
     M = w.shape[0]
@@ -158,7 +160,6 @@ def knapsack_specialized_pruning(xi, v, w, C, device, delta):
     lambda_opt = torch.zeros(M, device=device)
 
     # === Step 5: Edge cases ===
-
     if mask_edge.any():
         w_edge = w[mask_edge]
         x_edge = torch.zeros((w_edge.shape[0], C), device=device, dtype=torch.float32)
@@ -224,7 +225,7 @@ def knapsack_specialized_pruning(xi, v, w, C, device, delta):
         # First method
         ratio_b = w_mid[:, None] / v[b_vector]
         valid = (ratio_b >= 0) & (ratio_b <= 1) & (x_plus[b_vector] == 1).unsqueeze(0)
-        valid_i0 = torch.where(valid, torch.arange(C, device=device)[None, :], float('inf'))
+        valid_i0 = torch.where(valid, torch.arange(C, device=device)[None, :], torch.tensor(float('inf'), device=device))
         i0_pos = valid_i0.argmin(dim=1)
         i0 = b_vector[i0_pos]
         v_i0 = v[i0]
@@ -232,10 +233,11 @@ def knapsack_specialized_pruning(xi, v, w, C, device, delta):
         theta1 = w_mid / v_i0
         x1_sol[torch.arange(M_mid), i0] = theta1
         obj1 = x1_sol @ xi
-        obj1[theta1 < 0] = float('inf')
+        obj1[theta1 < 0] = torch.tensor(float('inf'), device=device)
 
         # Second method
         one_indices = torch.nonzero(x_plus, as_tuple=True)[0]
+        one_indices = one_indices.to(device=device, dtype=torch.long)
         i_right = torch.searchsorted(v[one_indices], w_mid, right=False)
         i_right = i_right.clamp(min=1, max=one_indices.shape[0] - 1)
         idx_right_mid = one_indices[i_right]
@@ -311,7 +313,6 @@ def knapsack_specialized_pruning(xi, v, w, C, device, delta):
             del locals()[var]
 
     # Garbage collection & CUDA cache
-    import gc
     gc.collect()
     torch.cuda.empty_cache()  
 
