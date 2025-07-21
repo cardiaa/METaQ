@@ -46,7 +46,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, s
         start_time2 = time.time()
         for i, data in enumerate(trainloader, 0):
             #if i % 100 == 0:
-            print(f"Batch {i} of epoch {epoch + 1}: time {time.time() - start_time2}", flush=True)
+            print(f"Batch {i} of epoch {epoch + 1}: time {round(time.time() - start_time2, 2)}s", flush=True)
             start_time2 = time.time()
             inputs, targets = data
             inputs, targets = inputs.to(device), targets.to(device)
@@ -106,6 +106,8 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, s
             
             loss.backward()
             optimizer.step()
+
+        training_time = round(time.time() - start_time)
         print(f"Epoch {epoch + 1}: training_time = {training_time}s\n", flush=True)
         w = torch.cat([param.data.view(-1) for param in model.parameters()]).to(device)
         print("Debug 1", flush=True)
