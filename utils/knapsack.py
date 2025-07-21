@@ -110,8 +110,8 @@ def knapsack_specialized_pruning(xi, v, w, C, device, delta):
     Returns:
         tuple: Optimal allocation (x), optimal multipliers (lambda_opt), and objective values.
     """
-    print("inside function", flush=True) # Debugging line
-    #print("Begin knaspasck_specialized_pruning ...") # Debugging line
+    #print("inside function", flush=True) # Debugging line
+    print("Begin knaspasck_specialized_pruning ...", flush=True) # Debugging line
     xi = xi.to(dtype=torch.float32, device=device)
     v = v.to(dtype=torch.float32, device=device)
     w = w.to(dtype=torch.float32, device=device)
@@ -332,7 +332,7 @@ def knapsack_specialized_pruning(xi, v, w, C, device, delta):
     gc.collect()
     torch.cuda.empty_cache()  
     #print("End part B ...") # Debugging line
-    print("End knaspasck_specialized_pruning ...") # Debugging line
+    print("End knaspasck_specialized_pruning ...", flush=True) # Debugging line
     return x, lambda_opt, objective_values
 
 def knapsack_specialized_histo(xi, v, w, C, device):
