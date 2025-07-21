@@ -10,7 +10,7 @@ from utils.quantize_and_compress import compute_entropy, quantize_weights_center
 from utils.optimization import FISTA, ProximalBM, test_accuracy
 from utils.weight_utils import initialize_weights
 from utils.quantize_and_compress import compress_zstd, BestQuantization, pack_bitmask
-from datetime import datetime
+from datetime import datetime, timedelta
 
 def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, subgradient_step, w0, r, first_best_indices,
                         BestQuantization_target_acc, final_target_acc, target_zstd_ratio, min_xi, max_xi, upper_c, lower_c, 
@@ -42,7 +42,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, s
 
     # Training loop
     for epoch in range(n_epochs):
-        print(f"Beginning epoch {epoch} at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", flush=True)
+        print(f"Beginning epoch {epoch} at {(datetime.now() + timedelta(hours=2)).strftime('%Y-%m-%d %H:%M:%S')}", flush=True)
         start_time = time.time()
         start_time2 = time.time()
         for i, data in enumerate(trainloader, 0):
