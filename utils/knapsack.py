@@ -230,39 +230,50 @@ def knapsack_specialized_pruning(xi, v, w, C, device, delta):
         w_mid = w[mask_mid]
         M_mid = w_mid.shape[0]
 
-        # First method
-        ratio_b = w_mid[:, None] / v[b_vector]
-        valid = (ratio_b >= 0) & (ratio_b <= 1) & (x_plus[b_vector] == 1).unsqueeze(0)
-        valid_i0 = torch.where(valid, torch.arange(C, device=device)[None, :], torch.tensor(float('inf'), device=device))
-        i0_pos = valid_i0.argmin(dim=1)
-        i0 = b_vector[i0_pos]
-        v_i0 = v[i0]
-        x1_sol = torch.zeros(M_mid, C, device=device)
-        theta1 = w_mid / v_i0
-        x1_sol[torch.arange(M_mid), i0] = theta1
-        obj1 = x1_sol @ xi
-        obj1[theta1 < 0] = torch.tensor(float('inf'), device=device)
+        # === First method ===
+        b_idx = b_vector[(x_plus[b_vector] == 1)]
+        v_b = v[b_idx]
 
-        # Second method
+        # Calcolo ratio solo sugli indici validi
+        ratio_b = w_mid[:, None] / v_b[None, :]  # (M_mid, len(b_idx))
+        valid = (ratio_b >= 0) & (ratio_b <= 1)
+        
+        # Metti inf solo dove non valido
+        ratio_masked = torch.where(valid, ratio_b * xi[b_idx], float('inf'))
+        best_idx_pos = ratio_masked.argmin(dim=1)
+        i0 = b_idx[best_idx_pos]
+        v_i0 = v[i0]
+        theta1 = w_mid / v_i0
+
+        obj1 = theta1 * xi[i0]
+        x1_sol = torch.zeros(M_mid, C, device=device)
+        x1_sol[torch.arange(M_mid), i0] = theta1
+
+        # === Second method ===
         one_indices = torch.nonzero(x_plus, as_tuple=True)[0]
-        one_indices = one_indices.to(device=device, dtype=torch.long)
-        i_right = torch.searchsorted(v[one_indices], w_mid, right=False)
-        i_right = i_right.clamp(min=1, max=one_indices.shape[0] - 1)
-        idx_right_mid = one_indices[i_right]
-        idx_left_mid = one_indices[i_right - 1]
-        v_left = v[idx_left_mid]
-        v_right = v[idx_right_mid]
-        theta2 = (w_mid - v_right) / (v_left - v_right + 1e-8)
+        v_one = v[one_indices]
+        i_right = torch.searchsorted(v_one, w_mid, right=False)
+        i_right = i_right.clamp(min=1, max=len(v_one) - 1)
+        i_left = i_right - 1
+        idx_left = one_indices[i_left]
+        idx_right = one_indices[i_right]
+
+        v_left = v[idx_left]
+        v_right = v[idx_right]
+
+        denom = (v_left - v_right + 1e-8)
+        theta2 = (w_mid - v_right) / denom
+        theta2 = theta2.clamp(0, 1)
 
         x2_sol = torch.zeros(M_mid, C, device=device)
-        x2_sol[torch.arange(M_mid), idx_left_mid] = theta2
-        x2_sol[torch.arange(M_mid), idx_right_mid] = 1 - theta2
-        obj2 = x2_sol @ xi
+        x2_sol[torch.arange(M_mid), idx_left] = theta2
+        x2_sol[torch.arange(M_mid), idx_right] = 1 - theta2
+        obj2 = theta2 * xi[idx_left] + (1 - theta2) * xi[idx_right]
 
-        # Choose better
+        # === Compare ===
         better_first = obj1 < obj2
-        final_x = torch.where(better_first.unsqueeze(1), x1_sol, x2_sol)
-        x[mask_mid] = final_x
+        x[mask_mid] = torch.where(better_first.unsqueeze(1), x1_sol, x2_sol)
+
     #print("end Processing mid cases A ...") # Debugging line
     # === Step 7: Compute idx_left and idx_right globally ===
     print("debug 5", flush=True) # Debugging line
