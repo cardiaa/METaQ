@@ -110,7 +110,7 @@ def knapsack_specialized_pruning(xi, v, w, C, device, delta):
     Returns:
         tuple: Optimal allocation (x), optimal multipliers (lambda_opt), and objective values.
     """
-    print("inside function") # Debugging line
+    print("inside function", flush=True) # Debugging line
     #print("Begin knaspasck_specialized_pruning ...") # Debugging line
     xi = xi.to(dtype=torch.float32, device=device)
     v = v.to(dtype=torch.float32, device=device)

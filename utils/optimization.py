@@ -45,7 +45,7 @@ def FISTA(xi, v, w, C, upper_c, lower_c, delta, subgradient_step, device, max_it
         #print(f"A FISTA's Iteration {iteration}", flush=True)
         # Solve the simil-knapsack problem for the current xi
         if(pruning == "Y"):
-            print("outside function")
+            print("outside function", flush=True)
             x_i_star, lambda_plus, phi_plus = knapsack_specialized_pruning(xi, v, w, C, device, delta)
         elif(pruning == "N"):
             x_i_star, lambda_plus, phi_plus = knapsack_specialized(xi, v, w, C, device)
