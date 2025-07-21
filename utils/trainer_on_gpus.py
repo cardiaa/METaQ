@@ -43,9 +43,11 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, s
     # Training loop
     for epoch in range(n_epochs):
         start_time = time.time()
+        start_time2 = time.time()
         for i, data in enumerate(trainloader, 0):
             #if i % 100 == 0:
-            print(f"Batch {i} of epoch {epoch + 1}", flush=True)
+            print(f"Batch {i} of epoch {epoch + 1}: time {time.time() - start_time2}", flush=True)
+            start_time2 = time.time()
             inputs, targets = data
             inputs, targets = inputs.to(device), targets.to(device)
             optimizer.zero_grad()
