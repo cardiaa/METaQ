@@ -121,7 +121,7 @@ def knapsack_specialized_pruning(xi, v, w, C, device, delta):
     # === Step 1: Compute x_plus ===
     b_list = []
     b = 0
-    print("Computing x_plus...")
+    #print("Computing x_plus...") # Questo l'ho messo solo per vedere se il calcolo di x_plus era il collo di bottiglia, e non lo è.
     while True:
         delta_xi = xi[b + 1:] - xi[b]
         delta_v = v[b + 1:] - v[b]
@@ -134,7 +134,7 @@ def knapsack_specialized_pruning(xi, v, w, C, device, delta):
     x_plus = torch.zeros(C, dtype=torch.int32)
     x_plus[torch.tensor(b_list)] = 1
     x_plus = x_plus.to(device)
-    print("x_plus calculated")
+    #print("x_plus calculated")
     """
     x_plus = torch.zeros(C, dtype=torch.int32)
     x_plus[0] = 1
@@ -149,7 +149,7 @@ def knapsack_specialized_pruning(xi, v, w, C, device, delta):
     pos_sorted = pos_indices[torch.argsort(ratio[pos_indices])]
     b_vector = torch.cat([neg_sorted, pos_sorted], dim=0)
     b_vector = b_vector.to(device)
-    print(w.device, v.device, xi.device, b_vector.device)
+    #print(w.device, v.device, xi.device, b_vector.device) # ... debug ...
 
     # === Step 3: Masks ===
     mask_small = w < v[0]
@@ -297,6 +297,12 @@ def knapsack_specialized_pruning(xi, v, w, C, device, delta):
 
     # === Step 9: Objective ===
     objective_values = delta + x @ xi
+
+    print("=== Device Report ===")
+    for name, obj in locals().items():
+        if isinstance(obj, torch.Tensor):
+            print(f"{name:25s} -> {obj.device}")
+    print("=====================")
 
     # Cleanup: delete intermediate tensors
     for var in [
