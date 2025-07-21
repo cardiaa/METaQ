@@ -160,7 +160,18 @@ if __name__ == "__main__":
     elif(model_name == "AlexNet"):
         model = models.alexnet(weights=None)
         model.classifier[6] = nn.Linear(4096, 1000)
-        model = model.to(device)       
+        if torch.cuda.is_available():
+            device = torch.device("cuda")
+            if torch.cuda.device_count() > 1:
+                print(f"Using {torch.cuda.device_count()} GPUs", flush=True)
+                model = nn.DataParallel(model)  # Wrappa qui
+            else:
+                print(f"Using GPU: {torch.cuda.get_device_name(0)}", flush=True)
+            model = model.to(device)
+        else:
+            device = torch.device("cpu")
+            print("Using CPU.", flush=True)
+            model = model.to(device)     
         criterion, criterion_name = nn.CrossEntropyLoss(), "CrossEntropy" 
         C = 32
         lr = 0.001
