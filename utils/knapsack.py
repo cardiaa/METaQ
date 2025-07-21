@@ -110,7 +110,7 @@ def knapsack_specialized_pruning(xi, v, w, C, device, delta):
     Returns:
         tuple: Optimal allocation (x), optimal multipliers (lambda_opt), and objective values.
     """
-
+    print("Begin knaspasck_specialized_pruning ...") # Debugging line
     xi = xi.to(dtype=torch.float32, device=device)
     v = v.to(dtype=torch.float32, device=device)
     w = w.to(dtype=torch.float32, device=device)
@@ -311,7 +311,7 @@ def knapsack_specialized_pruning(xi, v, w, C, device, delta):
     #print("=====================")
 
     # Cleanup: delete intermediate tensors
-    print("Start part A ...") # Debugging line
+    #print("Start part A ...") # Debugging line
     for var in [
         'x_edge', 'x1_sol', 'x2_sol', 'val_mat', 'div_mat', 'final_x', 
         'ratio', 'neg_indices', 'pos_indices', 'neg_sorted', 'pos_sorted', 
@@ -325,12 +325,13 @@ def knapsack_specialized_pruning(xi, v, w, C, device, delta):
     ]:
         if var in locals():
             del locals()[var]
-    print("End part A ...") # Debugging line
-    print("Start part B ...") # Debugging line
+    #print("End part A ...") # Debugging line
+    #print("Start part B ...") # Debugging line
     # Garbage collection & CUDA cache
     gc.collect()
     torch.cuda.empty_cache()  
-    print("End part B ...") # Debugging line
+    #print("End part B ...") # Debugging line
+    print("End knaspasck_specialized_pruning ...") # Debugging line
     return x, lambda_opt, objective_values
 
 def knapsack_specialized_histo(xi, v, w, C, device):
