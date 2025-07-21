@@ -42,13 +42,14 @@ def FISTA(xi, v, w, C, upper_c, lower_c, delta, subgradient_step, device, max_it
     t_prev = torch.tensor(1.0, device=device)
 
     for iteration in range(1, max_iterations + 1):
-        print(f"A FISTA's Iteration {iteration}", flush=True)
+        #print(f"A FISTA's Iteration {iteration}", flush=True)
         # Solve the simil-knapsack problem for the current xi
         if(pruning == "Y"):
+            print("outside function")
             x_i_star, lambda_plus, phi_plus = knapsack_specialized_pruning(xi, v, w, C, device, delta)
         elif(pruning == "N"):
             x_i_star, lambda_plus, phi_plus = knapsack_specialized(xi, v, w, C, device)
-        print(f"B FISTA's Iteration {iteration}", flush=True)
+        #print(f"B FISTA's Iteration {iteration}", flush=True)
         sum_x_star = torch.sum(x_i_star, dim=0)
 
         # Compute the optimal c values c_star
