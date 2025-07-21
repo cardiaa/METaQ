@@ -247,6 +247,7 @@ def knapsack_specialized_pruning(xi, v, w, C, device, delta):
         theta1 = w_mid / v_i0
         print("debug 4.8", flush=True) # Debugging line
         x1_sol[torch.arange(M_mid), i0] = theta1
+        print("debug 4.9", flush=True) # Debugging line
         obj1 = x1_sol @ xi
         obj1[theta1 < 0] = torch.tensor(float('inf'), device=device)
         print("debug 4.9", flush=True) # Debugging line
@@ -267,13 +268,17 @@ def knapsack_specialized_pruning(xi, v, w, C, device, delta):
         x2_sol = torch.zeros(M_mid, C, device=device)
         print("debug 4.13", flush=True) # Debugging line
         x2_sol[torch.arange(M_mid), idx_left_mid] = theta2
-        x2_sol[torch.arange(M_mid), idx_right_mid] = 1 - theta2
-        obj2 = x2_sol @ xi
-
-        # Choose better
         print("debug 4.14", flush=True) # Debugging line
+        x2_sol[torch.arange(M_mid), idx_right_mid] = 1 - theta2
+        print("debug 4.15", flush=True) # Debugging line
+        obj2 = x2_sol @ xi
+        print("debug 4.16", flush=True) # Debugging line
+        # Choose better
+        
         better_first = obj1 < obj2
+        print("debug 4.17", flush=True) # Debugging line
         final_x = torch.where(better_first.unsqueeze(1), x1_sol, x2_sol)
+        print("debug 4.18", flush=True) # Debugging line
         x[mask_mid] = final_x
     #print("end Processing mid cases A ...") # Debugging line
     # === Step 7: Compute idx_left and idx_right globally ===
