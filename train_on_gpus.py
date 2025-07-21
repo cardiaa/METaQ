@@ -90,7 +90,7 @@ if __name__ == "__main__":
         print("Using CPU.", flush=True)
 
     # Define fixed hyperparameters for the model and training process
-    model_name = "LeNet-5"
+    model_name = "AlexNet"
     if(model_name == "LeNet-5"):
         model = LeNet5()
         model = model.to(device)         
