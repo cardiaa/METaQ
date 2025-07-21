@@ -250,4 +250,3 @@ if __name__ == "__main__":
         entropy_optimizer=entropy_optimizer, trainloader=trainloader, testloader=testloader, delta=args.delta, pruning=pruning, 
         QuantizationType=QuantizationType, sparsity_threshold=sparsity_threshold, accuracy_tollerance=accuracy_tollerance
     )
-
