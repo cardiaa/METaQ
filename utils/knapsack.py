@@ -162,6 +162,7 @@ def knapsack_specialized_pruning(xi, v, w, C, device, delta):
     lambda_opt = torch.zeros(M, device=device)
 
     # === Step 5: Edge cases ===
+    print("Processing edge cases...") # Debugging line
     if mask_edge.any():
         w_edge = w[mask_edge]
         x_edge = torch.zeros((w_edge.shape[0], C), device=device, dtype=torch.float32)
@@ -217,7 +218,7 @@ def knapsack_specialized_pruning(xi, v, w, C, device, delta):
             x_edge[mask_else_large, -1] = 1.0
 
         x[mask_edge] = x_edge
-
+    print("end Processing edge cases...") # Debugging line
     # === Step 6: Intermediate Case ===
     if mask_mid.any():
         w_mid = w[mask_mid]
