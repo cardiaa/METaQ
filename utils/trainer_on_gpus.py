@@ -134,7 +134,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, s
         encoded_list = [float(elem) if float(elem) != -0.0 else 0.0 for elem in w_quantized]
         quantized_entropy = round(compute_entropy(encoded_list)) + 1
         input_bytes = b''.join(struct.pack('f', num) for num in encoded_list)
-        zstd_compressed = compress_zstd(input_bytes)
+        zstd_compressed = compress_zstd(input_bytes, level=3)
         original_size_bytes = len(input_bytes)
         zstd_size = len(zstd_compressed)
         zstd_ratio = zstd_size / original_size_bytes  
@@ -144,8 +144,8 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, s
         nonzero_values = [val for val in encoded_list if abs(val) > sparsity_threshold]
         bitmask_bytes = pack_bitmask(mask)
         packed_nonzeros = b''.join(struct.pack('f', val) for val in nonzero_values)
-        compressed_mask = compress_zstd(bitmask_bytes)
-        compressed_values = compress_zstd(packed_nonzeros)
+        compressed_mask = compress_zstd(bitmask_bytes, level=3)
+        compressed_values = compress_zstd(packed_nonzeros, level=3)
         sparse_compressed_size = len(compressed_mask) + len(compressed_values)
         sparse_ratio = sparse_compressed_size / original_size_bytes
         sparsity = 1.0 - sum(mask) / len(mask) 

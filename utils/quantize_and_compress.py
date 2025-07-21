@@ -154,8 +154,8 @@ def compress_gzip(data):
     return gzip.compress(data, compresslevel=9)
 
 # Compresses with zstd-22
-def compress_zstd(data):
-    cctx = zstd.ZstdCompressor(level=22)  # Creates a compressor object with level 22
+def compress_zstd(data, level):
+    cctx = zstd.ZstdCompressor(level=level)  # Creates a compressor object with level 22
     return cctx.compress(data)
 
 # Decompresses with gzip-9
@@ -225,7 +225,7 @@ def BestQuantization(log, C, r, delta, epoch, min_w, max_w, w, c1, c2, final_tar
         # Converts float list in byte
         input_bytes = b''.join(struct.pack('f', num) for num in encoded_list)
         # Compression
-        zstd_compressed = compress_zstd(input_bytes)
+        zstd_compressed = compress_zstd(input_bytes, level=3)
 
         # Verifies
         zstd_decompressed = decompress_zstd(zstd_compressed)
@@ -242,8 +242,8 @@ def BestQuantization(log, C, r, delta, epoch, min_w, max_w, w, c1, c2, final_tar
         nonzero_values = [val for val in encoded_list if abs(val) > sparsity_threshold]
         bitmask_bytes = pack_bitmask(mask)
         packed_nonzeros = b''.join(struct.pack('f', val) for val in nonzero_values)
-        compressed_mask = compress_zstd(bitmask_bytes)
-        compressed_values = compress_zstd(packed_nonzeros)
+        compressed_mask = compress_zstd(bitmask_bytes, level=3)
+        compressed_values = compress_zstd(packed_nonzeros, level=3)
         sparse_compressed_size = len(compressed_mask) + len(compressed_values)
         sparse_ratio = sparse_compressed_size / original_size_bytes
         sparsity = 1.0 - sum(mask) / len(mask) 

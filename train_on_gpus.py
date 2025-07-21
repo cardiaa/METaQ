@@ -163,9 +163,9 @@ if __name__ == "__main__":
         model = model.to(device)       
         criterion, criterion_name = nn.CrossEntropyLoss(), "CrossEntropy" 
         C = 32
-        lr = 0.001
+        lr = 0.1
         lambda_reg = 0.0002
-        alpha = 0.6
+        alpha = 1
         subgradient_step = 1e5 
         bucket_zero = round((C-1)/2) #it must range from 0 to C-2
         r = 2
