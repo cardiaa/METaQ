@@ -162,7 +162,7 @@ def knapsack_specialized_pruning(xi, v, w, C, device, delta):
     lambda_opt = torch.zeros(M, device=device)
 
     # === Step 5: Edge cases ===
-    print("Processing edge cases...") # Debugging line
+    #print("Processing edge cases...") # Debugging line
     if mask_edge.any():
         w_edge = w[mask_edge]
         x_edge = torch.zeros((w_edge.shape[0], C), device=device, dtype=torch.float32)
@@ -218,7 +218,8 @@ def knapsack_specialized_pruning(xi, v, w, C, device, delta):
             x_edge[mask_else_large, -1] = 1.0
 
         x[mask_edge] = x_edge
-    print("end Processing edge cases...") # Debugging line
+    #print("end Processing edge cases...") # Debugging line
+    print("Processing mid cases A ...") # Debugging line
     # === Step 6: Intermediate Case ===
     if mask_mid.any():
         w_mid = w[mask_mid]
@@ -257,7 +258,7 @@ def knapsack_specialized_pruning(xi, v, w, C, device, delta):
         better_first = obj1 < obj2
         final_x = torch.where(better_first.unsqueeze(1), x1_sol, x2_sol)
         x[mask_mid] = final_x
-
+    print("end Processing mid cases A ...") # Debugging line
     # === Step 7: Compute idx_left and idx_right globally ===
     one_indices = torch.nonzero(x_plus, as_tuple=True)[0]
 
@@ -265,6 +266,7 @@ def knapsack_specialized_pruning(xi, v, w, C, device, delta):
     idx_right = torch.zeros_like(w, dtype=torch.long)
 
     # Mid case
+    print("Processing mid cases B ...") # Debugging line
     if mask_mid.any():
         i_right_mid = torch.searchsorted(v[one_indices], w[mask_mid], right=False)
         i_right_mid = i_right_mid.clamp(min=1, max=one_indices.shape[0] - 1)
@@ -278,7 +280,7 @@ def knapsack_specialized_pruning(xi, v, w, C, device, delta):
 
         idx_left[mask_mid] = torch.where(better_first, i0, idx_left_mid)
         idx_right[mask_mid] = torch.where(better_first, i0, idx_right_mid)
-
+    print("end Processing mid cases B ...") # Debugging line
     # Edge case
     if mask_edge.any():
         x_edge_masked = x[mask_edge]  # (N_edge, C)
