@@ -83,7 +83,7 @@ if __name__ == "__main__":
     os.environ["OMP_NUM_THREADS"] = "1"
 
     if torch.cuda.is_available():
-        device = torch.device("cuda:0")
+        device = torch.device("cuda:1")
         print(f"Using device {device} ({torch.cuda.get_device_name(device)})", flush=True)
     else:
         device = torch.device("cpu")
