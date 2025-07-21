@@ -45,6 +45,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, s
         start_time = time.time()
         start_time2 = time.time()
         for i, data in enumerate(trainloader, 0):
+            break
             #if i % 100 == 0:
             print(f"Batch {i} of epoch {epoch + 1}: time {time.time() - start_time2}", flush=True)
             start_time2 = time.time()
@@ -182,7 +183,8 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, s
             f"A_NQ = {accuracy}, H_NQ = {entropy}, "
             f"A_Q = {quantized_accuracy}, H_Q = {quantized_entropy}, "
             f"zstd_ratio = {zstd_ratio:.2%}, sparse_ratio = {sparse_ratio:.2%}, "
-            f"sparsity = {sparsity:.2%} , sparse_accuracy = {sparse_accuracy}, training_time = {training_time}s\n"                
+            f"sparsity = {sparsity:.2%} , sparse_accuracy = {sparse_accuracy}, training_time = {training_time}s\n", 
+            flush=True              
         )
 
         # Saving a better model
