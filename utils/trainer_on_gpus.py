@@ -58,54 +58,46 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, s
 
             # Backpropagation
             loss.backward()
-            optimizer.step()
-
-            del inputs, targets, outputs, loss
-            torch.cuda.empty_cache()
-
-            inputs, labels = data[0].to(device), data[1].to(device)
-            optimizer.zero_grad()
-            outputs = model(inputs)
-            loss = criterion(outputs, labels)
             
-            w = torch.cat([param.data.to(device).view(-1) for param in model.parameters()])
-            #unique_weights = torch.unique(w).numel() # Alternative version
-            #indices = torch.searchsorted(v, w, right=True) - 1
-            #indices = torch.clamp(indices, min=0)
-            #w_quantized = v[indices]
+            with torch.no_grad():
+                w = torch.cat([param.data.to(device).view(-1) for param in model.parameters()])
+                #unique_weights = torch.unique(w).numel() # Alternative version
+                #indices = torch.searchsorted(v, w, right=True) - 1
+                #indices = torch.clamp(indices, min=0)
+                #w_quantized = v[indices]
 
-            zeta *= 1 + l
-            l = l / 1.5
-            if(entropy_optimizer == 'FISTA'):
-                #xi, beta_tensor = FISTA(xi, v, w_quantized, C, upper_c, lower_c, delta, 
-                #                        subgradient_step, device, max_iterations, pruning) # Alternative version
-                
-                #xi, beta_tensor = torch.zeros(C, dtype=torch.int32), torch.zeros(len(w), dtype=torch.int32)
-                #xi = xi.to(device)
-                #beta_tensor = beta_tensor.to(device)
-                
-                xi, beta_tensor = FISTA(xi, v, w, C, upper_c, lower_c, delta, 
-                                        subgradient_step, device, max_iterations, pruning) 
-                
-            elif(entropy_optimizer == 'PROXIMAL BM'):
-                #xi, beta_tensor = ProximalBM(xi, v, w_quantized, C, upper_c, lower_c, delta, 
-                #                             zeta, subgradient_step, device, max_iterations, pruning) # Alternative version
-                xi, beta_tensor = ProximalBM(xi, v, w, C, upper_c, lower_c, delta, 
-                                             zeta, subgradient_step, device, max_iterations, pruning)       
+                zeta *= 1 + l
+                l = l / 1.5
+
+            with torch.no_grad():
+                if(entropy_optimizer == 'FISTA'):
+                    #xi, beta_tensor = FISTA(xi, v, w_quantized, C, upper_c, lower_c, delta, 
+                    #                        subgradient_step, device, max_iterations, pruning) # Alternative version
+                    
+                    #xi, beta_tensor = torch.zeros(C, dtype=torch.int32), torch.zeros(len(w), dtype=torch.int32)
+                    #xi = xi.to(device)
+                    #beta_tensor = beta_tensor.to(device)
+                    
+                    xi, beta_tensor = FISTA(xi, v, w, C, upper_c, lower_c, delta, 
+                                            subgradient_step, device, max_iterations, pruning) 
+                    
+                elif(entropy_optimizer == 'PROXIMAL BM'):
+                    #xi, beta_tensor = ProximalBM(xi, v, w_quantized, C, upper_c, lower_c, delta, 
+                    #                             zeta, subgradient_step, device, max_iterations, pruning) # Alternative version
+                    xi, beta_tensor = ProximalBM(xi, v, w, C, upper_c, lower_c, delta, 
+                                                zeta, subgradient_step, device, max_iterations, pruning)       
 
             # Update of ∇ɸ
-            idx = 0
-            for param in model.parameters():
-                numel = param.numel()
-                if param.grad is not None:
-                    param_grad = param.grad.view(-1)
-                else:
-                    param_grad = torch.zeros_like(param.data.view(-1)).to(device)
-                param_grad += (1 - alpha) * lambda_reg * (- beta_tensor[idx:idx + numel]) #here there is a minus sign in front of the betas multipliers
-                param.grad = param_grad.view(param.size())
-                idx += numel
+            with torch.no_grad():
+                idx = 0
+                for param in model.parameters():
+                    numel = param.numel()
+                    if param.grad is not None:
+                        param_grad = param.grad.view(-1)
+                        param_grad += (1 - alpha) * lambda_reg * (- beta_tensor[idx:idx + numel])
+                        param.grad = param_grad.view(param.size())
+                    idx += numel
             
-            loss.backward()
             optimizer.step()
 
         training_time = round(time.time() - start_time)
