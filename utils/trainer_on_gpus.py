@@ -32,7 +32,9 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, s
     min_w, max_w = w0 - r, w0 + r
     v = torch.linspace(min_w, max_w - (max_w - min_w)/C, steps=C, device=device)
     #initialize_weights(model, min_w, max_w)
-    w = torch.cat([param.data.to(device).view(-1) for param in model.parameters()]).to(device)
+    with torch.no_grad():
+        w = torch.cat([param.detach().view(-1) for param in model.parameters()]).to(device)
+
     xi = min_xi + (max_xi - min_xi) * torch.rand(C, device=device)
     xi = torch.sort(xi)[0]   
     entropy, accuracy = 0, 0
@@ -60,7 +62,8 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, s
             loss.backward()
             
             with torch.no_grad():
-                w = torch.cat([param.data.to(device).view(-1) for param in model.parameters()])
+                w = torch.cat([param.detach().view(-1) for param in model.parameters()]).to(device)
+
                 #unique_weights = torch.unique(w).numel() # Alternative version
                 #indices = torch.searchsorted(v, w, right=True) - 1
                 #indices = torch.clamp(indices, min=0)
@@ -93,45 +96,55 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, s
                 for param in model.parameters():
                     numel = param.numel()
                     if param.grad is not None:
-                        param_grad = param.grad.view(-1)
-                        param_grad += (1 - alpha) * lambda_reg * (- beta_tensor[idx:idx + numel])
-                        param.grad = param_grad.view(param.size())
+                        update = ((1 - alpha) * lambda_reg * (-beta_tensor[idx:idx + numel])).view(param.size())
+                        param.grad.add_(update)
                     idx += numel
             
             optimizer.step()
 
         training_time = round(time.time() - start_time)
         print(f"Epoch {epoch + 1}: training_time = {training_time}s\n", flush=True)
-        w = torch.cat([param.data.view(-1) for param in model.parameters()]).to(device)
-        print("Debug 1", flush=True)
-        accuracy = test_accuracy(model, testloader, device)
+        t0 = time.time()
+        with torch.no_grad():
+            w = torch.cat([param.detach().view(-1) for param in model.parameters()]).to(device)
+        print("Debug 1 - Time:", round(time.time() - t0, 2), "s", flush=True)
+        t0 = time.time()
+        with torch.no_grad():
+            accuracy = test_accuracy(model, testloader, device)
         accuracies.append(accuracy)
-        print("Debug 2", flush=True)
+        print("Debug 2 - Time:", round(time.time() - t0, 2), "s", flush=True)
+        t0 = time.time()
         entropy = round(compute_entropy(w.tolist())) + 1
         entropies.append(entropy)
-        print("Debug 3", flush=True)
+        print("Debug 3 - Time:", round(time.time() - t0, 2), "s", flush=True)
+        t0 = time.time()
         if(QuantizationType == "center"): # Quantize weights using central values
             v_centers = (v[:-1] + v[1:]) / 2
             v_centers = torch.cat([v_centers, v[-1:]]) # Add final value to handle the last bucket
             w_quantized = quantize_weights_center(w, v, v_centers, device)
-        print("Debug 4", flush=True)
+        print("Debug 4 - Time:", round(time.time() - t0, 2), "s", flush=True)
+        t0 = time.time()
         model_quantized = copy.deepcopy(model).to(device)
         start_idx = 0
         for param in model_quantized.parameters():
             numel = param.data.numel()
-            param.data = w_quantized[start_idx:start_idx + numel].view(param.data.size())
+            param.data.copy_(w_quantized[start_idx:start_idx + numel].view(param.data.size()))
             start_idx += numel
-        model_quantized.eval()
+        with torch.no_grad():
+            model_quantized.eval()
         quantized_accuracy = test_accuracy(model_quantized, testloader, device)
-        print("Debug 5", flush=True)
-        encoded_list = [float(elem) if float(elem) != -0.0 else 0.0 for elem in w_quantized]
+        print("Debug 5 - Time:", round(time.time() - t0, 2), "s", flush=True)
+        t0 = time.time()
+        with torch.no_grad():
+            encoded_list = [float(elem) if float(elem) != -0.0 else 0.0 for elem in w_quantized]
         quantized_entropy = round(compute_entropy(encoded_list)) + 1
         input_bytes = b''.join(struct.pack('f', num) for num in encoded_list)
         zstd_compressed = compress_zstd(input_bytes, level=3)
         original_size_bytes = len(input_bytes)
         zstd_size = len(zstd_compressed)
         zstd_ratio = zstd_size / original_size_bytes  
-        print("Debug 6", flush=True)
+        print("Debug 6 - Time:", round(time.time() - t0, 2), "s", flush=True)
+        t0 = time.time()
         # --- Sparse compression ---
         mask = [1 if abs(val) > sparsity_threshold else 0 for val in encoded_list]
         nonzero_values = [val for val in encoded_list if abs(val) > sparsity_threshold]
@@ -142,23 +155,27 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, s
         sparse_compressed_size = len(compressed_mask) + len(compressed_values)
         sparse_ratio = sparse_compressed_size / original_size_bytes
         sparsity = 1.0 - sum(mask) / len(mask) 
-        print("Debug 7", flush=True)
+        print("Debug 7 - Time:", round(time.time() - t0, 2), "s", flush=True)
+        t0 = time.time()
         # Applies the sparsity mask to quantized weights
-        w_sparse = torch.tensor(encoded_list).to(device)
-        sparse_mask_tensor = torch.tensor(mask, dtype=torch.bool).to(device)
+        w_sparse = torch.as_tensor(encoded_list, device=device)
+        sparse_mask_tensor = torch.as_tensor(mask, dtype=torch.bool, device=device)
         w_sparse[~sparse_mask_tensor] = 0.0
-        print("Debug 8", flush=True)
+        print("Debug 8 - Time:", round(time.time() - t0, 2), "s", flush=True)
+        t0 = time.time()
         # Build a new sparsified model
         model_sparse = copy.deepcopy(model).to(device)
         start_idx = 0
         for param in model_sparse.parameters():
             numel = param.data.numel()
-            param.data = w_sparse[start_idx:start_idx + numel].view(param.data.size())
+            param.data.copy_(w_sparse[start_idx:start_idx + numel].view(param.data.size()))
             start_idx += numel
-        model_sparse.eval()
-        print("Debug 9", flush=True)
+        with torch.no_grad():
+            model_sparse.eval()
+        print("Debug 9 - Time:", round(time.time() - t0, 2), "s", flush=True)
         # Evaluate the accuracy of the sparsified model
-        sparse_accuracy = test_accuracy(model_sparse, testloader, device)
+        with torch.no_grad():
+            sparse_accuracy = test_accuracy(model_sparse, testloader, device)
 
         training_time = round(time.time() - start_time)
 
