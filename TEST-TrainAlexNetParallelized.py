@@ -1,23 +1,22 @@
 import os
 import torch
 import torch.distributed as dist
-import torch.multiprocessing as mp
 from torch.nn.parallel import DistributedDataParallel as DDP
 from torch.utils.data import DataLoader, DistributedSampler
 from torchvision import datasets, transforms, models
 
-def setup(rank, world_size):
-    os.environ['MASTER_ADDR'] = 'localhost'
-    os.environ['MASTER_PORT'] = '12355'  # oppure un'altra porta libera
-    dist.init_process_group(backend='nccl', rank=rank, world_size=world_size)
-    torch.cuda.set_device(rank)
+def setup():
+    dist.init_process_group(backend="nccl")
+    local_rank = int(os.environ["LOCAL_RANK"])
+    torch.cuda.set_device(local_rank)
+    return local_rank, dist.get_world_size()
 
 def cleanup():
     dist.destroy_process_group()
 
-def train(rank, world_size, delta):
-    print(f"[GPU {rank}] starting training with delta={delta}")
-    setup(rank, world_size)
+def main(delta):
+    local_rank, world_size = setup()
+    print(f"[GPU {local_rank}] starting training with delta={delta}")
 
     # === ImageNet transforms ===
     transform = transforms.Compose([
@@ -35,18 +34,17 @@ def train(rank, world_size, delta):
     train_dataset = datasets.ImageFolder(root=os.path.join(imagenet_path, "train"), transform=transform)
 
     # === Distributed Sampler ===
-    train_sampler = DistributedSampler(train_dataset, num_replicas=world_size, rank=rank, shuffle=True)
+    train_sampler = DistributedSampler(train_dataset, num_replicas=world_size, rank=local_rank, shuffle=True)
 
     # === DataLoader ===
     train_loader = DataLoader(train_dataset, batch_size=128, sampler=train_sampler, num_workers=8, pin_memory=True)
 
     # === Model ===
-    model = models.alexnet()
-    model.cuda(rank)
-    model = DDP(model, device_ids=[rank])
+    model = models.alexnet().cuda(local_rank)
+    model = DDP(model, device_ids=[local_rank])
 
     # === Loss and Optimizer ===
-    criterion = torch.nn.CrossEntropyLoss().cuda(rank)
+    criterion = torch.nn.CrossEntropyLoss().cuda(local_rank)
     optimizer = torch.optim.SGD(model.parameters(), lr=0.01, momentum=0.9)
 
     # === Training Loop ===
@@ -55,8 +53,8 @@ def train(rank, world_size, delta):
         model.train()
 
         for batch_idx, (inputs, targets) in enumerate(train_loader):
-            inputs = inputs.cuda(rank, non_blocking=True)
-            targets = targets.cuda(rank, non_blocking=True)
+            inputs = inputs.cuda(local_rank, non_blocking=True)
+            targets = targets.cuda(local_rank, non_blocking=True)
 
             outputs = model(inputs)
             loss = criterion(outputs, targets)
@@ -65,8 +63,8 @@ def train(rank, world_size, delta):
             loss.backward()
             optimizer.step()
 
-            if batch_idx % 20 == 0 and rank == 0:
-                print(f"[GPU {rank}] Epoch {epoch}, Batch {batch_idx}, Loss: {loss.item():.4f}")
+            if batch_idx % 20 == 0 and local_rank == 0:
+                print(f"[GPU {local_rank}] Epoch {epoch}, Batch {batch_idx}, Loss: {loss.item():.4f}")
 
     cleanup()
 
@@ -76,5 +74,4 @@ if __name__ == "__main__":
     parser.add_argument('--delta', type=int, default=10)
     args = parser.parse_args()
 
-    world_size = torch.cuda.device_count()
-    mp.spawn(train, args=(world_size, args.delta), nprocs=world_size, join=True)
+    main(args.delta)
