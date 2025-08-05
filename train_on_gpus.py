@@ -99,15 +99,17 @@ if __name__ == "__main__":
     # Set the OpenMP number of threads to 1 for parallel processing on CPU
     os.environ["OMP_NUM_THREADS"] = "1"
 
+    # Define fixed hyperparameters for the model and training process
+    model_name = "AlexNet"
+
     if torch.cuda.is_available():
         device = torch.device("cuda:0")
-        print(f"Using device {device} ({torch.cuda.get_device_name(device)})", flush=True)
+        if(model_name != "AlexNet"):
+            print(f"Using device {device} ({torch.cuda.get_device_name(device)})", flush=True)
     else:
         device = torch.device("cpu")
         print("Using CPU.", flush=True)
 
-    # Define fixed hyperparameters for the model and training process
-    model_name = "AlexNet"
     if(model_name == "LeNet-5"):
         model = LeNet5()
         model = model.to(device)         
@@ -177,8 +179,7 @@ if __name__ == "__main__":
     elif(model_name == "AlexNet"):
         local_rank, world_size = setup()
         device = torch.device(f"cuda:{local_rank}")
-        if(local_rank == 0):  # Only print on the first GPU
-            print(f"[GPU {local_rank}] Using device {device} ({torch.cuda.get_device_name(device)})", flush=True)        
+        print(f"[GPU {local_rank}] Using device {device} ({torch.cuda.get_device_name(device)})", flush=True)        
         model = models.alexnet(weights=None)
         model.classifier[6] = nn.Linear(4096, 1000)
         model = model.to(device)  
