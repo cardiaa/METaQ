@@ -50,7 +50,8 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, s
         start_time2 = time.time()
         for i, data in enumerate(trainloader, 0):
             #if i % 100 == 0:
-            print(f"Batch {i} of epoch {epoch + 1} [GPU {local_rank}]: time {round(time.time() - start_time2, 2)}s", flush=True)
+            if local_rank == 0:
+                print(f"Batch {i} of epoch {epoch + 1} [GPU {local_rank}]: time {round(time.time() - start_time2, 2)}s", flush=True)
             start_time2 = time.time()
             inputs, targets = data
             inputs, targets = inputs.to(device), targets.to(device)
