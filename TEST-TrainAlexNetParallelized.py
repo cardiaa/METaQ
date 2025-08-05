@@ -37,7 +37,7 @@ def main(delta):
     train_sampler = DistributedSampler(train_dataset, num_replicas=world_size, rank=local_rank, shuffle=True)
 
     # === DataLoader ===
-    train_loader = DataLoader(train_dataset, batch_size=128, sampler=train_sampler, num_workers=8, pin_memory=True)
+    train_loader = DataLoader(train_dataset, batch_size=2048, sampler=train_sampler, num_workers=8, pin_memory=True)
 
     # === Model ===
     model = models.alexnet().cuda(local_rank)
