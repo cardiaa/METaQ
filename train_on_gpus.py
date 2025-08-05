@@ -177,7 +177,8 @@ if __name__ == "__main__":
     elif(model_name == "AlexNet"):
         local_rank, world_size = setup()
         device = torch.device(f"cuda:{local_rank}")
-        print(f"[GPU {local_rank}] Using device {device} ({torch.cuda.get_device_name(device)})", flush=True)        
+        if(local_rank == 0):  # Only print on the first GPU
+            print(f"[GPU {local_rank}] Using device {device} ({torch.cuda.get_device_name(device)})", flush=True)        
         model = models.alexnet(weights=None)
         model.classifier[6] = nn.Linear(4096, 1000)
         model = model.to(device)  
@@ -214,7 +215,7 @@ if __name__ == "__main__":
         sparsity_threshold = 1e-3  
 
     #if(args.delta == 6 or args.delta == 6): # Quando faccio i test singoli questa è la terza cosa da uncommentare. Nell'altro file altre due.
-    if(True):
+    if(local_rank == 0):  # Only print on the first GPU
         print("=================================================================", flush = True)
         print("==================== PARAMETER CONFIGURATION ====================", flush = True)
         print("=================================================================", flush = True)
