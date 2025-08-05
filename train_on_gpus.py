@@ -1,11 +1,22 @@
 import argparse
 import torch
 import os
+import torch.distributed as dist
 from utils.trainer_on_gpus import train_and_evaluate
 from utils.networks import LeNet5, LeNet5_enhanced, LeNet5_Original, LeNet300_100
 from torchvision import datasets, transforms, models
 import torch.nn as nn 
-from torch.utils.data import DataLoader
+from torch.nn.parallel import DistributedDataParallel as DDP
+from torch.utils.data import DataLoader, DistributedSampler
+
+def setup():
+    dist.init_process_group(backend="nccl")
+    local_rank = int(os.environ["LOCAL_RANK"])
+    torch.cuda.set_device(local_rank)
+    return local_rank, dist.get_world_size()
+
+def cleanup():
+    dist.destroy_process_group()
 
 # Function to load the MNIST dataset
 def load_data(model_name):
@@ -60,15 +71,21 @@ def load_data(model_name):
             transforms.ToTensor(),
             transforms.Normalize([0.485, 0.456, 0.406], 
                                 [0.229, 0.224, 0.225])
-        ])      
+        ])   
+
         train_dataset = datasets.ImageFolder('/disk1/a.cardia/imagenet/train', transform=transform_train)
         val_dataset = datasets.ImageFolder('/disk1/a.cardia/imagenet/val', transform=transform_val)
 
-        trainset = DataLoader(train_dataset, batch_size=2048, shuffle=True, num_workers=8, pin_memory=True)
+        train_sampler = DistributedSampler(train_dataset, num_replicas=world_size, rank=local_rank, shuffle=True)
+
+        trainset = DataLoader(train_dataset, batch_size=2048, sampler=train_sampler, num_workers=8, pin_memory=True)
         testset = DataLoader(val_dataset, batch_size=2048, shuffle=False, num_workers=8, pin_memory=True)
 
     # Return the loaded training and test datasets
-    return trainset, testset
+    if(model_name == "AlexNet"):
+        return trainset, testset, train_sampler
+    else:
+        return trainset, testset
 
 if __name__ == "__main__":
     # Initialize argument parser for command-line arguments
@@ -158,9 +175,13 @@ if __name__ == "__main__":
         QuantizationType = "center"
         sparsity_threshold = 1e-3  
     elif(model_name == "AlexNet"):
+        local_rank, world_size = setup()
+        device = torch.device(f"cuda:{local_rank}")
+        print(f"[GPU {local_rank}] Using device {device} ({torch.cuda.get_device_name(device)})", flush=True)        
         model = models.alexnet(weights=None)
         model.classifier[6] = nn.Linear(4096, 1000)
-        model = model.to(device)       
+        model = model.to(device)  
+        model = DDP(model, device_ids=[local_rank])     
         criterion, criterion_name = nn.CrossEntropyLoss(), "CrossEntropy" 
         C = 32
         lr = 0.1
@@ -191,15 +212,6 @@ if __name__ == "__main__":
         pruning = "Y"
         QuantizationType = "center"
         sparsity_threshold = 1e-3  
-
-    # Load the training and test datasets using the load_data function
-    trainset, testset = load_data(model_name)
-    if(model_name == "AlexNet"):
-        trainloader = trainset
-        testloader = testset
-    else:
-        trainloader = torch.utils.data.DataLoader(trainset, batch_size=64, shuffle=True, num_workers=0)
-        testloader = torch.utils.data.DataLoader(testset, batch_size=1000, shuffle=False, num_workers=0)
 
     #if(args.delta == 6 or args.delta == 6): # Quando faccio i test singoli questa è la terza cosa da uncommentare. Nell'altro file altre due.
     if(True):
@@ -239,14 +251,35 @@ if __name__ == "__main__":
         print(f"pruning={pruning}", flush=True)
         print(f"QuantizationType={QuantizationType}", flush=True)
         print(f"sparsity_threshold={sparsity_threshold}", flush=True)
-        print("-"*60, flush=True)
-    
-    train_and_evaluate(
-        model=model, model_name=model_name, criterion=criterion, C=C, lr=lr, lambda_reg=lambda_reg, alpha=alpha,
-        subgradient_step=subgradient_step, w0=w0, r=r, first_best_indices=first_best_indices,
-        BestQuantization_target_acc=BestQuantization_target_acc, final_target_acc=final_target_acc, 
-        target_zstd_ratio=target_zstd_ratio, min_xi=min_xi, max_xi=max_xi, upper_c=upper_c, lower_c=lower_c, c1=c1, c2=c2, 
-        zeta=zeta, l=l, n_epochs=n_epochs, max_iterations=max_iterations, device=device, train_optimizer=train_optimizer,
-        entropy_optimizer=entropy_optimizer, trainloader=trainloader, testloader=testloader, delta=args.delta, pruning=pruning, 
-        QuantizationType=QuantizationType, sparsity_threshold=sparsity_threshold, accuracy_tollerance=accuracy_tollerance
-    )
+        print("-"*60, flush=True)        
+
+    # Load the training and test datasets using the load_data function
+    if(model_name == "AlexNet"):
+        trainset, testset, train_sampler = load_data(model_name)
+        trainloader = trainset
+        testloader = testset
+        train_and_evaluate(
+            model=model, model_name=model_name, criterion=criterion, C=C, lr=lr, lambda_reg=lambda_reg, alpha=alpha,
+            subgradient_step=subgradient_step, w0=w0, r=r, first_best_indices=first_best_indices,
+            BestQuantization_target_acc=BestQuantization_target_acc, final_target_acc=final_target_acc, 
+            target_zstd_ratio=target_zstd_ratio, min_xi=min_xi, max_xi=max_xi, upper_c=upper_c, lower_c=lower_c, c1=c1, c2=c2, 
+            zeta=zeta, l=l, n_epochs=n_epochs, max_iterations=max_iterations, device=device, train_optimizer=train_optimizer,
+            entropy_optimizer=entropy_optimizer, trainloader=trainloader, testloader=testloader, train_sampler=train_sampler,
+            delta=args.delta, pruning=pruning, QuantizationType=QuantizationType, sparsity_threshold=sparsity_threshold, 
+            accuracy_tollerance=accuracy_tollerance
+        )   
+        cleanup()     
+    else:
+        trainset, testset = load_data(model_name)
+        trainloader = torch.utils.data.DataLoader(trainset, batch_size=64, shuffle=True, num_workers=0)
+        testloader = torch.utils.data.DataLoader(testset, batch_size=1000, shuffle=False, num_workers=0)
+        train_and_evaluate(
+            model=model, model_name=model_name, criterion=criterion, C=C, lr=lr, lambda_reg=lambda_reg, alpha=alpha,
+            subgradient_step=subgradient_step, w0=w0, r=r, first_best_indices=first_best_indices,
+            BestQuantization_target_acc=BestQuantization_target_acc, final_target_acc=final_target_acc, 
+            target_zstd_ratio=target_zstd_ratio, min_xi=min_xi, max_xi=max_xi, upper_c=upper_c, lower_c=lower_c, c1=c1, c2=c2, 
+            zeta=zeta, l=l, n_epochs=n_epochs, max_iterations=max_iterations, device=device, train_optimizer=train_optimizer,
+            entropy_optimizer=entropy_optimizer, trainloader=trainloader, testloader=testloader, # manca train_sampler
+            delta=args.delta, pruning=pruning, QuantizationType=QuantizationType, sparsity_threshold=sparsity_threshold, 
+            accuracy_tollerance=accuracy_tollerance
+        )

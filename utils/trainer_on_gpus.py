@@ -1,10 +1,12 @@
 import torch
+import os
 import time 
 import numpy as np
 import copy
 import struct
 import sys
 import torch.optim as optim
+import torch.distributed as dist
 import gc
 from utils.quantize_and_compress import compute_entropy, quantize_weights_center
 from utils.optimization import FISTA, ProximalBM, test_accuracy
@@ -14,20 +16,17 @@ from datetime import datetime, timedelta
 
 def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, subgradient_step, w0, r, first_best_indices,
                         BestQuantization_target_acc, final_target_acc, target_zstd_ratio, min_xi, max_xi, upper_c, lower_c, 
-                        c1, c2, zeta, l, n_epochs, max_iterations, device, train_optimizer, entropy_optimizer, 
-                        trainloader, testloader, delta, pruning, QuantizationType, sparsity_threshold, accuracy_tollerance):
-    
-    torch.set_num_threads(1)
-    
+                        c1, c2, zeta, l, n_epochs, max_iterations, device, train_optimizer, entropy_optimizer, trainloader,
+                        testloader, train_sampler, delta, pruning, QuantizationType, sparsity_threshold, accuracy_tollerance):
+
+    local_rank = dist.get_rank() if dist.is_initialized() else 0
+
     # Selection of the optimizer based on the chosen type.
     if train_optimizer == 'ADAM':
         optimizer = optim.Adam(model.parameters(), lr=lr, betas=(0.9, 0.999), eps=1e-08, weight_decay=lambda_reg * alpha)
     elif train_optimizer == 'SGD':
         optimizer = optim.SGD(model.parameters(), lr=lr, momentum=0.9, weight_decay=lambda_reg * alpha)
 
-    if(model_name == "AlexNet"):
-        scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=30, gamma=0.1)
-    
     # Weights Initialization
     min_w, max_w = w0 - r, w0 + r
     v = torch.linspace(min_w, max_w - (max_w - min_w)/C, steps=C, device=device)
@@ -44,12 +43,15 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, s
 
     # Training loop
     for epoch in range(n_epochs):
-        print(f"Beginning epoch {epoch} at {(datetime.now() + timedelta(hours=2)).strftime('%Y-%m-%d %H:%M:%S')}", flush=True)
+        train_sampler.set_epoch(epoch)
+        if local_rank == 0:
+            print(f"Beginning epoch {epoch} at {(datetime.now() + timedelta(hours=2)).strftime('%Y-%m-%d %H:%M:%S')}", flush=True)
         start_time = time.time()
         start_time2 = time.time()
         for i, data in enumerate(trainloader, 0):
             #if i % 100 == 0:
-            print(f"Batch {i} of epoch {epoch + 1}: time {round(time.time() - start_time2, 2)}s", flush=True)
+            if local_rank == 0:
+                print(f"Batch {i} of epoch {epoch + 1}: time {round(time.time() - start_time2, 2)}s", flush=True)
             start_time2 = time.time()
             inputs, targets = data
             inputs, targets = inputs.to(device), targets.to(device)
@@ -103,26 +105,31 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, s
             optimizer.step()
 
         training_time = round(time.time() - start_time)
-        print(f"Epoch {epoch + 1}: training_time = {training_time}s\n", flush=True)
+        if local_rank == 0:
+            print(f"Epoch {epoch + 1}: training_time = {training_time}s\n", flush=True)
         t0 = time.time()
         with torch.no_grad():
             w = torch.cat([param.detach().view(-1) for param in model.parameters()]).to(device)
-        print("Debug 1 - Time:", round(time.time() - t0, 2), "s", flush=True)
+        if local_rank == 0:
+            print("Debug 1 - Time:", round(time.time() - t0, 2), "s", flush=True)
         t0 = time.time()
         with torch.no_grad():
             accuracy = test_accuracy(model, testloader, device)
         accuracies.append(accuracy)
-        print("Debug 2 - Time:", round(time.time() - t0, 2), "s", flush=True)
+        if local_rank == 0:
+            print("Debug 2 - Time:", round(time.time() - t0, 2), "s", flush=True)
         t0 = time.time()
         entropy = round(compute_entropy(w.tolist())) + 1
         entropies.append(entropy)
-        print("Debug 3 - Time:", round(time.time() - t0, 2), "s", flush=True)
+        if local_rank == 0:
+            print("Debug 3 - Time:", round(time.time() - t0, 2), "s", flush=True)
         t0 = time.time()
         if(QuantizationType == "center"): # Quantize weights using central values
             v_centers = (v[:-1] + v[1:]) / 2
             v_centers = torch.cat([v_centers, v[-1:]]) # Add final value to handle the last bucket
             w_quantized = quantize_weights_center(w, v, v_centers, device)
-        print("Debug 4 - Time:", round(time.time() - t0, 2), "s", flush=True)
+        if local_rank == 0:
+            print("Debug 4 - Time:", round(time.time() - t0, 2), "s", flush=True)
         t0 = time.time()
         model_quantized = copy.deepcopy(model).to(device)
         start_idx = 0
@@ -133,7 +140,8 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, s
         with torch.no_grad():
             model_quantized.eval()
         quantized_accuracy = test_accuracy(model_quantized, testloader, device)
-        print("Debug 5 - Time:", round(time.time() - t0, 2), "s", flush=True)
+        if local_rank == 0:
+            print("Debug 5 - Time:", round(time.time() - t0, 2), "s", flush=True)
         t0 = time.time()
         with torch.no_grad():
             encoded_list = [float(elem) if float(elem) != -0.0 else 0.0 for elem in w_quantized]
@@ -143,7 +151,8 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, s
         original_size_bytes = len(input_bytes)
         zstd_size = len(zstd_compressed)
         zstd_ratio = zstd_size / original_size_bytes  
-        print("Debug 6 - Time:", round(time.time() - t0, 2), "s", flush=True)
+        if local_rank == 0:
+            print("Debug 6 - Time:", round(time.time() - t0, 2), "s", flush=True)
         t0 = time.time()
         # --- Sparse compression ---
         mask = [1 if abs(val) > sparsity_threshold else 0 for val in encoded_list]
@@ -155,13 +164,15 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, s
         sparse_compressed_size = len(compressed_mask) + len(compressed_values)
         sparse_ratio = sparse_compressed_size / original_size_bytes
         sparsity = 1.0 - sum(mask) / len(mask) 
-        print("Debug 7 - Time:", round(time.time() - t0, 2), "s", flush=True)
+        if local_rank == 0:
+            print("Debug 7 - Time:", round(time.time() - t0, 2), "s", flush=True)
         t0 = time.time()
         # Applies the sparsity mask to quantized weights
         w_sparse = torch.as_tensor(encoded_list, device=device)
         sparse_mask_tensor = torch.as_tensor(mask, dtype=torch.bool, device=device)
         w_sparse[~sparse_mask_tensor] = 0.0
-        print("Debug 8 - Time:", round(time.time() - t0, 2), "s", flush=True)
+        if local_rank == 0:
+            print("Debug 8 - Time:", round(time.time() - t0, 2), "s", flush=True)
         t0 = time.time()
         # Build a new sparsified model
         model_sparse = copy.deepcopy(model).to(device)
@@ -172,7 +183,8 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, s
             start_idx += numel
         with torch.no_grad():
             model_sparse.eval()
-        print("Debug 9 - Time:", round(time.time() - t0, 2), "s", flush=True)
+        if local_rank == 0:
+            print("Debug 9 - Time:", round(time.time() - t0, 2), "s", flush=True)
         # Evaluate the accuracy of the sparsified model
         with torch.no_grad():
             sparse_accuracy = test_accuracy(model_sparse, testloader, device)
@@ -190,14 +202,15 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, s
             f"sparsity = {sparsity:.2%} , sparse_accuracy = {sparse_accuracy}, training_time = {training_time}s\n"     
         )
 
-        print(
-            f"Epoch {epoch + 1}: "
-            f"A_NQ = {accuracy}, H_NQ = {entropy}, "
-            f"A_Q = {quantized_accuracy}, H_Q = {quantized_entropy}, "
-            f"zstd_ratio = {zstd_ratio:.2%}, sparse_ratio = {sparse_ratio:.2%}, "
-            f"sparsity = {sparsity:.2%} , sparse_accuracy = {sparse_accuracy}, training_time = {training_time}s\n", 
-            flush=True              
-        )
+        if local_rank == 0:
+            print(
+                f"Epoch {epoch + 1}: "
+                f"A_NQ = {accuracy}, H_NQ = {entropy}, "
+                f"A_Q = {quantized_accuracy}, H_Q = {quantized_entropy}, "
+                f"zstd_ratio = {zstd_ratio:.2%}, sparse_ratio = {sparse_ratio:.2%}, "
+                f"sparsity = {sparsity:.2%} , sparse_accuracy = {sparse_accuracy}, training_time = {training_time}s\n", 
+                flush=True              
+            )
 
         # Saving a better model
         if(accuracies[-1] >= BestQuantization_target_acc):
@@ -326,5 +339,6 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, s
         torch.cuda.empty_cache()
     
     log += "-"*60
-    print(log, flush = True)
+    if local_rank == 0:
+        print(log, flush = True)
     return
