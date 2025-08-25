@@ -107,8 +107,8 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, s
         training_time = round(time.time() - start_time)
         if local_rank == 0:
             print(f"Epoch {epoch + 1}: training_time = {training_time}s\n", flush=True)
-        """
-        if local_rank == 0:
+        
+        if local_rank == 0 and (epoch % 5 == 0 or epoch == n_epochs - 1):
             t0 = time.time()
             with torch.no_grad():
                 w = torch.cat([param.detach().view(-1) for param in model.parameters()]).to(device)
@@ -215,7 +215,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, s
             BestQuantization_target_acc = accuracies[-1] 
         
         # ---------------------------------------------------------------------------------------------------------
-        """
+        
         """
         # No-pruning exit conditions
         if(pruning == "N"):
