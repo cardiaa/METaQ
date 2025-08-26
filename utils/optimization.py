@@ -19,6 +19,35 @@ def test_accuracy(model, dataloader, device):
     accuracy = 100 * correct / total  # Compute accuracy percentage
     return accuracy
 
+def test_accuracyGPU(model, dataloader, device):
+    """
+    Efficiently compute model accuracy on the given dataloader.
+    This version runs on all ranks and aggregates results with torch.distributed.
+    If running in single-process mode, it behaves normally.
+    """
+    correct, total = 0, 0
+    model.eval()  # Ensure model is in evaluation mode
+
+    with torch.no_grad():  # Disable gradient computation for evaluation
+        for images, labels in dataloader:
+            images, labels = images.to(device), labels.to(device)
+            outputs = model(images)  # Forward pass
+            _, predicted = torch.max(outputs.data, 1)  # Class with highest probability
+            total += labels.size(0)
+            correct += (predicted == labels).sum().item()
+
+    # If using Distributed Data Parallel (DDP), aggregate results across ranks
+    if torch.distributed.is_initialized():
+        total_tensor = torch.tensor(total, device=device)
+        correct_tensor = torch.tensor(correct, device=device)
+        torch.distributed.all_reduce(total_tensor, op=torch.distributed.ReduceOp.SUM)
+        torch.distributed.all_reduce(correct_tensor, op=torch.distributed.ReduceOp.SUM)
+        total = total_tensor.item()
+        correct = correct_tensor.item()
+
+    accuracy = 100.0 * correct / total if total > 0 else 0.0
+    return accuracy
+
 def FISTA(xi, v, w, C, upper_c, lower_c, delta, subgradient_step, device, max_iterations, pruning):
     """
     Implements the Fast Iterative Shrinking-Thresholding Algorithm (FISTA) 

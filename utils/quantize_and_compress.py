@@ -27,6 +27,22 @@ def compute_entropy(string):
     
     return entropy * total_length  # Return the entropy weighted by string length
 
+def compute_entropyGPU(arr):
+    """
+    Compute the entropy of a numerical array.
+    Works for integer or quantized values (floats should be discretized first).
+    Uses numpy for performance.
+    """
+    arr = np.asarray(arr)
+
+    # Get unique values and their counts
+    values, counts = np.unique(arr, return_counts=True)
+    probabilities = counts / counts.sum()
+
+    # Shannon entropy (in bits) multiplied by the length of the array
+    entropy = -(probabilities * np.log2(probabilities)).sum()
+    return entropy * arr.size
+
 def compute_entropy_new(string, pruning_threshold):
     """
     Function to compute a modified entropy measure for a list of numeric values,
@@ -70,6 +86,19 @@ def quantize_weights_center(weights, v, v_centers, device):
 
     indices = indices.to(device=device)
     
+    return v_centers[indices]
+
+def quantize_weights_centerGPU(weights, v, v_centers, device):
+    """
+    Quantizes weights based on precomputed bin edges (v) and center values (v_centers).
+    """
+    weights = weights.to(device=device)
+    v = v.to(device=device)
+    v_centers = v_centers.to(device=device)
+
+    indices = torch.bucketize(weights, v, right=False) - 1
+    indices = torch.clamp(indices, min=0, max=len(v_centers) - 1)
+
     return v_centers[indices]
 
 def encode(symb2freq):
@@ -293,3 +322,19 @@ def pack_bitmask(bits):
                 byte |= (bits[i + j] & 1) << (7 - j)
         byte_arr.append(byte)
     return bytes(byte_arr)
+
+def pack_bitmaskGPU(mask):
+    """
+    Convert a 0/1 numpy array into packed bytes (8 bits per byte).
+    Uses numpy vectorization for high performance.
+    """
+    mask = np.asarray(mask, dtype=np.uint8)
+
+    # Pad mask length to a multiple of 8
+    padded_len = int(np.ceil(mask.size / 8)) * 8
+    if padded_len != mask.size:
+        mask = np.pad(mask, (0, padded_len - mask.size), constant_values=0)
+
+    # Pack bits into bytes
+    packed = np.packbits(mask.reshape(-1, 8), axis=1, bitorder='big')
+    return packed.flatten().tobytes()
