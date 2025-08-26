@@ -109,109 +109,159 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, s
             print(f"Epoch {epoch + 1}: training_time = {training_time}s\n", flush=True)
         
         if local_rank == 0 and (epoch % 5 == 0 or epoch == n_epochs - 1):
+            # --- 0) I make sure that all ranks have completed the training for this epoch.  ---
+            torch.cuda.synchronize(device)
+            if dist.is_available() and dist.is_initialized():
+                dist.barrier()
+
+            # --- 1) weights collection: unique transfer GPU->CPU ---
             t0 = time.time()
             with torch.no_grad():
-                w = torch.cat([param.detach().view(-1) for param in model.parameters()]).to(device)
+                w = torch.cat([param.detach().view(-1) for param in model.parameters()]).cpu()  # CPU tensor
             print("Debug 1 - Time:", round(time.time() - t0, 2), "s", flush=True)
+
+            # --- 2) Accuracy calculation on the current model (rank 0) ---
             t0 = time.time()
             with torch.no_grad():
-                accuracy = test_accuracy(model, testloader, device)
+                accuracy = test_accuracy(model, testloader, device)   # Se test_accuracy usa collectives, vedi nota sotto
             accuracies.append(accuracy)
             print("Debug 2 - Time:", round(time.time() - t0, 2), "s", flush=True)
+
+            # --- 3) Non-quantized entropy calculation (on CPU) ---
             t0 = time.time()
-            entropy = round(compute_entropy(w.tolist())) + 1
+            # w is a CPU tensor; let's cast it in a numpy array for efficient computations
+            w_np = w.numpy().astype(np.float32)
+            entropy = round(compute_entropy(w_np.tolist())) + 1
             entropies.append(entropy)
             print("Debug 3 - Time:", round(time.time() - t0, 2), "s", flush=True)
+
+            # --- 4) Quantisation: if my quantize_weights_center requires tensors on the device,
+            #     I run it on the GPU but immediately move the result to the CPU for the rest of the operations ---
             t0 = time.time()
-            if(QuantizationType == "center"): # Quantize weights using central values
-                v_centers = (v[:-1] + v[1:]) / 2
-                v_centers = torch.cat([v_centers, v[-1:]]) # Add final value to handle the last bucket
-                w_quantized = quantize_weights_center(w, v, v_centers, device)
+            if QuantizationType == "center":
+                # if quantize_weights_center accepts tensors on CPU, I pass it; otherwise, I use temporary .to(device)
+                try:
+                    # I'll try the CPU-first version
+                    w_quantized = quantize_weights_center(w, v, (v[:-1] + v[1:]) / 2, device='cpu')
+                    # ensure it is a tensor CPU
+                    if isinstance(w_quantized, torch.Tensor):
+                        w_quantized = w_quantized.cpu()
+                except Exception:
+                    # fallback: perform quantization on GPU and then move to CPU (minimise GPU time)
+                    w_gpu = w.to(device)
+                    v_gpu = v.to(device)
+                    v_centers = (v_gpu[:-1] + v_gpu[1:]) / 2
+                    v_centers = torch.cat([v_centers, v_gpu[-1:]])
+                    w_quantized = quantize_weights_center(w_gpu, v_gpu, v_centers, device=device)
+                    w_quantized = w_quantized.detach().cpu()
+            else:
+                # implementation for other types of quantisation, if present
+                w_quantized = w.clone()
+
             print("Debug 4 - Time:", round(time.time() - t0, 2), "s", flush=True)
+
+            # --- 5) Build model_quantized on CPU (not GPU!) and then move it for evaluation ---
             t0 = time.time()
-            model_quantized = copy.deepcopy(model).to(device)
+            model_quantized = copy.deepcopy(model).cpu()
             start_idx = 0
+            wq_np = w_quantized.numpy().astype(np.float32)  # fast contiguous numpy
             for param in model_quantized.parameters():
                 numel = param.data.numel()
-                param.data.copy_(w_quantized[start_idx:start_idx + numel].view(param.data.size()))
+                # create contiguous CPU tensor and copy it directly into param.data (CPU)
+                param.data.copy_(torch.from_numpy(wq_np[start_idx:start_idx + numel].reshape(param.data.size())))
                 start_idx += numel
-            with torch.no_grad():
-                model_quantized.eval()
+            model_quantized.eval()
+            # move to device only at the time of evaluation (minimise GPU time occupied)
+            model_quantized = model_quantized.to(device)
             quantized_accuracy = test_accuracy(model_quantized, testloader, device)
             print("Debug 5 - Time:", round(time.time() - t0, 2), "s", flush=True)
+
+            # --- 5.1) Preparing encoded_list in vector mode on CPU (avoiding Python loops) ---
             t0 = time.time()
-            with torch.no_grad():
-                encoded_list = [float(elem) if float(elem) != -0.0 else 0.0 for elem in w_quantized]
+            arr = wq_np  # already numpy float32
+            # normalize -0.0 to +0.0 vectorially
+            mask_negzero = np.signbit(arr) & (arr == 0.0)
+            if mask_negzero.any():
+                arr[mask_negzero] = 0.0
             print("Debug 5.1 - Time:", round(time.time() - t0, 2), "s", flush=True)
+
+            # --- 5.2) calculate quantized entropy (on numpy) ---
             t0 = time.time()
-            quantized_entropy = round(compute_entropy(encoded_list)) + 1
+            quantized_entropy = round(compute_entropy(arr.tolist())) + 1
             print("Debug 5.2 - Time:", round(time.time() - t0, 2), "s", flush=True)
-            t0 = time.time()            
-            input_bytes = b''.join(struct.pack('f', num) for num in encoded_list)
+
+            # --- 5.3) bytes and compression (directly with numpy.tobytes) ---
+            t0 = time.time()
+            input_bytes = arr.tobytes()
             print("Debug 5.3 - Time:", round(time.time() - t0, 2), "s", flush=True)
-            t0 = time.time()            
+            t0 = time.time()
             zstd_compressed = compress_zstd(input_bytes, level=3)
             print("Debug 5.4 - Time:", round(time.time() - t0, 2), "s", flush=True)
-            t0 = time.time()            
+
             original_size_bytes = len(input_bytes)
             zstd_size = len(zstd_compressed)
-            zstd_ratio = zstd_size / original_size_bytes  
+            zstd_ratio = zstd_size / original_size_bytes
             print("Debug 6 - Time:", round(time.time() - t0, 2), "s", flush=True)
+
+            # --- 6) Sparse representation (VECTORIZED on numpy) ---
             t0 = time.time()
-            # --- Sparse compression ---
-            mask = [1 if abs(val) > sparsity_threshold else 0 for val in encoded_list]
-            nonzero_values = [val for val in encoded_list if abs(val) > sparsity_threshold]
-            bitmask_bytes = pack_bitmask(mask)
-            packed_nonzeros = b''.join(struct.pack('f', val) for val in nonzero_values)
+            mask = (np.abs(arr) > sparsity_threshold).astype(np.uint8)  # 1 where keep, 0 where zero
+            nonzero_values = arr[mask == 1]
+            # pack bitmask: create bytearray compact (8 bit per byte)
+            bitmask_bytes = pack_bitmask(mask.tolist())  
+            packed_nonzeros = nonzero_values.tobytes()
             compressed_mask = compress_zstd(bitmask_bytes, level=3)
             compressed_values = compress_zstd(packed_nonzeros, level=3)
             sparse_compressed_size = len(compressed_mask) + len(compressed_values)
             sparse_ratio = sparse_compressed_size / original_size_bytes
-            sparsity = 1.0 - sum(mask) / len(mask) 
+            sparsity = 1.0 - mask.sum() / mask.size
             print("Debug 7 - Time:", round(time.time() - t0, 2), "s", flush=True)
+
+            # --- 7) Build w_sparse and model_sparse (on CPU), then evaluate on device ---
             t0 = time.time()
-            # Applies the sparsity mask to quantized weights
-            w_sparse = torch.as_tensor(encoded_list, device=device)
-            sparse_mask_tensor = torch.as_tensor(mask, dtype=torch.bool, device=device)
-            w_sparse[~sparse_mask_tensor] = 0.0
-            print("Debug 8 - Time:", round(time.time() - t0, 2), "s", flush=True)
-            t0 = time.time()
-            # Build a new sparsified model
-            model_sparse = copy.deepcopy(model).to(device)
+            w_sparse_np = arr.copy()
+            w_sparse_np[mask == 0] = 0.0
+            # build model_sparse on CPU
+            model_sparse = copy.deepcopy(model).cpu()
             start_idx = 0
             for param in model_sparse.parameters():
                 numel = param.data.numel()
-                param.data.copy_(w_sparse[start_idx:start_idx + numel].view(param.data.size()))
+                param.data.copy_(torch.from_numpy(w_sparse_np[start_idx:start_idx + numel].reshape(param.data.size())))
                 start_idx += numel
-            with torch.no_grad():
-                model_sparse.eval()
-            print("Debug 9 - Time:", round(time.time() - t0, 2), "s", flush=True)
-            # Evaluate the accuracy of the sparsified model
+            model_sparse.eval()
+            model_sparse = model_sparse.to(device)
+            # evaluation
             with torch.no_grad():
                 sparse_accuracy = test_accuracy(model_sparse, testloader, device)
+            print("Debug 8 - Time:", round(time.time() - t0, 2), "s", flush=True)
 
+            # --- 8) log and printout of the results ---
             training_time = round(time.time() - start_time)
 
-            if(epoch == 0):
+            if epoch == 0:
                 log += f"delta = {delta}\n"
-        
+
             log += (
                 f"Epoch {epoch + 1}: "
                 f"A_NQ = {accuracy}, H_NQ = {entropy}, "
                 f"A_Q = {quantized_accuracy}, H_Q = {quantized_entropy}, "
                 f"zstd_ratio = {zstd_ratio:.2%}, sparse_ratio = {sparse_ratio:.2%}, "
-                f"sparsity = {sparsity:.2%} , sparse_accuracy = {sparse_accuracy}, training_time = {training_time}s\n"     
+                f"sparsity = {sparsity:.2%} , sparse_accuracy = {sparse_accuracy}, training_time = {training_time}s\n"
             )
-
 
             print(
                 f"Epoch {epoch + 1}: "
                 f"A_NQ = {accuracy}, H_NQ = {entropy}, "
                 f"A_Q = {quantized_accuracy}, H_Q = {quantized_entropy}, "
                 f"zstd_ratio = {zstd_ratio:.2%}, sparse_ratio = {sparse_ratio:.2%}, "
-                f"sparsity = {sparsity:.2%} , sparse_accuracy = {sparse_accuracy}, training_time = {training_time}s\n", 
-                flush=True              
+                f"sparsity = {sparsity:.2%} , sparse_accuracy = {sparse_accuracy}, training_time = {training_time}s\n",
+                flush=True
             )
+
+            # --- 9) Final barrier: allow all ranks to resume training together ---
+            torch.cuda.synchronize(device)
+            if dist.is_available() and dist.is_initialized():
+                dist.barrier()
 
         """
         # Saving a better model
