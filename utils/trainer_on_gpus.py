@@ -205,6 +205,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, s
                 flush=True              
             )
 
+        """
         # Saving a better model
         if(accuracies[-1] >= BestQuantization_target_acc):
             log = BestQuantization(log=log, C=C, r=r, delta=delta, epoch=epoch, min_w=min_w, max_w=max_w, w=w, c1=c1, c2=c2,
@@ -213,6 +214,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, s
                                    testloader=testloader, accuracy=accuracy, device=device, first_best_indices=first_best_indices, 
                                    accuracy_tollerance=accuracy_tollerance)
             BestQuantization_target_acc = accuracies[-1] 
+        """
         
         # ---------------------------------------------------------------------------------------------------------
         
