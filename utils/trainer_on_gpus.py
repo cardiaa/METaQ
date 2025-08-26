@@ -21,13 +21,6 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, s
 
     local_rank = dist.get_rank() if dist.is_initialized() else 0
 
-    # Ensure each process sets the correct CUDA device to avoid "No device id" warning
-    if device.type == "cuda":
-        dev_index = device.index if getattr(device, "index", None) is not None else local_rank
-        torch.cuda.set_device(dev_index)
-        # update device to be explicit (optional but consistent)
-        device = torch.device(f"cuda:{dev_index}")
-
     # Selection of the optimizer based on the chosen type.
     if train_optimizer == 'ADAM':
         optimizer = optim.Adam(model.parameters(), lr=lr, betas=(0.9, 0.999), eps=1e-08, weight_decay=lambda_reg * alpha)
@@ -115,142 +108,143 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, s
         if local_rank == 0:
             print(f"Epoch {epoch + 1}: training_time = {training_time}s\n", flush=True)
 
-        # --- 0) Synchronize all ranks BEFORE heavy CPU/GPU operations ---
-        if device.type == "cuda":
-            torch.cuda.set_device(device.index if device.index is not None else local_rank)
-            torch.cuda.synchronize(device)
-        if dist.is_available() and dist.is_initialized():
-            # NCCL requires all ranks to participate without blocking
-            dist.barrier()
+        if epoch % 5 == 0 or epoch == n_epochs - 1:
+            # --- 0) Synchronize all ranks BEFORE heavy CPU/GPU operations ---
+            if device.type == "cuda":
+                torch.cuda.set_device(device.index if device.index is not None else local_rank)
+                torch.cuda.synchronize(device)
+            if dist.is_available() and dist.is_initialized():
+                # NCCL requires all ranks to participate without blocking
+                dist.barrier()
 
-        # --- 1) Rank 0 does all heavy computations and logging ---
-        if local_rank == 0:
-            # --- 1) Collect weights on CPU ---
-            t0 = time.time()
-            with torch.no_grad():
-                w = torch.cat([param.detach().view(-1) for param in model.parameters()]).cpu()
-            print("Debug 1 - Time:", round(time.time() - t0, 2), "s", flush=True)
+            # --- 1) Rank 0 does all heavy computations and logging ---
+            if local_rank == 0:
+                # --- 1) Collect weights on CPU ---
+                t0 = time.time()
+                with torch.no_grad():
+                    w = torch.cat([param.detach().view(-1) for param in model.parameters()]).cpu()
+                print("Debug 1 - Time:", round(time.time() - t0, 2), "s", flush=True)
 
-            # --- 2) Accuracy calculation ---
-            t0 = time.time()
-            with torch.no_grad():
-                accuracy = test_accuracy(model, testloader, device)
-            accuracies.append(accuracy)
-            print("Debug 2 - Time:", round(time.time() - t0, 2), "s", flush=True)
+                # --- 2) Accuracy calculation ---
+                t0 = time.time()
+                with torch.no_grad():
+                    accuracy = test_accuracy(model, testloader, device)
+                accuracies.append(accuracy)
+                print("Debug 2 - Time:", round(time.time() - t0, 2), "s", flush=True)
 
-            # --- 3) Non-quantized entropy calculation ---
-            t0 = time.time()
-            w_np = w.numpy().astype(np.float32)
-            entropy = round(compute_entropy(w_np.tolist())) + 1
-            entropies.append(entropy)
-            print("Debug 3 - Time:", round(time.time() - t0, 2), "s", flush=True)
+                # --- 3) Non-quantized entropy calculation ---
+                t0 = time.time()
+                w_np = w.numpy().astype(np.float32)
+                entropy = round(compute_entropy(w_np.tolist())) + 1
+                entropies.append(entropy)
+                print("Debug 3 - Time:", round(time.time() - t0, 2), "s", flush=True)
 
-            # --- 4) Quantization ---
-            t0 = time.time()
-            if QuantizationType == "center":
-                try:
-                    w_quantized = quantize_weights_center(w, v, (v[:-1] + v[1:]) / 2, device='cpu')
-                    if isinstance(w_quantized, torch.Tensor):
-                        w_quantized = w_quantized.cpu()
-                except Exception:
-                    w_gpu = w.to(device)
-                    v_gpu = v.to(device)
-                    v_centers = (v_gpu[:-1] + v_gpu[1:]) / 2
-                    v_centers = torch.cat([v_centers, v_gpu[-1:]])
-                    w_quantized = quantize_weights_center(w_gpu, v_gpu, v_centers, device=device)
-                    w_quantized = w_quantized.detach().cpu()
-            else:
-                w_quantized = w.clone()
-            print("Debug 4 - Time:", round(time.time() - t0, 2), "s", flush=True)
+                # --- 4) Quantization ---
+                t0 = time.time()
+                if QuantizationType == "center":
+                    try:
+                        w_quantized = quantize_weights_center(w, v, (v[:-1] + v[1:]) / 2, device='cpu')
+                        if isinstance(w_quantized, torch.Tensor):
+                            w_quantized = w_quantized.cpu()
+                    except Exception:
+                        w_gpu = w.to(device)
+                        v_gpu = v.to(device)
+                        v_centers = (v_gpu[:-1] + v_gpu[1:]) / 2
+                        v_centers = torch.cat([v_centers, v_gpu[-1:]])
+                        w_quantized = quantize_weights_center(w_gpu, v_gpu, v_centers, device=device)
+                        w_quantized = w_quantized.detach().cpu()
+                else:
+                    w_quantized = w.clone()
+                print("Debug 4 - Time:", round(time.time() - t0, 2), "s", flush=True)
 
-            # --- 5) Build model_quantized on CPU, evaluate on device ---
-            t0 = time.time()
-            model_quantized = copy.deepcopy(model).cpu()
-            start_idx = 0
-            wq_np = w_quantized.numpy().astype(np.float32)
-            for param in model_quantized.parameters():
-                numel = param.data.numel()
-                param.data.copy_(torch.from_numpy(wq_np[start_idx:start_idx + numel].reshape(param.data.size())))
-                start_idx += numel
-            model_quantized.eval()
-            model_quantized = model_quantized.to(device)
-            quantized_accuracy = test_accuracy(model_quantized, testloader, device)
-            print("Debug 5 - Time:", round(time.time() - t0, 2), "s", flush=True)
+                # --- 5) Build model_quantized on CPU, evaluate on device ---
+                t0 = time.time()
+                model_quantized = copy.deepcopy(model).cpu()
+                start_idx = 0
+                wq_np = w_quantized.numpy().astype(np.float32)
+                for param in model_quantized.parameters():
+                    numel = param.data.numel()
+                    param.data.copy_(torch.from_numpy(wq_np[start_idx:start_idx + numel].reshape(param.data.size())))
+                    start_idx += numel
+                model_quantized.eval()
+                model_quantized = model_quantized.to(device)
+                quantized_accuracy = test_accuracy(model_quantized, testloader, device)
+                print("Debug 5 - Time:", round(time.time() - t0, 2), "s", flush=True)
 
-            # --- 5.1) Normalize -0.0 to +0.0 vectorially ---
-            t0 = time.time()
-            arr = wq_np
-            mask_negzero = np.signbit(arr) & (arr == 0.0)
-            if mask_negzero.any():
-                arr[mask_negzero] = 0.0
-            print("Debug 5.1 - Time:", round(time.time() - t0, 2), "s", flush=True)
+                # --- 5.1) Normalize -0.0 to +0.0 vectorially ---
+                t0 = time.time()
+                arr = wq_np
+                mask_negzero = np.signbit(arr) & (arr == 0.0)
+                if mask_negzero.any():
+                    arr[mask_negzero] = 0.0
+                print("Debug 5.1 - Time:", round(time.time() - t0, 2), "s", flush=True)
 
-            # --- 5.2) Quantized entropy ---
-            t0 = time.time()
-            quantized_entropy = round(compute_entropy(arr.tolist())) + 1
-            print("Debug 5.2 - Time:", round(time.time() - t0, 2), "s", flush=True)
+                # --- 5.2) Quantized entropy ---
+                t0 = time.time()
+                quantized_entropy = round(compute_entropy(arr.tolist())) + 1
+                print("Debug 5.2 - Time:", round(time.time() - t0, 2), "s", flush=True)
 
-            # --- 5.3) Bytes and compression ---
-            t0 = time.time()
-            input_bytes = arr.tobytes()
-            print("Debug 5.3 - Time:", round(time.time() - t0, 2), "s", flush=True)
-            t0 = time.time()
-            zstd_compressed = compress_zstd(input_bytes, level=3)
-            print("Debug 5.4 - Time:", round(time.time() - t0, 2), "s", flush=True)
+                # --- 5.3) Bytes and compression ---
+                t0 = time.time()
+                input_bytes = arr.tobytes()
+                print("Debug 5.3 - Time:", round(time.time() - t0, 2), "s", flush=True)
+                t0 = time.time()
+                zstd_compressed = compress_zstd(input_bytes, level=3)
+                print("Debug 5.4 - Time:", round(time.time() - t0, 2), "s", flush=True)
 
-            original_size_bytes = len(input_bytes)
-            zstd_size = len(zstd_compressed)
-            zstd_ratio = zstd_size / original_size_bytes
-            print("Debug 6 - Time:", round(time.time() - t0, 2), "s", flush=True)
+                original_size_bytes = len(input_bytes)
+                zstd_size = len(zstd_compressed)
+                zstd_ratio = zstd_size / original_size_bytes
+                print("Debug 6 - Time:", round(time.time() - t0, 2), "s", flush=True)
 
-            # --- 6) Sparse representation ---
-            t0 = time.time()
-            mask = (np.abs(arr) > sparsity_threshold).astype(np.uint8)
-            nonzero_values = arr[mask == 1]
-            bitmask_bytes = pack_bitmask(mask.tolist())
-            packed_nonzeros = nonzero_values.tobytes()
-            compressed_mask = compress_zstd(bitmask_bytes, level=3)
-            compressed_values = compress_zstd(packed_nonzeros, level=3)
-            sparse_compressed_size = len(compressed_mask) + len(compressed_values)
-            sparse_ratio = sparse_compressed_size / original_size_bytes
-            sparsity = 1.0 - mask.sum() / mask.size
-            print("Debug 7 - Time:", round(time.time() - t0, 2), "s", flush=True)
+                # --- 6) Sparse representation ---
+                t0 = time.time()
+                mask = (np.abs(arr) > sparsity_threshold).astype(np.uint8)
+                nonzero_values = arr[mask == 1]
+                bitmask_bytes = pack_bitmask(mask.tolist())
+                packed_nonzeros = nonzero_values.tobytes()
+                compressed_mask = compress_zstd(bitmask_bytes, level=3)
+                compressed_values = compress_zstd(packed_nonzeros, level=3)
+                sparse_compressed_size = len(compressed_mask) + len(compressed_values)
+                sparse_ratio = sparse_compressed_size / original_size_bytes
+                sparsity = 1.0 - mask.sum() / mask.size
+                print("Debug 7 - Time:", round(time.time() - t0, 2), "s", flush=True)
 
-            # --- 7) Build model_sparse ---
-            t0 = time.time()
-            w_sparse_np = arr.copy()
-            w_sparse_np[mask == 0] = 0.0
-            model_sparse = copy.deepcopy(model).cpu()
-            start_idx = 0
-            for param in model_sparse.parameters():
-                numel = param.data.numel()
-                param.data.copy_(torch.from_numpy(w_sparse_np[start_idx:start_idx + numel].reshape(param.data.size())))
-                start_idx += numel
-            model_sparse.eval()
-            model_sparse = model_sparse.to(device)
-            with torch.no_grad():
-                sparse_accuracy = test_accuracy(model_sparse, testloader, device)
-            print("Debug 8 - Time:", round(time.time() - t0, 2), "s", flush=True)
+                # --- 7) Build model_sparse ---
+                t0 = time.time()
+                w_sparse_np = arr.copy()
+                w_sparse_np[mask == 0] = 0.0
+                model_sparse = copy.deepcopy(model).cpu()
+                start_idx = 0
+                for param in model_sparse.parameters():
+                    numel = param.data.numel()
+                    param.data.copy_(torch.from_numpy(w_sparse_np[start_idx:start_idx + numel].reshape(param.data.size())))
+                    start_idx += numel
+                model_sparse.eval()
+                model_sparse = model_sparse.to(device)
+                with torch.no_grad():
+                    sparse_accuracy = test_accuracy(model_sparse, testloader, device)
+                print("Debug 8 - Time:", round(time.time() - t0, 2), "s", flush=True)
 
-            # --- 8) Log results ---
-            training_time = round(time.time() - start_time)
-            if epoch == 0:
-                log += f"delta = {delta}\n"
-            log += (
-                f"Epoch {epoch + 1}: "
-                f"A_NQ = {accuracy}, H_NQ = {entropy}, "
-                f"A_Q = {quantized_accuracy}, H_Q = {quantized_entropy}, "
-                f"zstd_ratio = {zstd_ratio:.2%}, sparse_ratio = {sparse_ratio:.2%}, "
-                f"sparsity = {sparsity:.2%} , sparse_accuracy = {sparse_accuracy}, training_time = {training_time}s\n"
-            )
-            print(
-                f"Epoch {epoch + 1}: "
-                f"A_NQ = {accuracy}, H_NQ = {entropy}, "
-                f"A_Q = {quantized_accuracy}, H_Q = {quantized_entropy}, "
-                f"zstd_ratio = {zstd_ratio:.2%}, sparse_ratio = {sparse_ratio:.2%}, "
-                f"sparsity = {sparsity:.2%} , sparse_accuracy = {sparse_accuracy}, training_time = {training_time}s\n",
-                flush=True
-            )
+                # --- 8) Log results ---
+                training_time = round(time.time() - start_time)
+                if epoch == 0:
+                    log += f"delta = {delta}\n"
+                log += (
+                    f"Epoch {epoch + 1}: "
+                    f"A_NQ = {accuracy}, H_NQ = {entropy}, "
+                    f"A_Q = {quantized_accuracy}, H_Q = {quantized_entropy}, "
+                    f"zstd_ratio = {zstd_ratio:.2%}, sparse_ratio = {sparse_ratio:.2%}, "
+                    f"sparsity = {sparsity:.2%} , sparse_accuracy = {sparse_accuracy}, training_time = {training_time}s\n"
+                )
+                print(
+                    f"Epoch {epoch + 1}: "
+                    f"A_NQ = {accuracy}, H_NQ = {entropy}, "
+                    f"A_Q = {quantized_accuracy}, H_Q = {quantized_entropy}, "
+                    f"zstd_ratio = {zstd_ratio:.2%}, sparse_ratio = {sparse_ratio:.2%}, "
+                    f"sparsity = {sparsity:.2%} , sparse_accuracy = {sparse_accuracy}, training_time = {training_time}s\n",
+                    flush=True
+                )
 
             # --- 9) Final barrier: allow all ranks to resume training together ---
             if device.type == "cuda":
