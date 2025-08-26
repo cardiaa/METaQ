@@ -108,7 +108,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, s
         if local_rank == 0:
             print(f"Epoch {epoch + 1}: training_time = {training_time}s\n", flush=True)
 
-        if epoch % 5 == 0 or epoch == n_epochs - 1:
+        if epoch % 2 == 0 or epoch == n_epochs - 1:
             # --- 0) Synchronize all ranks BEFORE heavy CPU/GPU operations ---
             if device.type == "cuda":
                 torch.cuda.set_device(device.index if device.index is not None else local_rank)
