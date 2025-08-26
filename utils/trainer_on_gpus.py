@@ -21,6 +21,13 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, s
 
     local_rank = dist.get_rank() if dist.is_initialized() else 0
 
+    # Ensure each process sets the correct CUDA device to avoid "No device id" warning
+    if device.type == "cuda":
+        dev_index = device.index if getattr(device, "index", None) is not None else local_rank
+        torch.cuda.set_device(dev_index)
+        # update device to be explicit (optional but consistent)
+        device = torch.device(f"cuda:{dev_index}")
+
     # Selection of the optimizer based on the chosen type.
     if train_optimizer == 'ADAM':
         optimizer = optim.Adam(model.parameters(), lr=lr, betas=(0.9, 0.999), eps=1e-08, weight_decay=lambda_reg * alpha)
