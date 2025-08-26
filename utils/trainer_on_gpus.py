@@ -142,9 +142,17 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, s
             t0 = time.time()
             with torch.no_grad():
                 encoded_list = [float(elem) if float(elem) != -0.0 else 0.0 for elem in w_quantized]
+            print("Debug 5.1 - Time:", round(time.time() - t0, 2), "s", flush=True)
+            t0 = time.time()
             quantized_entropy = round(compute_entropy(encoded_list)) + 1
+            print("Debug 5.2 - Time:", round(time.time() - t0, 2), "s", flush=True)
+            t0 = time.time()            
             input_bytes = b''.join(struct.pack('f', num) for num in encoded_list)
+            print("Debug 5.3 - Time:", round(time.time() - t0, 2), "s", flush=True)
+            t0 = time.time()            
             zstd_compressed = compress_zstd(input_bytes, level=3)
+            print("Debug 5.4 - Time:", round(time.time() - t0, 2), "s", flush=True)
+            t0 = time.time()            
             original_size_bytes = len(input_bytes)
             zstd_size = len(zstd_compressed)
             zstd_ratio = zstd_size / original_size_bytes  
@@ -215,7 +223,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, s
                                    accuracy_tollerance=accuracy_tollerance)
             BestQuantization_target_acc = accuracies[-1] 
         """
-        
+
         # ---------------------------------------------------------------------------------------------------------
         
         """
