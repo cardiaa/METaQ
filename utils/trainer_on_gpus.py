@@ -50,8 +50,8 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, s
         start_time2 = time.time()
         for i, data in enumerate(trainloader, 0):
             #if i % 100 == 0:
-            #if local_rank == 0:
-            #    print(f"Batch {i} of epoch {epoch + 1}: time {round(time.time() - start_time2, 2)}s", flush=True)
+            if local_rank == 0:
+                print(f"Batch {i} of epoch {epoch + 1}: time {round(time.time() - start_time2, 2)}s", flush=True)
             start_time2 = time.time()
             inputs, targets = data
             inputs, targets = inputs.to(device), targets.to(device)
@@ -113,9 +113,12 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, s
             if device.type == "cuda":
                 torch.cuda.set_device(device.index if device.index is not None else local_rank)
                 torch.cuda.synchronize(device)
-            if dist.is_available() and dist.is_initialized():
-                # NCCL requires all ranks to participate without blocking
-                dist.barrier()
+            # Ensure all ranks are synchronized before metric computation
+            if dist.is_initialized():
+                if dist.get_backend() == "nccl" and device.type == "cuda":
+                    dist.barrier(device_ids=[torch.cuda.current_device()])
+                else:
+                    dist.barrier()
 
             # --- 1) Rank 0 does all heavy computations and logging ---
             if local_rank == 0:
@@ -123,27 +126,27 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, s
                 t0 = time.time()
                 with torch.no_grad():
                     w = torch.cat([param.detach().view(-1) for param in model.parameters()]).cpu()
-                #print("Debug 1 - Time:", round(time.time() - t0, 2), "s", flush=True)
+                print("Debug 1 - Time:", round(time.time() - t0, 2), "s", flush=True)
 
                 # --- 2) Accuracy calculation ---
                 t0 = time.time()
                 with torch.no_grad():
-                    accuracy = test_accuracy(model, testloader, device)
+                    accuracy = test_accuracyGPU(model, testloader, device)
                 accuracies.append(accuracy)
-                #print("Debug 2 - Time:", round(time.time() - t0, 2), "s", flush=True)
+                print("Debug 2 - Time:", round(time.time() - t0, 2), "s", flush=True)
 
                 # --- 3) Non-quantized entropy calculation ---
                 t0 = time.time()
                 w_np = w.numpy().astype(np.float32)
-                entropy = round(compute_entropy(w_np.tolist())) + 1
+                entropy = round(compute_entropyGPU(w_np.tolist())) + 1
                 entropies.append(entropy)
-                #print("Debug 3 - Time:", round(time.time() - t0, 2), "s", flush=True)
+                print("Debug 3 - Time:", round(time.time() - t0, 2), "s", flush=True)
 
                 # --- 4) Quantization ---
                 t0 = time.time()
                 if QuantizationType == "center":
                     try:
-                        w_quantized = quantize_weights_center(w, v, (v[:-1] + v[1:]) / 2, device='cpu')
+                        w_quantized = quantize_weights_centerGPU(w, v, (v[:-1] + v[1:]) / 2, device='cpu')
                         if isinstance(w_quantized, torch.Tensor):
                             w_quantized = w_quantized.cpu()
                     except Exception:
@@ -151,11 +154,11 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, s
                         v_gpu = v.to(device)
                         v_centers = (v_gpu[:-1] + v_gpu[1:]) / 2
                         v_centers = torch.cat([v_centers, v_gpu[-1:]])
-                        w_quantized = quantize_weights_center(w_gpu, v_gpu, v_centers, device=device)
+                        w_quantized = quantize_weights_centerGPU(w_gpu, v_gpu, v_centers, device=device)
                         w_quantized = w_quantized.detach().cpu()
                 else:
                     w_quantized = w.clone()
-                #print("Debug 4 - Time:", round(time.time() - t0, 2), "s", flush=True)
+                print("Debug 4 - Time:", round(time.time() - t0, 2), "s", flush=True)
 
                 # --- 5) Build model_quantized on CPU, evaluate on device ---
                 t0 = time.time()
@@ -168,8 +171,8 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, s
                     start_idx += numel
                 model_quantized.eval()
                 model_quantized = model_quantized.to(device)
-                quantized_accuracy = test_accuracy(model_quantized, testloader, device)
-                #print("Debug 5 - Time:", round(time.time() - t0, 2), "s", flush=True)
+                quantized_accuracy = test_accuracyGPU(model_quantized, testloader, device)
+                print("Debug 5 - Time:", round(time.time() - t0, 2), "s", flush=True)
 
                 # --- 5.1) Normalize -0.0 to +0.0 vectorially ---
                 t0 = time.time()
@@ -177,38 +180,38 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, s
                 mask_negzero = np.signbit(arr) & (arr == 0.0)
                 if mask_negzero.any():
                     arr[mask_negzero] = 0.0
-                #print("Debug 5.1 - Time:", round(time.time() - t0, 2), "s", flush=True)
+                print("Debug 5.1 - Time:", round(time.time() - t0, 2), "s", flush=True)
 
                 # --- 5.2) Quantized entropy ---
                 t0 = time.time()
-                quantized_entropy = round(compute_entropy(arr.tolist())) + 1
-                #print("Debug 5.2 - Time:", round(time.time() - t0, 2), "s", flush=True)
+                quantized_entropy = round(compute_entropyGPU(arr.tolist())) + 1
+                print("Debug 5.2 - Time:", round(time.time() - t0, 2), "s", flush=True)
 
                 # --- 5.3) Bytes and compression ---
                 t0 = time.time()
                 input_bytes = arr.tobytes()
-                #print("Debug 5.3 - Time:", round(time.time() - t0, 2), "s", flush=True)
+                print("Debug 5.3 - Time:", round(time.time() - t0, 2), "s", flush=True)
                 t0 = time.time()
                 zstd_compressed = compress_zstd(input_bytes, level=22)
-                #print("Debug 5.4 - Time:", round(time.time() - t0, 2), "s", flush=True)
+                print("Debug 5.4 - Time:", round(time.time() - t0, 2), "s", flush=True)
 
                 original_size_bytes = len(input_bytes)
                 zstd_size = len(zstd_compressed)
                 zstd_ratio = zstd_size / original_size_bytes
-                #print("Debug 6 - Time:", round(time.time() - t0, 2), "s", flush=True)
+                print("Debug 6 - Time:", round(time.time() - t0, 2), "s", flush=True)
 
                 # --- 6) Sparse representation ---
                 t0 = time.time()
                 mask = (np.abs(arr) > sparsity_threshold).astype(np.uint8)
                 nonzero_values = arr[mask == 1]
-                bitmask_bytes = pack_bitmask(mask.tolist())
+                bitmask_bytes = pack_bitmaskGPU(mask.tolist())
                 packed_nonzeros = nonzero_values.tobytes()
                 compressed_mask = compress_zstd(bitmask_bytes, level=22)
                 compressed_values = compress_zstd(packed_nonzeros, level=22)
                 sparse_compressed_size = len(compressed_mask) + len(compressed_values)
                 sparse_ratio = sparse_compressed_size / original_size_bytes
                 sparsity = 1.0 - mask.sum() / mask.size
-                #print("Debug 7 - Time:", round(time.time() - t0, 2), "s", flush=True)
+                print("Debug 7 - Time:", round(time.time() - t0, 2), "s", flush=True)
 
                 # --- 7) Build model_sparse ---
                 t0 = time.time()
@@ -223,8 +226,8 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, s
                 model_sparse.eval()
                 model_sparse = model_sparse.to(device)
                 with torch.no_grad():
-                    sparse_accuracy = test_accuracy(model_sparse, testloader, device)
-                #print("Debug 8 - Time:", round(time.time() - t0, 2), "s", flush=True)
+                    sparse_accuracy = test_accuracyGPU(model_sparse, testloader, device)
+                print("Debug 8 - Time:", round(time.time() - t0, 2), "s", flush=True)
 
                 # --- 8) Log results ---
                 training_time = round(time.time() - start_time)
@@ -249,8 +252,11 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, s
             # --- 9) Final barrier: allow all ranks to resume training together ---
             if device.type == "cuda":
                 torch.cuda.synchronize(device)
-            if dist.is_available() and dist.is_initialized():
-                dist.barrier()
+            if dist.is_initialized():
+                if dist.get_backend() == "nccl" and device.type == "cuda":
+                    dist.barrier(device_ids=[torch.cuda.current_device()])
+                else:
+                    dist.barrier()
 
         """
         # Saving a better model
