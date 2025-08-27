@@ -92,15 +92,24 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     # Add argument for 'delta', which is required for the training
     parser.add_argument("--delta", type=float, required=True, help="Value of delta")
+    # Add argument for model name, so the user can choose the architecture from the command line
+    parser.add_argument(
+        "--model_name",
+        type=str,
+        required=True,
+        choices=["LeNet-5", "LeNet-5 (rotated)", "LeNet300_100", "AlexNet"],
+        help="Name of the model to train"
+    )
     # Parse the command-line arguments
     args = parser.parse_args()
+
     # Limit the number of threads used by PyTorch to 1 for CPU execution
     torch.set_num_threads(1)
     # Set the OpenMP number of threads to 1 for parallel processing on CPU
     os.environ["OMP_NUM_THREADS"] = "1"
 
-    # Define fixed hyperparameters for the model and training process
-    model_name = "AlexNet"
+    # Use model name from command line instead of hardcoding
+    model_name = args.model_name
 
     if torch.cuda.is_available():
         device = torch.device("cuda:0")
@@ -139,7 +148,6 @@ if __name__ == "__main__":
         max_iterations = 15
         train_optimizer = "ADAM"  
         entropy_optimizer = "FISTA"  
-        #delta = 11
         pruning = "Y"
         QuantizationType = "center"
         sparsity_threshold = 1e-3
@@ -172,7 +180,6 @@ if __name__ == "__main__":
         max_iterations = 15
         train_optimizer = "ADAM"  
         entropy_optimizer = "FISTA"  
-        #delta = 11
         pruning = "Y"
         QuantizationType = "center"
         sparsity_threshold = 1e-3  
@@ -210,13 +217,17 @@ if __name__ == "__main__":
         max_iterations = 15
         train_optimizer = "SGD"  
         entropy_optimizer = "FISTA"  
-        #delta = 11
         pruning = "Y"
         QuantizationType = "center"
         sparsity_threshold = 1e-3  
 
-    #if(args.delta == 6 or args.delta == 6): # Quando faccio i test singoli questa è la terza cosa da uncommentare. Nell'altro file altre due.
-    if(local_rank == 0):  # Only print on the first GPU
+    # Only print parameters from the first process/GPU
+    if(model_name == "AlexNet"):
+        local_rank_to_print = local_rank
+    else:
+        local_rank_to_print = 0
+
+    if(local_rank_to_print == 0):
         print("=================================================================", flush = True)
         print("==================== PARAMETER CONFIGURATION ====================", flush = True)
         print("=================================================================", flush = True)
@@ -249,7 +260,6 @@ if __name__ == "__main__":
         print(f"max_iterations={max_iterations}", flush=True)    
         print(f"train_optimizer={train_optimizer}", flush=True)    
         print(f"entropy_optimizer={entropy_optimizer}", flush=True) 
-        #print(f"delta={delta}", flush=True) 
         print(f"pruning={pruning}", flush=True)
         print(f"QuantizationType={QuantizationType}", flush=True)
         print(f"sparsity_threshold={sparsity_threshold}", flush=True)
@@ -281,7 +291,7 @@ if __name__ == "__main__":
             BestQuantization_target_acc=BestQuantization_target_acc, final_target_acc=final_target_acc, 
             target_zstd_ratio=target_zstd_ratio, min_xi=min_xi, max_xi=max_xi, upper_c=upper_c, lower_c=lower_c, c1=c1, c2=c2, 
             zeta=zeta, l=l, n_epochs=n_epochs, max_iterations=max_iterations, device=device, train_optimizer=train_optimizer,
-            entropy_optimizer=entropy_optimizer, trainloader=trainloader, testloader=testloader, # manca train_sampler
+            entropy_optimizer=entropy_optimizer, trainloader=trainloader, testloader=testloader,
             delta=args.delta, pruning=pruning, QuantizationType=QuantizationType, sparsity_threshold=sparsity_threshold, 
             accuracy_tollerance=accuracy_tollerance
         )
