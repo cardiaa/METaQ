@@ -116,7 +116,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, s
         if local_rank == 0:
             print(f"Epoch {epoch + 1}: training_time = {training_time}s\n", flush=True)
 
-        # --- Metrics & logging ---
+        # --- Metrics & Logging ---
         if epoch % 1 == 0 or epoch == n_epochs - 1:
 
             # --- 0) Synchronize all ranks BEFORE evaluation/CPU-heavy work ---
@@ -128,7 +128,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, s
                 else:
                     dist.barrier()
 
-            # --- 1) Compute accuracy on ALL ranks (collective inside test_accuracyGPU) ---
+            # --- 1) Compute accuracy on ALL ranks ---
             t0_acc = time.time()
             with torch.no_grad():
                 accuracy = test_accuracyGPU(model, testloader, device)  # all ranks must participate
@@ -143,7 +143,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, s
                 else:
                     dist.barrier()
 
-            # --- 2) Rank 0 performs CPU-heavy computations and logging ---
+            # --- 2) Rank 0 performs CPU-heavy computations ---
             if local_rank == 0:
                 # --- 2.1) Collect weights on CPU ---
                 t0 = time.time()
@@ -151,7 +151,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, s
                     w = torch.cat([param.detach().view(-1) for param in model.parameters()]).cpu()
                 print("Debug 2 - Time:", round(time.time() - t0, 2), "s", flush=True)
 
-                # --- 2.2) Non-quantized entropy calculation ---
+                # --- 2.2) Non-quantized entropy ---
                 t0 = time.time()
                 w_np = w.numpy().astype(np.float32)
                 entropy = round(compute_entropyGPU(w_np.tolist())) + 1
@@ -177,27 +177,32 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, s
                     param.data.copy_(torch.from_numpy(wq_np[start_idx:start_idx + numel].reshape(param.data.size())))
                     start_idx += numel
                 model_quantized.eval()
-                model_quantized = model_quantized.to(device)
-                print("Debug 4.1 - Time:", round(time.time() - t0, 2), "s", flush=True)
+            else:
+                # Gli altri rank devono avere la variabile pronta per il collective,
+                # ma il contenuto può essere un dummy model
+                model_quantized = copy.deepcopy(model).cpu()
+                model_quantized.eval()
 
-                # --- 2.5) Evaluate quantized model accuracy ---
-                t0_qacc = time.time()
-                with torch.no_grad():
-                    quantized_accuracy = test_accuracyGPU(model_quantized, testloader, device)
+            # --- 2.5) Evaluate quantized model accuracy on ALL ranks ---
+            model_quantized = model_quantized.to(device)  # tutti i rank spostano il model sul device
+            t0_qacc = time.time()
+            with torch.no_grad():
+                quantized_accuracy = test_accuracyGPU(model_quantized, testloader, device)
+            if local_rank == 0:
                 print("Debug 5 - Time:", round(time.time() - t0_qacc, 2), "s", flush=True)
 
+            if local_rank == 0:
                 # --- 2.6) Normalize -0.0 to +0.0 ---
                 t0 = time.time()
                 arr = wq_np
                 mask_negzero = np.signbit(arr) & (arr == 0.0)
-                if mask_negzero.any():
-                    arr[mask_negzero] = 0.0
-                print("Debug 5.1 - Time:", round(time.time() - t0, 2), "s", flush=True)
+                arr[mask_negzero] = 0.0
+                print("Debug 6 - Time:", round(time.time() - t0, 2), "s", flush=True)
 
                 # --- 2.7) Quantized entropy ---
                 t0 = time.time()
                 quantized_entropy = round(compute_entropyGPU(arr.tolist())) + 1
-                print("Debug 5.2 - Time:", round(time.time() - t0, 2), "s", flush=True)
+                print("Debug 7 - Time:", round(time.time() - t0, 2), "s", flush=True)
 
                 # --- 2.8) Bytes and compression ---
                 t0 = time.time()
@@ -206,7 +211,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, s
                 original_size_bytes = len(input_bytes)
                 zstd_size = len(zstd_compressed)
                 zstd_ratio = zstd_size / original_size_bytes
-                print("Debug 5.3-6 - Time:", round(time.time() - t0, 2), "s", flush=True)
+                print("Debug 8 - Time:", round(time.time() - t0, 2), "s", flush=True)
 
                 # --- 2.9) Sparse representation ---
                 t0 = time.time()
@@ -219,7 +224,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, s
                 sparse_compressed_size = len(compressed_mask) + len(compressed_values)
                 sparse_ratio = sparse_compressed_size / original_size_bytes
                 sparsity = 1.0 - mask.sum() / mask.size
-                print("Debug 7 - Time:", round(time.time() - t0, 2), "s", flush=True)
+                print("Debug 9 - Time:", round(time.time() - t0, 2), "s", flush=True)
 
                 # --- 2.10) Build sparse model and evaluate accuracy ---
                 t0 = time.time()
@@ -232,13 +237,21 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, s
                     param.data.copy_(torch.from_numpy(w_sparse_np[start_idx:start_idx + numel].reshape(param.data.size())))
                     start_idx += numel
                 model_sparse.eval()
-                model_sparse = model_sparse.to(device)
-                t0_sacc = time.time()
-                with torch.no_grad():
-                    sparse_accuracy = test_accuracyGPU(model_sparse, testloader, device)
-                print("Debug 8 - Time:", round(time.time() - t0_sacc, 2), "s", flush=True)
+            else:
+                # Dummy model per gli altri rank
+                model_sparse = copy.deepcopy(model).cpu()
+                model_sparse.eval()
 
-                # --- 2.11) Logging (rank 0 only) ---
+            # Tutti i rank eseguono la valutazione finale
+            model_sparse = model_sparse.to(device)
+            t0_sacc = time.time()
+            with torch.no_grad():
+                sparse_accuracy = test_accuracyGPU(model_sparse, testloader, device)
+            if local_rank == 0:
+                print("Debug 10 - Time:", round(time.time() - t0_sacc, 2), "s", flush=True)
+
+            # --- 2.11) Logging rank 0 ---
+            if local_rank == 0:
                 training_time = round(time.time() - start_time)
                 if epoch == 0:
                     log += f"delta = {delta}\n"
@@ -247,18 +260,18 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, s
                     f"A_NQ = {accuracy}, H_NQ = {entropy}, "
                     f"A_Q = {quantized_accuracy}, H_Q = {quantized_entropy}, "
                     f"zstd_ratio = {zstd_ratio:.2%}, sparse_ratio = {sparse_ratio:.2%}, "
-                    f"sparsity = {sparsity:.2%}, sparse_accuracy = {sparse_accuracy}, training_time = {training_time}s\n"
+                    f"sparsity = {sparsity:.2%} , sparse_accuracy = {sparse_accuracy}, training_time = {training_time}s\n"
                 )
                 print(
                     f"Epoch {epoch + 1}: "
                     f"A_NQ = {accuracy}, H_NQ = {entropy}, "
                     f"A_Q = {quantized_accuracy}, H_Q = {quantized_entropy}, "
                     f"zstd_ratio = {zstd_ratio:.2%}, sparse_ratio = {sparse_ratio:.2%}, "
-                    f"sparsity = {sparsity:.2%}, sparse_accuracy = {sparse_accuracy}, training_time = {training_time}s\n",
+                    f"sparsity = {sparsity:.2%} , sparse_accuracy = {sparse_accuracy}, training_time = {training_time}s\n",
                     flush=True
                 )
 
-            # --- 3) Final barrier: allow all ranks to resume training together ---
+            # --- 3) Final barrier: allow all ranks to resume training ---
             if device.type == "cuda":
                 torch.cuda.synchronize(device)
             if dist.is_initialized():
@@ -266,6 +279,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, s
                     dist.barrier(device_ids=[torch.cuda.current_device()])
                 else:
                     dist.barrier()
+
 
         """
         # Saving a better model
