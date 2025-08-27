@@ -193,8 +193,8 @@ if __name__ == "__main__":
         model = DDP(model, device_ids=[local_rank])     
         criterion, criterion_name = nn.CrossEntropyLoss(), "CrossEntropy" 
         C = 32
-        lr = 0.1
-        lambda_reg = 0.0002
+        lr = 0.01
+        lambda_reg = 0.0005
         alpha = 1
         subgradient_step = 1e5 
         bucket_zero = round((C-1)/2) #it must range from 0 to C-2
@@ -213,7 +213,7 @@ if __name__ == "__main__":
         accuracy_tollerance = 0.2
         zeta = 50000
         l = 0.5
-        n_epochs = 10 # To be increased as soon as I find good configurations
+        n_epochs = 40 # To be increased as soon as I find good configurations
         max_iterations = 15
         train_optimizer = "SGD"  
         entropy_optimizer = "FISTA"  
