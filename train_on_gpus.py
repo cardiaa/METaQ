@@ -56,7 +56,7 @@ def load_data(model_name):
         ])
         trainset = datasets.MNIST(root='./data', train=True, download=True, transform=transform)
         testset = datasets.MNIST(root='./data', train=False, download=True, transform=transform)
-    elif(model_name == "AlexNet" or model_name == "VGG16"):
+    elif(model_name == "AlexNet"):
         transform_train = transforms.Compose([
             transforms.RandomResizedCrop(224),
             transforms.RandomHorizontalFlip(),
@@ -80,6 +80,30 @@ def load_data(model_name):
 
         trainset = DataLoader(train_dataset, batch_size=2048, sampler=train_sampler, num_workers=8, pin_memory=True)
         testset = DataLoader(val_dataset, batch_size=2048, shuffle=False, num_workers=8, pin_memory=True)
+    elif(model_name == "VGG16"):
+        transform_train = transforms.Compose([
+            transforms.RandomResizedCrop(224),
+            transforms.RandomHorizontalFlip(),
+            transforms.ToTensor(),
+            transforms.Normalize([0.485, 0.456, 0.406], 
+                                [0.229, 0.224, 0.225])
+        ])
+
+        transform_val = transforms.Compose([
+            transforms.Resize(256),
+            transforms.CenterCrop(224),
+            transforms.ToTensor(),
+            transforms.Normalize([0.485, 0.456, 0.406], 
+                                [0.229, 0.224, 0.225])
+        ])   
+
+        train_dataset = datasets.ImageFolder('/disk1/a.cardia/imagenet/train', transform=transform_train)
+        val_dataset = datasets.ImageFolder('/disk1/a.cardia/imagenet/val', transform=transform_val)
+
+        train_sampler = DistributedSampler(train_dataset, num_replicas=world_size, rank=local_rank, shuffle=True, drop_last=True)
+
+        trainset = DataLoader(train_dataset, batch_size=1024, sampler=train_sampler, num_workers=8, pin_memory=True)
+        testset = DataLoader(val_dataset, batch_size=1024, shuffle=False, num_workers=8, pin_memory=True)        
 
     # Return the loaded training and test datasets
     if(model_name == "AlexNet" or model_name == "VGG16"):
