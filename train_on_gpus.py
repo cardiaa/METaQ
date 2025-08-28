@@ -56,7 +56,7 @@ def load_data(model_name):
         ])
         trainset = datasets.MNIST(root='./data', train=True, download=True, transform=transform)
         testset = datasets.MNIST(root='./data', train=False, download=True, transform=transform)
-    elif(model_name == "AlexNet"):
+    elif(model_name == "AlexNet" or model_name == "VGG16"):
         transform_train = transforms.Compose([
             transforms.RandomResizedCrop(224),
             transforms.RandomHorizontalFlip(),
@@ -82,7 +82,7 @@ def load_data(model_name):
         testset = DataLoader(val_dataset, batch_size=2048, shuffle=False, num_workers=8, pin_memory=True)
 
     # Return the loaded training and test datasets
-    if(model_name == "AlexNet"):
+    if(model_name == "AlexNet" or model_name == "VGG16"):
         return trainset, testset, train_sampler
     else:
         return trainset, testset
