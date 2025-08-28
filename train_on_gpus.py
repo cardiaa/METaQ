@@ -97,7 +97,7 @@ if __name__ == "__main__":
         "--model_name",
         type=str,
         required=True,
-        choices=["LeNet-5", "LeNet-5 (rotated)", "LeNet300_100", "AlexNet"],
+        choices=["LeNet-5", "LeNet-5 (rotated)", "LeNet300_100", "AlexNet", "VGG16"],
         help="Name of the model to train"
     )
     # Parse the command-line arguments
@@ -113,7 +113,7 @@ if __name__ == "__main__":
 
     if torch.cuda.is_available():
         device = torch.device("cuda:0")
-        if(model_name != "AlexNet"):
+        if(model_name != "AlexNet" or model_name != "VGG16"):
             print(f"Using device {device} ({torch.cuda.get_device_name(device)})", flush=True)
     else:
         device = torch.device("cpu")
@@ -220,9 +220,46 @@ if __name__ == "__main__":
         pruning = "Y"
         QuantizationType = "center"
         sparsity_threshold = 1e-3  
+    elif(model_name == "VGG16"):
+        local_rank, world_size = setup()
+        device = torch.device(f"cuda:{local_rank}")
+        print(f"[GPU {local_rank}] Using device {device} ({torch.cuda.get_device_name(device)})", flush=True)        
+        model = models.vgg16(weights=None)
+        model.classifier[6] = nn.Linear(4096, 1000)
+        model = model.to(device)  
+        model = DDP(model, device_ids=[local_rank])     
+        criterion, criterion_name = nn.CrossEntropyLoss(), "CrossEntropy" 
+        C = 32
+        lr = 0.01
+        lambda_reg = 0.0005
+        alpha = 1
+        subgradient_step = 1e5 
+        bucket_zero = round((C-1)/2) #it must range from 0 to C-2
+        r = 2
+        w0 = round(r - (bucket_zero + 0.5) * 2 * r * (1 - 1/C) / (C - 1), 3)
+        BestQuantization_target_acc = 99.8
+        final_target_acc = 99.7
+        target_zstd_ratio = 0.0179
+        min_xi = 0  
+        max_xi = 1  
+        upper_c = sum(p.numel() for p in model.parameters())
+        lower_c = 1e-2
+        c1 = 10
+        c2 = 1000
+        first_best_indices = 20
+        accuracy_tollerance = 0.2
+        zeta = 50000
+        l = 0.5
+        n_epochs = 40 # To be increased as soon as I find good configurations
+        max_iterations = 15
+        train_optimizer = "SGD"  
+        entropy_optimizer = "FISTA"  
+        pruning = "Y"
+        QuantizationType = "center"
+        sparsity_threshold = 1e-3          
 
     # Only print parameters from the first process/GPU
-    if(model_name == "AlexNet"):
+    if(model_name == "AlexNet" or model_name == "VGG16"):
         local_rank_to_print = local_rank
     else:
         local_rank_to_print = 0
@@ -266,7 +303,7 @@ if __name__ == "__main__":
         print("-"*60, flush=True)        
 
     # Load the training and test datasets using the load_data function
-    if(model_name == "AlexNet"):
+    if(model_name == "AlexNet" or model_name == "VGG16"):
         trainset, testset, train_sampler = load_data(model_name)
         trainloader = trainset
         testloader = testset
