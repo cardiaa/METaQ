@@ -141,7 +141,6 @@ if __name__ == "__main__":
             print(f"Using device {device} ({torch.cuda.get_device_name(device)})", flush=True)
     else:
         device = torch.device("cpu")
-        print("Using CPU.", flush=True)
 
     if(model_name == "LeNet-5"):
         model = LeNet5()
@@ -365,7 +364,8 @@ if __name__ == "__main__":
             print(f"pruning={pruning}", flush=True)
             print(f"QuantizationType={QuantizationType}", flush=True)
             print(f"sparsity_threshold={sparsity_threshold}", flush=True)
-            print("-"*60, flush=True)             
+            print("-"*60, flush=True)   
+            print("Using CPU.", flush=True)          
 
     # Load the training and test datasets using the load_data function
     if(model_name == "AlexNet" or model_name == "VGG16"):
