@@ -385,7 +385,7 @@ if __name__ == "__main__":
         cleanup()     
     else:
         trainset, testset = load_data(model_name)
-        trainloader = torch.utils.data.DataLoader(trainset, batch_size=64, shuffle=True, num_workers=0)
+        trainloader = torch.utils.data.DataLoader(trainset, batch_size=64, shuffle=True, drop_last=True, num_workers=0)
         testloader = torch.utils.data.DataLoader(testset, batch_size=1000, shuffle=False, num_workers=0)
         train_and_evaluate(
             model=model, model_name=model_name, criterion=criterion, C=C, lr=lr, lambda_reg=lambda_reg, alpha=alpha,
