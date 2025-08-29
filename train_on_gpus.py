@@ -142,7 +142,7 @@ if __name__ == "__main__":
     else:
         device = torch.device("cpu")
 
-    if(model_name == "LeNet-5"):
+    if(model_name[:7] == "LeNet-5"):
         model = LeNet5()
         model = model.to(device)         
         criterion, criterion_name = nn.CrossEntropyLoss(), "CrossEntropy" 
