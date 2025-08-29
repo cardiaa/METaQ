@@ -102,8 +102,8 @@ def load_data(model_name):
 
         train_sampler = DistributedSampler(train_dataset, num_replicas=world_size, rank=local_rank, shuffle=True, drop_last=True)
 
-        trainset = DataLoader(train_dataset, batch_size=1024, sampler=train_sampler, num_workers=8, pin_memory=True) #with 512 and C=4 it works
-        testset = DataLoader(val_dataset, batch_size=1024, shuffle=False, num_workers=8, pin_memory=True)        
+        trainset = DataLoader(train_dataset, batch_size=512, sampler=train_sampler, num_workers=8, pin_memory=True) #with 512 and C=4 it works
+        testset = DataLoader(val_dataset, batch_size=512, shuffle=False, num_workers=8, pin_memory=True)        
 
     # Return the loaded training and test datasets
     if(model_name == "AlexNet" or model_name == "VGG16"):
@@ -237,7 +237,7 @@ if __name__ == "__main__":
         accuracy_tollerance = 0.2
         zeta = 50000
         l = 0.5
-        n_epochs = 10 # To be increased as soon as I find good configurations
+        n_epochs = 50 # To be increased as soon as I find good configurations
         max_iterations = 15
         train_optimizer = "SGD"  
         entropy_optimizer = "FISTA"  
@@ -253,7 +253,7 @@ if __name__ == "__main__":
         model = model.to(device)  
         model = DDP(model, device_ids=[local_rank])     
         criterion, criterion_name = nn.CrossEntropyLoss(), "CrossEntropy" 
-        C = 8
+        C = 16
         lr = 0.01
         lambda_reg = 0.0005
         alpha = 1
@@ -295,6 +295,7 @@ if __name__ == "__main__":
         print(f"model={model_name}", flush=True)
         print(f"criterion={criterion_name}", flush=True)
         print(f"C={C}", flush=True)
+        print(f"delta={args.delta}", flush=True)
         print(f"lr={lr}", flush=True)    
         print(f"lambda_reg={lambda_reg}", flush=True)
         print(f"alpha={alpha}", flush=True)    

@@ -52,8 +52,8 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, s
         # Ensure deterministic sharding for distributed samplers across epochs
         if hasattr(train_sampler, "set_epoch"):
             train_sampler.set_epoch(epoch)
-        if local_rank == 0:
-            print(f"Beginning epoch {epoch} at {(datetime.now() + timedelta(hours=2)).strftime('%Y-%m-%d %H:%M:%S')}", flush=True)
+        #if local_rank == 0:
+        #    print(f"Beginning epoch {epoch} at {(datetime.now() + timedelta(hours=2)).strftime('%Y-%m-%d %H:%M:%S')}", flush=True)
         start_time = time.time()
         start_time2 = time.time()
         for i, data in enumerate(trainloader, 0):
@@ -113,8 +113,8 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, s
             optimizer.step()
 
         training_time = round(time.time() - start_time)
-        if local_rank == 0:
-            print(f"Epoch {epoch + 1}: training_time = {training_time}s\n", flush=True)
+        #if local_rank == 0:
+        #    print(f"Epoch {epoch + 1}: training_time = {training_time}s\n", flush=True)
 
         # --- Metrics & Logging ---
         if epoch % 1 == 0 or epoch == n_epochs - 1:
@@ -260,7 +260,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, s
                     f"A_NQ = {accuracy}, H_NQ = {entropy}, "
                     f"A_Q = {quantized_accuracy}, H_Q = {quantized_entropy}, "
                     f"zstd_ratio = {zstd_ratio:.2%}, sparse_ratio = {sparse_ratio:.2%}, "
-                    f"sparsity = {sparsity:.2%} , sparse_accuracy = {sparse_accuracy}, training_time = {training_time}s\n"
+                    f"sparsity = {sparsity:.2%} , sparse_accuracy = {sparse_accuracy}, training_time = {training_time}s\n\n"
                 )
                 print(
                     f"Epoch {epoch + 1}: "
