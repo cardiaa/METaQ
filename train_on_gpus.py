@@ -353,7 +353,7 @@ if __name__ == "__main__":
             BestQuantization_target_acc=BestQuantization_target_acc, final_target_acc=final_target_acc, 
             target_zstd_ratio=target_zstd_ratio, min_xi=min_xi, max_xi=max_xi, upper_c=upper_c, lower_c=lower_c, c1=c1, c2=c2, 
             zeta=zeta, l=l, n_epochs=n_epochs, max_iterations=max_iterations, device=device, train_optimizer=train_optimizer,
-            entropy_optimizer=entropy_optimizer, trainloader=trainloader, testloader=testloader,
+            entropy_optimizer=entropy_optimizer, trainloader=trainloader, testloader=testloader, train_sampler=None,
             delta=args.delta, pruning=pruning, QuantizationType=QuantizationType, sparsity_threshold=sparsity_threshold, 
             accuracy_tollerance=accuracy_tollerance
         )
