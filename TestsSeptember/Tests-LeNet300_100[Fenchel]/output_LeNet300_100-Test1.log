@@ -1,0 +1,1072 @@
+nohup: ignoring input
+=================================================================
+==================== PARAMETER CONFIGURATION ====================
+=================================================================
+model=LeNet300_100
+criterion=CrossEntropy
+C=64
+delta=5.0
+lr=0.001
+lambda_reg=0.0002
+alpha=0.6
+[T1=lambda_reg*alpha=0.00012]
+[T2=lambda_reg*(1-alpha)=8e-05]
+subgradient_step=100000.0
+w0=-0.031
+r=2
+bucket_zero=32
+BestQuantization_target_acc=99.8
+final_target_acc=99.7
+target_zstd_ratio=0.0179
+min_xi=0
+max_xi=1
+upper_c=266610
+lower_c=0.01
+c1=10
+c2=1000
+first_best_indices=20
+accuracy_tollerance=0.2
+zeta=50000
+l=0.5
+n_epochs=100
+max_iterations=15
+train_optimizer=ADAM
+entropy_optimizer=FISTA
+pruning=Y
+QuantizationType=center
+sparsity_threshold=0.001
+------------------------------------------------------------
+Using CPU.
+Epoch 1: A_NQ = 94.15, H_NQ = 4804598, A_Q = 93.76, H_Q = 44947, zstd_ratio = 0.63%, sparse_ratio = 0.43%, sparsity = 98.22% , sparse_accuracy = 93.74, training_time = 16907s
+
+Epoch 1: A_NQ = 92.84, H_NQ = 4804254, A_Q = 92.51, H_Q = 35332, zstd_ratio = 0.51%, sparse_ratio = 0.35%, sparsity = 98.69% , sparse_accuracy = 92.54, training_time = 16508s
+
+Epoch 1: A_NQ = 94.29, H_NQ = 4803725, A_Q = 93.83, H_Q = 38821, zstd_ratio = 0.56%, sparse_ratio = 0.38%, sparsity = 98.52% , sparse_accuracy = 93.87, training_time = 17105s
+
+Epoch 1: A_NQ = 94.05, H_NQ = 4804739, A_Q = 93.84, H_Q = 46749, zstd_ratio = 0.68%, sparse_ratio = 0.46%, sparsity = 98.11% , sparse_accuracy = 93.83, training_time = 17617s
+
+Epoch 1: A_NQ = 93.08, H_NQ = 4804759, A_Q = 93.27, H_Q = 36486, zstd_ratio = 0.53%, sparse_ratio = 0.36%, sparsity = 98.62% , sparse_accuracy = 93.26, training_time = 17845s
+
+Epoch 1: A_NQ = 94.54, H_NQ = 4804782, A_Q = 94.14, H_Q = 46447, zstd_ratio = 0.67%, sparse_ratio = 0.46%, sparsity = 98.14% , sparse_accuracy = 94.14, training_time = 17952s
+
+Epoch 1: A_NQ = 94.74, H_NQ = 4803496, A_Q = 95.25, H_Q = 70014, zstd_ratio = 0.96%, sparse_ratio = 0.69%, sparsity = 96.85% , sparse_accuracy = 95.23, training_time = 18007s
+
+Epoch 1: A_NQ = 93.45, H_NQ = 4803959, A_Q = 93.48, H_Q = 39435, zstd_ratio = 0.57%, sparse_ratio = 0.39%, sparsity = 98.49% , sparse_accuracy = 93.45, training_time = 1802EpocEpoch 1: A_NQ = 94.26, H_NQ = 4804509, A_Q = 94.24, H_Q = 51119, zstd_ratio = 0.73%, sparse_ratio = 0.50%, sparsity = 97.88% , sparse_accuracy = 94.3, training_time = 18257EpoEpoch 1: A_NQ = 95.44, H_NQ = 4804828, A_Q = 95.14, H_Q = 73875, zstd_ratio = 1.02%, sparse_ratio = 0.73%, sparsity = 96.61% , sparse_accuracy = 95.08, training_time = 18332s
+
+Epoch 1: A_NQ = 94.19, H_NQ = 4804683, A_Q = 93.79, H_Q = 48479, zstd_ratio = 0.68%, sparse_ratio = 0.47%, sparsity = 98.02% , sparse_accuracy = 93.75, training_time = 18512s
+
+Epoch 1: A_NQ = 93.34, H_NQ = 4804709, A_Q = 92.66, H_Q = 39804, zstd_ratio = 0.56%, sparse_ratio = 0.39%, sparsity = 98.46% , sparse_accuracy = 92.63, training_time = 18549s
+
+Epoch 1: A_NQ = 93.81, H_NQ = 4803993, A_Q = 93.21, H_Q = 38548, zstd_ratio = 0.57%, sparse_ratio = 0.38%, sparsity = 98.53% , sparse_accuracy = 93.23, training_time = 18799s
+
+Epoch 1: A_NQ = 94.04, H_NQ = 4804493, A_Q = 93.7, H_Q = 42919, zstd_ratio = 0.63%, sparse_ratio = 0.43%, sparsity = 98.32% , sparse_accuracy = 93.72, training_time = 19072s
+
+Epoch 1: A_NQ = 94.12, H_NQ = 4804705, A_Q = 93.86, H_Q = 52354, zstd_ratio = 0.75%, sparse_ratio = 0.52%, sparsity = 97.81% , sparse_accuracy = 93.86, training_time = 19446s
+
+Epoch 1: A_NQ = 93.86, H_NQ = 4804159, A_Q = 93.52, H_Q = 38158, zstd_ratio = 0.56%, sparse_ratio = 0.38%, sparsity = 98.55% , sparse_accuracy = 93.51, training_time = 19991s
+
+Epoch 1: A_NQ = 95.14, H_NQ = 4804756, A_Q = 94.67, H_Q = 55315, zstd_ratio = 0.78%, sparse_ratio = 0.55%, sparsity = 97.67% , sparse_accuracy = 94.66, training_time = 20117s
+
+Epoch 1: A_NQ = 94.09, H_NQ = 4804725, A_Q = 93.98, H_Q = 45693, zstd_ratio = 0.65%, sparse_ratio = 0.45%, sparsity = 98.18% , sparse_accuracy = 93.98, training_time = 20179s
+
+Epoch 1: A_NQ = 93.79, H_NQ = 4804807, A_Q = 93.95, H_Q = 47965, zstd_ratio = 0.70%, sparse_ratio = 0.48%, sparsity = 98.05% , sparse_accuracy = 93.91, training_time = 20309s
+
+Epoch 1: A_NQ = 94.78, H_NQ = 4804464, A_Q = 94.59, H_Q = 57236, zstd_ratio = 0.81%, sparse_ratio = 0.57%, sparsity = 97.56% , sparse_accuracy = 94.6, training_time = 20325s
+
+Epoch 1: A_NQ = 93.91, H_NQ = 4804053, A_Q = 93.31, H_Q = 36890, zstd_ratio = 0.55%, sparse_ratio = 0.37%, sparsity = 98.62% , sparse_accuracy = 93.31, training_time = 20421s
+
+Epoch 1: A_NQ = 93.31, H_NQ = 4804585, A_Q = 93.58, H_Q = 46026, zstd_ratio = 0.66%, sparse_ratio = 0.45%, sparsity = 98.16% , sparse_accuracy = 93.6, training_time = 20503s
+
+Epoch 1: A_NQ = 93.22, H_NQ = 4803474, A_Q = 93.24, H_Q = 37381, zstd_ratio = 0.56%, sparse_ratio = 0.38%, sparsity = 98.60% , sparse_accuracy = 93.23, training_time = 20525s
+
+Epoch 1: A_NQ = 94.78, H_NQ = 4804719, A_Q = 94.58, H_Q = 69648, zstd_ratio = 0.98%, sparse_ratio = 0.70%, sparsity = 96.86% , sparse_accuracy = 94.59, training_time = 20539s
+
+Epoch 1: A_NQ = 93.75, H_NQ = 4804003, A_Q = 93.24, H_Q = 37398, zstd_ratio = 0.56%, sparse_ratio = 0.37%, sparsity = 98.59% , sparse_accuracy = 93.27, training_time = 20561s
+
+Epoch 1: A_NQ = 94.07, H_NQ = 4804193, A_Q = 93.29, H_Q = 39873, zstd_ratio = 0.58%, sparse_ratio = 0.39%, sparsity = 98.47% , sparse_accuracy = 93.23, training_time = 20684s
+
+Epoch 1: A_NQ = 93.74, H_NQ = 4804059, A_Q = 93.65, H_Q = 41943, zstd_ratio = 0.62%, sparse_ratio = 0.42%, sparsity = 98.37% , sparse_accuracy = 93.62, training_time = 20716s
+
+Epoch 1: A_NQ = 95.26, H_NQ = 4804915, A_Q = 94.93, H_Q = 64306, zstd_ratio = 0.89%, sparse_ratio = 0.63%, sparsity = 97.17% , sparse_accuracy = 94.85, training_time = 20726s
+
+Epoch 1: A_NQ = 93.2, H_NQ = 4804259, A_Q = 92.7, H_Q = 35861, zstd_ratio = 0.52%, sparse_ratio = 0.35%, sparsity = 98.65% , sparse_accuracy = 92.69, training_time = 20763s
+
+Epoch 1: A_NQ = 93.55, H_NQ = 4804393, A_Q = 92.97, H_Q = 36878, zstd_ratio = 0.53%, sparse_ratio = 0.36%, sparsity = 98.61% , sparse_accuracy = 92.99, training_time = 20780s
+
+Epoch 1: A_NQ = 94.03, H_NQ = 4804656, A_Q = 94.63, H_Q = 50225, zstd_ratio = 0.72%, sparse_ratio = 0.50%, sparsity = 97.94% , sparse_accuracy = 94.58, training_time = 20790s
+
+Epoch 1: A_NQ = 94.29, H_NQ = 4804743, A_Q = 93.37, H_Q = 40407, zstd_ratio = 0.59%, sparse_ratio = 0.40%, sparsity = 98.45% , sparse_accuracy = 93.36, training_time = 2083Epoch 2: A_NQ = 95.41, H_NQ = 4804621, A_Q = 95.73, H_Q = 44404, zstd_ratio = 0.64%, sparse_ratio = 0.44%, sparsity = 98.31% , sparse_accuracy = 95.74, training_time = 17263s
+
+Epoch 2: A_NQ = 95.4, H_NQ = 4803304, A_Q = 94.98, H_Q = 32873, zstd_ratio = 0.48%, sparse_ratio = 0.33%, sparsity = 98.84% , sparse_accuracy = 94.99, training_time = 18681s
+
+Epoch 2: A_NQ = 95.65, H_NQ = 4804388, A_Q = 95.53, H_Q = 37069, zstd_ratio = 0.54%, sparse_ratio = 0.37%, sparsity = 98.66% , sparse_accuracy = 95.52, training_time = 18414s
+
+Epoch 2: A_NQ = 94.77, H_NQ = 4804339, A_Q = 94.04, H_Q = 29237, zstd_ratio = 0.43%, sparse_ratio = 0.30%, sparsity = 99.00% , sparse_accuracy = 94.0, training_time = 19251s
+
+Epoch 2: A_NQ = 94.69, H_NQ = 4803247, A_Q = 94.69, H_Q = 30627, zstd_ratio = 0.46%, sparse_ratio = 0.31%, sparsity = 98.94% , sparse_accuracy = 94.69, training_time = 18836s
+
+Epoch 2: A_NQ = 95.18, H_NQ = 4802726, A_Q = 95.55, H_Q = 40684, zstd_ratio = 0.59%, sparse_ratio = 0.41%, sparsity = 98.49% , sparse_accuracy = 95.52, training_time = 18678s
+
+Epoch 2: A_NQ = 95.69, H_NQ = 4804583, A_Q = 95.16, H_Q = 38484, zstd_ratio = 0.55%, sparse_ratio = 0.38%, sparsity = 98.59% , sparse_accuracy = 95.14, training_time = 18509s
+
+EpocEpoch 2: A_NQ = 95.48, H_NQ = 4802957, A_Q = 95.05, H_Q = 37793, zstd_ratio = 0.54%, sparse_ratio = 0.38%, sparsity = 98.62% , sparse_accuracy = 95.04, training_time = 1829EpocEpoch 2: A_NQ = 95.6, H_NQ = 4804708, A_Q = 96.11, H_Q = 44348, zstd_ratio = 0.64%, sparse_ratio = 0.44%, sparsity = 98.32% , sparse_accuracy = 96.1, training_time = 18746sEpoch 2: A_NQ = 95.03, H_NQ = 4804458, A_Q = 94.62, H_Q = 30257, zstd_ratio = 0.45%, sparse_ratio = 0.31%, sparsity = 98.95% , sparse_accuracy = 94.59, training_time = 18954s
+
+Epoch 2: A_NQ = 93.82, H_NQ = 4803788, A_Q = 94.4, H_Q = 28477, zstd_ratio = 0.43%, sparse_ratio = 0.29%, sparsity = 99.03% , sparse_accuracy = 94.41, training_time = 20534s
+
+Epoch 2: A_NQ = 95.42, H_NQ = 4804665, A_Q = 95.26, H_Q = 30645, zstd_ratio = 0.45%, sparse_ratio = 0.30%, sparsity = 98.94% , sparse_accuracy = 95.23, training_time = 19624s
+
+EpoEpoch 2: A_NQ = 96.21, H_NQ = 4804408, A_Q = 96.18, H_Q = 49391, zstd_ratio = 0.69%, sparse_ratio = 0.48%, sparsity = 98.07% , sparse_accuracy = 96.13, training_time = 20257s
+
+Epoch 2: A_NQ = 95.38, H_NQ = 4804586, A_Q = 95.1, H_Q = 31838, zstd_ratio = 0.47%, sparse_ratio = 0.32%, sparsity = 98.89% , sparse_accuracy = 95.09, training_time = 19585s
+
+Epoch 2: A_NQ = 95.74, H_NQ = 4804593, A_Q = 95.31, H_Q = 38023, zstd_ratio = 0.56%, sparse_ratio = 0.39%, sparsity = 98.61% , sparse_accuracy = 95.31, training_time = 19670s
+
+Epoch 2: A_NQ = 94.53, H_NQ = 4803962, A_Q = 94.64, H_Q = 28349, zstd_ratio = 0.42%, sparse_ratio = 0.29%, sparsity = 99.04% , sparse_accuracy = 94.61, training_time = 18733s
+
+Epoch 2: A_NQ = 95.37, H_NQ = 4804160, A_Q = 94.71, H_Q = 30511, zstd_ratio = 0.45%, sparse_ratio = 0.31%, sparsity = 98.95% , sparse_accuracy = 94.67, training_time = 19238s
+
+Epoch 2: A_NQ = 94.93, H_NQ = 4803904, A_Q = 94.56, H_Q = 29379, zstd_ratio = 0.44%, sparse_ratio = 0.30%, sparsity = 98.99% , sparse_accuracy = 94.5, training_time = 20142s
+
+Epoch 2: A_NQ = 96.21, H_NQ = 4804464, A_Q = 95.96, H_Q = 39188, zstd_ratio = 0.57%, sparse_ratio = 0.39%, sparsity = 98.56% , sparse_accuracy = 95.95, training_time = 20043s
+
+Epoch 2: A_NQ = 95.24, H_NQ = 4804285, A_Q = 95.56, H_Q = 34791, zstd_ratio = 0.51%, sparse_ratio = 0.35%, sparsity = 98.75% , sparse_accuracy = 95.55, training_time = 20094s
+
+Epoch 2: A_NQ = 95.9, H_NQ = 4804495, A_Q = 95.81, H_Q = 46095, zstd_ratio = 0.65%, sparse_ratio = 0.46%, sparsity = 98.23% , sparse_accuracy = 95.78, training_time = 19878s
+
+Epoch 2: A_NQ = 94.72, H_NQ = 4803133, A_Q = 94.43, H_Q = 28099, zstd_ratio = 0.42%, sparse_ratio = 0.29%, sparsity = 99.04% , sparse_accuracy = 94.43, training_time = 20027s
+
+Epoch 2: A_NQ = 94.34, H_NQ = 4804656, A_Q = 95.28, H_Q = 38545, zstd_ratio = 0.54%, sparse_ratio = 0.38%, sparsity = 98.59% , sparse_accuracy = 95.31, training_time = 20371s
+
+Epoch 2: A_NQ = 95.04, H_NQ = 4804331, A_Q = 95.15, H_Q = 33509, zstd_ratio = 0.49%, sparse_ratio = 0.34%, sparsity = 98.81% , sparse_accuracy = 95.14, training_time = 20322s
+
+Epoch 2: A_NQ = 95.53, H_NQ = 4803850, A_Q = 95.38, H_Q = 33885, zstd_ratio = 0.51%, sparse_ratio = 0.34%, sparsity = 98.80% , sparse_accuracy = 95.39, training_time = 20028s
+
+Epoch 2: A_NQ = 94.55, H_NQ = 4803026, A_Q = 94.4, H_Q = 27438, zstd_ratio = 0.41%, sparse_ratio = 0.28%, sparsity = 99.07% , sparse_accuracy = 94.38, training_time = 20015s
+
+Epoch 2: A_NQ = 96.01, H_NQ = 4804277, A_Q = 95.85, H_Q = 41471, zstd_ratio = 0.59%, sparse_ratio = 0.41%, sparsity = 98.45% , sparse_accuracy = 95.83, training_time = 20273s
+
+Epoch 2: A_NQ = 95.48, H_NQ = 4804533, A_Q = 94.76, H_Q = 31239, zstd_ratio = 0.46%, sparse_ratio = 0.31%, sparsity = 98.91% , sparse_accuracy = 94.77, training_time = 20299s
+
+Epoch 2: A_NQ = 94.93, H_NQ = 4804421, A_Q = 94.89, H_Q = 31668, zstd_ratio = 0.46%, sparse_ratio = 0.32%, sparsity = 98.89% , sparse_accuracy = 94.86, training_time = 20385s
+
+Epoch 2: A_NQ = 93.69, H_NQ = 4804463, A_Q = 94.04, H_Q = 27721, zstd_ratio = 0.41%, sparse_ratio = 0.28%, sparsity = 99.05% , sparse_accuracy = 94.03, training_time = 20412s
+
+Epoch 2: A_NQ = 95.04, H_NQ = 4802338, A_Q = 95.65, H_Q = 37532, zstd_ratio = 0.54%, sparse_ratio = 0.37%, sparsity = 98.63% , sparse_accuracy = 95.66, training_time = 20386s
+
+Epoch 2: A_NQ = 94.39, H_NQ = 4798947, A_Q = 93.91, H_Q = 27778, zstd_ratio = 0.41%, sparse_ratio = 0.28%, sparsity = 99.05% , sparse_accuracy = 93.89, training_time = 20415sEpoch 3: A_NQ = 96.17, H_NQ = 4804661, A_Q = 96.26, H_Q = 36277, zstd_ratio = 0.53%, sparse_ratio = 0.37%, sparsity = 98.71% , sparse_accuracy = 96.24, training_time = 17363s
+
+Epoch 3: A_NQ = 95.82, H_NQ = 4804314, A_Q = 96.02, H_Q = 32876, zstd_ratio = 0.48%, sparse_ratio = 0.33%, sparsity = 98.87% , sparse_accuracy = 96.01, training_time = 18559s
+
+Epoch 3: A_NQ = 95.4, H_NQ = 4804567, A_Q = 95.45, H_Q = 28627, zstd_ratio = 0.42%, sparse_ratio = 0.29%, sparsity = 99.03% , sparse_accuracy = 95.43, training_time = 18900s
+
+Epoch 3: A_NQ = 95.41, H_NQ = 4804137, A_Q = 95.14, H_Q = 27057, zstd_ratio = 0.41%, sparse_ratio = 0.28%, sparsity = 99.11% , sparse_accuracy = 95.1, training_time = 18156s
+
+Epoch 3: A_NQ = 95.01, H_NQ = 4804302, A_Q = 95.57, H_Q = 33843, zstd_ratio = 0.51%, sparse_ratio = 0.35%, sparsity = 98.82% , sparse_accuracy = 95.55, training_time = 18398s
+
+Epoch 3: A_NQ = 94.71, H_NQ = 4803014, A_Q = 94.48, H_Q = 24208, zstd_ratio = 0.38%, sparse_ratio = 0.26%, sparsity = 99.21% , sparse_accuracy = 94.49, training_time = 18781s
+
+Epoch 3: A_NQ = 96.08, H_NQ = 4799619, A_Q = 96.09, H_Q = 34406, zstd_ratio = 0.52%, sparse_ratio = 0.35%, sparsity = 98.79% , sparse_accuracy = 96.1, training_time = 18959s
+
+Epoch 3: A_NQ = 95.05, H_NQ = 4804090, A_Q = 95.21, H_Q = 26755, zstd_ratio = 0.41%, sparse_ratio = 0.28%, sparsity = 99.11% , sparse_accuracy = 95.22, training_time = 19035s
+
+Epoch 3: A_NQ = 96.61, H_NQ = 4802689, A_Q = 96.1, H_Q = 35628, zstd_ratio = 0.53%, sparse_ratio = 0.37%, sparsity = 98.74% , sparse_accuracy = 96.08, training_time = 18610s
+
+EEpoch 3: A_NQ = 94.95, H_NQ = 4803708, A_Q = 94.84, H_Q = 25653, zstd_ratio = 0.39%, sparse_ratio = 0.27%, sparsity = 99.16% , sparse_accuracy = 94.79, training_time = 19438s
+
+Epoch 3: A_NQ = 95.3, H_NQ = 4804381, A_Q = 95.52, H_Q = 26312, zstd_ratio = 0.41%, sparse_ratio = 0.28%, sparsity = 99.13% , sparse_accuracy = 95.51, training_time = 19102s
+EEpoch 3: A_NQ = 94.98, H_NQ = 4803398, A_Q = 95.13, H_Q = 26405, zstd_ratio = 0.41%, sparse_ratio = 0.28%, sparsity = 99.12% , sparse_accuracy = 95.1, training_time = 19377s
+
+Epoch 3: A_NQ = 95.12, H_NQ = 4804610, A_Q = 95.3, H_Q = 25360, zstd_ratio = 0.40%, sparse_ratio = 0.27%, sparsity = 99.17% , sparse_accuracy = 95.3, training_time = 19759s
+
+EpEpoch 3: A_NQ = 95.84, H_NQ = 4804408, A_Q = 95.24, H_Q = 28172, zstd_ratio = 0.43%, sparse_ratio = 0.29%, sparsity = 99.05% , sparse_accuracy = 95.27, training_time = 19693sEpEpoch 3: A_NQ = 95.75, H_NQ = 4804511, A_Q = 95.76, H_Q = 33215, zstd_ratio = 0.50%, sparse_ratio = 0.35%, sparsity = 98.85% , sparse_accuracy = 95.75, training_time = 19790s
+
+Epoch 3: A_NQ = 96.46, H_NQ = 4804529, A_Q = 96.16, H_Q = 39856, zstd_ratio = 0.59%, sparse_ratio = 0.40%, sparsity = 98.55% , sparse_accuracy = 96.16, training_time = 20356s
+
+Epoch 3: A_NQ = 95.14, H_NQ = 4804397, A_Q = 95.23, H_Q = 26851, zstd_ratio = 0.41%, sparse_ratio = 0.28%, sparsity = 99.11% , sparse_accuracy = 95.23, training_time = 19287s
+
+Epoch 3: A_NQ = 95.39, H_NQ = 4802694, A_Q = 94.85, H_Q = 25414, zstd_ratio = 0.39%, sparse_ratio = 0.27%, sparsity = 99.17% , sparse_accuracy = 94.84, training_time = 20230s
+
+Epoch 3: A_NQ = 95.38, H_NQ = 4801113, A_Q = 94.76, H_Q = 24501, zstd_ratio = 0.38%, sparse_ratio = 0.26%, sparsity = 99.20% , sparse_accuracy = 94.75, training_time = 19990s
+
+Epoch 3: A_NQ = 96.38, H_NQ = 4804584, A_Q = 96.22, H_Q = 38845, zstd_ratio = 0.57%, sparse_ratio = 0.40%, sparsity = 98.60% , sparse_accuracy = 96.19, training_time = 20065s
+
+Epoch 3: A_NQ = 96.3, H_NQ = 4801713, A_Q = 96.34, H_Q = 33745, zstd_ratio = 0.50%, sparse_ratio = 0.34%, sparsity = 98.82% , sparse_accuracy = 96.33, training_time = 20181s
+
+Epoch 3: A_NQ = 96.13, H_NQ = 4802475, A_Q = 95.95, H_Q = 33381, zstd_ratio = 0.49%, sparse_ratio = 0.34%, sparsity = 98.84% , sparse_accuracy = 95.94, training_time = 20219s
+
+Epoch 3: A_NQ = 95.8, H_NQ = 4803937, A_Q = 95.88, H_Q = 28458, zstd_ratio = 0.44%, sparse_ratio = 0.30%, sparsity = 99.04% , sparse_accuracy = 95.88, training_time = 20204s
+
+Epoch 3: A_NQ = 95.22, H_NQ = 4804209, A_Q = 95.62, H_Q = 28143, zstd_ratio = 0.44%, sparse_ratio = 0.30%, sparsity = 99.06% , sparse_accuracy = 95.62, training_time = 20238s
+
+Epoch 3: A_NQ = 95.31, H_NQ = 4802102, A_Q = 95.92, H_Q = 30277, zstd_ratio = 0.45%, sparse_ratio = 0.31%, sparsity = 98.97% , sparse_accuracy = 95.9, training_time = 20361s
+
+Epoch 3: A_NQ = 94.99, H_NQ = 4802360, A_Q = 94.85, H_Q = 24263, zstd_ratio = 0.37%, sparse_ratio = 0.26%, sparsity = 99.21% , sparse_accuracy = 94.87, training_time = 20233s
+
+Epoch 3: A_NQ = 96.12, H_NQ = 4804322, A_Q = 95.94, H_Q = 35050, zstd_ratio = 0.51%, sparse_ratio = 0.36%, sparsity = 98.77% , sparse_accuracy = 95.93, training_time = 20191s
+
+Epoch 3: A_NQ = 94.46, H_NQ = 4804462, A_Q = 94.99, H_Q = 26887, zstd_ratio = 0.41%, sparse_ratio = 0.28%, sparsity = 99.11% , sparse_accuracy = 94.98, training_time = 20134s
+
+Epoch 3: A_NQ = 94.87, H_NQ = 4804303, A_Q = 95.19, H_Q = 26959, zstd_ratio = 0.41%, sparse_ratio = 0.28%, sparsity = 99.11% , sparse_accuracy = 95.14, training_time = 20202s
+
+Epoch 3: A_NQ = 95.35, H_NQ = 4804207, A_Q = 95.93, H_Q = 32585, zstd_ratio = 0.47%, sparse_ratio = 0.32%, sparsity = 98.87% , sparse_accuracy = 95.9, training_time = 20165s
+
+Epoch 3: A_NQ = 94.67, H_NQ = 4804415, A_Q = 94.47, H_Q = 24019, zstd_ratio = 0.37%, sparse_ratio = 0.25%, sparsity = 99.22% , sparse_accuracy = 94.43, training_time = 20346s
+
+Epoch 3: A_NQ = 94.48, H_NQ = 4802628, A_Q = 94.29, H_Q = 24053, zstd_ratio = 0.37%, sparse_ratio = 0.25%, sparsity = 99.22% , sparse_accuracy = 94.27, training_time = 20409s
+
+Epoch 4: A_NQ = 96.28, H_NQ = 4804078, A_Q = 96.41, H_Q = 32838, zstd_ratio = 0.50%, sparse_ratio = 0.34%, sparsity = 98.87% , sparse_accuracy = 96.38, training_time = 17427s
+
+Epoch 4: A_NQ = 96.06, H_NQ = 4801111, A_Q = 96.01, H_Q = 30066, zstd_ratio = 0.46%, sparse_ratio = 0.31%, sparsity = 98.99% , sparse_accuracy = 96.01, training_time = 18634s
+
+Epoch 4: A_NQ = 95.35, H_NQ = 4804344, A_Q = 95.52, H_Q = 24626, zstd_ratio = 0.39%, sparse_ratio = 0.26%, sparsity = 99.20% , sparse_accuracy = 95.43, training_time = 18805s
+
+Epoch 4: A_NQ = 96.07, H_NQ = 4803271, A_Q = 95.82, H_Q = 23831, zstd_ratio = 0.37%, sparse_ratio = 0.26%, sparsity = 99.24% , sparse_accuracy = 95.82, training_time = 17848s
+
+Epoch 4: A_NQ = 96.05, H_NQ = 4803552, A_Q = 95.64, H_Q = 29627, zstd_ratio = 0.45%, sparse_ratio = 0.31%, sparsity = 99.00% , sparse_accuracy = 95.65, training_time = 18082s
+
+Epoch 4: A_NQ = 96.4, H_NQ = 4804046, A_Q = 95.96, H_Q = 30480, zstd_ratio = 0.47%, sparse_ratio = 0.32%, sparsity = 98.97% , sparse_accuracy = 95.97, training_time = 18748s
+
+Epoch 4: A_NQ = 95.25, H_NQ = 4803003, A_Q = 94.79, H_Q = 22118, zstd_ratio = 0.35%, sparse_ratio = 0.24%, sparsity = 99.30% , sparse_accuracy = 94.82, training_time = 19155s
+
+Epoch 4: A_NQ = 95.63, H_NQ = 4800760, A_Q = 95.43, H_Q = 23425, zstd_ratio = 0.37%, sparse_ratio = 0.25%, sparsity = 99.25% , sparse_accuracy = 95.43, training_time = 19033s
+
+Epoch 4: A_NQ = 96.12, H_NQ = 4804444, A_Q = 96.32, H_Q = 30906, zstd_ratio = 0.47%, sparse_ratio = 0.32%, sparsity = 98.95% , sparse_accuracy = 96.31, training_time = 19524s
+
+Epoch 4: A_NQ = 95.17, H_NQ = 4801420, A_Q = 95.28, H_Q = 22891, zstd_ratio = 0.36%, sparse_ratio = 0.25%, sparsity = 99.27% , sparse_accuracy = 95.29, training_time = 19384s
+
+Epoch 4: A_NQ = 95.04, H_NQ = 4804348, A_Q = 95.56, H_Q = 24342, zstd_ratio = 0.38%, sparse_ratio = 0.26%, sparsity = 99.22% , sparse_accuracy = 95.54, training_time = 19458s
+
+Epoch 4: A_NQ = 95.68, H_NQ = 4803715, A_Q = 95.49, H_Q = 23861, zstd_ratio = 0.38%, sparse_ratio = 0.26%, sparsity = 99.23% , sparse_accuracy = 95.48, training_time = 19417s
+
+Epoch 4: A_NQ = 95.13, H_NQ = 4802418, A_Q = 95.28, H_Q = 22810, zstd_ratio = 0.37%, sparse_ratio = 0.25%, sparsity = 99.28% , sparse_accuracy = 95.28, training_time = 1984Epoch 4: A_NQ = 96.0, H_NQ = 4803641, A_Q = 95.58, H_Q = 25117, zstd_ratio = 0.40%, sparse_ratio = 0.27%, sparsity = 99.19% , sparse_accuracy = 95.58, training_time = 20201s
+
+Epoch 4: A_NQ = 95.51, H_NQ = 4804462, A_Q = 95.57, H_Q = 23818, zstd_ratio = 0.38%, sparse_ratio = 0.26%, sparsity = 99.24% , sparse_accuracy = 95.56, training_time = 19312s
+
+Epoch 4: A_NQ = 95.72, H_NQ = 4804596, A_Q = 96.08, H_Q = 29656, zstd_ratio = 0.46%, sparse_ratio = 0.31%, sparsity = 99.00% , sparse_accuracy = 96.07, training_time = 19881s
+
+Epoch 4: A_NQ = 96.28, H_NQ = 4804317, A_Q = 96.51, H_Q = 34806, zstd_ratio = 0.53%, sparse_ratio = 0.36%, sparsity = 98.79% , sparse_accuracy = 96.48, training_time = 20154s
+
+Epoch 4: A_NQ = 95.39, H_NQ = 4803752, A_Q = 95.13, H_Q = 22323, zstd_ratio = 0.37%, sparse_ratio = 0.24%, sparsity = 99.30% , sparse_accuracy = 95.09, training_time = 20068s
+
+Epoch 4: A_NQ = 95.58, H_NQ = 4804335, A_Q = 95.17, H_Q = 21710, zstd_ratio = 0.35%, sparse_ratio = 0.23%, sparsity = 99.32% , sparse_accuracy = 95.16, training_time = 20187s
+
+Epoch 4: A_NQ = 96.2, H_NQ = 4800580, A_Q = 96.41, H_Q = 30161, zstd_ratio = 0.47%, sparse_ratio = 0.32%, sparsity = 98.98% , sparse_accuracy = 96.4, training_time = 20086s
+
+Epoch 4: A_NQ = 96.36, H_NQ = 4801888, A_Q = 96.27, H_Q = 34840, zstd_ratio = 0.53%, sparse_ratio = 0.37%, sparsity = 98.78% , sparse_accuracy = 96.27, training_time = 20172s
+
+Epoch 4: A_NQ = 95.24, H_NQ = 4804418, A_Q = 94.77, H_Q = 21918, zstd_ratio = 0.35%, sparse_ratio = 0.24%, sparsity = 99.31% , sparse_accuracy = 94.81, training_time = 19994s
+
+Epoch 4: A_NQ = 95.69, H_NQ = 4802750, A_Q = 96.31, H_Q = 27765, zstd_ratio = 0.42%, sparse_ratio = 0.29%, sparsity = 99.08% , sparse_accuracy = 96.28, training_time = 20172s
+
+Epoch 4: A_NQ = 96.18, H_NQ = 4803954, A_Q = 96.06, H_Q = 25984, zstd_ratio = 0.41%, sparse_ratio = 0.28%, sparsity = 99.15% , sparse_accuracy = 96.09, training_time = 20223s
+
+Epoch 4: A_NQ = 96.03, H_NQ = 4803900, A_Q = 95.71, H_Q = 25779, zstd_ratio = 0.41%, sparse_ratio = 0.28%, sparsity = 99.16% , sparse_accuracy = 95.71, training_time = 20235s
+
+Epoch 4: A_NQ = 96.19, H_NQ = 4803175, A_Q = 96.23, H_Q = 29694, zstd_ratio = 0.45%, sparse_ratio = 0.31%, sparsity = 99.00% , sparse_accuracy = 96.2, training_time = 20396s
+
+Epoch 4: A_NQ = 95.65, H_NQ = 4803785, A_Q = 95.53, H_Q = 24510, zstd_ratio = 0.38%, sparse_ratio = 0.26%, sparsity = 99.21% , sparse_accuracy = 95.53, training_time = 20100s
+
+Epoch 4: A_NQ = 96.14, H_NQ = 4804317, A_Q = 96.11, H_Q = 31203, zstd_ratio = 0.48%, sparse_ratio = 0.33%, sparsity = 98.94% , sparse_accuracy = 96.12, training_time = 20210s
+
+Epoch 4: A_NQ = 95.98, H_NQ = 4804568, A_Q = 96.25, H_Q = 29737, zstd_ratio = 0.44%, sparse_ratio = 0.30%, sparsity = 98.99% , sparse_accuracy = 96.25, training_time = 20186s
+
+Epoch 4: A_NQ = 94.94, H_NQ = 4800828, A_Q = 95.35, H_Q = 23963, zstd_ratio = 0.37%, sparse_ratio = 0.25%, sparsity = 99.23% , sparse_accuracy = 95.33, training_time = 20344s
+
+Epoch 4: A_NQ = 95.11, H_NQ = 4803820, A_Q = 94.76, H_Q = 21586, zstd_ratio = 0.35%, sparse_ratio = 0.23%, sparsity = 99.32% , sparse_accuracy = 94.8, training_time = 20204s
+
+Epoch 4: A_NQ = 94.73, H_NQ = 4803985, A_Q = 93.99, H_Q = 21927, zstd_ratio = 0.34%, sparse_ratio = 0.24%, sparsity = 99.31% , sparse_accuracy = 94.0, training_time = 20333s
+
+Epoch 5Epoch 5: A_NQ = 96.79, H_NQ = 4802984, A_Q = 96.47, H_Q = 29940, zstd_ratio = 0.47%, sparse_ratio = 0.32%, sparsity = 99.00% , sparse_accuracy = 96.45, training_time = 17591s
+
+Epoch 5: A_NQ = 95.57, H_NQ = 4804441, A_Q = 95.99, H_Q = 21803, zstd_ratio = 0.36%, sparse_ratio = 0.24%, sparsity = 99.32% , sparse_accuracy = 95.97, training_time = 18151s
+
+Epoch 5: A_NQ = 96.02, H_NQ = 4804282, A_Q = 96.26, H_Q = 28007, zstd_ratio = 0.44%, sparse_ratio = 0.30%, sparsity = 99.08% , sparse_accuracy = 96.23, training_time = 18971s
+
+Epoch 5: A_NQ = 95.9, H_NQ = 4802966, A_Q = 95.73, H_Q = 22875, zstd_ratio = 0.36%, sparse_ratio = 0.25%, sparsity = 99.27% , sparse_accuracy = 95.72, training_time = 18952s
+
+Epoch 5: A_NQ = 95.67, H_NQ = 4804169, A_Q = 95.98, H_Q = 27619, zstd_ratio = 0.43%, sparse_ratio = 0.29%, sparsity = 99.09% , sparse_accuracy = 95.96, training_time = 18680s
+
+Epoch 5: A_NQ = 96.25, H_NQ = 4801474, A_Q = 96.17, H_Q = 27817, zstd_ratio = 0.44%, sparse_ratio = 0.30%, sparsity = 99.08% , sparse_accuracy = 96.16, training_time = 18970s
+
+Epoch 5: A_NQ = 95.43, H_NQ = 4804314, A_Q = 95.02, H_Q = 19749, zstd_ratio = 0.33%, sparse_ratio = 0.22%, sparsity = 99.39% , sparse_accuracy = 95.01, training_time = 18840s
+
+Epoch 5: A_NQ = 95.84, H_NQ = 4804041, A_Q = 95.29, H_Q = 21958, zstd_ratio = 0.36%, sparse_ratio = 0.24%, sparsity = 99.31% , sparse_accuracy = 95.29, training_time = 19328s
+
+Epoch 5: A_NQ = 96.25, H_NQ = 4802316, A_Q = 96.69, H_Q = 28995, zstd_ratio = 0.45%, sparse_ratio = 0.31%, sparsity = 99.04% , sparse_accuracy = 96.66, training_time = 18964s
+
+Epoch 5: A_NQ = 95.43, H_NQ = 4802721, A_Q = 95.27, H_Q = 20813, zstd_ratio = 0.34%, sparse_ratio = 0.23%, sparsity = 99.35% , sparse_accuracy = 95.26, training_time = 19496s
+
+Epoch 5: A_NQ = 96.31, H_NQ = 4804113, A_Q = 95.79, H_Q = 22465, zstd_ratio = 0.37%, sparse_ratio = 0.25%, sparsity = 99.29% , sparse_accuracy = 95.76, training_time = 19882s
+
+Epoch 5: A_NQ = 96.19, H_NQ = 4804162, A_Q = 95.62, H_Q = 21493, zstd_ratio = 0.36%, sparse_ratio = 0.24%, sparsity = 99.33% , sparse_accuracy = 95.63, training_time = 19455s
+
+Epoch 5: A_NQ = 96.13, H_NQ = 4804456, A_Q = 96.1, H_Q = 24034, zstd_ratio = 0.39%, sparse_ratio = 0.26%, sparsity = 99.24% , sparse_accuracy = 96.1, training_time =Epoch 5: A_NQ = 95.92, H_NQ = 4804230, A_Q = 95.67, H_Q = 21249, zstd_ratio = 0.35%, sparse_ratio = 0.24%, sparsity = 99.34% , sparse_accuracy = 95.68, training_time = 19375s
+
+Epoch 5: A_NQ = 95.99, H_NQ = 4804299, A_Q = 95.43, H_Q = 23002, zstd_ratio = 0.37%, sparse_ratio = 0.25%, sparsity = 99.27% , sparse_accuracy = 95.39, training_time = 20307s
+
+Epoch 5: A_NQ = 96.33, H_NQ = 4804479, A_Q = 96.09, H_Q = 27696, zstd_ratio = 0.44%, sparse_ratio = 0.30%, sparsity = 99.09% , sparse_accuracy = 96.12, training_time = 20254s
+
+Epoch 5: A_NQ = 96.35, H_NQ = 4799399, A_Q = 96.47, H_Q = 31561, zstd_ratio = 0.48%, sparse_ratio = 0.33%, sparsity = 98.93% , sparse_accuracy = 96.5, training_time = 20176s
+
+Epoch 6: A_NQ = 95.62, H_NQ = 4804441, A_Q = 95.43, H_Q = 18359, zstd_ratio = 0.30%, sparse_ratio = 0.20%, sparsity = 99.44% , sparse_accuracy = 95.4, training_time = 16740s
+
+Epoch 6: A_NQ = 95.87, H_NQ = 4804066, A_Q = 95.46, H_Q = 20482, zstd_ratio = 0.34%, sparse_ratio = 0.23%, sparsity = 99.37% , sparse_accuracy = 95.49, training_time = 17079s
+
+Epoch 5: A_NQ = 95.6, H_NQ = 4802637, A_Q = 95.84, H_Q = 21238, zstd_ratio = 0.35%, sparse_ratio = 0.24%, sparsity = 99.34% , sparse_accuracy = 95.87, training_time = 20010s
+
+Epoch 5: A_NQ = 95.45, H_NQ = 4801507, A_Q = 95.27, H_Q = 20202, zstd_ratio = 0.33%, sparse_ratio = 0.22%, sparsity = 99.38% , sparse_accuracy = 95.22, training_time = 20005s
+
+Epoch 5: A_NQ = 96.56, H_NQ = 4804240, A_Q = 96.35, H_Q = 28022, zstd_ratio = 0.44%, sparse_ratio = 0.30%, sparsity = 99.08% , sparse_accuracy = 96.34, training_time = 20059s
+
+Epoch 5: A_NQ = 96.37, H_NQ = 4804166, A_Q = 96.22, H_Q = 31107, zstd_ratio = 0.49%, sparse_ratio = 0.33%, sparsity = 98.95% , sparse_accuracy = 96.23, training_time = 20111s
+
+Epoch 5: A_NQ = 95.7, H_NQ = 4804345, A_Q = 95.72, H_Q = 23471, zstd_ratio = 0.39%, sparse_ratio = 0.26%, sparsity = 99.26% , sparse_accuracy = 95.71, training_time = 19820s
+
+Epoch 5: A_NQ = 94.76, H_NQ = 4803797, A_Q = 95.38, H_Q = 20341, zstd_ratio = 0.34%, sparse_ratio = 0.22%, sparsity = 99.37% , sparse_accuracy = 95.39, training_time = 20057s
+
+Epoch 5: A_NQ = 95.47, H_NQ = 4804032, A_Q = 96.14, H_Q = 23763, zstd_ratio = 0.38%, sparse_ratio = 0.26%, sparsity = 99.24% , sparse_accuracy = 96.14, training_time = 19992s
+
+Epoch 5: A_NQ = 95.89, H_NQ = 4804619, A_Q = 96.28, H_Q = 25391, zstd_ratio = 0.40%, sparse_ratio = 0.27%, sparsity = 99.18% , sparse_accuracy = 96.32, training_time = 20247s
+
+Epoch 5: A_NQ = 96.08, H_NQ = 4804108, A_Q = 96.27, H_Q = 27378, zstd_ratio = 0.43%, sparse_ratio = 0.29%, sparsity = 99.10% , sparse_accuracy = 96.23, training_time = 20242s
+
+Epoch 5: A_NQ = 95.65, H_NQ = 4802495, A_Q = 96.49, H_Q = 28157, zstd_ratio = 0.45%, sparse_ratio = 0.30%, sparsity = 99.07% , sparse_accuracy = 96.46, training_time = 20050s
+
+Epoch 5: A_NQ = 95.49, H_NQ = 4801889, A_Q = 95.26, H_Q = 21495, zstd_ratio = 0.35%, sparse_ratio = 0.24%, sparsity = 99.33% , sparse_accuracy = 95.27, training_time = 19969s
+
+Epoch 6: A_NQ = 95.99, H_NQ = 4803860, A_Q = 95.32, H_Q = 19526, zstd_ratio = 0.33%, sparse_ratio = 0.22%, sparsity = 99.41% , sparse_accuracy = 95.26, training_time = 17190s
+
+Epoch 5: A_NQ = 95.43, H_NQ = 4804315, A_Q = 95.39, H_Q = 22539, zstd_ratio = 0.37%, sparse_ratio = 0.24%, sparsity = 99.29% , sparse_accuracy = 95.34, training_time = 20327s
+
+Epoch 5:Epoch 6: A_NQ = 96.25, H_NQ = 4804326, A_Q = 96.3, H_Q = 28122, zstd_ratio = 0.45%, sparse_ratio = 0.30%, sparsity = 99.08% , sparse_accuracy = 96.32, training_time = 17640s
+
+Epoch 6: A_NQ = 95.96, H_NQ = 4798736, A_Q = 96.17, H_Q = 20155, zstd_ratio = 0.34%, sparse_ratio = 0.22%, sparsity = 99.38% , sparse_accuracy = 96.17, training_time = 17865s
+
+Epoch 6: A_NQ = 96.49, H_NQ = 4804442, A_Q = 96.4, H_Q = 26986, zstd_ratio = 0.43%, sparse_ratio = 0.29%, sparsity = 99.13% , sparse_accuracy = 96.36, training_time = 18904s
+
+Epoch 6: A_NQ = 96.14, H_NQ = 4802000, A_Q = 95.86, H_Q = 25832, zstd_ratio = 0.41%, sparse_ratio = 0.28%, sparsity = 99.16% , sparse_accuracy = 95.87, training_time = 18151s
+
+Epoch 6: A_NQ = 95.98, H_NQ = 4804106, A_Q = 95.78, H_Q = 20853, zstd_ratio = 0.34%, sparse_ratio = 0.23%, sparsity = 99.35% , sparse_accuracy = 95.76, training_time = 18959s
+
+Epoch 6: A_NQ = 96.22, H_NQ = 4803308, A_Q = 96.12, H_Q = 25802, zstd_ratio = 0.41%, sparse_ratio = 0.28%, sparsity = 99.17% , sparse_accuracy = 96.1, training_time = 18737s
+
+Epoch 6: A_NQ = 94.82, H_NQ = 4801031, A_Q = 94.69, H_Q = 18228, zstd_ratio = 0.31%, sparse_ratio = 0.21%, sparsity = 99.45% , sparse_accuracy = 94.7, training_time = 19060s
+
+Epoch 6: A_NQ = 95.86, H_NQ = 4803158, A_Q = 95.49, H_Q = 20378, zstd_ratio = 0.35%, sparse_ratio = 0.23%, sparsity = 99.38% , sparse_accuracy = 95.48, training_time = 19328s
+
+Epoch 6: A_NQ = 96.24, H_NQ = 4801878, A_Q = 96.48, H_Q = 26787, zstd_ratio = 0.43%, sparse_ratio = 0.29%, sparsity = 99.13% , sparse_accuracy = 96.46, training_time = 19551s
+
+Epoch 6: A_NQ = 95.27, H_NQ = 4803928, A_Q = 95.65, H_Q = 19666, zstd_ratio = 0.33%, sparse_ratio = 0.22%, sparsity = 99.40% , sparse_accuracy = 95.65, training_time = 19398s
+
+Epoch 6: A_NQ = 95.93, H_NQ = 4803767, A_Q = 95.8, H_Q = 20191, zstd_ratio = 0.34%, sparse_ratio = 0.23%, sparsity = 99.38% , sparse_accuracy = 95.78, training_time = 19455s
+
+Epoch 6: A_NQ = 96.21, H_NQ = 4802842, A_Q = 96.33, H_Q = 22271, zstd_ratio = 0.38%, sparse_ratio = 0.25%, sparsity = 99.31% , sparse_accuracy = 96.31, training_time = 19842s
+
+Epoch 6: A_NQ = 95.56, H_NQ = 4802566, A_Q = 95.96, H_Q = 20805, zstd_ratio = 0.35%, sparse_ratio = 0.23%, sparsity = 99.36% , sparse_accuracy = 95.98, training_time = 20176s
+
+Epoch 6: A_NQ = 95.88, H_NQ = 4799777, A_Q = 96.52, H_Q = 30095, zstd_ratio = 0.49%, sparse_ratio = 0.33%, sparsity = 99.00% , sparse_accuracy = 96.52, training_time = 19318s
+
+Epoch 6: A_NQ = 95.86, H_NQ = 4804435, A_Q = 95.55, H_Q = 19452, zstd_ratio = 0.34%, sparse_ratio = 0.22%, sparsity = 99.41% , sparse_accuracy = 95.55, training_time = 19931s
+
+Epoch 6: A_NQ = 95.71, H_NQ = 4800335, A_Q = 95.44, H_Q = 20139, zstd_ratio = 0.34%, sparse_ratio = 0.23%, sparsity = 99.38% , sparse_accuracy = 95.46, training_time = 2Epoch 6: A_NQ = 96.0, H_NQ = 4804555, A_Q = 96.2, H_Q = 25593, zstd_ratio = 0.42%, sparse_ratio = 0.28%, sparsity = 99.17% , sparse_accuracy = 96.17, training_time = 19756s
+
+Epoch 7: A_NQ = 95.81, H_NQ = 4803741, A_Q = 95.43, H_Q = 18331, zstd_ratio = 0.31%, sparse_ratio = 0.21%, sparsity = 99.45% , sparse_accuracy = 95.43, training_time = 17269s
+
+Epoch 6: A_NQ = 95.96, H_NQ = 4804153, A_Q = 95.76, H_Q = 21329, zstd_ratio = 0.36%, sparse_ratio = 0.24%, sparsity = 99.34% , sparse_accuracy = 95.74, training_time = 20285s
+
+Epoch 6: A_NQ = 96.51, H_NQ = 4804543, A_Q = 96.48, H_Q = 29413, zstd_ratio = 0.46%, sparse_ratio = 0.31%, sparsity = 99.02% , sparse_accuracy = 96.46, training_time = 20199s
+
+Epoch 6: A_NQ = 95.61, H_NQ = 4802775, A_Q = 95.12, H_Q = 18658, zstd_ratio = 0.31%, sparse_ratio = 0.21%, sparsity = 99.44% , sparse_accuracy = 95.13, training_time = 19619s
+
+Epoch 6: A_NQ = 95.74, H_NQ = 4804045, A_Q = 95.75, H_Q = 19542, zstd_ratio = 0.33%, sparse_ratio = 0.22%, sparsity = 99.40% , sparse_accuracy = 95.72, training_time = 20026s
+
+Epoch 6: A_NQ = 94.84, H_NQ = 4800794, A_Q = 95.13, H_Q = 18805, zstd_ratio = 0.32%, sparse_ratio = 0.21%, sparsity = 99.43% , sparse_accuracy = 95.07, training_time = 19952s
+
+Epoch 6: A_NQ = 96.4, H_NQ = 4803361, A_Q = 96.42, H_Q = 26163, zstd_ratio = 0.42%, sparse_ratio = 0.28%, sparsity = 99.15% , sparse_accuracy = 96.38, training_time = 20159s
+
+Epoch 6: A_NQ = 95.81, H_NQ = 4804156, A_Q = 95.92, H_Q = 21610, zstd_ratio = 0.36%, sparse_ratio = 0.24%, sparsity = 99.33% , sparse_accuracy = 95.92, training_time = 20157s
+
+Epoch 7: A_NQ = 95.73, H_NQ = 4803100, A_Q = 94.91, H_Q = 18761, zstd_ratio = 0.32%, sparse_ratio = 0.21%, sparsity = 99.43% , sparse_accuracy = 94.9, training_time = 17171s
+
+Epoch 6: A_NQ = 96.92, H_NQ = 4800373, A_Q = 96.39, H_Q = 29042, zstd_ratio = 0.47%, sparse_ratio = 0.31%, sparsity = 99.04% , sparse_accuracy = 96.39, training_time = 20286s
+
+Epoch 6: A_NQ = 95.98, H_NQ = 4803902, A_Q = 96.09, H_Q = 23855, zstd_ratio = 0.38%, sparse_ratio = 0.26%, sparsity = 99.24% , sparse_accuracy = 96.14, training_time = 19884s
+
+Epoch 6: A_NQ = 95.98, H_NQ = 4804302, A_Q = 96.18, H_Q = 22138, zstd_ratio = 0.37%, sparse_ratio = 0.25%, sparsity = 99.31% , sparse_accuracy = 96.18, training_time = 20189s
+
+Epoch 6: A_NQ = 96.54, H_NQ = 4804571, A_Q = 96.63, H_Q = 26148, zstd_ratio = 0.42%, sparse_ratio = 0.28%, sparsity = 99.16% , sparse_accuracy = 96.64, training_time = 20139s
+
+Epoch 6: A_NQ = 95.47, H_NQ = 4803048, A_Q = 95.34, H_Q = 20043, zstd_ratio = 0.34%, sparse_ratio = 0.23%, sparsity = 99.39% , sparse_accuracy = 95.33, training_time = 20102s
+
+Epoch 6: A_NQ = 96.35, H_NQ = 4804256, A_Q = 96.33, H_Q = 25061, zstd_ratio = 0.40%, sparse_ratio = 0.27%, sparsity = 99.20% , sparse_accuracy = 96.34, training_time = 20343s
+
+Epoch 6: A_NQ = 95.73, H_NQ = 4804566, A_Q = 95.74, H_Q = 20372, zstd_ratio = 0.34%, sparse_ratio = 0.23%, sparsity = 99.37% , sparse_accuracy = 95.7, training_time = 20181s
+
+Epoch 6Epoch 7: A_NQ = 96.5, H_NQ = 4803139, A_Q = 95.94, H_Q = 19043, zstd_ratio = 0.33%, sparse_ratio = 0.22%, sparsity = 99.43% , sparse_accuracy = 95.92, training_time = 17637s
+
+Epoch 7: A_NQ = 96.13, H_NQ = 4804581, A_Q = 96.09, H_Q = 24357, zstd_ratio = 0.40%, sparse_ratio = 0.27%, sparsity = 99.22% , sparse_accuracy = 96.04, training_time = 18436s
+
+Epoch 7: A_NQ = 96.13, H_NQ = 4804501, A_Q = 96.45, H_Q = 26013, zstd_ratio = 0.42%, sparse_ratio = 0.28%, sparsity = 99.16% , sparse_accuracy = 96.43, training_time = 18814s
+
+Epoch 7: A_NQ = 95.27, H_NQ = 4803587, A_Q = 96.0, H_Q = 19919, zstd_ratio = 0.33%, sparse_ratio = 0.22%, sparsity = 99.39% , sparse_accuracy = 96.03, training_time = 18897s
+
+Epoch 7: A_NQ = 95.88, H_NQ = 4802927, A_Q = 96.29, H_Q = 24652, zstd_ratio = 0.40%, sparse_ratio = 0.27%, sparsity = 99.22% , sparse_accuracy = 96.25, training_time = 18865s
+
+Epoch 7: A_NQ = 95.6, H_NQ = 4802990, A_Q = 95.23, H_Q = 17315, zstd_ratio = 0.30%, sparse_ratio = 0.20%, sparsity = 99.49% , sparse_accuracy = 95.27, training_time = 19008s
+
+Epoch 7: A_NQ = 95.82, H_NQ = 4802346, A_Q = 95.77, H_Q = 18983, zstd_ratio = 0.33%, sparse_ratio = 0.22%, sparsity = 99.43% , sparse_accuracy = 95.77, training_time = 18890s
+
+Epoch 7: A_NQ = 96.15, H_NQ = 4798630, A_Q = 96.36, H_Q = 25192, zstd_ratio = 0.41%, sparse_ratio = 0.28%, sparsity = 99.19% , sparse_accuracy = 96.35, training_time = 19537s
+
+Epoch 7: A_NQ = 96.03, H_NQ = 4804349, A_Q = 95.71, H_Q = 18362, zstd_ratio = 0.31%, sparse_ratio = 0.21%, sparsity = 99.45% , sparse_accuracy = 95.67, training_time = 19399s
+
+Epoch 7: A_NQ = 94.98, H_NQ = 4803942, A_Q = 95.73, H_Q = 19015, zstd_ratio = 0.33%, sparse_ratio = 0.22%, sparsity = 99.42% , sparse_accuracy = 95.69, training_time = 19404s
+
+Epoch 7: A_NQ = 95.98, H_NQ = 4803946, A_Q = 96.36, H_Q = 20714, zstd_ratio = 0.36%, sparse_ratio = 0.24%, sparsity = 99.37% , sparse_accuracy = 96.35, training_time = 19845s
+
+Epoch 7: A_NQ = 96.62, H_NQ = 4800180, A_Q = 96.62, H_Q = 27554, zstd_ratio = 0.46%, sparse_ratio = 0.30%, sparsity = 99.10% , sparse_accuracy = 96.62, training_time = 19109s
+
+Epoch 7: A_NQ = 95.88, H_NQ = 4802662, A_Q = 95.69, H_Q = 19489, zstd_ratio = 0.34%, sparse_ratio = 0.22%, sparsity = 99.41% , sparse_accuracy = 95.67, training_time = 20256s
+
+Epoch 7: A_NQ = 95.84, H_NQ = 4804412, A_Q = 95.84, H_Q = 17899, zstd_ratio = 0.32%, sparse_ratio = 0.21%, sparsity = 99.47% , sparse_accuracy = 95.83, training_time = 19948s
+
+Epoch 7: A_NQ = 95.5, H_NQ = 4801003, A_Q = 95.66, H_Q = 18814, zstd_ratio = 0.33%, sparse_ratio = 0.22%, sparsity = 99.43% , sparse_accuracy = 95.68, training_time = 20170s
+
+Epoch 7: A_NQ = 95.48, H_NQ = 4804172, A_Q = 94.91, H_Q = 18004, zstd_ratio = 0.31%, sparse_ratio = 0.20%, sparsity = 99.46% , sparse_accuracy = 94.88, training_time = 20004s
+
+Epoch 7: A_NQ = 96.13, H_NQ = 4804596, A_Q = 95.97, H_Q = 20478, zstd_ratio = 0.35%, sparse_ratio = 0.23%, sparsity = 99.37% , sparse_accuracy = 95.95, training_time = 1Epoch 7Epoch 7: A_NQ = 96.27, H_NQ = 4803930, A_Q = 96.38, H_Q = 21951, zstd_ratio = 0.36%, sparse_ratio = 0.24%, sparsity = 99.32% , sparse_accuracy = 96.39, training_time = 2Epoch 7: A_NQ = 95.95, H_NQ = 4803874, A_Q = 95.9, H_Q = 19627, zstd_ratio = 0.33%, sparse_ratio = 0.22%, sparsity = 99.40% , sparse_accuracy = 95.9, training_time = 20226s
+
+Epoch 7: A_NQ = 96.52, H_NQ = 4804383, A_Q = 96.51, H_Q = 27639, zstd_ratio = 0.44%, sparse_ratio = 0.30%, sparsity = 99.10% , sparse_accuracy = 96.54, training_time = 20191s
+
+Epoch 7: A_NQ = 95.59, H_NQ = 4799130, A_Q = 95.72, H_Q = 17764, zstd_ratio = 0.30%, sparse_ratio = 0.20%, sparsity = 99.47% , sparse_accuracy = 95.71, training_time = 19950s
+
+Epoch 7: A_NQ = 95.72, H_NQ = 4804084, A_Q = 95.59, H_Q = 17970, zstd_ratio = 0.32%, sparse_ratio = 0.21%, sparsity = 99.46% , sparse_accuracy = 95.54, training_time = 20022s
+
+Epoch 7: A_NQ = 96.49, H_NQ = 4804107, A_Q = 96.0, H_Q = 22374, zstd_ratio = 0.37%, sparse_ratio = 0.24%, sparsity = 99.30% , sparse_accuracy = 96.01, training_time = 19527s
+
+Epoch 7: A_NQ = 95.65, H_NQ = 4804396, A_Q = 95.07, H_Q = 17703, zstd_ratio = 0.31%, sparse_ratio = 0.20%, sparsity = 99.47% , sparse_accuracy = 95.05, training_time = 19977s
+
+Epoch 7: A_NQ = 96.48, H_NQ = 4804323, A_Q = 96.86, H_Q = 24950, zstd_ratio = 0.40%, sparse_ratio = 0.27%, sparsity = 99.20% , sparse_accuracy = 96.87, training_time = 20092s
+
+Epoch 7: A_NQ = 96.07, H_NQ = 4804134, A_Q = 95.87, H_Q = 19933, zstd_ratio = 0.34%, sparse_ratio = 0.23%, sparsity = 99.39% , sparse_accuracy = 95.87, training_time = 20113s
+
+Epoch 7: A_NQ = 96.27, H_NQ = 4804496, A_Q = 96.27, H_Q = 20479, zstd_ratio = 0.35%, sparse_ratio = 0.23%, sparsity = 99.37% , sparse_accuracy = 96.26, training_time = 20018s
+
+Epoch 7: A_NQ = 96.48, H_NQ = 4802331, A_Q = 96.46, H_Q = 27062, zstd_ratio = 0.45%, sparse_ratio = 0.30%, sparsity = 99.12% , sparse_accuracy = 96.48, training_time = 20247s
+
+Epoch 7: A_NQ = 95.4, H_NQ = 4802062, A_Q = 95.11, H_Q = 18697, zstd_ratio = 0.32%, sparse_ratio = 0.21%, sparsity = 99.44% , sparse_accuracy = 95.1, training_time = 20027s
+
+Epoch 7: A_NQ = 96.62, H_NQ = 4804211, A_Q = 96.77, H_Q = 24326, zstd_ratio = 0.40%, sparse_ratio = 0.27%, sparsity = 99.23% , sparse_accuracy = 96.76, training_time = 20194s
+
+Epoch 7: A_NQ = 95.95, H_NQ = 4800371, A_Q = 96.1, H_Q = 23735, zstd_ratio = 0.39%, sparse_ratio = 0.26%, sparsity = 99.25% , sparse_accuracy = 96.09, training_time = 20287s
+
+Epoch 7: A_NQ = 96.26, H_NQ = 4804309, A_Q = 96.3, H_Q = 23600, zstd_ratio = 0.38%, sparse_ratio = 0.26%, sparsity = 99.25% , sparse_accuracy = 96.3, training_time = 20136s
+
+Epoch 7Epoch 8: A_NQ = 96.1, H_NQ = 4804479, A_Q = 95.78, H_Q = 17694, zstd_ratio = 0.31%, sparse_ratio = 0.21%, sparsity = 99.48% , sparse_accuracy = 95.74, training_time = 18024s
+
+Epoch 8: A_NQ = 95.98, H_NQ = 4802050, A_Q = 96.07, H_Q = 23072, zstd_ratio = 0.38%, sparse_ratio = 0.25%, sparsity = 99.28% , sparse_accuracy = 96.03, training_time = 18534s
+
+Epoch 8: A_NQ = 96.41, H_NQ = 4804484, A_Q = 96.48, H_Q = 24122, zstd_ratio = 0.40%, sparse_ratio = 0.27%, sparsity = 99.24% , sparse_accuracy = 96.54, training_time = 18986s
+
+Epoch 8: A_NQ = 95.87, H_NQ = 4803657, A_Q = 95.84, H_Q = 18434, zstd_ratio = 0.32%, sparse_ratio = 0.21%, sparsity = 99.45% , sparse_accuracy = 95.83, training_time = 18999s
+
+Epoch 8: A_NQ = 96.23, H_NQ = 4803422, A_Q = 96.24, H_Q = 22902, zstd_ratio = 0.39%, sparse_ratio = 0.26%, sparsity = 99.28% , sparse_accuracy = 96.25, training_time = 18751s
+
+Epoch 8: A_NQ = 95.32, H_NQ = 4804359, A_Q = 95.38, H_Q = 16534, zstd_ratio = 0.30%, sparse_ratio = 0.19%, sparsity = 99.51% , sparse_accuracy = 95.33, training_time = 19060s
+
+Epoch 8: A_NQ = 95.54, H_NQ = 4804105, A_Q = 95.77, H_Q = 18336, zstd_ratio = 0.32%, sparse_ratio = 0.21%, sparsity = 99.45% , sparse_accuracy = 95.78, training_time = 19207s
+
+Epoch 8: A_NQ = 96.8, H_NQ = 4803427, A_Q = 96.74, H_Q = 24126, zstd_ratio = 0.40%, sparse_ratio = 0.27%, sparsity = 99.24% , sparse_accuracy = 96.7, training_time = 18910s
+
+Epoch 8: A_NQ = 96.1, H_NQ = 4803619, A_Q = 95.79, H_Q = 17468, zstd_ratio = 0.31%, sparse_ratio = 0.20%, sparsity = 99.48% , sparse_accuracy = 95.8, training_time = 19450s
+
+Epoch 8: A_NQ = 95.56, H_NQ = 4800307, A_Q = 95.92, H_Q = 17918, zstd_ratio = 0.32%, sparse_ratio = 0.21%, sparsity = 99.47% , sparse_accuracy = 95.87, training_time = 19471s
+
+Epoch 8: A_NQ = 96.12, H_NQ = 4803977, A_Q = 95.98, H_Q = 18387, zstd_ratio = 0.33%, sparse_ratio = 0.21%, sparsity = 99.45% , sparse_accuracy = 95.96, training_time = 19098s
+
+Epoch 8: A_NQ = 96.2, H_NQ = 4804490, A_Q = 96.51, H_Q = 25599, zstd_ratio = 0.43%, sparse_ratio = 0.29%, sparsity = 99.18% , sparse_accuracy = 96.51, training_time = 19728s
+
+Epoch 8: A_NQ = 95.5, H_NQ = 4803256, A_Q = 96.26, H_Q = 19734, zstd_ratio = 0.34%, sparse_ratio = 0.23%, sparsity = 99.40% , sparse_accuracy = 96.28, training_time = 19873s
+
+Epoch 9: A_NQ = 96.71, H_NQ = 4804506, A_Q = 96.67, H_Q = 23719, zstd_ratio = 0.40%, sparse_ratio = 0.27%, sparsity = 99.26% , sparse_accuracy = 96.66, training_time = 17519s
+
+Epoch 8: A_NQ = 95.95, H_NQ = 4804011, A_Q = 95.75, H_Q = 16840, zstd_ratio = 0.31%, sparse_ratio = 0.20%, sparsity = 99.51% , sparse_accuracy = 95.73, training_time = 19883s
+
+Epoch 8: A_NQ = 95.06, H_NQ = 4804189, A_Q = 95.81, H_Q = 17566, zstd_ratio = 0.31%, sparse_ratio = 0.21%, sparsity = 99.48% , sparse_accuracy = 95.81, training_time = 20214s
+
+Epoch 8: A_NQ = 95.47, H_NQ = 4804047, A_Q = 94.75, H_Q = 17230, zstd_ratio = 0.30%, sparse_ratio = 0.20%, sparsity = 99.49% , sparse_accuracy = 94.79, training_time = 2Epoch 8: A_NQ = 96.34, H_NQ = 4804231, A_Q = 96.23, H_Q = 23135, zstd_ratio = 0.39%, sparse_ratio = 0.26%, sparsity = 99.27% , sparse_accuracy = 96.23, training_time = 19686s
+
+Epoch 8: A_NQ = 95.77, H_NQ = 4803900, A_Q = 95.88, H_Q = 18549, zstd_ratio = 0.33%, sparse_ratio = 0.21%, sparsity = 99.44% , sparse_accuracy = 95.89, training_time = 20304s
+
+Epoch 8: A_NQ = 96.35, H_NQ = 4803713, A_Q = 96.25, H_Q = 26402, zstd_ratio = 0.42%, sparse_ratio = 0.29%, sparsity = 99.15% , sparse_accuracy = 96.26, training_time = 20277s
+
+Epoch 8: A_NQ = 95.53, H_NQ = 4804319, A_Q = 95.5, H_Q = 16723, zstd_ratio = 0.29%, sparse_ratio = 0.19%, sparsity = 99.51% , sparse_accuracy = 95.5, training_time = 19781s
+
+Epoch 8: A_NQ = 96.03, H_NQ = 4801980, A_Q = 95.47, H_Q = 17156, zstd_ratio = 0.31%, sparse_ratio = 0.20%, sparsity = 99.49% , sparse_accuracy = 95.42, training_time = 20063s
+
+Epoch 8: A_NQ = 95.28, H_NQ = 4803680, A_Q = 95.33, H_Q = 16656, zstd_ratio = 0.30%, sparse_ratio = 0.20%, sparsity = 99.51% , sparse_accuracy = 95.35, training_time = 19763s
+
+Epoch 8: A_NQ = 96.19, H_NQ = 4804351, A_Q = 96.22, H_Q = 20925, zstd_ratio = 0.35%, sparse_ratio = 0.24%, sparsity = 99.35% , sparse_accuracy = 96.23, training_time = 19968s
+
+Epoch 9: A_NQ = 95.02, H_NQ = 4804064, A_Q = 95.32, H_Q = 15050, zstd_ratio = 0.27%, sparse_ratio = 0.18%, sparsity = 99.57% , sparse_accuracy = 95.3, training_time = 17897s
+
+Epoch 8: A_NQ = 96.53, H_NQ = 4804338, A_Q = 96.64, H_Q = 23494, zstd_ratio = 0.39%, sparse_ratio = 0.26%, sparsity = 99.26% , sparse_accuracy = 96.63, training_time = 20168s
+
+Epoch 8: A_NQ = 95.63, H_NQ = 4801145, A_Q = 96.19, H_Q = 19796, zstd_ratio = 0.34%, sparse_ratio = 0.23%, sparsity = 99.40% , sparse_accuracy = 96.18, training_time = 20012s
+
+Epoch 8: Epoch 8: A_NQ = 95.0, H_NQ = 4803606, A_Q = 94.76, H_Q = 15558, zstd_ratio = 0.27%, sparse_ratio = 0.18%, sparsity = 99.54% , sparse_accuracy = 94.74, training_time = Epoch 8: A_NQ = 96.48, H_NQ = 4799522, A_Q = 96.53, H_Q = 25379, zstd_ratio = 0.43%, sparse_ratio = 0.28%, sparsity = 99.19% , sparse_accuracy = 96.49, training_time = 20259s
+
+Epoch 8: A_NQ = 95.45, H_NQ = 4802760, A_Q = 96.57, H_Q = 22961, zstd_ratio = 0.39%, sparse_ratio = 0.25%, sparsity = 99.28% , sparse_accuracy = 96.53, training_time = 20113s
+
+Epoch 8: A_NQ = 95.76, H_NQ = 4803965, A_Q = 95.63, H_Q = 17997, zstd_ratio = 0.32%, sparse_ratio = 0.21%, sparsity = 99.46% , sparse_accuracy = 95.62, training_time = 20373s
+
+Epoch 8: A_NQ = 96.32, H_NQ = 4804013, A_Q = 96.46, H_Q = 22190, zstd_ratio = 0.37%, sparse_ratio = 0.25%, sparsity = 99.31% , sparse_accuracy = 96.45, training_time = 20227s
+
+Epoch 8Epoch 9: A_NQ = 96.1, H_NQ = 4801355, A_Q = 96.17, H_Q = 17320, zstd_ratio = 0.31%, sparse_ratio = 0.20%, sparsity = 99.49% , sparse_accuracy = 96.16, training_time = 18125s
+
+Epoch 9: A_NQ = 96.24, H_NQ = 4804457, A_Q = 95.84, H_Q = 22501, zstd_ratio = 0.38%, sparse_ratio = 0.25%, sparsity = 99.30% , sparse_accuracy = 95.8, training_time = 18960s
+
+Epoch 9: A_NQ = 96.42, H_NQ = 4803604, A_Q = 96.39, H_Q = 23022, zstd_ratio = 0.39%, sparse_ratio = 0.26%, sparsity = 99.28% , sparse_accuracy = 96.41, training_time = 18598s
+
+Epoch 9: A_NQ = 95.49, H_NQ = 4804221, A_Q = 95.81, H_Q = 17742, zstd_ratio = 0.31%, sparse_ratio = 0.20%, sparsity = 99.47% , sparse_accuracy = 95.83, training_time = 19045s
+
+Epoch 9: A_NQ = 96.48, H_NQ = 4804620, A_Q = 96.48, H_Q = 22226, zstd_ratio = 0.38%, sparse_ratio = 0.25%, sparsity = 99.31% , sparse_accuracy = 96.49, training_time = 18963s
+
+Epoch 9: A_NQ = 94.77, H_NQ = 4804273, A_Q = 95.33, H_Q = 15852, zstd_ratio = 0.29%, sparse_ratio = 0.19%, sparsity = 99.54% , sparse_accuracy = 95.27, training_time = 19031s
+
+Epoch 9: A_NQ = 96.14, H_NQ = 4803036, A_Q = 95.78, H_Q = 17458, zstd_ratio = 0.32%, sparse_ratio = 0.20%, sparsity = 99.49% , sparse_accuracy = 95.72, training_time = 19675s
+
+Epoch 9: A_NQ = 96.53, H_NQ = 4804498, A_Q = 96.59, H_Q = 23284, zstd_ratio = 0.39%, sparse_ratio = 0.26%, sparsity = 99.27% , sparse_accuracy = 96.6, training_time = 19021s
+
+Epoch 9: A_NQ = 96.17, H_NQ = 4800408, A_Q = 95.9, H_Q = 16701, zstd_ratio = 0.30%, sparse_ratio = 0.20%, sparsity = 99.51% , sparse_accuracy = 95.85, training_time = 19478s
+
+Epoch 10: A_NQ = 96.49, H_NQ = 4804467, A_Q = 96.54, H_Q = 22936, zstd_ratio = 0.39%, sparse_ratio = 0.26%, sparsity = 99.29% , sparse_accuracy = 96.53, training_time = 17626s
+
+Epoch 9: A_NQ = 95.67, H_NQ = 4804321, A_Q = 95.57, H_Q = 17560, zstd_ratio = 0.32%, sparse_ratio = 0.20%, sparsity = 99.48% , sparse_accuracy = 95.57, training_time = 18413s
+
+Epoch 9: A_NQ = 95.97, H_NQ = 4804216, A_Q = 95.58, H_Q = 17023, zstd_ratio = 0.31%, sparse_ratio = 0.20%, sparsity = 99.50% , sparse_accuracy = 95.59, training_time = 19689s
+
+Epoch 9: A_NQ = 95.99, H_NQ = 4804146, A_Q = 96.21, H_Q = 18600, zstd_ratio = 0.33%, sparse_ratio = 0.22%, sparsity = 99.45% , sparse_accuracy = 96.18, training_time = 19351s
+
+Epoch 9: A_NQ = 95.55, H_NQ = 4803343, A_Q = 96.37, H_Q = 24336, zstd_ratio = 0.42%, sparse_ratio = 0.28%, sparsity = 99.23% , sparse_accuracy = 96.38, training_time = 19536s
+
+Epoch 9: A_NQ = 95.38, H_NQ = 4804264, A_Q = 95.6, H_Q = 15953, zstd_ratio = 0.30%, sparse_ratio = 0.19%, sparsity = 99.54% , sparse_accuracy = 95.57, training_time = 19799s
+
+Epoch 9: A_NQ = 95.92, H_NQ = 4802265, A_Q = 96.07, H_Q = 18637, zstd_ratio = 0.33%, sparse_ratio = 0.22%, sparsity = 99.44% , sparse_accuracy = 96.06, training_time = 19839s
+
+Epoch 9: A_NQ = 94.8, H_NQ = 4802605, A_Q = 96.02, H_Q = 17042, zstd_ratio = 0.31%, sparse_ratio = 0.20%, sparsity = 99.50% , sparse_accuracy = 96.01, training_time = 20113s
+
+Epoch 9: A_NQ = 95.78, H_NQ = 4804217, A_Q = 95.3, H_Q = 16630, zstd_ratio = 0.30%, sparse_ratio = 0.20%, sparsity = 99.51% , sparse_accuracy = 95.29, training_time = 20122s
+
+Epoch 9: A_NQ = 95.8, H_NQ = 4804207, A_Q = 96.02, H_Q = 19703, zstd_ratio = 0.33%, sparse_ratio = 0.22%, sparsity = 99.40% , sparse_accuracy = 96.03, training_time = 20095s
+
+EpoEpoch 9: A_NQ = 95.96, H_NQ = 4802748, A_Q = 95.95, H_Q = 17854, zstd_ratio = 0.32%, sparse_ratio = 0.21%, sparsity = 99.47% , sparse_accuracy = 95.95, training_time = 20174s
+
+Epoch 9: A_NQ = 96.65, H_NQ = 4804577, A_Q = 96.59, H_Q = 25177, zstd_ratio = 0.42%, sparse_ratio = 0.28%, sparsity = 99.20% , sparse_accuracy = 96.58, training_time = 20083s
+
+Epoch 9: A_NQ = 95.33, H_NQ = 4802891, A_Q = 95.36, H_Q = 16188, zstd_ratio = 0.28%, sparse_ratio = 0.19%, sparsity = 99.53% , sparse_accuracy = 95.36, training_time = 20105s
+
+Epoch 9: A_NQ = 95.7, H_NQ = 4802499, A_Q = 95.0, H_Q = 16162, zstd_ratio = 0.29%, sparse_ratio = 0.19%, sparsity = 99.53% , sparse_accuracy = 95.02, training_time = 19978s
+
+Epoch 9: A_NQ = 95.5, H_NQ = 4804276, A_Q = 95.64, H_Q = 16286, zstd_ratio = 0.29%, sparse_ratio = 0.19%, sparsity = 99.52% , sparse_accuracy = 95.65, training_time = 20109s
+
+Epoch 9: A_NQ = 96.31, H_NQ = 4803737, A_Q = 96.21, H_Q = 20111, zstd_ratio = 0.35%, sparse_ratio = 0.23%, sparsity = 99.38% , sparse_accuracy = 96.19, training_time = 20176s
+EEpoch 9: A_NQ = 96.3, H_NQ = 4803574, A_Q = 96.65, H_Q = 22497, zstd_ratio = 0.38%, sparse_ratio = 0.25%, sparsity = 99.30% , sparse_accuracy = 96.65, training_time = 20032s
+
+Epoch 9: A_NQ = 95.57, H_NQ = 4803989, A_Q = 96.3, H_Q = 18844, zstd_ratio = 0.33%, sparse_ratio = 0.22%, sparsity = 99.44% , sparse_accuracy = 96.32, training_time = 19980s
+
+Epoch 9: A_NQ = 96.13, H_NQ = 4802740, A_Q = 96.17, H_Q = 18069, zstd_ratio = 0.33%, sparse_ratio = 0.21%, sparsity = 99.46% , sparse_accuracy = 96.17, training_time = 20305s
+
+Epoch 9: A_NQ = 96.51, H_NQ = 4804538, A_Q = 96.46, H_Q = 23875, zstd_ratio = 0.41%, sparse_ratio = 0.27%, sparsity = 99.25% , sparse_accuracy = 96.42, training_time = 20212s
+
+Epoch 11: A_NQ = 95.45, H_NQ = 4803658, A_Q = 95.75, H_Q = 16769, zstd_ratio = 0.30%, sparse_ratio = 0.19%, sparsity = 99.51% , sparse_accuracy = 95.69, training_time = 14555s
+Epoch 9: A_NQ = 95.28, H_NQ = 4803862, A_Q = 94.91, H_Q = 15781, zstd_ratio = 0.28%, sparse_ratio = 0.18%, sparsity = 99.54% , sparse_accuracy = 94.88, training_time = 20346s
+
+Epoch 9: A_NQ = 95.36, H_NQ = 4802919, A_Q = 95.25, H_Q = 15229, zstd_ratio = 0.28%, sparse_ratio = 0.18%, sparsity = 99.56% , sparse_accuracy = 95.22, training_time = 20382s
+
+Epoch 9: A_NQ = 96.2, H_NQ = 4804575, A_Q = 95.94, H_Q = 21108, zstd_ratio = 0.37%, sparse_ratio = 0.24%, sparsity = 99.35% , sparse_accuracy = 95.91, training_time = 20344s
+
+Epoch 10: A_NQ = 96.21, H_NQ = 4802306, A_Q = 95.73, H_Q = 21385, zstd_ratio = 0.37%, sparse_ratio = 0.24%, sparsity = 99.34% , sparse_accuracy = 95.67, training_time = 18421s
+
+Epoch 10: A_NQ = 96.14, H_NQ = 4804428, A_Q = 96.76, H_Q = 21961, zstd_ratio = 0.38%, sparse_ratio = 0.25%, sparsity = 99.32% , sparse_accuracy = 96.76, training_time = 19120s
+
+Epoch 10: A_NQ = 95.93, H_NQ = 4804529, A_Q = 95.79, H_Q = 17001, zstd_ratio = 0.30%, sparse_ratio = 0.20%, sparsity = 99.50% , sparse_accuracy = 95.76, training_time = 19029s
+
+Epoch 10: A_NQ = 96.12, H_NQ = 4804225, A_Q = 96.11, H_Q = 21055, zstd_ratio = 0.37%, sparse_ratio = 0.24%, sparsity = 99.36% , sparse_accuracy = 96.07, training_time = 18741s
+
+Epoch 10: A_NQ = 95.17, H_NQ = 4804124, A_Q = 95.19, H_Q = 15487, zstd_ratio = 0.28%, sparse_ratio = 0.18%, sparsity = 99.55% , sparse_accuracy = 95.17, training_time = 19407s
+
+Epoch 10: A_NQ = 95.96, H_NQ = 4802150, A_Q = 96.86, H_Q = 22100, zstd_ratio = 0.39%, sparse_ratio = 0.25%, sparsity = 99.32% , sparse_accuracy = 96.87, training_time = 18650s
+
+Epoch 10: A_NQ = 95.92, H_NQ = 4803203, A_Q = 96.0, H_Q = 17021, zstd_ratio = 0.31%, sparse_ratio = 0.20%, sparsity = 99.50% , sparse_accuracy = 95.98, training_time = 19596s
+
+Epoch 11: A_NQ = 97.04, H_NQ = 4804369, A_Q = 96.54, H_Q = 21824, zstd_ratio = 0.37%, sparse_ratio = 0.25%, sparsity = 99.33% , sparse_accuracy = 96.52, training_time = 17739s
+
+Epoch 10: A_NQ = 95.52, H_NQ = 4804100, A_Q = 96.05, H_Q = 16413, zstd_ratio = 0.30%, sparse_ratio = 0.20%, sparsity = 99.52% , sparse_accuracy = 95.99, training_time = 19509s
+
+Epoch 10: A_NQ = 96.29, H_NQ = 4804330, A_Q = 96.17, H_Q = 18005, zstd_ratio = 0.33%, sparse_ratio = 0.21%, sparsity = 99.47% , sparse_accuracy = 96.15, training_time = 18250s
+
+Epoch 10: A_NQ = 95.46, H_NQ = 4801523, A_Q = 95.76, H_Q = 16397, zstd_ratio = 0.30%, sparse_ratio = 0.19%, sparsity = 99.52% , sparse_accuracy = 95.76, training_time = 19638s
+
+Epoch 10: A_NQ = 96.18, H_NQ = 4804111, A_Q = 95.77, H_Q = 16873, zstd_ratio = 0.31%, sparse_ratio = 0.20%, sparsity = 99.50% , sparse_accuracy = 95.77, training_time = 19988s
+
+Epoch 10: A_NQ = 96.38, H_NQ = 4802593, A_Q = 96.45, H_Q = 23161, zstd_ratio = 0.41%, sparse_ratio = 0.26%, sparsity = 99.28% , sparse_accuracy = 96.46, training_time = 19720s
+
+Epoch 10: A_NQ = 95.54, H_NQ = 4804036, A_Q = 96.04, H_Q = 15864, zstd_ratio = 0.30%, sparse_ratio = 0.19%, sparsity = 99.54% , sparse_accuracy = 96.03, training_time = 20091s
+
+Epoch 10: A_NQ = 95.56, H_NQ = 4804060, A_Q = 95.88, H_Q = 17932, zstd_ratio = 0.32%, sparse_ratio = 0.21%, sparsity = 99.47% , sparse_accuracy = 95.88, training_time = 19871s
+
+Epoch 10: A_NQ = 96.14, H_NQ = 4803805, A_Q = 96.21, H_Q = 18979, zstd_ratio = 0.33%, sparse_ratio = 0.22%, sparsity = 99.43% , sparse_accuracy = 96.21, training_time = 19074s
+
+Epoch 10: A_NQ = 95.51, H_NQ = 4803558, A_Q = 95.32, H_Q = 15791, zstd_ratio = 0.29%, sparse_ratio = 0.19%, sparsity = 99.54% , sparse_accuracy = 95.33, training_time = 19907s
+
+Epoch 10: A_NQ = 96.33, H_NQ = 4803831, A_Q = 96.03, H_Q = 15983, zstd_ratio = 0.29%, sparse_ratio = 0.19%, sparsity = 99.53% , sparse_accuracy = 96.0, training_time = 20Epoch Epoch 11: A_NQ = 96.19, H_NQ = 4804456, A_Q = 96.28, H_Q = 16536, zstd_ratio = 0.30%, sparse_ratio = 0.20%, sparsity = 99.52% , sparse_accuracy = 96.3, training_time = 185Epoch 10: A_NQ = 95.82, H_NQ = 4802064, A_Q = 95.39, H_Q = 15558, zstd_ratio = 0.28%, sparse_ratio = 0.18%, sparsity = 99.55% , sparse_accuracy = 95.41, training_time = 20007s
+
+Epoch 10: A_NQ = 96.15, H_NQ = 4804407, A_Q = 96.47, H_Q = 24110, zstd_ratio = 0.41%, sparse_ratio = 0.27%, sparsity = 99.24% , sparse_accuracy = 96.45, training_time = 20095s
+
+Epoch 10: A_NQ = 96.09, H_NQ = 4804491, A_Q = 96.02, H_Q = 17497, zstd_ratio = 0.32%, sparse_ratio = 0.21%, sparsity = 99.48% , sparse_accuracy = 96.05, training_time = 20328s
+
+Epoch 12: A_NQ = 95.54, H_NQ = 4802906, A_Q = 95.62, H_Q = 14206, zstd_ratio = 0.26%, sparse_ratio = 0.17%, sparsity = 99.59% , sparse_accuracy = 95.63, training_time = 16721s
+
+Epoch 10: A_NQ = 95.06, H_NQ = 4804031, A_Q = 95.54, H_Q = 15421, zstd_ratio = 0.28%, sparse_ratio = 0.18%, sparsity = 99.55% , sparse_accuracy = 95.53, training_time = 19951s
+
+Epoch 10: A_NQ = 96.47, H_NQ = 4803173, A_Q = 96.8, H_Q = 21816, zstd_ratio = 0.37%, sparse_ratio = 0.25%, sparsity = 99.33% , sparse_accuracy = 96.77, training_time = 19495s
+
+EpoEpoch 10: A_NQ = 96.65, H_NQ = 4804508, A_Q = 96.27, H_Q = 19142, zstd_ratio = 0.34%, sparse_ratio = 0.22%, sparsity = 99.42% , sparse_accuracy = 96.28, training_time = 20233s
+
+Epoch 10: A_NQ = 96.81, H_NQ = 4804523, A_Q = 96.79, H_Q = 23654, zstd_ratio = 0.40%, sparse_ratio = 0.27%, sparsity = 99.26% , sparse_accuracy = 96.82, training_time = 20348s
+
+Epoch 10: A_NQ = 94.94, H_NQ = 4803868, A_Q = 94.93, H_Q = 14523, zstd_ratio = 0.26%, sparse_ratio = 0.17%, sparsity = 99.58% , sparse_accuracy = 94.91, training_time = 20170s
+
+Epoch 10: A_NQ = 95.91, H_NQ = 4804119, A_Q = 95.89, H_Q = 16779, zstd_ratio = 0.30%, sparse_ratio = 0.20%, sparsity = 99.51% , sparse_accuracy = 95.85, training_time = 20211s
+
+Epoch 10: A_NQ = 95.6, H_NQ = 4804201, A_Q = 96.02, H_Q = 20383, zstd_ratio = 0.36%, sparse_ratio = 0.23%, sparsity = 99.38% , sparse_accuracy = 96.03, training_time = 20307s
+
+Epoch 10: A_NQ = 95.35, H_NQ = 4803950, A_Q = 95.24, H_Q = 14759, zstd_ratio = 0.27%, sparse_ratio = 0.18%, sparsity = 99.57% , sparse_accuracy = 95.22, training_time = 20367s
+
+Epoch 10: A_NQ = 95.31, H_NQ = 4804574, A_Q = 94.88, H_Q = 15259, zstd_ratio = 0.28%, sparse_ratio = 0.18%, sparsity = 99.56% , sparse_accuracy = 94.87, training_time = 20464s
+
+Epoch 11: A_NQ = 96.03, H_NQ = 4802874, A_Q = 96.08, H_Q = 20557, zstd_ratio = 0.35%, sparse_ratio = 0.23%, sparsity = 99.37% , sparse_accuracy = 96.03, training_time = 18309s
+
+Epoch 11: A_NQ = 96.83, H_NQ = 4804594, A_Q = 96.83, H_Q = 20875, zstd_ratio = 0.37%, sparse_ratio = 0.24%, sparsity = 99.36% , sparse_accuracy = 96.81, training_time = 19080s
+
+Epoch 11: A_NQ = 95.73, H_NQ = 4803983, A_Q = 95.73, H_Q = 16802, zstd_ratio = 0.30%, sparse_ratio = 0.19%, sparsity = 99.51% , sparse_accuracy = 95.69, training_time = 18936s
+
+Epoch 11: A_NQ = 96.53, H_NQ = 4792580, A_Q = 96.39, H_Q = 20529, zstd_ratio = 0.36%, sparse_ratio = 0.24%, sparsity = 99.38% , sparse_accuracy = 96.43, training_time = 18644s
+
+Epoch 11: A_NQ = 95.87, H_NQ = 4803419, A_Q = 95.13, H_Q = 14925, zstd_ratio = 0.28%, sparse_ratio = 0.18%, sparsity = 99.57% , sparse_accuracy = 95.12, training_time = 19371s
+
+Epoch 11: A_NQ = 96.59, H_NQ = 4804214, A_Q = 96.82, H_Q = 21340, zstd_ratio = 0.37%, sparse_ratio = 0.25%, sparsity = 99.35% , sparse_accuracy = 96.79, training_time = 18737s
+
+Epoch 11: A_NQ = 95.5, H_NQ = 4803495, A_Q = 95.49, H_Q = 16604, zstd_ratio = 0.30%, sparse_ratio = 0.20%, sparsity = 99.52% , sparse_accuracy = 95.48, training_time = 18970s
+
+Epoch 12: A_NQ = 96.22, H_NQ = 4804334, A_Q = 96.56, H_Q = 21193, zstd_ratio = 0.37%, sparse_ratio = 0.25%, sparsity = 99.35% , sparse_accuracy = 96.55, training_time = 17621s
+
+Epoch 11: A_NQ = 95.29, H_NQ = 4804619, A_Q = 95.99, H_Q = 15826, zstd_ratio = 0.29%, sparse_ratio = 0.19%, sparsity = 99.54% , sparse_accuracy = 95.97, training_time = 19409s
+
+Epoch 11: A_NQ = 96.72, H_NQ = 4803880, A_Q = 96.27, H_Q = 17511, zstd_ratio = 0.31%, sparse_ratio = 0.21%, sparsity = 99.49% , sparse_accuracy = 96.24, training_time = 19488s
+
+Epoch 11: A_NQ = 95.74, H_NQ = 4804362, A_Q = 95.9, H_Q = 15631, zstd_ratio = 0.29%, sparse_ratio = 0.19%, sparsity = 99.55% , sparse_accuracy = 95.91, training_time = 19620s
+
+Epoch 11: A_NQ = 96.25, H_NQ = 4804365, A_Q = 96.04, H_Q = 16431, zstd_ratio = 0.30%, sparse_ratio = 0.19%, sparsity = 99.52% , sparse_accuracy = 96.04, training_time = 19824s
+
+Epoch 11: A_NQ = 96.71, H_NQ = 4802799, A_Q = 96.37, H_Q = 22446, zstd_ratio = 0.39%, sparse_ratio = 0.25%, sparsity = 99.31% , sparse_accuracy = 96.36, training_time = 19791s
+
+Epoch 11: A_NQ = 96.09, H_NQ = 4799451, A_Q = 95.92, H_Q = 15288, zstd_ratio = 0.29%, sparse_ratio = 0.19%, sparsity = 99.56% , sparse_accuracy = 95.94, training_time = 19861s
+
+Epoch 12: A_NQ = 96.0, H_NQ = 4803868, A_Q = 95.65, H_Q = 16100, zstd_ratio = 0.30%, sparse_ratio = 0.19%, sparsity = 99.54% , sparse_accuracy = 95.62, training_time = 18443s
+
+Epoch 11: A_NQ = 96.09, H_NQ = 4803820, A_Q = 96.01, H_Q = 17049, zstd_ratio = 0.32%, sparse_ratio = 0.20%, sparsity = 99.50% , sparse_accuracy = 96.01, training_time = 20044s
+
+Epoch 11: A_NQ = 96.03, H_NQ = 4800385, A_Q = 96.01, H_Q = 18395, zstd_ratio = 0.32%, sparse_ratio = 0.21%, sparsity = 99.45% , sparse_accuracy = 96.02, training_time = 19874s
+
+Epoch 11: A_NQ = 95.47, H_NQ = 4796496, A_Q = 95.48, H_Q = 15200, zstd_ratio = 0.28%, sparse_ratio = 0.18%, sparsity = 99.56% , sparse_accuracy = 95.46, training_time = 20031s
+
+Epoch 11: A_NQ = 96.18, H_NQ = 4797509, A_Q = 95.94, H_Q = 15347, zstd_ratio = 0.28%, sparse_ratio = 0.19%, sparsity = 99.56% , sparse_accuracy = 95.93, training_time = 20283s
+
+Epoch 11: A_NQ = 96.44, H_NQ = 4798049, A_Q = 96.57, H_Q = 18949, zstd_ratio = 0.34%, sparse_ratio = 0.22%, sparsity = 99.43% , sparse_accuracy = 96.56, training_time = 20157s
+
+Epoch 11: A_NQ = 95.9, H_NQ = 4804289, A_Q = 95.75, H_Q = 15413, zstd_ratio = 0.28%, sparse_ratio = 0.18%, sparsity = 99.55% , sparse_accuracy = 95.77, training_time = 20088s
+
+Epoch 11: A_NQ = 95.85, H_NQ = 4804482, A_Q = 95.92, H_Q = 17675, zstd_ratio = 0.33%, sparse_ratio = 0.21%, sparsity = 99.48% , sparse_accuracy = 95.91, training_time =Epoch 11: A_NQ = 96.54, H_NQ = 4804023, A_Q = 96.43, H_Q = 23457, zstd_ratio = 0.39%, sparse_ratio = 0.26%, sparsity = 99.27% , sparse_accuracy = 96.43, training_time = 20026s
+
+Epoch 11: A_NQ = 96.01, H_NQ = 4803959, A_Q = 95.48, H_Q = 14883, zstd_ratio = 0.27%, sparse_ratio = 0.17%, sparsity = 99.57% , sparse_accuracy = 95.43, training_time = 20118s
+
+Epoch 1Epoch 11: A_NQ = 95.19, H_NQ = 4802499, A_Q = 95.79, H_Q = 13604, zstd_ratio = 0.27%, sparse_ratio = 0.17%, sparsity = 99.62% , sparse_accuracy = 95.78, training_time = 20264s
+
+Epoch 12: A_NQ = 96.46, H_NQ = 4802079, A_Q = 96.23, H_Q = 20121, zstd_ratio = 0.35%, sparse_ratio = 0.23%, sparsity = 99.39% , sparse_accuracy = 96.21, training_time = 18217s
+
+Epoch 11: A_NQ = 95.91, H_NQ = 4803236, A_Q = 96.45, H_Q = 18659, zstd_ratio = 0.33%, sparse_ratio = 0.22%, sparsity = 99.44% , sparse_accuracy = 96.43, training_time = 20190s
+
+Epoch 11: A_NQ = 96.35, H_NQ = 4789392, A_Q = 96.67, H_Q = 22532, zstd_ratio = 0.39%, sparse_ratio = 0.26%, sparsity = 99.31% , sparse_accuracy = 96.67, training_time = 20418s
+
+Epoch 11: A_NQ = 96.22, H_NQ = 4804226, A_Q = 95.71, H_Q = 16227, zstd_ratio = 0.30%, sparse_ratio = 0.19%, sparsity = 99.53% , sparse_accuracy = 95.71, training_time = 20200s
+
+Epoch 11: A_NQ = 95.51, H_NQ = 4803936, A_Q = 94.79, H_Q = 14102, zstd_ratio = 0.26%, sparse_ratio = 0.17%, sparsity = 99.60% , sparse_accuracy = 94.75, training_time = 20356s
+
+Epoch 11: A_NQ = 95.46, H_NQ = 4797349, A_Q = 94.85, H_Q = 14731, zstd_ratio = 0.27%, sparse_ratio = 0.17%, sparsity = 99.58% , sparse_accuracy = 94.84, training_time = 20138s
+
+Epoch 11: A_NQ = 95.56, H_NQ = 4804185, A_Q = 96.07, H_Q = 20006, zstd_ratio = 0.36%, sparse_ratio = 0.23%, sparsity = 99.39% , sparse_accuracy = 96.1, training_time = 20383s
+
+Epoch 11: A_NQ = 95.36, H_NQ = 4801282, A_Q = 95.42, H_Q = 14473, zstd_ratio = 0.27%, sparse_ratio = 0.17%, sparsity = 99.58% , sparse_accuracy = 95.42, training_time = 20414s
+
+Epoch 12: A_NQ = 96.79, H_NQ = 4804232, A_Q = 96.96, H_Q = 20439, zstd_ratio = 0.36%, sparse_ratio = 0.24%, sparsity = 99.38% , sparse_accuracy = 97.02, training_time = 18867s
+
+Epoch 12: A_NQ = 96.41, H_NQ = 4804372, A_Q = 96.52, H_Q = 19553, zstd_ratio = 0.35%, sparse_ratio = 0.23%, sparsity = 99.41% , sparse_accuracy = 96.52, training_time = 18641s
+
+Epoch 12: A_NQ = 96.23, H_NQ = 4801759, A_Q = 95.54, H_Q = 16155, zstd_ratio = 0.29%, sparse_ratio = 0.19%, sparsity = 99.53% , sparse_accuracy = 95.55, training_time = 18988s
+
+Epoch 12: A_NQ = 95.78, H_NQ = 4804386, A_Q = 95.29, H_Q = 14395, zstd_ratio = 0.27%, sparse_ratio = 0.18%, sparsity = 99.59% , sparse_accuracy = 95.28, training_time = 18676s
+
+Epoch 12: A_NQ = 96.64, H_NQ = 4804583, A_Q = 96.78, H_Q = 20627, zstd_ratio = 0.37%, sparse_ratio = 0.24%, sparsity = 99.37% , sparse_accuracy = 96.77, training_time = 18719s
+
+Epoch 13: A_NQ = 97.26, H_NQ = 4802390, A_Q = 96.79, H_Q = 20632, zstd_ratio = 0.37%, sparse_ratio = 0.24%, sparsity = 99.38% , sparse_accuracy = 96.77, training_time = 17616s
+
+Epoch 12: A_NQ = 95.51, H_NQ = 4801706, A_Q = 95.96, H_Q = 16212, zstd_ratio = 0.29%, sparse_ratio = 0.19%, sparsity = 99.53% , sparse_accuracy = 95.94, training_time = 19351s
+
+Epoch 12: A_NQ = 95.91, H_NQ = 4801456, A_Q = 95.71, H_Q = 15254, zstd_ratio = 0.29%, sparse_ratio = 0.18%, sparsity = 99.56% , sparse_accuracy = 95.62, training_time = 19410s
+
+Epoch 12: A_NQ = 96.48, H_NQ = 4804348, A_Q = 96.23, H_Q = 17029, zstd_ratio = 0.31%, sparse_ratio = 0.20%, sparsity = 99.50% , sparse_accuracy = 96.22, training_time = 19775s
+
+Epoch 12: A_NQ = 96.07, H_NQ = 4798995, A_Q = 95.77, H_Q = 15050, zstd_ratio = 0.29%, sparse_ratio = 0.19%, sparsity = 99.57% , sparse_accuracy = 95.74, training_time = 19593s
+
+Epoch 12: A_NQ = 95.81, H_NQ = 4802741, A_Q = 96.15, H_Q = 15769, zstd_ratio = 0.30%, sparse_ratio = 0.19%, sparsity = 99.54% , sparse_accuracy = 96.18, training_time = 19935s
+
+Epoch 12: A_NQ = 96.45, H_NQ = 4801718, A_Q = 96.47, H_Q = 21373, zstd_ratio = 0.38%, sparse_ratio = 0.25%, sparsity = 99.35% , sparse_accuracy = 96.48, training_time = 19984s
+
+Epoch 13: A_NQ = 96.03, H_NQ = 4803663, A_Q = 96.22, H_Q = 15867, zstd_ratio = 0.29%, sparse_ratio = 0.19%, sparsity = 99.54% , sparse_accuracy = 96.23, training_time = 18105s
+
+Epoch 12: A_NQ = 95.54, H_NQ = 4803325, A_Q = 95.92, H_Q = 14678, zstd_ratio = 0.28%, sparse_ratio = 0.18%, sparsity = 99.58% , sparse_accuracy = 95.9, training_time = 20095s
+
+Epoch 12: A_NQ = 95.9, H_NQ = 4803743, A_Q = 95.62, H_Q = 16491, zstd_ratio = 0.31%, sparse_ratio = 0.20%, sparsity = 99.52% , sparse_accuracy = 95.66, training_time = 19925s
+
+Epoch 12: A_NQ = 96.13, H_NQ = 4803933, A_Q = 96.23, H_Q = 17922, zstd_ratio = 0.32%, sparse_ratio = 0.21%, sparsity = 99.47% , sparse_accuracy = 96.23, training_time = 20163s
+
+Epoch 12: A_NQ = 94.93, H_NQ = 4803914, A_Q = 95.39, H_Q = 14805, zstd_ratio = 0.28%, sparse_ratio = 0.18%, sparsity = 99.58% , sparse_accuracy = 95.35, training_time = 20248s
+
+Epoch 12: A_NQ = 95.24, H_NQ = 4804257, A_Q = 95.85, H_Q = 15000, zstd_ratio = 0.28%, sparse_ratio = 0.18%, sparsity = 99.57% , sparse_accuracy = 95.82, training_time = 20142s
+
+Epoch 13: A_NQ = 96.27, H_NQ = 4804189, A_Q = 96.21, H_Q = 19840, zstd_ratio = 0.34%, sparse_ratio = 0.22%, sparsity = 99.40% , sparse_accuracy = 96.19, training_time = 18234s
+
+Epoch 12: A_NQ = 96.6, H_NQ = 4804152, A_Q = 96.49, H_Q = 18001, zstd_ratio = 0.32%, sparse_ratio = 0.21%, sparsity = 99.47% , sparse_accuracy = 96.47, training_time = 20082s
+
+Epoch 12: A_NQ = 96.26, H_NQ = 4803563, A_Q = 95.98, H_Q = 15905, zstd_ratio = 0.29%, sparse_ratio = 0.19%, sparsity = 99.54% , sparse_accuracy = 95.96, training_time = 19957s
+
+Epoch 12: A_NQ = 95.9, H_NQ = 4804591, A_Q = 95.9, H_Q = 15814, zstd_ratio = 0.30%, sparse_ratio = 0.19%, sparsity = 99.54% , sparse_accuracy = 95.87, training_time = 20072s
+
+Epoch 12: A_NQ = 95.92, H_NQ = 4804427, A_Q = 95.43, H_Q = 14866, zstd_ratio = 0.27%, sparse_ratio = 0.18%, sparsity = 99.57% , sparse_accuracy = 95.4, training_time = 20189s
+
+Epoch 12: A_NQ = 96.01, H_NQ = 4803833, A_Q = 96.25, H_Q = 17061, zstd_ratio = 0.31%, sparse_ratio = 0.20%, sparsity = 99.50% , sparse_accuracy = 96.23, training_time = 20Epoch Epoch 12: A_NQ = 95.61, H_NQ = 4799574, A_Q = 95.31, H_Q = 13285, zstd_ratio = 0.26%, sparse_ratio = 0.17%, sparsity = 99.63% , sparse_accuracy = 95.3, training_time = 20348s
+
+Epoch 12: A_NQ = 96.38, H_NQ = 4800931, A_Q = 96.2, H_Q = 17818, zstd_ratio = 0.32%, sparse_ratio = 0.21%, sparsity = 99.47% , sparse_accuracy = 96.21, training_time = 20088s
+
+Epoch 12: A_NQ = 95.18, H_NQ = 4804174, A_Q = 94.8, H_Q = 13727, zstd_ratio = 0.26%, sparse_ratio = 0.17%, sparsity = 99.61% , sparse_accuracy = 94.78, training_time = 20144s
+
+Epoch 12: A_NQ = 96.21, H_NQ = 4804199, A_Q = 95.9, H_Q = 16099, zstd_ratio = 0.30%, sparse_ratio = 0.19%, sparsity = 99.53% , sparse_accuracy = 95.91, training_time = 20184s
+
+Epoch 12: A_NQ = 96.4, H_NQ = 4804588, A_Q = 96.69, H_Q = 22000, zstd_ratio = 0.38%, sparse_ratio = 0.25%, sparsity = 99.33% , sparse_accuracy = 96.65, training_time = 20442s
+
+Epoch 13: A_NQ = 96.79, H_NQ = 4804332, A_Q = 96.75, H_Q = 19561, zstd_ratio = 0.35%, sparse_ratio = 0.23%, sparsity = 99.41% , sparse_accuracy = 96.75, training_time = 19168s
+
+Epoch 13: A_NQ = 95.89, H_NQ = 4802998, A_Q = 96.56, H_Q = 19037, zstd_ratio = 0.35%, sparse_ratio = 0.23%, sparsity = 99.43% , sparse_accuracy = 96.54, training_time = 18749s
+
+Epoch 12: A_NQ = 95.63, H_NQ = 4804377, A_Q = 95.29, H_Q = 14305, zstd_ratio = 0.26%, sparse_ratio = 0.17%, sparsity = 99.59% , sparse_accuracy = 95.28, training_time = 20350s
+
+Epoch 13: A_NQ = 95.34, H_NQ = 4800358, A_Q = 95.65, H_Q = 15701, zstd_ratio = 0.28%, sparse_ratio = 0.19%, sparsity = 99.54% , sparse_accuracy = 95.7, training_time = 18994s
+
+Epoch 12: A_NQ = 96.18, H_NQ = 4804254, A_Q = 96.13, H_Q = 19372, zstd_ratio = 0.35%, sparse_ratio = 0.22%, sparsity = 99.42% , sparse_accuracy = 96.12, training_time = 20365s
+
+Epoch 12: A_NQ = 95.22, H_NQ = 4803996, A_Q = 95.52, H_Q = 13693, zstd_ratio = 0.26%, sparse_ratio = 0.17%, sparsity = 99.61% , sparse_accuracy = 95.47, training_time = 20406s
+
+Epoch 14: A_NQ = 96.63, H_NQ = 4802790, A_Q = 97.0, H_Q = 20097, zstd_ratio = 0.36%, sparse_ratio = 0.24%, sparsity = 99.40% , sparse_accuracy = 97.03, training_time = 17433s
+
+Epoch 13: A_NQ = 95.98, H_NQ = 4804367, A_Q = 95.14, H_Q = 14091, zstd_ratio = 0.27%, sparse_ratio = 0.17%, sparsity = 99.60% , sparse_accuracy = 95.15, training_time = 18840s
+
+Epoch 13: A_NQ = 96.6, H_NQ = 4802336, A_Q = 96.69, H_Q = 20077, zstd_ratio = 0.36%, sparse_ratio = 0.24%, sparsity = 99.39% , sparse_accuracy = 96.65, training_time = 18906s
+
+Epoch 13: A_NQ = 95.85, H_NQ = 4801832, A_Q = 95.94, H_Q = 15697, zstd_ratio = 0.29%, sparse_ratio = 0.19%, sparsity = 99.55% , sparse_accuracy = 95.94, training_time = 18921s
+
+Epoch 13: A_NQ = 96.13, H_NQ = 4804051, A_Q = 95.96, H_Q = 14619, zstd_ratio = 0.28%, sparse_ratio = 0.18%, sparsity = 99.58% , sparse_accuracy = 95.95, training_time = 19432s
+
+Epoch 13: A_NQ = 96.31, H_NQ = 4804493, A_Q = 96.38, H_Q = 16224, zstd_ratio = 0.30%, sparse_ratio = 0.20%, sparsity = 99.53% , sparse_accuracy = 96.41, training_time = 19941s
+
+Epoch 13: A_NQ = 95.95, H_NQ = 4804381, A_Q = 95.77, H_Q = 15065, zstd_ratio = 0.29%, sparse_ratio = 0.18%, sparsity = 99.57% , sparse_accuracy = 95.75, training_time = 19589s
+
+Epoch 13: A_NQ = 96.58, H_NQ = 4802387, A_Q = 96.37, H_Q = 21245, zstd_ratio = 0.38%, sparse_ratio = 0.25%, sparsity = 99.35% , sparse_accuracy = 96.38, training_time = 19177s
+
+Epoch 13: A_NQ = 96.1, H_NQ = 4804181, A_Q = 96.23, H_Q = 15642, zstd_ratio = 0.29%, sparse_ratio = 0.19%, sparsity = 99.55% , sparse_accuracy = 96.22, training_time = 20285s
+
+Epoch 14: A_NQ = 95.62, H_NQ = 4803830, A_Q = 96.11, H_Q = 15181, zstd_ratio = 0.29%, sparse_ratio = 0.18%, sparsity = 99.57% , sparse_accuracy = 96.11, training_time = 18328s
+
+Epoch 14: A_NQ = 96.72, H_NQ = 4803438, A_Q = 96.05, H_Q = 19519, zstd_ratio = 0.34%, sparse_ratio = 0.22%, sparsity = 99.41% , sparse_accuracy = 96.02, training_time = 18081s
+
+Epoch 13: A_NQ = 96.08, H_NQ = 4800256, A_Q = 95.96, H_Q = 14218, zstd_ratio = 0.28%, sparse_ratio = 0.18%, sparsity = 99.60% , sparse_accuracy = 95.95, training_time = 20001s
+
+Epoch 13: A_NQ = 95.29, H_NQ = 4804356, A_Q = 95.72, H_Q = 15966, zstd_ratio = 0.30%, sparse_ratio = 0.19%, sparsity = 99.54% , sparse_accuracy = 95.76, training_time = 20097s
+
+Epoch 13: A_NQ = 96.21, H_NQ = 4803788, A_Q = 96.03, H_Q = 17008, zstd_ratio = 0.31%, sparse_ratio = 0.20%, sparsity = 99.50% , sparse_accuracy = 96.0, training_time = 20062s
+
+Epoch 13: A_NQ = 95.44, H_NQ = 4804453, A_Q = 95.0, H_Q = 14516, zstd_ratio = 0.28%, sparse_ratio = 0.18%, sparsity = 99.59% , sparse_accuracy = 95.02, training_time = 20317s
+
+Epoch 13: A_NQ = 96.0, H_NQ = 4804421, A_Q = 95.73, H_Q = 14264, zstd_ratio = 0.28%, sparse_ratio = 0.18%, sparsity = 99.60% , sparse_accuracy = 95.73, training_time = 20141s
+
+Epoch 13: A_NQ = 95.88, H_NQ = 4804185, A_Q = 96.58, H_Q = 17934, zstd_ratio = 0.32%, sparse_ratio = 0.21%, sparsity = 99.47% , sparse_accuracy = 96.55, training_time = 19985s
+
+Epoch 13: A_NQ = 95.94, H_NQ = 4804432, A_Q = 96.15, H_Q = 15568, zstd_ratio = 0.29%, sparse_ratio = 0.19%, sparsity = 99.55% , sparse_accuracy = 96.12, training_time = 19976s
+
+Epoch 13: A_NQ = 95.29, H_NQ = 4804060, A_Q = 95.65, H_Q = 14291, zstd_ratio = 0.27%, sparse_ratio = 0.17%, sparsity = 99.59% , sparse_accuracy = 95.66, training_time = 20108s
+
+Epoch 13: A_NQ = 95.99, H_NQ = 4804456, A_Q = 95.94, H_Q = 15232, zstd_ratio = 0.29%, sparse_ratio = 0.19%, sparsity = 99.56% , sparse_accuracy = 95.94, training_time = 20170s
+
+Epoch 13: A_NQ = 96.32, H_NQ = 4801695, A_Q = 96.21, H_Q = 16641, zstd_ratio = 0.31%, sparse_ratio = 0.20%, sparsity = 99.51% , sparse_accuracy = 96.22, training_time = 20249s
+
+Epoch 13: A_NQ = 96.04, H_NQ = 4803624, A_Q = 95.58, H_Q = 13023, zstd_ratio = 0.26%, sparse_ratio = 0.17%, sparsity = 99.64% , sparse_accuracy = 95.58, training_time = 19656s
+
+Epoch 14: A_NQ = 96.16, H_NQ = 4801562, A_Q = 96.68, H_Q = 19501, zstd_ratio = 0.35%, sparse_ratio = 0.23%, sparsity = 99.42% , sparse_accuracy = 96.64, training_time = 18840s
+
+Epoch 14: A_NQ = 96.53, H_NQ = 4804261, A_Q = 96.57, H_Q = 18781, zstd_ratio = 0.34%, sparse_ratio = 0.22%, sparsity = 99.44% , sparse_accuracy = 96.58, training_time = 18790s
+
+Epoch 13: A_NQ = 96.2, H_NQ = 4804326, A_Q = 96.49, H_Q = 17585, zstd_ratio = 0.32%, sparse_ratio = 0.21%, sparsity = 99.48% , sparse_accuracy = 96.48, training_time = 19972s
+
+Epoch 14: A_NQ = 95.65, H_NQ = 4802678, A_Q = 96.03, H_Q = 15110, zstd_ratio = 0.28%, sparse_ratio = 0.18%, sparsity = 99.57% , sparse_accuracy = 95.99, training_time = 19035s
+
+Epoch 15: A_NQ = 96.81, H_NQ = 4802253, A_Q = 96.67, H_Q = 19445, zstd_ratio = 0.35%, sparse_ratio = 0.23%, sparsity = 99.42% , sparse_accuracy = 96.61, training_time = 17461s
+
+Epoch 13: A_NQ = 95.34, H_NQ = 4803796, A_Q = 94.94, H_Q = 13559, zstd_ratio = 0.26%, sparse_ratio = 0.16%, sparsity = 99.61% , sparse_accuracy = 94.95, training_time = 20130s
+
+Epoch 13: A_NQ = 96.71, H_NQ = 4803634, A_Q = 96.66, H_Q = 21314, zstd_ratio = 0.38%, sparse_ratio = 0.25%, sparsity = 99.35% , sparse_accuracy = 96.66, training_time = 20096s
+
+Epoch 13: A_NQ = 95.66, H_NQ = 4798523, A_Q = 96.13, H_Q = 15835, zstd_ratio = 0.29%, sparse_ratio = 0.19%, sparsity = 99.54% , sparse_accuracy = 96.13, training_time = 20216s
+
+Epoch 13: A_NQ = 95.63, H_NQ = 4804084, A_Q = 95.11, H_Q = 14004, zstd_ratio = 0.26%, sparse_ratio = 0.17%, sparsity = 99.60% , sparse_accuracy = 95.07, training_time = 20196s
+
+Epoch 13: A_NQ = 95.8, H_NQ = 4804333, A_Q = 95.9, H_Q = 19143, zstd_ratio = 0.35%, sparse_ratio = 0.22%, sparsity = 99.43% , sparse_accuracy = 95.88, training_time = 20385s
+
+Epoch 13: A_NQ = 95.07, H_NQ = 4802796, A_Q = 95.42, H_Q = 13333, zstd_ratio = 0.25%, sparse_ratio = 0.16%, sparsity = 99.62% , sparse_accuracy = 95.4, training_time = 20383s
+
+Epoch 14: A_NQ = 96.52, H_NQ = 4802138, A_Q = 96.66, H_Q = 19665, zstd_ratio = 0.35%, sparse_ratio = 0.23%, sparsity = 99.41% , sparse_accuracy = 96.65, training_time = 18773s
+
+Epoch 14: A_NQ = 96.29, H_NQ = 4804049, A_Q = 95.74, H_Q = 15389, zstd_ratio = 0.29%, sparse_ratio = 0.18%, sparsity = 99.56% , sparse_accuracy = 95.72, training_time = 17465s
+
+Epoch 14: A_NQ = 95.7, H_NQ = 4800633, A_Q = 95.63, H_Q = 13740, zstd_ratio = 0.26%, sparse_ratio = 0.17%, sparsity = 99.61% , sparse_accuracy = 95.6, training_time = 20087s
+
+Epoch 14: A_NQ = 96.03, H_NQ = 4803990, A_Q = 95.96, H_Q = 14524, zstd_ratio = 0.28%, sparse_ratio = 0.18%, sparsity = 99.59% , sparse_accuracy = 95.94, training_time = 19554s
+
+Epoch 15: A_NQ = 96.11, H_NQ = 4803310, A_Q = 95.98, H_Q = 14855, zstd_ratio = 0.28%, sparse_ratio = 0.18%, sparsity = 99.58% , sparse_accuracy = 95.99, training_time = 18103s
+
+Epoch 14: A_NQ = 96.08, H_NQ = 4804246, A_Q = 95.99, H_Q = 14773, zstd_ratio = 0.28%, sparse_ratio = 0.18%, sparsity = 99.58% , sparse_accuracy = 95.9, training_time = 19462s
+
+Epoch 14: A_NQ = 96.11, H_NQ = 4804470, A_Q = 96.34, H_Q = 15980, zstd_ratio = 0.30%, sparse_ratio = 0.20%, sparsity = 99.54% , sparse_accuracy = 96.32, training_time = 19840s
+
+Epoch 14: A_NQ = 96.38, H_NQ = 4803189, A_Q = 96.37, H_Q = 20749, zstd_ratio = 0.38%, sparse_ratio = 0.24%, sparsity = 99.37% , sparse_accuracy = 96.37, training_time = 20117s
+
+Epoch 14: A_NQ = 95.64, H_NQ = 4799394, A_Q = 96.1, H_Q = 15272, zstd_ratio = 0.29%, sparse_ratio = 0.19%, sparsity = 99.56% , sparse_accuracy = 96.1, training_time = 20236s
+
+Epoch 15: A_NQ = 96.0, H_NQ = 4803491, A_Q = 95.98, H_Q = 19068, zstd_ratio = 0.33%, sparse_ratio = 0.22%, sparsity = 99.43% , sparse_accuracy = 95.97, training_time = 18276s
+
+Epoch 14: A_NQ = 95.93, H_NQ = 4803871, A_Q = 95.97, H_Q = 14056, zstd_ratio = 0.27%, sparse_ratio = 0.18%, sparsity = 99.60% , sparse_accuracy = 95.9, training_time = 20090s
+
+Epoch 14: A_NQ = 95.5, H_NQ = 4804536, A_Q = 95.9, H_Q = 15735, zstd_ratio = 0.30%, sparse_ratio = 0.19%, sparsity = 99.54% , sparse_accuracy = 95.89, training_time = 20100s
+
+Epoch 14: A_NQ = 96.38, H_NQ = 4803700, A_Q = 96.23, H_Q = 16793, zstd_ratio = 0.30%, sparse_ratio = 0.20%, sparsity = 99.51% , sparse_accuracy = 96.24, training_time = 19930s
+
+Epoch 14: A_NQ = 95.82, H_NQ = 4793241, A_Q = 95.15, H_Q = 14045, zstd_ratio = 0.27%, sparse_ratio = 0.17%, sparsity = 99.60% , sparse_accuracy = 95.15, training_time = 19946s
+
+Epoch 14: A_NQ = 96.11, H_NQ = 4804268, A_Q = 96.08, H_Q = 13840, zstd_ratio = 0.27%, sparse_ratio = 0.17%, sparsity = 99.61% , sparse_accuracy = 96.05, training_time = 20130s
+
+Epoch 16: A_NQ = 96.64, H_NQ = 4803942, A_Q = 96.61, H_Q = 19111, zstd_ratio = 0.35%, sparse_ratio = 0.23%, sparsity = 99.43% , sparse_accuracy = 96.62, training_time = 17446s
+
+Epoch 15: A_NQ = 96.41, H_NQ = 4801054, A_Q = 96.75, H_Q = 18994, zstd_ratio = 0.34%, sparse_ratio = 0.23%, sparsity = 99.43% , sparse_accuracy = 96.78, training_time = 18603s
+
+Epoch 14: A_NQ = 96.02, H_NQ = 4804303, A_Q = 96.0, H_Q = 15138, zstd_ratio = 0.28%, sparse_ratio = 0.18%, sparsity = 99.57% , sparse_accuracy = 95.99, training_time = 20032s
+
+Epoch 14: A_NQ = 96.6, H_NQ = 4804505, A_Q = 96.37, H_Q = 17517, zstd_ratio = 0.32%, sparse_ratio = 0.21%, sparsity = 99.49% , sparse_accuracy = 96.37, training_time = 20204s
+
+Epoch 15: A_NQ = 96.56, H_NQ = 4804447, A_Q = 96.57, H_Q = 18326, zstd_ratio = 0.34%, sparse_ratio = 0.22%, sparsity = 99.46% , sparse_accuracy = 96.58, training_time = 18921s
+
+Epoch 14: A_NQ = 96.02, H_NQ = 4797142, A_Q = 95.55, H_Q = 14117, zstd_ratio = 0.27%, sparse_ratio = 0.17%, sparsity = 99.60% , sparse_accuracy = 95.53, training_time = 20314s
+
+Epoch 14: A_NQ = 96.06, H_NQ = 4803398, A_Q = 96.17, H_Q = 15046, zstd_ratio = 0.29%, sparse_ratio = 0.18%, sparsity = 99.57% , sparse_accuracy = 96.17, training_time = 20357s
+
+Epoch 14: A_NQ = 95.96, H_NQ = 4804539, A_Q = 96.26, H_Q = 16313, zstd_ratio = 0.31%, sparse_ratio = 0.20%, sparsity = 99.53% , sparse_accuracy = 96.23, training_time = 20204s
+
+Epoch 15: A_NQ = 95.6, H_NQ = 4804421, A_Q = 96.23, H_Q = 15246, zstd_ratio = 0.28%, sparse_ratio = 0.18%, sparsity = 99.56% , sparse_accuracy = 96.24, training_time = 18909s
+
+Epoch 14: A_NQ = 95.3, H_NQ = 4803839, A_Q = 95.72, H_Q = 12951, zstd_ratio = 0.26%, sparse_ratio = 0.16%, sparsity = 99.64% , sparse_accuracy = 95.72, training_time = 20383s
+
+Epoch 14: A_NQ = 96.27, H_NQ = 4802934, A_Q = 96.05, H_Q = 17043, zstd_ratio = 0.31%, sparse_ratio = 0.20%, sparsity = 99.50% , sparse_accuracy = 96.03, training_time = 20076s
+
+Epoch 14: A_NQ = 95.61, H_NQ = 4802600, A_Q = 95.84, H_Q = 15179, zstd_ratio = 0.28%, sparse_ratio = 0.18%, sparsity = 99.57% , sparse_accuracy = 95.79, training_time = 20125s
+
+Epoch 14: A_NQ = 95.39, H_NQ = 4803823, A_Q = 95.06, H_Q = 13382, zstd_ratio = 0.25%, sparse_ratio = 0.16%, sparsity = 99.62% , sparse_accuracy = 95.04, training_time = 20347s
+
+Epoch 14: A_NQ = 95.95, H_NQ = 4803226, A_Q = 96.74, H_Q = 20510, zstd_ratio = 0.37%, sparse_ratio = 0.24%, sparsity = 99.38% , sparse_accuracy = 96.73, training_time = 20401s
+
+Epoch 15: A_NQ = 96.93, H_NQ = 4804329, A_Q = 96.71, H_Q = 19402, zstd_ratio = 0.36%, sparse_ratio = 0.23%, sparsity = 99.42% , sparse_accuracy = 96.73, training_time = 18840s
+
+Epoch 14: A_NQ = 94.98, H_NQ = 4803650, A_Q = 95.32, H_Q = 13682, zstd_ratio = 0.26%, sparse_ratio = 0.17%, sparsity = 99.61% , sparse_accuracy = 95.29, training_time = 20272s
+
+Epoch 15: A_NQ = 96.3, H_NQ = 4804470, A_Q = 95.84, H_Q = 14930, zstd_ratio = 0.28%, sparse_ratio = 0.18%, sparsity = 99.58% , sparse_accuracy = 95.87, training_time = 19135s
+
+Epoch 14: A_NQ = 96.36, H_NQ = 4800259, A_Q = 95.95, H_Q = 18495, zstd_ratio = 0.34%, sparse_ratio = 0.22%, sparsity = 99.45% , sparse_accuracy = 95.95, training_time = 20411s
+
+Epoch 14: A_NQ = 95.48, H_NQ = 4804417, A_Q = 95.63, H_Q = 13293, zstd_ratio = 0.26%, sparse_ratio = 0.16%, sparsity = 99.63% , sparse_accuracy = 95.65, training_time = 20460s
+
+Epoch 15: A_NQ = 95.33, H_NQ = 4803538, A_Q = 95.67, H_Q = 13613, zstd_ratio = 0.26%, sparse_ratio = 0.17%, sparsity = 99.62% , sparse_accuracy = 95.68, training_time = 19298s
+
+Epoch 15: A_NQ = 96.23, H_NQ = 4798710, A_Q = 96.03, H_Q = 14119, zstd_ratio = 0.27%, sparse_ratio = 0.18%, sparsity = 99.60% , sparse_accuracy = 96.02, training_time = 19402s
+
+Epoch 16: A_NQ = 96.44, H_NQ = 4801820, A_Q = 96.14, H_Q = 15008, zstd_ratio = 0.29%, sparse_ratio = 0.18%, sparsity = 99.57% , sparse_accuracy = 96.1, training_time = 17974s
+
+Epoch 15: A_NQ = 96.06, H_NQ = 4802612, A_Q = 95.96, H_Q = 14436, zstd_ratio = 0.28%, sparse_ratio = 0.18%, sparsity = 99.59% , sparse_accuracy = 95.95, training_time = 19432s
+
+Epoch 15: A_NQ = 95.75, H_NQ = 4803841, A_Q = 96.55, H_Q = 15767, zstd_ratio = 0.30%, sparse_ratio = 0.19%, sparsity = 99.55% , sparse_accuracy = 96.59, training_time = 19879s
+
+Epoch 16: A_NQ = 96.34, H_NQ = 4804164, A_Q = 96.06, H_Q = 18477, zstd_ratio = 0.33%, sparse_ratio = 0.21%, sparsity = 99.45% , sparse_accuracy = 96.02, training_time = 18108s
+
+Epoch 15: A_NQ = 96.39, H_NQ = 4804486, A_Q = 95.94, H_Q = 14831, zstd_ratio = 0.28%, sparse_ratio = 0.18%, sparsity = 99.58% , sparse_accuracy = 95.91, training_time = 19705s
+
+Epoch 15: A_NQ = 96.03, H_NQ = 4804150, A_Q = 96.39, H_Q = 21138, zstd_ratio = 0.38%, sparse_ratio = 0.24%, sparsity = 99.36% , sparse_accuracy = 96.4, training_time = 20111s
+
+Epoch 17: A_NQ = 96.91, H_NQ = 4803758, A_Q = 96.67, H_Q = 18910, zstd_ratio = 0.34%, sparse_ratio = 0.23%, sparsity = 99.44% , sparse_accuracy = 96.67, training_time = 17594s
+
+Epoch 15: A_NQ = 95.78, H_NQ = 4804170, A_Q = 95.99, H_Q = 13765, zstd_ratio = 0.27%, sparse_ratio = 0.17%, sparsity = 99.61% , sparse_accuracy = 96.04, training_time = 19828s
+
+Epoch 15: A_NQ = 95.96, H_NQ = 4803493, A_Q = 95.8, H_Q = 15447, zstd_ratio = 0.29%, sparse_ratio = 0.19%, sparsity = 99.55% , sparse_accuracy = 95.81, training_time = 20036s
+
+Epoch 15: A_NQ = 95.57, H_NQ = 4804028, A_Q = 96.24, H_Q = 16375, zstd_ratio = 0.30%, sparse_ratio = 0.19%, sparsity = 99.53% , sparse_accuracy = 96.23, training_time = 20033s
+
+Epoch 16: A_NQ = 96.85, H_NQ = 4797076, A_Q = 96.88, H_Q = 18637, zstd_ratio = 0.34%, sparse_ratio = 0.22%, sparsity = 99.45% , sparse_accuracy = 96.86, training_time = 18584s
+
+Epoch 15: A_NQ = 95.62, H_NQ = 4803945, A_Q = 94.95, H_Q = 13745, zstd_ratio = 0.27%, sparse_ratio = 0.17%, sparsity = 99.61% , sparse_accuracy = 94.91, training_time = 19873s
+
+Epoch 16: A_NQ = 96.15, H_NQ = 4804444, A_Q = 96.55, H_Q = 17902, zstd_ratio = 0.33%, sparse_ratio = 0.21%, sparsity = 99.47% , sparse_accuracy = 96.51, training_time = 18768s
+
+Epoch 15: A_NQ = 95.4, H_NQ = 4804362, A_Q = 96.01, H_Q = 13628, zstd_ratio = 0.27%, sparse_ratio = 0.17%, sparsity = 99.62% , sparse_accuracy = 96.01, training_time = 20060s
+
+Epoch 15: A_NQ = 95.62, H_NQ = 4801408, A_Q = 95.93, H_Q = 14824, zstd_ratio = 0.28%, sparse_ratio = 0.18%, sparsity = 99.58% , sparse_accuracy = 95.95, training_time = 20047s
+
+Epoch 16: A_NQ = 95.46, H_NQ = 4804660, A_Q = 95.61, H_Q = 14841, zstd_ratio = 0.28%, sparse_ratio = 0.18%, sparsity = 99.57% , sparse_accuracy = 95.6, training_time = 19073s
+
+Epoch 15: A_NQ = 96.98, H_NQ = 4803917, A_Q = 96.48, H_Q = 17035, zstd_ratio = 0.31%, sparse_ratio = 0.20%, sparsity = 99.50% , sparse_accuracy = 96.46, training_time = 20118s
+
+Epoch 15: A_NQ = 96.23, H_NQ = 4802718, A_Q = 96.27, H_Q = 15897, zstd_ratio = 0.31%, sparse_ratio = 0.19%, sparsity = 99.54% , sparse_accuracy = 96.25, training_time = 19867s
+
+Epoch 15: A_NQ = 95.64, H_NQ = 4803713, A_Q = 95.42, H_Q = 14073, zstd_ratio = 0.26%, sparse_ratio = 0.17%, sparsity = 99.60% , sparse_accuracy = 95.37, training_time = 20246s
+
+Epoch 15: A_NQ = 95.69, H_NQ = 4804179, A_Q = 96.05, H_Q = 14740, zstd_ratio = 0.28%, sparse_ratio = 0.18%, sparsity = 99.58% , sparse_accuracy = 96.04, training_time = 20187s
+
+Epoch 15: A_NQ = 94.95, H_NQ = 4804022, A_Q = 95.51, H_Q = 12685, zstd_ratio = 0.26%, sparse_ratio = 0.16%, sparsity = 99.65% , sparse_accuracy = 95.46, training_time = 20252s
+
+Epoch 15: A_NQ = 96.07, H_NQ = 4803996, A_Q = 96.25, H_Q = 16362, zstd_ratio = 0.30%, sparse_ratio = 0.20%, sparsity = 99.52% , sparse_accuracy = 96.21, training_time = 19915s
+
+Epoch 16: A_NQ = 96.53, H_NQ = 4799558, A_Q = 96.88, H_Q = 18968, zstd_ratio = 0.35%, sparse_ratio = 0.23%, sparsity = 99.43% , sparse_accuracy = 96.89, training_time = 18886s
+
+Epoch 15: A_NQ = 95.71, H_NQ = 4804361, A_Q = 96.01, H_Q = 14902, zstd_ratio = 0.28%, sparse_ratio = 0.18%, sparsity = 99.58% , sparse_accuracy = 96.0, training_time = 20126s
+
+Epoch 15: A_NQ = 95.47, H_NQ = 4802767, A_Q = 95.08, H_Q = 12943, zstd_ratio = 0.25%, sparse_ratio = 0.16%, sparsity = 99.64% , sparse_accuracy = 95.06, training_time = 20203s
+
+Epoch 15: A_NQ = 96.75, H_NQ = 4804496, A_Q = 96.84, H_Q = 19723, zstd_ratio = 0.36%, sparse_ratio = 0.23%, sparsity = 99.41% , sparse_accuracy = 96.79, training_time = 20232s
+
+Epoch 16: A_NQ = 95.87, H_NQ = 4804447, A_Q = 96.0, H_Q = 14751, zstd_ratio = 0.28%, sparse_ratio = 0.18%, sparsity = 99.58% , sparse_accuracy = 96.02, training_time = 19180s
+
+Epoch 15: A_NQ = 95.45, H_NQ = 4803974, A_Q = 95.56, H_Q = 13429, zstd_ratio = 0.26%, sparse_ratio = 0.17%, sparsity = 99.62% , sparse_accuracy = 95.54, training_time = 20211s
+
+Epoch 16: A_NQ = 95.9, H_NQ = 4804050, A_Q = 95.47, H_Q = 13065, zstd_ratio = 0.25%, sparse_ratio = 0.16%, sparsity = 99.63% , sparse_accuracy = 95.44, training_time = 19237s
+
+Epoch 15: A_NQ = 96.29, H_NQ = 4804430, A_Q = 96.19, H_Q = 18304, zstd_ratio = 0.34%, sparse_ratio = 0.22%, sparsity = 99.46% , sparse_accuracy = 96.16, training_time = 20285s
+
+Epoch 15: A_NQ = 95.47, H_NQ = 4804351, A_Q = 95.17, H_Q = 13076, zstd_ratio = 0.25%, sparse_ratio = 0.16%, sparsity = 99.63% , sparse_accuracy = 95.15, training_time = 20339s
+
+Epoch 17: A_NQ = 96.06, H_NQ = 4804076, A_Q = 95.84, H_Q = 14563, zstd_ratio = 0.28%, sparse_ratio = 0.18%, sparsity = 99.59% , sparse_accuracy = 95.82, training_time = 18315s
+
+Epoch 16: A_NQ = 96.26, H_NQ = 4803930, A_Q = 96.17, H_Q = 13999, zstd_ratio = 0.27%, sparse_ratio = 0.17%, sparsity = 99.61% , sparse_accuracy = 96.15, training_time = 19406s
+
+Epoch 16: A_NQ = 96.06, H_NQ = 4802821, A_Q = 95.96, H_Q = 14165, zstd_ratio = 0.28%, sparse_ratio = 0.18%, sparsity = 99.60% , sparse_accuracy = 95.98, training_time = 19483s
+
+Epoch 17: A_NQ = 96.58, H_NQ = 4804318, A_Q = 96.14, H_Q = 18018, zstd_ratio = 0.32%, sparse_ratio = 0.21%, sparsity = 99.46% , sparse_accuracy = 96.11, training_time = 18616s
+
+Epoch 16: A_NQ = 96.39, H_NQ = 4798941, A_Q = 96.34, H_Q = 15656, zstd_ratio = 0.30%, sparse_ratio = 0.19%, sparsity = 99.55% , sparse_accuracy = 96.27, training_time = 20019s
+
+Epoch 16: A_NQ = 96.38, H_NQ = 4803022, A_Q = 96.46, H_Q = 20301, zstd_ratio = 0.37%, sparse_ratio = 0.24%, sparsity = 99.39% , sparse_accuracy = 96.44, training_time = 19637s
+
+Epoch 16: A_NQ = 96.03, H_NQ = 4803998, A_Q = 96.12, H_Q = 14688, zstd_ratio = 0.28%, sparse_ratio = 0.18%, sparsity = 99.58% , sparse_accuracy = 96.1, training_time = 19988s
+
+Epoch 18: A_NQ = 96.76, H_NQ = 4803946, A_Q = 96.93, H_Q = 18680, zstd_ratio = 0.35%, sparse_ratio = 0.22%, sparsity = 99.45% , sparse_accuracy = 96.93, training_time = 17560s
+
+Epoch 17: A_NQ = 96.5, H_NQ = 4803646, A_Q = 96.66, H_Q = 17845, zstd_ratio = 0.33%, sparse_ratio = 0.22%, sparsity = 99.48% , sparse_accuracy = 96.66, training_time = 18796s
+
+Epoch 16: A_NQ = 96.13, H_NQ = 4802470, A_Q = 95.88, H_Q = 13427, zstd_ratio = 0.26%, sparse_ratio = 0.17%, sparsity = 99.62% , sparse_accuracy = 95.91, training_time = 20125s
+
+Epoch 17: A_NQ = 96.5, H_NQ = 4804142, A_Q = 96.31, H_Q = 17123, zstd_ratio = 0.32%, sparse_ratio = 0.21%, sparsity = 99.50% , sparse_accuracy = 96.3, training_time = 18869s
+
+Epoch 16: A_NQ = 96.07, H_NQ = 4804430, A_Q = 95.84, H_Q = 15151, zstd_ratio = 0.28%, sparse_ratio = 0.18%, sparsity = 99.56% , sparse_accuracy = 95.83, training_time = 20098s
+
+Epoch 16: A_NQ = 96.36, H_NQ = 4804018, A_Q = 96.17, H_Q = 16010, zstd_ratio = 0.30%, sparse_ratio = 0.19%, sparsity = 99.54% , sparse_accuracy = 96.2, training_time = 20174s
+
+Epoch 16: A_NQ = 95.36, H_NQ = 4803656, A_Q = 94.83, H_Q = 13660, zstd_ratio = 0.27%, sparse_ratio = 0.17%, sparsity = 99.62% , sparse_accuracy = 94.82, training_time = 20198s
+
+Epoch 17: A_NQ = 95.76, H_NQ = 4802533, A_Q = 95.77, H_Q = 14701, zstd_ratio = 0.27%, sparse_ratio = 0.18%, sparsity = 99.58% , sparse_accuracy = 95.69, training_time = 19176s
+
+Epoch 16: A_NQ = 96.26, H_NQ = 4803665, A_Q = 96.14, H_Q = 13396, zstd_ratio = 0.26%, sparse_ratio = 0.17%, sparsity = 99.62% , sparse_accuracy = 96.1, training_time = 20228s
+
+Epoch 16: A_NQ = 96.18, H_NQ = 4804327, A_Q = 96.36, H_Q = 14498, zstd_ratio = 0.28%, sparse_ratio = 0.18%, sparsity = 99.59% , sparse_accuracy = 96.37, training_time = 19970s
+
+Epoch 16: A_NQ = 96.5, H_NQ = 4804457, A_Q = 96.42, H_Q = 16414, zstd_ratio = 0.31%, sparse_ratio = 0.20%, sparsity = 99.52% , sparse_accuracy = 96.42, training_time = 20164s
+
+Epoch 16: A_NQ = 96.33, H_NQ = 4804026, A_Q = 96.25, H_Q = 15889, zstd_ratio = 0.31%, sparse_ratio = 0.19%, sparsity = 99.54% , sparse_accuracy = 96.24, training_time = 19970s
+
+Epoch 16: A_NQ = 95.22, H_NQ = 4804134, A_Q = 95.84, H_Q = 14373, zstd_ratio = 0.28%, sparse_ratio = 0.18%, sparsity = 99.59% , sparse_accuracy = 95.8, training_time = 20291s
+
+Epoch 16: A_NQ = 95.8, H_NQ = 4803769, A_Q = 95.42, H_Q = 13746, zstd_ratio = 0.26%, sparse_ratio = 0.17%, sparsity = 99.61% , sparse_accuracy = 95.41, training_time = 20333s
+
+Epoch 17: A_NQ = 96.43, H_NQ = 4804373, A_Q = 96.76, H_Q = 18553, zstd_ratio = 0.34%, sparse_ratio = 0.22%, sparsity = 99.45% , sparse_accuracy = 96.75, training_time = 18992s
+
+Epoch 16: A_NQ = 96.65, H_NQ = 4804144, A_Q = 96.25, H_Q = 16286, zstd_ratio = 0.30%, sparse_ratio = 0.20%, sparsity = 99.53% , sparse_accuracy = 96.21, training_time = 19906s
+
+Epoch 16: A_NQ = 95.81, H_NQ = 4804319, A_Q = 95.63, H_Q = 12540, zstd_ratio = 0.25%, sparse_ratio = 0.16%, sparsity = 99.65% , sparse_accuracy = 95.62, training_time = 20439s
+
+Epoch 17: A_NQ = 95.44, H_NQ = 4803265, A_Q = 95.81, H_Q = 14468, zstd_ratio = 0.28%, sparse_ratio = 0.18%, sparsity = 99.59% , sparse_accuracy = 95.77, training_time = 18759s
+
+Epoch 17: A_NQ = 95.93, H_NQ = 4803798, A_Q = 95.56, H_Q = 13138, zstd_ratio = 0.26%, sparse_ratio = 0.16%, sparsity = 99.63% , sparse_accuracy = 95.57, training_time = 18131s
+
+Epoch 16: A_NQ = 96.11, H_NQ = 4804444, A_Q = 96.0, H_Q = 14904, zstd_ratio = 0.28%, sparse_ratio = 0.18%, sparsity = 99.58% , sparse_accuracy = 96.01, training_time = 20271s
+
+Epoch 16: A_NQ = 95.28, H_NQ = 4801950, A_Q = 95.0, H_Q = 12550, zstd_ratio = 0.25%, sparse_ratio = 0.16%, sparsity = 99.65% , sparse_accuracy = 94.99, training_time = 20158s
+
+Epoch 16: A_NQ = 96.17, H_NQ = 4804302, A_Q = 96.76, H_Q = 19660, zstd_ratio = 0.36%, sparse_ratio = 0.23%, sparsity = 99.41% , sparse_accuracy = 96.75, training_time = 20345s
+
+Epoch 16: A_NQ = 95.21, H_NQ = 4804155, A_Q = 95.47, H_Q = 13300, zstd_ratio = 0.25%, sparse_ratio = 0.16%, sparsity = 99.63% , sparse_accuracy = 95.45, training_time = 20278s
+
+Epoch 16: A_NQ = 96.05, H_NQ = 4801992, A_Q = 96.12, H_Q = 17806, zstd_ratio = 0.33%, sparse_ratio = 0.21%, sparsity = 99.48% , sparse_accuracy = 96.1, training_time = 20293s
+
+Epoch 16: A_NQ = 95.21, H_NQ = 4801704, A_Q = 95.77, H_Q = 12983, zstd_ratio = 0.25%, sparse_ratio = 0.16%, sparsity = 99.64% , sparse_accuracy = 95.76, training_time = 20371s
+
+Epoch 18: A_NQ = 96.59, H_NQ = 4803978, A_Q = 96.0, H_Q = 14217, zstd_ratio = 0.28%, sparse_ratio = 0.18%, sparsity = 99.60% , sparse_accuracy = 95.94, training_time = 18580s
+
+s
+
+Epoch 17: A_NQ = 95.83, H_NQ = 4804453, A_Q = 95.35, H_Q = 14190, zstd_ratio = 0.27%, sparse_ratio = 0.18%, sparsity = 99.60% , sparse_accuracy = 95.31, training_time = 18998s
+
+Epoch 16: A_NQ = 96.36, H_NQ = 4804229, A_Q = 96.01, H_Q = 14742, zstd_ratio = 0.29%, sparse_ratio = 0.18%, sparsity = 99.58% , sparse_accuracy = 96.02, training_time = 20344s
+
+Epoch 19: A_NQ = 96.25, H_NQ = 4796123, A_Q = 95.89, H_Q = 14733, zstd_ratio = 0.28%, sparse_ratio = 0.18%, sparsity = 99.58% , sparse_accuracy = 95.87, training_time = 17307s
+
+Epoch 16: A_NQ = 95.8, H_NQ = 4804427, A_Q = 96.3, H_Q = 15094, zstd_ratio = 0.29%, sparse_ratio = 0.19%, sparsity = 99.57% , sparse_accuracy = 96.28, training_time = 20167s
+
+Epoch 16: A_NQ = 95.87, H_NQ = 4803661, A_Q = 95.72, H_Q = 14427, zstd_ratio = 0.28%, sparse_ratio = 0.18%, sparsity = 99.59% , sparse_accuracy = 95.75, training_time = 20145s
+
+Epoch 16: A_NQ = 96.71, H_NQ = 4803912, A_Q = 96.65, H_Q = 17452, zstd_ratio = 0.31%, sparse_ratio = 0.21%, sparsity = 99.49% , sparse_accuracy = 96.66, training_time = 20192s
+
+Epoch 16: A_NQ = 95.82, H_NQ = 4802793, A_Q = 95.95, H_Q = 14839, zstd_ratio = 0.28%, sparse_ratio = 0.18%, sparsity = 99.58% , sparse_accuracy = 95.97, training_time = 20467s
+
+Epoch 16: A_NQ = 95.82, H_NQ = 4804048, A_Q = 95.34, H_Q = 12246, zstd_ratio = 0.25%, sparse_ratio = 0.16%, sparsity = 99.66% , sparse_accuracy = 95.33, training_time = 20312s
+
+Epoch 16: A_NQ = 96.58, H_NQ = 4801146, A_Q = 96.34, H_Q = 17656, zstd_ratio = 0.32%, sparse_ratio = 0.21%, sparsity = 99.48% , sparse_accuracy = 96.34, training_time = 20198s
+
+Epoch 16: A_NQ = 95.54, H_NQ = 4804060, A_Q = 95.02, H_Q = 12909, zstd_ratio = 0.25%, sparse_ratio = 0.16%, sparsity = 99.64% , sparse_accuracy = 94.99, training_time = 20271s
+
+Epoch 19: A_NQ = 95.73, H_NQ = 4800877, A_Q = 95.64, H_Q = 13106, zstd_ratio = 0.26%, sparse_ratio = 0.17%, sparsity = 99.64% , sparse_accuracy = 95.65, training_time = 17506s
+
+Epoch 18: A_NQ = 96.3, H_NQ = 4803882, A_Q = 95.94, H_Q = 15056, zstd_ratio = 0.28%, sparse_ratio = 0.18%, sparsity = 99.57% , sparse_accuracy = 95.95, training_time = 17281s
+
