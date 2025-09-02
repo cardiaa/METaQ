@@ -116,6 +116,10 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, s
         training_time = round(time.time() - start_time)
         #if local_rank == 0:
         #    print(f"Epoch {epoch + 1}: training_time = {training_time}s\n", flush=True)
+        if(model_name[:7] == "LeNet-5" and delta == 5): # To modify if delta's tests are different
+            print(f"Epoch {epoch + 1}: training_time = {training_time}s\n", flush=True)
+        if(model_name == "LeNet300_100" and delta == 5): # To modify if delta's tests are different
+            print(f"Epoch {epoch + 1}: training_time = {training_time}s\n", flush=True)            
 
         # --- Metrics & Logging ---
         if epoch % 1 == 0 or epoch == n_epochs - 1:
@@ -263,14 +267,16 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, s
                     f"zstd_ratio = {zstd_ratio:.2%}, sparse_ratio = {sparse_ratio:.2%}, "
                     f"sparsity = {sparsity:.2%} , sparse_accuracy = {sparse_accuracy}, training_time = {training_time}s\n\n"
                 )
-                print(
-                    f"Epoch {epoch + 1}: "
-                    f"A_NQ = {accuracy}, H_NQ = {entropy}, "
-                    f"A_Q = {quantized_accuracy}, H_Q = {quantized_entropy}, "
-                    f"zstd_ratio = {zstd_ratio:.2%}, sparse_ratio = {sparse_ratio:.2%}, "
-                    f"sparsity = {sparsity:.2%} , sparse_accuracy = {sparse_accuracy}, training_time = {training_time}s\n",
-                    flush=True
-                )
+                if(model_name == "AlexNet" or model_name == "VGG16"): # In this case I'm not training the model 
+                                                                      # a lot of times in parallel with Dantzig or Fenchel
+                    print(
+                        f"Epoch {epoch + 1}: "
+                        f"A_NQ = {accuracy}, H_NQ = {entropy}, "
+                        f"A_Q = {quantized_accuracy}, H_Q = {quantized_entropy}, "
+                        f"zstd_ratio = {zstd_ratio:.2%}, sparse_ratio = {sparse_ratio:.2%}, "
+                        f"sparsity = {sparsity:.2%} , sparse_accuracy = {sparse_accuracy}, training_time = {training_time}s\n",
+                        flush=True
+                    )
 
             # --- 3) Final barrier: allow all ranks to resume training ---
             if device.type == "cuda":
