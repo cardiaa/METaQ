@@ -80,16 +80,7 @@ def FISTA(xi, v, w, C, upper_c, lower_c, delta, subgradient_step, device, max_it
         
         #print(f"B FISTA's Iteration {iteration}", flush=True)
 
-        #sum_x_star = torch.sum(x_i_star, dim=0)
-
-        # Unpack the sparse representation
-        x_idx, x_val, x_idx_2, x_val_2 = x_i_star
-        # Create a dense sum vector of size C
-        sum_x_star = torch.zeros(C, device=x_val.device, dtype=x_val.dtype)
-        # Add the contributions from the first set of indices
-        sum_x_star.index_add_(0, x_idx, x_val)
-        # Add the contributions from the second set of indices (if any)
-        sum_x_star.index_add_(0, x_idx_2, x_val_2)
+        sum_x_star = torch.sum(x_i_star, dim=0)
 
         # Compute the optimal c values c_star
         c_star = torch.exp(torch.log(torch.tensor(2.0, device=device)) * xi - 1)
@@ -154,16 +145,7 @@ def ProximalBM(xi, v, w, C, upper_c, lower_c, delta, zeta, subgradient_step, dev
         elif(pruning == "N"):
             x_i_star, lambda_plus, phi_plus = knapsack_specialized(xi, v, w, C, device)
 
-        #sum_x_star = torch.sum(x_i_star, dim=0)
-
-        # Unpack the sparse representation
-        x_idx, x_val, x_idx_2, x_val_2 = x_i_star
-        # Create a dense sum vector of size C
-        sum_x_star = torch.zeros(C, device=x_val.device, dtype=x_val.dtype)
-        # Add the contributions from the first set of indices
-        sum_x_star.index_add_(0, x_idx, x_val)
-        # Add the contributions from the second set of indices (if any)
-        sum_x_star.index_add_(0, x_idx_2, x_val_2)
+        sum_x_star = torch.sum(x_i_star, dim=0)
 
         # Compute the optimal c values c_star
         c_star = torch.exp(torch.log(torch.tensor(2.0, device=device)) * xi - 1)

@@ -534,7 +534,12 @@ def knapsack_specialized_pruning_sparse(xi, v, w, C, device, delta):
     gc.collect()
     torch.cuda.empty_cache()
 
-    return (x_idx, x_val, x_idx_2, x_val_2), lambda_opt, objective_values
+    # Fill the dense matrix from sparse representation
+    x = torch.zeros((M, C), device=device, dtype=x_val.dtype)
+    x.scatter_add_(1, x_idx.unsqueeze(1), x_val.unsqueeze(1))
+    x.scatter_add_(1, x_idx_2.unsqueeze(1), x_val_2.unsqueeze(1))
+
+    return x, lambda_opt, objective_values
 
 def knapsack_specialized_histo(xi, v, w, C, device):
     """
