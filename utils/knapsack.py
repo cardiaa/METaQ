@@ -530,10 +530,6 @@ def knapsack_specialized_pruning_sparse(xi, v, w, C, device, delta):
     x.scatter_add_(1, x_idx.unsqueeze(1), x_val.unsqueeze(1))
     x.scatter_add_(1, x_idx_2.unsqueeze(1), x_val_2.unsqueeze(1))
 
-    print("Unique values in x:", torch.unique(x).numel())
-    print("Unique values in lambda_opt:", torch.unique(lambda_opt).numel())
-    print("Unique values in objective_values:", torch.unique(objective_values).numel())
-
     return x, lambda_opt, objective_values
 
 def knapsack_specialized_histo(xi, v, w, C, device):
