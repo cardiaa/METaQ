@@ -525,7 +525,12 @@ def knapsack_specialized_pruning_sparse(xi, v, w, C, device, delta):
     del ratio, neg_indices, pos_indices, neg_sorted, pos_sorted, b_vector
     del idx_left_mid, idx_right_mid, one_indices
     del i0, i0_pos, theta1, theta2, obj1, obj2, better_first
-    del x_edge_idx, x_edge_val
+
+    # Delete optional variables only if they exist
+    if 'x_edge_idx' in locals():
+        del x_edge_idx
+    if 'x_edge_val' in locals():
+        del x_edge_val
     gc.collect()
     torch.cuda.empty_cache()
 
