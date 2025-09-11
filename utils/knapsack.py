@@ -404,9 +404,8 @@ def knapsack_specialized_pruning_sparse(xi, v, w, C, device, delta):
     # === Step 4: Initialize sparse outputs ===
     x_idx = torch.zeros(M, dtype=torch.int64, device=device)    # bucket index
     x_val = torch.zeros(M, dtype=torch.float32, device=device)  # value
-    x_idx_2 = torch.zeros(M, dtype=torch.int64, device=device)  # optional second index
-    x_val_2 = torch.zeros(M, dtype=torch.float32, device=device)  # optional second value
-
+    x_idx_2 = torch.full((M,), -1, dtype=torch.int64, device=device)  # second index, -1 = unused
+    x_val_2 = torch.zeros(M, dtype=torch.float32, device=device)  # second value
     lambda_opt = torch.zeros(M, device=device)
 
     # === Step 5: Edge cases ===
@@ -486,9 +485,11 @@ def knapsack_specialized_pruning_sparse(xi, v, w, C, device, delta):
         obj2 = xi[idx_left_mid] * theta2 + xi[idx_right_mid] * (1 - theta2)
         better_first = obj1 < obj2
 
+        # Assign sparse indices
         x_idx[mask_mid] = torch.where(better_first, i0, idx_left_mid).to(torch.int64)
         x_val[mask_mid] = torch.where(better_first, theta1, theta2)
-        x_idx_2[mask_mid] = torch.where(better_first, 0, idx_right_mid).to(torch.int64)
+        # Only write to x_idx_2/x_val_2 if method2 was chosen
+        x_idx_2[mask_mid] = torch.where(better_first, -1, idx_right_mid).to(torch.int64)
         x_val_2[mask_mid] = torch.where(better_first, 0.0, 1 - theta2)
 
     # === Step 7: Compute idx_left and idx_right globally ===
@@ -518,15 +519,17 @@ def knapsack_specialized_pruning_sparse(xi, v, w, C, device, delta):
     lambda_opt = torch.where(denominator_zero_mask, lambda_opt_zero, lambda_opt_nonzero)
 
     # === Step 9: Objective ===
-    objective_values = delta + x_val * xi[x_idx] + x_val_2 * xi[x_idx_2]
-
-    # Cleanup only the largest intermediates (let PyTorch reuse memory)
-    del ratio, neg_indices, pos_indices, neg_sorted, pos_sorted, b_vector
+    objective_values = delta + x_val * xi[x_idx] + x_val_2 * xi[torch.clamp(x_idx_2, min=0)]
 
     # === Step 10: Fill the dense matrix from sparse representation ===
     x = torch.zeros((M, C), device=device, dtype=x_val.dtype)
     x.scatter_add_(1, x_idx.unsqueeze(1), x_val.unsqueeze(1))
-    x.scatter_add_(1, x_idx_2.unsqueeze(1), x_val_2.unsqueeze(1))
+    mask_x2_nonzero = x_idx_2 >= 0
+    x.scatter_add_(1, x_idx_2[mask_x2_nonzero].unsqueeze(1),
+                   x_val_2[mask_x2_nonzero].unsqueeze(1))
+
+    # Cleanup only the largest intermediates
+    del ratio, neg_indices, pos_indices, neg_sorted, pos_sorted, b_vector
 
     return x, lambda_opt, objective_values
 
