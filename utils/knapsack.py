@@ -363,8 +363,9 @@ def knapsack_specialized_pruning_sparse(xi, v, w, C, device, delta):
         device (torch.device): Target device for computation.
 
     Returns:
-        tuple: Optimal allocation (sparse: x_idx, x_val), optimal multipliers (lambda_opt), and objective values.
+        tuple: Optimal allocation (dense: x), optimal multipliers (lambda_opt), and objective values.
     """
+    # Move to device + float32 baseline
     xi = xi.to(dtype=torch.float32, device=device)
     v = v.to(dtype=torch.float32, device=device)
     w = w.to(dtype=torch.float32, device=device)
@@ -373,6 +374,7 @@ def knapsack_specialized_pruning_sparse(xi, v, w, C, device, delta):
     M = w.shape[0]
 
     # === Step 1: Compute x_plus ===
+    # Keep b_list rather than rely on a large dense x_plus if C grows
     b_list = []
     b = 0
     while True:
@@ -384,16 +386,25 @@ def knapsack_specialized_pruning_sparse(xi, v, w, C, device, delta):
         if b + 1 > C - 1:
             break
     b_list.append(C - 1)
+    # we still create x_plus because later code expects a binary mask; it's tiny (size C)
     x_plus = torch.zeros(C, dtype=torch.int32, device=device)
-    x_plus[torch.tensor(b_list, device=device)] = 1
+    x_plus[torch.tensor(b_list, device=device, dtype=torch.int32)] = 1
 
     # === Step 2: Precompute ===
+    # ratio is size C (tiny relative to M). Use it then free it immediately.
     ratio = xi / v
     neg_indices = torch.where(v < 0)[0]
     pos_indices = torch.where(v >= 0)[0]
     neg_sorted = neg_indices[torch.argsort(ratio[neg_indices], descending=True)]
     pos_sorted = pos_indices[torch.argsort(ratio[pos_indices])]
     b_vector = torch.cat([neg_sorted, pos_sorted], dim=0).to(device)
+
+    # free ratio now to reduce peak memory
+    if 'ratio' in locals():
+        del ratio
+        # not strictly necessary but helps reduce peak memory
+        import gc
+        gc.collect()
 
     # === Step 3: Masks ===
     mask_small = w < v[0]
@@ -402,16 +413,20 @@ def knapsack_specialized_pruning_sparse(xi, v, w, C, device, delta):
     mask_edge = mask_small | mask_large
 
     # === Step 4: Initialize sparse outputs ===
-    x_idx = torch.zeros(M, dtype=torch.int32, device=device)   # bucket index
+    # Keep indices as int32 to save memory; convert to long only after if/when needed.
+    x_idx = torch.zeros(M, dtype=torch.int32, device=device)   # bucket index (int32 to save memory)
     x_val = torch.zeros(M, dtype=torch.float32, device=device) # value
     x_idx_2 = torch.zeros(M, dtype=torch.int32, device=device) # optional second index
     x_val_2 = torch.zeros(M, dtype=torch.float32, device=device) # optional second value
 
-    lambda_opt = torch.zeros(M, device=device)
+    # initialize lambda_opt directly
+    lambda_opt = torch.zeros(M, device=device, dtype=torch.float32)
 
     # === Step 5: Edge cases ===
     if mask_edge.any():
         w_edge = w[mask_edge]
+
+        # local sparse storage for edges (length N_edge)
         x_edge_idx = torch.zeros(w_edge.shape[0], dtype=torch.int32, device=device)
         x_edge_val = torch.zeros(w_edge.shape[0], dtype=torch.float32, device=device)
 
@@ -421,58 +436,104 @@ def knapsack_specialized_pruning_sparse(xi, v, w, C, device, delta):
         edge_small = w_edge < v[0]
         edge_large = w_edge > v[-1]
 
-        # Small edge
+        # Small edge branch
         mask_cond_small = (w_div_v0 >= 0) & (w_div_v0 <= 1) & edge_small
         mask_else_small = edge_small & (~mask_cond_small)
         if mask_cond_small.any():
-            w_small = w_edge[mask_cond_small].unsqueeze(1)
-            div_mat = w_small / v.unsqueeze(0)
-            val_mat = div_mat * xi.unsqueeze(0)
+            # Use float16 for big temporary matrices to save peak memory
+            w_small = w_edge[mask_cond_small].unsqueeze(1)  # (N_s,1)
+            # compute div_mat in float16 to lower memory peak (C is small, but M_mid can be large)
+            div_mat = (w_small / v.unsqueeze(0)).half()  # (N_s, C) in float16
+            xi_half = xi.half()
+            val_mat = div_mat * xi_half.unsqueeze(0)  # float16
             i_min = torch.argmin(val_mat, dim=1)
-            vals_min = div_mat[torch.arange(i_min.shape[0], device=device), i_min]
+            # values for assignment: take the div_mat values (float16) but cast to float32 for storage
+            vals_min = div_mat[torch.arange(i_min.shape[0], device=device), i_min].to(torch.float32)
+
             x_edge_idx[mask_cond_small] = i_min.to(torch.int32)
             x_edge_val[mask_cond_small] = vals_min
+
+            # free temporaries
+            del div_mat, val_mat, xi_half, w_small
+            gc.collect()
+
         if mask_else_small.any():
             x_edge_idx[mask_else_small] = 0
             x_edge_val[mask_else_small] = 1.0
 
-        # Large edge
+        # Large edge branch
         mask_cond_large = (w_div_v_last >= 0) & (w_div_v_last <= 1) & edge_large
         mask_else_large = edge_large & (~mask_cond_large)
         if mask_cond_large.any():
             w_large = w_edge[mask_cond_large].unsqueeze(1)
-            div_mat = w_large / v.unsqueeze(0)
-            val_mat = div_mat * xi.unsqueeze(0)
+            div_mat = (w_large / v.unsqueeze(0)).half()
+            xi_half = xi.half()
+            val_mat = div_mat * xi_half.unsqueeze(0)
             i_min = torch.argmin(val_mat, dim=1)
-            vals_min = div_mat[torch.arange(i_min.shape[0], device=device), i_min]
+            vals_min = div_mat[torch.arange(i_min.shape[0], device=device), i_min].to(torch.float32)
+
             x_edge_idx[mask_cond_large] = i_min.to(torch.int32)
             x_edge_val[mask_cond_large] = vals_min
+
+            del div_mat, val_mat, xi_half, w_large
+            gc.collect()
+
         if mask_else_large.any():
             x_edge_idx[mask_else_large] = C - 1
             x_edge_val[mask_else_large] = 1.0
 
+        # write back to global sparse arrays (M-long)
         x_idx[mask_edge] = x_edge_idx
         x_val[mask_edge] = x_edge_val
 
+        # lambda_opt for edge entries (denominator zero case)
+        # compute lambda_opt_zero_full once (length C small)
+        lambda_opt_zero_full = -(xi + delta) / v  # length C
+        # idx_edge are indices along C
+        idx_edge = x_idx[mask_edge].to(torch.long)
+        lambda_opt[mask_edge] = lambda_opt_zero_full[idx_edge]
+
+        # free edge temporaries
+        if 'x_edge_idx' in locals():
+            del x_edge_idx
+        if 'x_edge_val' in locals():
+            del x_edge_val
+        if 'w_edge' in locals():
+            del w_edge
+        gc.collect()
+
     # === Step 6: Intermediate Case ===
+    # For mid entries we compute both methods and choose best; we will also compute lambda_opt directly here
     if mask_mid.any():
-        w_mid = w[mask_mid]
+        w_mid = w[mask_mid]  # length M_mid
         M_mid = w_mid.shape[0]
 
-        # First method
-        ratio_b = w_mid[:, None] / v[b_vector]
+        # --- First method: look over b_vector choices ---
+        # ratio_b = w_mid[:, None] / v[b_vector]
+        # compute in float16 to reduce peak memory if M_mid large. v[b_vector] is small (size C)
+        # We'll compute ratio_b and val for argmin in float16 and then cast results back.
+        denom_b = v[b_vector]  # small array
+        ratio_b = (w_mid[:, None] / denom_b.unsqueeze(0)).half()  # (M_mid, len(b_vector)) float16
+        # valid positions are those where ratio_b in [0,1] and x_plus[b_vector]==1
         valid = (ratio_b >= 0) & (ratio_b <= 1) & (x_plus[b_vector] == 1).unsqueeze(0)
-        valid_i0 = torch.where(
-            valid,
-            torch.arange(C, device=device)[None, :],
-            torch.tensor(float('inf'), device=device)
-        )
-        i0_pos = valid_i0.argmin(dim=1)
-        i0 = b_vector[i0_pos]
+        # to find i0 we create a masked index selection: use large positive value for invalid positions
+        # create candidate indices (shape (1, len(b_vector))) then broadcast
+        inf_mask = torch.tensor(float('inf'), device=device).half()
+        # construct valid_i0: if valid -> index else inf
+        # we need indices in range 0..C-1, use int64 for the temporary selection
+        candidate_indices = torch.arange(b_vector.shape[0], device=device)
+        valid_i0 = torch.where(valid, candidate_indices.unsqueeze(0), torch.full_like(ratio_b, float('inf')).to(ratio_b.dtype))
+        i0_pos = valid_i0.argmin(dim=1)  # positions into b_vector
+        i0 = b_vector[i0_pos]  # actual bucket indices length M_mid
         v_i0 = v[i0]
+        # theta1: w_mid / v_i0 (float32)
         theta1 = w_mid / v_i0
 
-        # Second method
+        # free ratio_b, valid, valid_i0 candidates asap
+        del ratio_b, valid, valid_i0, candidate_indices
+        gc.collect()
+
+        # --- Second method: linear interpolation between one_indices neighbors ---
         one_indices = torch.nonzero(x_plus, as_tuple=True)[0].to(device=device, dtype=torch.long)
         i_right = torch.searchsorted(v[one_indices], w_mid, right=False)
         i_right = i_right.clamp(min=1, max=one_indices.shape[0] - 1)
@@ -482,62 +543,71 @@ def knapsack_specialized_pruning_sparse(xi, v, w, C, device, delta):
         v_right = v[idx_right_mid]
         theta2 = (w_mid - v_right) / (v_left - v_right + 1e-8)
 
-        # Choose better
+        # Compare objectives (obj1 vs obj2) but compute in float32 to keep stability
         obj1 = xi[i0] * theta1
         obj2 = xi[idx_left_mid] * theta2 + xi[idx_right_mid] * (1 - theta2)
         better_first = obj1 < obj2
 
+        # Assign sparse representation for mid entries
+        # ensure index dtype matches x_idx (int32)
         x_idx[mask_mid] = torch.where(better_first, i0, idx_left_mid).to(torch.int32)
         x_val[mask_mid] = torch.where(better_first, theta1, theta2)
-        x_idx_2[mask_mid] = torch.where(better_first, 0, idx_right_mid).to(torch.int32)
-        x_val_2[mask_mid] = torch.where(better_first, 0.0, 1 - theta2)
+        x_idx_2[mask_mid] = torch.where(better_first, torch.zeros_like(i0), idx_right_mid).to(torch.int32)
+        x_val_2[mask_mid] = torch.where(better_first, torch.zeros_like(theta1), 1 - theta2)
 
-    # === Step 7: Compute idx_left and idx_right globally ===
-    one_indices = torch.nonzero(x_plus, as_tuple=True)[0]
-    idx_left = torch.zeros_like(w, dtype=torch.long)
-    idx_right = torch.zeros_like(w, dtype=torch.long)
+        # Compute lambda_opt for mid entries directly:
+        # - if better_first True -> idx_left = idx_right = i0 => denominator zero => use lambda_opt_zero_full[i0]
+        # - else -> idx_left = idx_left_mid, idx_right = idx_right_mid => compute normal formula
+        # Ensure lambda_opt_zero_full exists (compute once; C small)
+        if 'lambda_opt_zero_full' not in locals():
+            lambda_opt_zero_full = -(xi + delta) / v  # length C
+        # mask of mid & better_first: set to lambda_opt_zero_full[i0]
+        idx_i0_long = i0.to(torch.long)
+        lambda_opt_mid = torch.empty(M_mid, device=device, dtype=torch.float32)
+        # where better_first
+        bf_mask = better_first
+        if bf_mask.any():
+            lambda_opt_mid[bf_mask] = lambda_opt_zero_full[idx_i0_long[bf_mask]]
+        # where not better_first
+        not_bf = ~bf_mask
+        if not_bf.any():
+            denom = v[idx_right_mid[not_bf]] - v[idx_left_mid[not_bf]]
+            # avoid zero denominators with small epsilon (shouldn't happen for this branch, but safe)
+            denom_safe = denom + (denom == 0).to(dtype=denom.dtype) * 1e-12
+            lambda_opt_mid[not_bf] = -(xi[idx_right_mid[not_bf]] - xi[idx_left_mid[not_bf]]) / denom_safe
 
-    if mask_mid.any():
-        i_right_mid = torch.searchsorted(v[one_indices], w[mask_mid], right=False)
-        i_right_mid = i_right_mid.clamp(min=1, max=one_indices.shape[0] - 1)
-        idx_right_mid = one_indices[i_right_mid]
-        idx_left_mid = one_indices[i_right_mid - 1]
-        idx_left[mask_mid] = torch.where(better_first, i0, idx_left_mid)
-        idx_right[mask_mid] = torch.where(better_first, i0, idx_right_mid)
+        # write back to global lambda_opt
+        lambda_opt[mask_mid] = lambda_opt_mid
 
-    if mask_edge.any():
-        idx_edge = x_idx[mask_edge]
-        idx_left[mask_edge] = idx_edge
-        idx_right[mask_edge] = idx_edge
+        # free mid temporaries
+        for _n in ['w_mid', 'M_mid', 'v_i0', 'theta1', 'i0', 'i0_pos', 'idx_right_mid', 'idx_left_mid',
+                   'v_left', 'v_right', 'theta2', 'obj1', 'obj2', 'better_first', 'bf_mask', 'not_bf', 'lambda_opt_mid']:
+            if _n in locals():
+                del locals()[_n]
+        gc.collect()
 
-    # === Step 8: Compute lambda_opt ===
-    denominator = v[idx_right] - v[idx_left]
-    denominator_zero_mask = denominator == 0
-    lambda_opt_nonzero = -(xi[idx_right] - xi[idx_left]) / denominator
-    lambda_opt_zero_full = -(xi + delta) / v
-    lambda_opt_zero = lambda_opt_zero_full[idx_left]
-    lambda_opt = torch.where(denominator_zero_mask, lambda_opt_zero, lambda_opt_nonzero)
+    # If lambda_opt_zero_full hasn't been created in the function yet, create it now for completeness
+    if 'lambda_opt_zero_full' not in locals():
+        lambda_opt_zero_full = -(xi + delta) / v
 
     # === Step 9: Objective ===
+    # compute objective_values using sparse representation (M-long vectors)
     objective_values = delta + x_val * xi[x_idx] + x_val_2 * xi[x_idx_2]
 
-    # Cleanup: delete intermediate tensors
-    del ratio, neg_indices, pos_indices, neg_sorted, pos_sorted, b_vector
-    del idx_left_mid, idx_right_mid, one_indices
-    del i0, i0_pos, theta1, theta2, obj1, obj2, better_first
-
-    # Delete optional variables only if they exist
-    if 'x_edge_idx' in locals():
-        del x_edge_idx
-    if 'x_edge_val' in locals():
-        del x_edge_val
+    # Cleanup: delete intermediate tensors if present
+    to_try_del = ['neg_indices', 'pos_indices', 'neg_sorted', 'pos_sorted', 'b_vector',
+                  'one_indices']
+    for _n in to_try_del:
+        if _n in locals():
+            del locals()[_n]
     gc.collect()
     torch.cuda.empty_cache()
 
-    # Fill the dense matrix from sparse representation
+    # === Reconstruct dense x for compatibility with the rest of code ===
+    # NOTE: scatter_add_ expects Long index type, so convert indices here only (keeps x_idx stored as int32)
     x = torch.zeros((M, C), device=device, dtype=x_val.dtype)
     x.scatter_add_(1, x_idx.unsqueeze(1).to(torch.long), x_val.unsqueeze(1))
-    x.scatter_add_(1, x_idx_2.unsqueeze(1).to(torch.long), x_val_2.unsqueeze(1))    
+    x.scatter_add_(1, x_idx_2.unsqueeze(1).to(torch.long), x_val_2.unsqueeze(1))
 
     return x, lambda_opt, objective_values
 
