@@ -351,8 +351,9 @@ def knapsack_specialized_pruning(xi, v, w, C, device, delta):
 
 def knapsack_specialized_pruning_sparse(xi, v, w, C, device, delta):
     """
-    Solves a specialized knapsack problem with pruning strategy, using vectorized operations,
-    with sparse representation for memory efficiency.
+    Solves a specialized knapsack problem with pruning strategy using vectorized operations,
+    with sparse representation for memory efficiency, except for critical indices needed
+    for correct lambda computation.
 
     Args:
         xi (torch.Tensor): xi variables.
@@ -363,7 +364,7 @@ def knapsack_specialized_pruning_sparse(xi, v, w, C, device, delta):
         device (torch.device): Target device for computation.
 
     Returns:
-        tuple: Optimal allocation (dense matrix), optimal multipliers, and objective values.
+        tuple: Optimal allocation (dense: x), optimal multipliers (lambda_opt), and objective values.
     """
     xi = xi.to(dtype=torch.float32, device=device)
     v = v.to(dtype=torch.float32, device=device)
@@ -378,7 +379,7 @@ def knapsack_specialized_pruning_sparse(xi, v, w, C, device, delta):
     while True:
         delta_xi = xi[b + 1:] - xi[b]
         delta_v = v[b + 1:] - v[b]
-        b = torch.argmin(delta_xi / delta_v) + 1 + b_list[-1] if b_list else 0
+        b = torch.argmin(delta_xi / delta_v) + 1 + (b_list[-1] if b_list else 0)
         if b != C - 1:
             b_list.append(int(b))
         if b + 1 > C - 1:
@@ -387,7 +388,7 @@ def knapsack_specialized_pruning_sparse(xi, v, w, C, device, delta):
     x_plus = torch.zeros(C, dtype=torch.int32, device=device)
     x_plus[torch.tensor(b_list, device=device)] = 1
 
-    # === Step 2: Precompute ===
+    # === Step 2: Precompute sorted indices (ratio is only O(C)) ===
     ratio = xi / v
     neg_indices = torch.where(v < 0)[0]
     pos_indices = torch.where(v >= 0)[0]
@@ -401,17 +402,19 @@ def knapsack_specialized_pruning_sparse(xi, v, w, C, device, delta):
     mask_mid = (~mask_small) & (~mask_large)
     mask_edge = mask_small | mask_large
 
-    # === Step 4: Initialize sparse outputs ===
-    x_idx = torch.zeros(M, dtype=torch.int32, device=device)
+    # === Step 4: Initialize sparse outputs for large matrices ===
+    x_idx = torch.zeros(M, dtype=torch.int64, device=device)
     x_val = torch.zeros(M, dtype=torch.float32, device=device)
-    x_idx_2 = torch.zeros(M, dtype=torch.int32, device=device)
+    x_idx_2 = torch.zeros(M, dtype=torch.int64, device=device)
     x_val_2 = torch.zeros(M, dtype=torch.float32, device=device)
+
+    # Dense tensor for lambda calculation
     lambda_opt = torch.zeros(M, device=device)
 
     # === Step 5: Edge cases ===
     if mask_edge.any():
         w_edge = w[mask_edge]
-        x_edge_idx = torch.zeros(w_edge.shape[0], dtype=torch.int32, device=device)
+        x_edge_idx = torch.zeros(w_edge.shape[0], dtype=torch.int64, device=device)
         x_edge_val = torch.zeros(w_edge.shape[0], dtype=torch.float32, device=device)
 
         w_div_v0 = w_edge / v[0]
@@ -429,7 +432,7 @@ def knapsack_specialized_pruning_sparse(xi, v, w, C, device, delta):
             val_mat = div_mat * xi.unsqueeze(0)
             i_min = torch.argmin(val_mat, dim=1)
             vals_min = div_mat[torch.arange(i_min.shape[0], device=device), i_min]
-            x_edge_idx[mask_cond_small] = i_min.to(torch.int32)
+            x_edge_idx[mask_cond_small] = i_min.to(torch.int64)
             x_edge_val[mask_cond_small] = vals_min
         if mask_else_small.any():
             x_edge_idx[mask_else_small] = 0
@@ -444,7 +447,7 @@ def knapsack_specialized_pruning_sparse(xi, v, w, C, device, delta):
             val_mat = div_mat * xi.unsqueeze(0)
             i_min = torch.argmin(val_mat, dim=1)
             vals_min = div_mat[torch.arange(i_min.shape[0], device=device), i_min]
-            x_edge_idx[mask_cond_large] = i_min.to(torch.int32)
+            x_edge_idx[mask_cond_large] = i_min.to(torch.int64)
             x_edge_val[mask_cond_large] = vals_min
         if mask_else_large.any():
             x_edge_idx[mask_else_large] = C - 1
@@ -456,8 +459,8 @@ def knapsack_specialized_pruning_sparse(xi, v, w, C, device, delta):
     # === Step 6: Intermediate Case ===
     if mask_mid.any():
         w_mid = w[mask_mid]
-        M_mid = w_mid.shape[0]
 
+        # Method 1
         ratio_b = w_mid[:, None] / v[b_vector]
         valid = (ratio_b >= 0) & (ratio_b <= 1) & (x_plus[b_vector] == 1).unsqueeze(0)
         valid_i0 = torch.where(
@@ -470,6 +473,7 @@ def knapsack_specialized_pruning_sparse(xi, v, w, C, device, delta):
         v_i0 = v[i0]
         theta1 = w_mid / v_i0
 
+        # Method 2
         one_indices = torch.nonzero(x_plus, as_tuple=True)[0].to(device=device, dtype=torch.long)
         i_right = torch.searchsorted(v[one_indices], w_mid, right=False)
         i_right = i_right.clamp(min=1, max=one_indices.shape[0] - 1)
@@ -479,16 +483,17 @@ def knapsack_specialized_pruning_sparse(xi, v, w, C, device, delta):
         v_right = v[idx_right_mid]
         theta2 = (w_mid - v_right) / (v_left - v_right + 1e-8)
 
+        # Choose better
         obj1 = xi[i0] * theta1
         obj2 = xi[idx_left_mid] * theta2 + xi[idx_right_mid] * (1 - theta2)
         better_first = obj1 < obj2
 
-        x_idx[mask_mid] = torch.where(better_first, i0, idx_left_mid).to(torch.int32)
+        x_idx[mask_mid] = torch.where(better_first, i0, idx_left_mid).to(torch.int64)
         x_val[mask_mid] = torch.where(better_first, theta1, theta2)
-        x_idx_2[mask_mid] = torch.where(better_first, 0, idx_right_mid).to(torch.int32)
+        x_idx_2[mask_mid] = torch.where(better_first, 0, idx_right_mid).to(torch.int64)
         x_val_2[mask_mid] = torch.where(better_first, 0.0, 1 - theta2)
 
-    # === Step 7: Compute idx_left and idx_right globally ===
+    # === Step 7: Compute idx_left and idx_right globally (dense) ===
     one_indices = torch.nonzero(x_plus, as_tuple=True)[0]
     idx_left = torch.zeros_like(w, dtype=torch.long)
     idx_right = torch.zeros_like(w, dtype=torch.long)
@@ -517,23 +522,14 @@ def knapsack_specialized_pruning_sparse(xi, v, w, C, device, delta):
     # === Step 9: Objective ===
     objective_values = delta + x_val * xi[x_idx] + x_val_2 * xi[x_idx_2]
 
-    # Cleanup: delete intermediate tensors
+    # Cleanup only the largest intermediates (let PyTorch reuse memory)
     del ratio, neg_indices, pos_indices, neg_sorted, pos_sorted, b_vector
-    del idx_left_mid, idx_right_mid, one_indices
-    del i0, i0_pos, theta1, theta2, obj1, obj2, better_first
-
-    if 'x_edge_idx' in locals():
-        del x_edge_idx
-    if 'x_edge_val' in locals():
-        del x_edge_val
-
-    torch.cuda.empty_cache()
 
     # === Step 10: Fill the dense matrix from sparse representation ===
     x = torch.zeros((M, C), device=device, dtype=x_val.dtype)
-    x.scatter_add_(1, x_idx.unsqueeze(1).long(), x_val.unsqueeze(1))
-    x.scatter_add_(1, x_idx_2.unsqueeze(1).long(), x_val_2.unsqueeze(1))
-    
+    x.scatter_add_(1, x_idx.unsqueeze(1), x_val.unsqueeze(1))
+    x.scatter_add_(1, x_idx_2.unsqueeze(1), x_val_2.unsqueeze(1))
+
     print("Unique values in x:", torch.unique(x).numel())
     print("Unique values in lambda_opt:", torch.unique(lambda_opt).numel())
     print("Unique values in objective_values:", torch.unique(objective_values).numel())
