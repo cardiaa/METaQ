@@ -215,7 +215,7 @@ if __name__ == "__main__":
         model = model.to(device)  
         model = DDP(model, device_ids=[local_rank])     
         criterion, criterion_name = nn.CrossEntropyLoss(), "CrossEntropy" 
-        C = 32
+        C = 64
         lr = 0.01
         lambda_reg = 0.0005
         alpha = 1
@@ -236,7 +236,7 @@ if __name__ == "__main__":
         accuracy_tollerance = 0.2
         zeta = 50000
         l = 0.5
-        n_epochs = 50 # To be increased as soon as I find good configurations
+        n_epochs = 20 # To be increased as soon as I find good configurations
         max_iterations = 15
         train_optimizer = "SGD"  
         entropy_optimizer = "FISTA"  
