@@ -78,8 +78,8 @@ def load_data(model_name):
 
         train_sampler = DistributedSampler(train_dataset, num_replicas=world_size, rank=local_rank, shuffle=True, drop_last=True)
 
-        trainset = DataLoader(train_dataset, batch_size=1024, sampler=train_sampler, num_workers=16, pin_memory=True)
-        testset = DataLoader(val_dataset, batch_size=1024, shuffle=False, num_workers=16, pin_memory=True)
+        trainset = DataLoader(train_dataset, batch_size=512, sampler=train_sampler, num_workers=16, pin_memory=True)
+        testset = DataLoader(val_dataset, batch_size=512, shuffle=False, num_workers=16, pin_memory=True)
     elif(model_name == "VGG16"):
         transform_train = transforms.Compose([
             transforms.RandomResizedCrop(224),
