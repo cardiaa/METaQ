@@ -74,44 +74,45 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, s
             # Backpropagation
             loss.backward()
             
-            with torch.no_grad():
-                w = torch.cat([param.detach().view(-1) for param in model.parameters()]).to(device)
+            if(alpha != 1):
+                with torch.no_grad():
+                    w = torch.cat([param.detach().view(-1) for param in model.parameters()]).to(device)
 
-                #unique_weights = torch.unique(w).numel() # Alternative version
-                #indices = torch.searchsorted(v, w, right=True) - 1
-                #indices = torch.clamp(indices, min=0)
-                #w_quantized = v[indices]
+                    #unique_weights = torch.unique(w).numel() # Alternative version
+                    #indices = torch.searchsorted(v, w, right=True) - 1
+                    #indices = torch.clamp(indices, min=0)
+                    #w_quantized = v[indices]
 
-                zeta *= 1 + l
-                l = l / 1.5
+                    zeta *= 1 + l
+                    l = l / 1.5
 
-            with torch.no_grad():
-                if(entropy_optimizer == 'FISTA'):
-                    #xi, beta_tensor = FISTA(xi, v, w_quantized, C, upper_c, lower_c, delta, 
-                    #                        subgradient_step, device, max_iterations, pruning) # Alternative version
-                    
-                    #xi, beta_tensor = torch.zeros(C, dtype=torch.int32), torch.zeros(len(w), dtype=torch.int32)
-                    #xi = xi.to(device)
-                    #beta_tensor = beta_tensor.to(device)
-                    
-                    xi, beta_tensor = FISTA(xi, v, w, C, upper_c, lower_c, delta, 
-                                            subgradient_step, device, max_iterations, pruning) 
-                    
-                elif(entropy_optimizer == 'PROXIMAL BM'):
-                    #xi, beta_tensor = ProximalBM(xi, v, w_quantized, C, upper_c, lower_c, delta, 
-                    #                             zeta, subgradient_step, device, max_iterations, pruning) # Alternative version
-                    xi, beta_tensor = ProximalBM(xi, v, w, C, upper_c, lower_c, delta, 
-                                                zeta, subgradient_step, device, max_iterations, pruning)       
+                with torch.no_grad():
+                    if(entropy_optimizer == 'FISTA'):
+                        #xi, beta_tensor = FISTA(xi, v, w_quantized, C, upper_c, lower_c, delta, 
+                        #                        subgradient_step, device, max_iterations, pruning) # Alternative version
+                        
+                        #xi, beta_tensor = torch.zeros(C, dtype=torch.int32), torch.zeros(len(w), dtype=torch.int32)
+                        #xi = xi.to(device)
+                        #beta_tensor = beta_tensor.to(device)
+                        
+                        xi, beta_tensor = FISTA(xi, v, w, C, upper_c, lower_c, delta, 
+                                                subgradient_step, device, max_iterations, pruning) 
+                        
+                    elif(entropy_optimizer == 'PROXIMAL BM'):
+                        #xi, beta_tensor = ProximalBM(xi, v, w_quantized, C, upper_c, lower_c, delta, 
+                        #                             zeta, subgradient_step, device, max_iterations, pruning) # Alternative version
+                        xi, beta_tensor = ProximalBM(xi, v, w, C, upper_c, lower_c, delta, 
+                                                    zeta, subgradient_step, device, max_iterations, pruning)       
 
-            # Update of ∇ɸ
-            with torch.no_grad():
-                idx = 0
-                for param in model.parameters():
-                    numel = param.numel()
-                    if param.grad is not None:
-                        update = ((1 - alpha) * lambda_reg * (-beta_tensor[idx:idx + numel])).view(param.size())
-                        param.grad.add_(update)
-                    idx += numel
+                # Update of ∇ɸ
+                with torch.no_grad():
+                    idx = 0
+                    for param in model.parameters():
+                        numel = param.numel()
+                        if param.grad is not None:
+                            update = ((1 - alpha) * lambda_reg * (-beta_tensor[idx:idx + numel])).view(param.size())
+                            param.grad.add_(update)
+                        idx += numel
             
             optimizer.step()
 
