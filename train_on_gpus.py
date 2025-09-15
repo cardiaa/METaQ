@@ -216,7 +216,7 @@ if __name__ == "__main__":
         model = DDP(model, device_ids=[local_rank])     
         criterion, criterion_name = nn.CrossEntropyLoss(), "CrossEntropy" 
         C = 32
-        lr = 0.01
+        lr = 0.8
         lambda_reg = 0.0005
         alpha = 0.9
         subgradient_step = 1e5 
