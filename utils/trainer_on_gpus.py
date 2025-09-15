@@ -70,7 +70,6 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, s
 
             outputs = model(inputs)
             loss = criterion(outputs, targets)
-            print("Initial loss:", loss.item())
 
             # Backpropagation
             loss.backward()
