@@ -217,7 +217,7 @@ if __name__ == "__main__":
         criterion, criterion_name = nn.CrossEntropyLoss(), "CrossEntropy" 
         C = 32
         lr = 1e-5
-        lambda_reg = 0.01
+        lambda_reg = 1e-4
         alpha = 1
         subgradient_step = 1e5 
         bucket_zero = round((C-1)/2) #it must range from 0 to C-2
