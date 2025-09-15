@@ -66,11 +66,11 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, s
             start_time2 = time.time()
             inputs, targets = data
             inputs, targets = inputs.to(device), targets.to(device)
-            print("Unique labels in first batch:", torch.unique(targets))
             optimizer.zero_grad()
 
             outputs = model(inputs)
             loss = criterion(outputs, targets)
+            print("Initial loss:", loss.item())
 
             # Backpropagation
             loss.backward()
