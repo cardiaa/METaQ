@@ -1,7 +1,7 @@
-W0912 06:21:24.250000 2463288 torch/distributed/run.py:766] 
-W0912 06:21:24.250000 2463288 torch/distributed/run.py:766] *****************************************
-W0912 06:21:24.250000 2463288 torch/distributed/run.py:766] Setting OMP_NUM_THREADS environment variable for each process to be 1 in default, to avoid your system being overloaded, please further tune the variable for optimal performance in your application as needed. 
-W0912 06:21:24.250000 2463288 torch/distributed/run.py:766] *****************************************
+W0916 12:23:22.369000 3123447 torch/distributed/run.py:766] 
+W0916 12:23:22.369000 3123447 torch/distributed/run.py:766] *****************************************
+W0916 12:23:22.369000 3123447 torch/distributed/run.py:766] Setting OMP_NUM_THREADS environment variable for each process to be 1 in default, to avoid your system being overloaded, please further tune the variable for optimal performance in your application as needed. 
+W0916 12:23:22.369000 3123447 torch/distributed/run.py:766] *****************************************
 Using device cuda:0 (NVIDIA H100 80GB HBM3)
 Using device cuda:0 (NVIDIA H100 80GB HBM3)
 [GPU 0] Using device cuda:0 (NVIDIA H100 80GB HBM3)
@@ -12,10 +12,11 @@ Using device cuda:0 (NVIDIA H100 80GB HBM3)
 model=AlexNet
 criterion=CrossEntropy
 C=32
-delta=500.0
-lr=0.01
+delta=1000.0
+lr=0.016
+batch_size=2048
 lambda_reg=0.0005
-alpha=1
+alpha=0.99999
 [T1=lambda_reg*alpha=0.0005]
 [T2=lambda_reg*(1-alpha)=0.0]
 subgradient_step=100000.0
@@ -35,7 +36,7 @@ first_best_indices=20
 accuracy_tollerance=0.2
 zeta=50000
 l=0.5
-n_epochs=20
+n_epochs=7
 max_iterations=15
 train_optimizer=SGD
 entropy_optimizer=FISTA
@@ -43,163 +44,33 @@ pruning=Y
 QuantizationType=center
 sparsity_threshold=0.001
 ------------------------------------------------------------
-Batch 0 of epoch 1: time 33.57s
-Batch 1 of epoch 1: time 11.35s
-Batch 2 of epoch 1: time 5.69s
-Batch 3 of epoch 1: time 3.72s
-Batch 4 of epoch 1: time 1.6s
-Batch 5 of epoch 1: time 1.64s
-Batch 6 of epoch 1: time 1.59s
-Batch 7 of epoch 1: time 1.58s
-Batch 8 of epoch 1: time 1.58s
-Batch 9 of epoch 1: time 1.58s
-Batch 10 of epoch 1: time 1.58s
-Batch 11 of epoch 1: time 1.58s
-Batch 12 of epoch 1: time 1.64s
-Batch 13 of epoch 1: time 1.66s
-Batch 14 of epoch 1: time 1.66s
-Batch 15 of epoch 1: time 1.65s
-Batch 16 of epoch 1: time 1.58s
-Batch 17 of epoch 1: time 1.58s
-Batch 18 of epoch 1: time 1.6s
-Batch 19 of epoch 1: time 1.66s
-Batch 20 of epoch 1: time 1.58s
-Batch 21 of epoch 1: time 1.58s
-Batch 22 of epoch 1: time 1.58s
-Batch 23 of epoch 1: time 1.58s
-Batch 24 of epoch 1: time 1.59s
-Batch 25 of epoch 1: time 1.61s
-Batch 26 of epoch 1: time 1.66s
-Batch 27 of epoch 1: time 1.65s
-Batch 28 of epoch 1: time 1.66s
-Batch 29 of epoch 1: time 1.66s
-Batch 30 of epoch 1: time 1.62s
-Batch 31 of epoch 1: time 1.69s
-Batch 32 of epoch 1: time 1.58s
-Batch 33 of epoch 1: time 2.36s
-Batch 34 of epoch 1: time 1.59s
-Batch 35 of epoch 1: time 4.27s
-Batch 36 of epoch 1: time 1.74s
-Batch 37 of epoch 1: time 3.01s
-Batch 38 of epoch 1: time 1.66s
-Batch 39 of epoch 1: time 3.65s
-Batch 40 of epoch 1: time 1.58s
-Batch 41 of epoch 1: time 1.64s
-Batch 42 of epoch 1: time 1.65s
-Batch 43 of epoch 1: time 3.01s
-Batch 44 of epoch 1: time 3.16s
-Batch 45 of epoch 1: time 4.82s
-Batch 46 of epoch 1: time 1.65s
-Batch 47 of epoch 1: time 1.66s
-Batch 48 of epoch 1: time 1.67s
-Batch 49 of epoch 1: time 1.66s
-Batch 50 of epoch 1: time 1.66s
-Batch 51 of epoch 1: time 1.65s
-Batch 52 of epoch 1: time 3.8s
-Batch 53 of epoch 1: time 6.37s
-Batch 54 of epoch 1: time 1.66s
-Batch 55 of epoch 1: time 1.67s
-Batch 56 of epoch 1: time 1.64s
-Batch 57 of epoch 1: time 1.59s
-Batch 58 of epoch 1: time 1.58s
-Batch 59 of epoch 1: time 1.58s
-Batch 60 of epoch 1: time 2.52s
-Batch 61 of epoch 1: time 6.24s
-Batch 62 of epoch 1: time 1.64s
-Batch 63 of epoch 1: time 1.59s
-Batch 64 of epoch 1: time 1.59s
-Batch 65 of epoch 1: time 1.62s
-Batch 66 of epoch 1: time 1.64s
-Batch 67 of epoch 1: time 1.58s
-Batch 68 of epoch 1: time 2.24s
-Batch 69 of epoch 1: time 5.87s
-Batch 70 of epoch 1: time 1.58s
-Batch 71 of epoch 1: time 1.58s
-Batch 72 of epoch 1: time 1.59s
-Batch 73 of epoch 1: time 2.19s
-Batch 74 of epoch 1: time 1.65s
-Batch 75 of epoch 1: time 1.65s
-Batch 76 of epoch 1: time 1.66s
-Batch 77 of epoch 1: time 6.57s
-Batch 78 of epoch 1: time 1.64s
-Batch 79 of epoch 1: time 1.59s
-Batch 80 of epoch 1: time 1.58s
-Batch 81 of epoch 1: time 2.28s
-Batch 82 of epoch 1: time 1.59s
-Batch 83 of epoch 1: time 1.66s
-Batch 84 of epoch 1: time 1.59s
-Batch 85 of epoch 1: time 5.6s
-Batch 86 of epoch 1: time 1.59s
-Batch 87 of epoch 1: time 1.58s
-Batch 88 of epoch 1: time 1.59s
-Batch 89 of epoch 1: time 3.28s
-Batch 90 of epoch 1: time 1.62s
-Batch 91 of epoch 1: time 1.65s
-Batch 92 of epoch 1: time 1.65s
-Batch 93 of epoch 1: time 5.08s
-Batch 94 of epoch 1: time 1.58s
-Batch 95 of epoch 1: time 1.59s
-Batch 96 of epoch 1: time 1.58s
-Batch 97 of epoch 1: time 4.68s
-Batch 98 of epoch 1: time 1.62s
-Batch 99 of epoch 1: time 1.66s
-Batch 100 of epoch 1: time 1.65s
-Batch 101 of epoch 1: time 4.63s
-Batch 102 of epoch 1: time 1.58s
-Batch 103 of epoch 1: time 1.59s
-Batch 104 of epoch 1: time 1.61s
-Batch 105 of epoch 1: time 5.13s
-Batch 106 of epoch 1: time 1.62s
-Batch 107 of epoch 1: time 1.58s
-Batch 108 of epoch 1: time 1.59s
-Batch 109 of epoch 1: time 4.59s
-Batch 110 of epoch 1: time 1.59s
-Batch 111 of epoch 1: time 1.58s
-Batch 112 of epoch 1: time 1.58s
-Batch 113 of epoch 1: time 4.55s
-Batch 114 of epoch 1: time 1.69s
-Batch 115 of epoch 1: time 1.63s
-Batch 116 of epoch 1: time 1.66s
-Batch 117 of epoch 1: time 3.84s
-Batch 118 of epoch 1: time 1.58s
-Batch 119 of epoch 1: time 1.58s
-Batch 120 of epoch 1: time 1.58s
-Batch 121 of epoch 1: time 5.05s
-Batch 122 of epoch 1: time 1.58s
-Batch 123 of epoch 1: time 1.6s
-Batch 124 of epoch 1: time 1.65s
-Batch 125 of epoch 1: time 3.52s
-Batch 126 of epoch 1: time 1.58s
-Batch 127 of epoch 1: time 1.65s
-Batch 128 of epoch 1: time 1.58s
-Batch 129 of epoch 1: time 6.11s
-Batch 130 of epoch 1: time 1.59s
-W0912 06:27:06.624000 2463288 torch/distributed/elastic/agent/server/api.py:719] Received 15 death signal, shutting down workers
-Traceback (most recent call last):
-  File "/home/a.cardia/METaQ/venv/bin/torchrun", line 8, in <module>
-    sys.exit(main())
-             ^^^^^^
-  File "/home/a.cardia/METaQ/venv/lib/python3.12/site-packages/torch/distributed/elastic/multiprocessing/errors/__init__.py", line 355, in wrapper
-    return f(*args, **kwargs)
-           ^^^^^^^^^^^^^^^^^^
-  File "/home/a.cardia/METaQ/venv/lib/python3.12/site-packages/torch/distributed/run.py", line 892, in main
-    run(args)
-  File "/home/a.cardia/METaQ/venv/lib/python3.12/site-packages/torch/distributed/run.py", line 883, in run
-    elastic_launch(
-  File "/home/a.cardia/METaQ/venv/lib/python3.12/site-packages/torch/distributed/launcher/api.py", line 139, in __call__
-    return launch_agent(self._config, self._entrypoint, list(args))
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/a.cardia/METaQ/venv/lib/python3.12/site-packages/torch/distributed/launcher/api.py", line 261, in launch_agent
-    result = agent.run()
-             ^^^^^^^^^^^
-  File "/home/a.cardia/METaQ/venv/lib/python3.12/site-packages/torch/distributed/elastic/metrics/api.py", line 138, in wrapper
-    result = f(*args, **kwargs)
-             ^^^^^^^^^^^^^^^^^^
-  File "/home/a.cardia/METaQ/venv/lib/python3.12/site-packages/torch/distributed/elastic/agent/server/api.py", line 711, in run
-    result = self._invoke_run(role)
-             ^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/a.cardia/METaQ/venv/lib/python3.12/site-packages/torch/distributed/elastic/agent/server/api.py", line 870, in _invoke_run
-    time.sleep(monitor_interval)
-  File "/home/a.cardia/METaQ/venv/lib/python3.12/site-packages/torch/distributed/elastic/multiprocessing/api.py", line 84, in _terminate_process_handler
-    raise SignalException(f"Process {os.getpid()} got signal: {sigval}", sigval=sigval)
-torch.distributed.elastic.multiprocessing.api.SignalException: Process 2463288 got signal: 15
+Epoch 1: A_NQ = 0.1, H_NQ = 1528887744, A_Q = 0.1, H_Q = 1, zstd_ratio = 0.01%, sparse_ratio = 0.00%, sparsity = 100.00% , sparse_accuracy = 0.1, training_time = 780s
+
+Epoch 2: A_NQ = 0.1, H_NQ = 1528824771, A_Q = 0.1, H_Q = 1, zstd_ratio = 0.01%, sparse_ratio = 0.00%, sparsity = 100.00% , sparse_accuracy = 0.1, training_time = 765s
+
+Epoch 3: A_NQ = 0.447, H_NQ = 1529067085, A_Q = 0.272, H_Q = 1, zstd_ratio = 0.01%, sparse_ratio = 0.00%, sparsity = 100.00% , sparse_accuracy = 0.272, training_time = 768s
+
+Epoch 4: A_NQ = 1.253, H_NQ = 1529311333, A_Q = 0.676, H_Q = 361, zstd_ratio = 0.01%, sparse_ratio = 0.00%, sparsity = 100.00% , sparse_accuracy = 0.676, training_time = 768s
+
+Epoch 5: A_NQ = 2.315, H_NQ = 1529504160, A_Q = 1.208, H_Q = 5441, zstd_ratio = 0.01%, sparse_ratio = 0.00%, sparsity = 100.00% , sparse_accuracy = 1.208, training_time = 768s
+
+Epoch 6: A_NQ = 4.586, H_NQ = 1529927637, A_Q = 2.343, H_Q = 14896, zstd_ratio = 0.01%, sparse_ratio = 0.00%, sparsity = 100.00% , sparse_accuracy = 2.343, training_time = 766s
+
+Epoch 7: A_NQ = 7.057, H_NQ = 1530217491, A_Q = 3.578, H_Q = 25449, zstd_ratio = 0.01%, sparse_ratio = 0.00%, sparsity = 100.00% , sparse_accuracy = 3.578, training_time = 767s
+
+delta = 1000.0
+Epoch 1: A_NQ = 0.1, H_NQ = 1528887744, A_Q = 0.1, H_Q = 1, zstd_ratio = 0.01%, sparse_ratio = 0.00%, sparsity = 100.00% , sparse_accuracy = 0.1, training_time = 780s
+
+Epoch 2: A_NQ = 0.1, H_NQ = 1528824771, A_Q = 0.1, H_Q = 1, zstd_ratio = 0.01%, sparse_ratio = 0.00%, sparsity = 100.00% , sparse_accuracy = 0.1, training_time = 765s
+
+Epoch 3: A_NQ = 0.447, H_NQ = 1529067085, A_Q = 0.272, H_Q = 1, zstd_ratio = 0.01%, sparse_ratio = 0.00%, sparsity = 100.00% , sparse_accuracy = 0.272, training_time = 768s
+
+Epoch 4: A_NQ = 1.253, H_NQ = 1529311333, A_Q = 0.676, H_Q = 361, zstd_ratio = 0.01%, sparse_ratio = 0.00%, sparsity = 100.00% , sparse_accuracy = 0.676, training_time = 768s
+
+Epoch 5: A_NQ = 2.315, H_NQ = 1529504160, A_Q = 1.208, H_Q = 5441, zstd_ratio = 0.01%, sparse_ratio = 0.00%, sparsity = 100.00% , sparse_accuracy = 1.208, training_time = 768s
+
+Epoch 6: A_NQ = 4.586, H_NQ = 1529927637, A_Q = 2.343, H_Q = 14896, zstd_ratio = 0.01%, sparse_ratio = 0.00%, sparsity = 100.00% , sparse_accuracy = 2.343, training_time = 766s
+
+Epoch 7: A_NQ = 7.057, H_NQ = 1530217491, A_Q = 3.578, H_Q = 25449, zstd_ratio = 0.01%, sparse_ratio = 0.00%, sparsity = 100.00% , sparse_accuracy = 3.578, training_time = 767s
+
+------------------------------------------------------------
