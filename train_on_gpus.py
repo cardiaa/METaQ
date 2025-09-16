@@ -80,8 +80,8 @@ def load_data(model_name):
 
         train_sampler = DistributedSampler(train_dataset, num_replicas=world_size, rank=local_rank, shuffle=True, drop_last=True)
 
-        trainset = DataLoader(train_dataset, batch_size=256, sampler=train_sampler, num_workers=8, pin_memory=True)
-        testset = DataLoader(val_dataset, batch_size=256, shuffle=False, num_workers=8, pin_memory=True)
+        trainset = DataLoader(train_dataset, batch_size=512, sampler=train_sampler, num_workers=8, pin_memory=True)
+        testset = DataLoader(val_dataset, batch_size=512, shuffle=False, num_workers=8, pin_memory=True)
     # --------------------------------------------------------------------------------------------------------------
     elif(model_name == "VGG16"):
         transform_train = transforms.Compose([
@@ -219,7 +219,7 @@ if __name__ == "__main__":
         model = DDP(model, device_ids=[local_rank])     
         criterion, criterion_name = nn.CrossEntropyLoss(), "CrossEntropy" 
         C = 32
-        lr = 2e-3
+        lr = 4e-3
         lambda_reg = 5e-4
         alpha = 1
         subgradient_step = 1e5 
