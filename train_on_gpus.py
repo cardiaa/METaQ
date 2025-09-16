@@ -19,7 +19,7 @@ def cleanup():
     dist.destroy_process_group()
 
 # Function to load the MNIST dataset
-def load_data(model_name):
+def load_data(model_name, batch_size):
 
     if(model_name[:7] == "LeNet-5"):
         if(model_name[-9:] == "(rotated)"):
@@ -80,8 +80,8 @@ def load_data(model_name):
 
         train_sampler = DistributedSampler(train_dataset, num_replicas=world_size, rank=local_rank, shuffle=True, drop_last=True)
 
-        trainset = DataLoader(train_dataset, batch_size=2048, sampler=train_sampler, num_workers=8, pin_memory=True)
-        testset = DataLoader(val_dataset, batch_size=2048, shuffle=False, num_workers=8, pin_memory=True)
+        trainset = DataLoader(train_dataset, batch_size=batch_size, sampler=train_sampler, num_workers=8, pin_memory=True)
+        testset = DataLoader(val_dataset, batch_size=batch_size, shuffle=False, num_workers=8, pin_memory=True)
     # --------------------------------------------------------------------------------------------------------------
     elif(model_name == "VGG16"):
         transform_train = transforms.Compose([
@@ -105,8 +105,8 @@ def load_data(model_name):
 
         train_sampler = DistributedSampler(train_dataset, num_replicas=world_size, rank=local_rank, shuffle=True, drop_last=True)
 
-        trainset = DataLoader(train_dataset, batch_size=512, sampler=train_sampler, num_workers=8, pin_memory=True) #with 512 and C=4 it works
-        testset = DataLoader(val_dataset, batch_size=512, shuffle=False, num_workers=8, pin_memory=True)        
+        trainset = DataLoader(train_dataset, batch_size=batch_size, sampler=train_sampler, num_workers=8, pin_memory=True) #with 512 and C=4 it works
+        testset = DataLoader(val_dataset, batch_size=batch_size, shuffle=False, num_workers=8, pin_memory=True)        
 
     # Return the loaded training and test datasets
     if(model_name == "AlexNet" or model_name == "VGG16"):
@@ -220,6 +220,7 @@ if __name__ == "__main__":
         criterion, criterion_name = nn.CrossEntropyLoss(), "CrossEntropy" 
         C = 32
         lr = 1.6e-2
+        batch_size = 2048
         lambda_reg = 5e-4
         alpha = 0.99999
         subgradient_step = 1e5 
@@ -239,7 +240,7 @@ if __name__ == "__main__":
         accuracy_tollerance = 0.2
         zeta = 50000
         l = 0.5
-        n_epochs = 50 # To be increased as soon as I find good configurations
+        n_epochs = 7 # To be increased as soon as I find good configurations
         max_iterations = 15
         train_optimizer = "SGD"  
         entropy_optimizer = "FISTA"  
@@ -257,6 +258,7 @@ if __name__ == "__main__":
         criterion, criterion_name = nn.CrossEntropyLoss(), "CrossEntropy" 
         C = 8
         lr = 0.01
+        batch_size = 512
         lambda_reg = 0.0005
         alpha = 1
         subgradient_step = 1e5 
@@ -299,7 +301,8 @@ if __name__ == "__main__":
             print(f"criterion={criterion_name}", flush=True)
             print(f"C={C}", flush=True)
             print(f"delta={args.delta}", flush=True)
-            print(f"lr={lr}", flush=True)    
+            print(f"lr={lr}", flush=True)   
+            print(f"batch_size={batch_size}", flush=True) 
             print(f"lambda_reg={lambda_reg}", flush=True)
             print(f"alpha={alpha}", flush=True)    
             print(f"[T1=lambda_reg*alpha={round(lambda_reg*alpha, 6)}]", flush=True)
@@ -338,7 +341,7 @@ if __name__ == "__main__":
             print(f"criterion={criterion_name}", flush=True)
             print(f"C={C}", flush=True)
             print(f"delta={args.delta}", flush=True)
-            print(f"lr={lr}", flush=True)    
+            print(f"lr={lr}", flush=True) 
             print(f"lambda_reg={lambda_reg}", flush=True)
             print(f"alpha={alpha}", flush=True)    
             print(f"[T1=lambda_reg*alpha={round(lambda_reg*alpha, 6)}]", flush=True)
@@ -372,7 +375,7 @@ if __name__ == "__main__":
 
     # Load the training and test datasets using the load_data function
     if(model_name == "AlexNet" or model_name == "VGG16"):
-        trainset, testset, train_sampler = load_data(model_name)
+        trainset, testset, train_sampler = load_data(model_name, batch_size)
         trainloader = trainset
         testloader = testset
         train_and_evaluate(
@@ -387,7 +390,7 @@ if __name__ == "__main__":
         )   
         cleanup()     
     else:
-        trainset, testset = load_data(model_name)
+        trainset, testset = load_data(model_name, batch_size=None)
         trainloader = torch.utils.data.DataLoader(trainset, batch_size=64, shuffle=True, drop_last=True, num_workers=0)
         testloader = torch.utils.data.DataLoader(testset, batch_size=1000, shuffle=False, num_workers=0)
         train_and_evaluate(
