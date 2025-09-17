@@ -74,7 +74,10 @@ def FISTA(xi, v, w, C, upper_c, lower_c, delta, subgradient_step, device, max_it
         # Solve the simil-knapsack problem for the current xi
         if(pruning == "Y"):
             #print("outside function", flush=True)
-            x_i_star, lambda_plus, phi_plus = knapsack_specialized_pruning_sparse(xi, v, w, C, device, delta)
+            if(device.type == "cuda"):
+                x_i_star, lambda_plus, phi_plus = knapsack_specialized_pruning_sparse(xi, v, w, C, device, delta)
+            else:
+                x_i_star, lambda_plus, phi_plus = knapsack_specialized_pruning(xi, v, w, C, device, delta)
         elif(pruning == "N"):
             x_i_star, lambda_plus, phi_plus = knapsack_specialized(xi, v, w, C, device)
         
@@ -141,7 +144,10 @@ def ProximalBM(xi, v, w, C, upper_c, lower_c, delta, zeta, subgradient_step, dev
     for iteration in range(1, max_iterations + 1):
         # Solve the knapsack problem for the current xi
         if(pruning == "Y"):
-            x_i_star, lambda_plus, phi_plus = knapsack_specialized_pruning_sparse(xi, v, w, C, device, delta)
+            if(device.type == "cuda"):
+                x_i_star, lambda_plus, phi_plus = knapsack_specialized_pruning_sparse(xi, v, w, C, device, delta)
+            else:
+                x_i_star, lambda_plus, phi_plus = knapsack_specialized_pruning(xi, v, w, C, device, delta)
         elif(pruning == "N"):
             x_i_star, lambda_plus, phi_plus = knapsack_specialized(xi, v, w, C, device)
 
