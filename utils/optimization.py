@@ -145,7 +145,7 @@ def ProximalBM(xi, v, w, C, upper_c, lower_c, delta, zeta, subgradient_step, dev
         # Solve the knapsack problem for the current xi
         if(pruning == "Y"):
             if(device.type == "cuda"):
-                x_i_star, lambda_plus, phi_plus = knapsack_specialized_pruning_sparse(xi, v, w, C, device, delta)
+                x_i_star, lambda_plus, phi_plus = knapsack_specialized_pruning(xi, v, w, C, device, delta)
             else:
                 x_i_star, lambda_plus, phi_plus = knapsack_specialized_pruning(xi, v, w, C, device, delta)
         elif(pruning == "N"):
