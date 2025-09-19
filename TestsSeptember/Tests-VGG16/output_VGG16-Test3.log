@@ -1,0 +1,84 @@
+W0919 17:37:14.283000 3456320 torch/distributed/run.py:766] 
+W0919 17:37:14.283000 3456320 torch/distributed/run.py:766] *****************************************
+W0919 17:37:14.283000 3456320 torch/distributed/run.py:766] Setting OMP_NUM_THREADS environment variable for each process to be 1 in default, to avoid your system being overloaded, please further tune the variable for optimal performance in your application as needed. 
+W0919 17:37:14.283000 3456320 torch/distributed/run.py:766] *****************************************
+Using device cuda:0 (NVIDIA H100 80GB HBM3)
+Using device cuda:0 (NVIDIA H100 80GB HBM3)
+[GPU 0] Using device cuda:0 (NVIDIA H100 80GB HBM3)
+[GPU 1] Using device cuda:1 (NVIDIA H100 80GB HBM3)
+=================================================================
+==================== PARAMETER CONFIGURATION ====================
+=================================================================
+model=VGG16
+criterion=CrossEntropy
+C=8
+delta=100.0
+lr=0.01
+batch_size=512
+lambda_reg=0.0005
+alpha=0.9
+[T1=lambda_reg*alpha=0.00045]
+[T2=lambda_reg*(1-alpha)=5e-05]
+subgradient_step=100000.0
+w0=-0.25
+r=2
+bucket_zero=4
+BestQuantization_target_acc=99.8
+final_target_acc=99.7
+target_zstd_ratio=0.0179
+min_xi=0
+max_xi=1
+upper_c=138357544
+lower_c=0.01
+c1=10
+c2=1000
+first_best_indices=20
+accuracy_tollerance=0.2
+zeta=50000
+l=0.5
+n_epochs=20
+max_iterations=15
+train_optimizer=SGD
+entropy_optimizer=FISTA
+pruning=Y
+QuantizationType=center
+sparsity_threshold=0.001
+------------------------------------------------------------
+Epoch 1: A_NQ = 0.1, H_NQ = 2418413965, A_Q = 0.1, H_Q = 1, zstd_ratio = 0.01%, sparse_ratio = 0.01%, sparsity = 0.00% , sparse_accuracy = 0.1, training_time = 2602s
+
+Epoch 2: A_NQ = 0.1, H_NQ = 2130008279, A_Q = 0.1, H_Q = 1, zstd_ratio = 0.01%, sparse_ratio = 0.01%, sparsity = 0.00% , sparse_accuracy = 0.1, training_time = 1905s
+
+Epoch 3: A_NQ = 0.1, H_NQ = 2114261023, A_Q = 0.1, H_Q = 1, zstd_ratio = 0.01%, sparse_ratio = 0.01%, sparsity = 0.00% , sparse_accuracy = 0.1, training_time = 1628s
+
+Epoch 4: A_NQ = 0.1, H_NQ = 1964148238, A_Q = 0.1, H_Q = 1, zstd_ratio = 0.01%, sparse_ratio = 0.01%, sparsity = 0.00% , sparse_accuracy = 0.1, training_time = 1626s
+
+W0919 20:13:12.929000 3456320 torch/distributed/elastic/agent/server/api.py:719] Received 15 death signal, shutting down workers
+W0919 20:13:12.935000 3456320 torch/distributed/elastic/multiprocessing/api.py:900] Sending process 3456390 closing signal SIGTERM
+Traceback (most recent call last):
+  File "/home/a.cardia/METaQ/venv/bin/torchrun", line 8, in <module>
+    sys.exit(main())
+             ^^^^^^
+  File "/home/a.cardia/METaQ/venv/lib/python3.12/site-packages/torch/distributed/elastic/multiprocessing/errors/__init__.py", line 355, in wrapper
+    return f(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^
+  File "/home/a.cardia/METaQ/venv/lib/python3.12/site-packages/torch/distributed/run.py", line 892, in main
+    run(args)
+  File "/home/a.cardia/METaQ/venv/lib/python3.12/site-packages/torch/distributed/run.py", line 883, in run
+    elastic_launch(
+  File "/home/a.cardia/METaQ/venv/lib/python3.12/site-packages/torch/distributed/launcher/api.py", line 139, in __call__
+    return launch_agent(self._config, self._entrypoint, list(args))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/a.cardia/METaQ/venv/lib/python3.12/site-packages/torch/distributed/launcher/api.py", line 261, in launch_agent
+    result = agent.run()
+             ^^^^^^^^^^^
+  File "/home/a.cardia/METaQ/venv/lib/python3.12/site-packages/torch/distributed/elastic/metrics/api.py", line 138, in wrapper
+    result = f(*args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^
+  File "/home/a.cardia/METaQ/venv/lib/python3.12/site-packages/torch/distributed/elastic/agent/server/api.py", line 711, in run
+    result = self._invoke_run(role)
+             ^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/a.cardia/METaQ/venv/lib/python3.12/site-packages/torch/distributed/elastic/agent/server/api.py", line 870, in _invoke_run
+    time.sleep(monitor_interval)
+  File "/home/a.cardia/METaQ/venv/lib/python3.12/site-packages/torch/distributed/elastic/multiprocessing/api.py", line 84, in _terminate_process_handler
+    raise SignalException(f"Process {os.getpid()} got signal: {sigval}", sigval=sigval)
+torch.distributed.elastic.multiprocessing.api.SignalException: Process 3456320 got signal: 15
