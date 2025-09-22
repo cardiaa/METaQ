@@ -88,6 +88,8 @@ def train_and_evaluate(model, criterion, C, lr, lambda_reg, alpha, subgradient_s
             
             loss.backward()
             optimizer.step()
+
+        print(f"Epoch {epoch + 1}/{n_epochs} completed.", flush = True)
         
         w = torch.cat([param.data.view(-1) for param in model.parameters()]).to(device)
         

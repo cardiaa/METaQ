@@ -86,7 +86,7 @@ if __name__ == "__main__":
     QuantizationType = "center"
     sparsity_threshold = 1e-3
 
-    if(args.delta == 10.400 or args.delta == 10.560):
+    if(args.delta == 5):
         print("=================================================================", flush = True)
         print("==================== PARAMETER CONFIGURATION ====================", flush = True)
         print("=================================================================", flush = True)
