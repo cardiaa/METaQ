@@ -91,7 +91,7 @@ def train_and_evaluate(model, criterion, C, lr, lambda_reg, alpha, subgradient_s
 
         end_time = time.time()
         print(f"Epoch {epoch + 1}/{n_epochs} completed. Time: {end_time - start_time}", flush = True)
-        
+        """
         w = torch.cat([param.data.view(-1) for param in model.parameters()]).to(device)
         
         accuracy = test_accuracy(model, testloader, device)
@@ -267,7 +267,7 @@ def train_and_evaluate(model, criterion, C, lr, lambda_reg, alpha, subgradient_s
 
                 print(log, flush = True)
                 return
-            """
+            
             # After the 10th epoch I must have accuracy above 94%
             if(epoch >= 9 and accuracies[-1] <= 94):
                 log += (
