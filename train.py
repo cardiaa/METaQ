@@ -56,7 +56,7 @@ if __name__ == "__main__":
     # Define fixed hyperparameters for the model and training process
     model, model_name = LeNet5().to(device), "LeNet-5 (rotated)"
     criterion, criterion_name = CrossEntropyLoss(), "CrossEntropy" 
-    C = 128
+    C = 64
     lr = 0.0007  
     lambda_reg = 0.0015
     alpha = 0.533
