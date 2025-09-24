@@ -149,7 +149,7 @@ if __name__ == "__main__":
         model = LeNet5_Original()
         model = model.to(device)         
         criterion, criterion_name = nn.CrossEntropyLoss(), "CrossEntropy" 
-        C = 64
+        C = 6
         lr = 0.001
         lambda_reg = 0.0002
         alpha = 0.1
