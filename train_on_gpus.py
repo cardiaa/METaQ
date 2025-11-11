@@ -222,7 +222,7 @@ if __name__ == "__main__":
         lr = 1.6e-2
         batch_size = 2048
         lambda_reg = 5e-4
-        alpha = 0.9
+        alpha = 1
         subgradient_step = 1e5 
         bucket_zero = round((C-1)/2) #it must range from 0 to C-2
         r = 2
