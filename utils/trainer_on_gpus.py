@@ -53,8 +53,8 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, s
         if(train_sampler is not None):
             if hasattr(train_sampler, "set_epoch"):
                 train_sampler.set_epoch(epoch)
-        #if local_rank == 0:
-        #    print(f"Beginning epoch {epoch} at {(datetime.now() + timedelta(hours=2)).strftime('%Y-%m-%d %H:%M:%S')}", flush=True)
+        if local_rank == 0:
+            print(f"Beginning epoch {epoch} at {(datetime.now() + timedelta(hours=2)).strftime('%Y-%m-%d %H:%M:%S')}", flush=True)
         start_time = time.time()
         start_time2 = time.time()
         for i, data in enumerate(trainloader, 0):
