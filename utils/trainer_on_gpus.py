@@ -62,18 +62,20 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, s
             #if((model_name[:7] == "LeNet-5" or model_name == "LeNet300_100") and delta == 5): 
             #    print(f"Batch {i} of epoch {epoch + 1}: time {round(time.time() - start_time2, 2)}s", flush=True)
             if((model_name == "AlexNet" or model_name == "VGG16") and local_rank == 0):
-                print(f"Batch {i} of epoch {epoch + 1}: time {round(time.time() - start_time2, 2)}s", flush=True)
-                """
-                w = torch.cat([param.detach().view(-1) for param in model.parameters()]).to(device)
-                num_samples = 1000000
-                idx = torch.randperm(w.numel(), device=w.device)[:num_samples]
-                w_sample = w[idx]                
-                qs = torch.tensor([0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0])
-                qs = qs.to(w.device)
-                valori = torch.quantile(w_sample, qs)
-                valori_rounded = [round(v.item(), 4) for v in valori]
-                print(f"Quantiles of weights: {valori_rounded}", flush=True)
-                """
+                if i % 10 == 0:
+                    print(f"Batch {i} of epoch {epoch + 1}: time {round(time.time() - start_time2, 2)}s", flush=True)
+                    w = torch.cat([param.detach().view(-1) for param in model.parameters()]).to(device)
+                    num_samples = 1000000
+                    idx = torch.randperm(w.numel(), device=w.device)[:num_samples]
+                    w_sample = w[idx]                
+                    qs = torch.tensor([0.0, 0.00001, 0.0001, 0.001, 0.01, 0.1, 0.2, 0.4, 0.5, 0.6, 0.8, 0.9, 0.99, 0.999, 0.9999, 0.99999, 1.0])
+                    qs = qs.to(w.device)
+                    valori = torch.quantile(w_sample, qs)
+                    valori_rounded = [round(v.item(), 4) for v in valori]
+                    print("Quantiles of weights:", flush=True)
+                    print([f"{q:.5f}" for q in qs.tolist()], flush=True)
+                    print(f"{valori_rounded}", flush=True)
+                
             start_time2 = time.time()
             inputs, targets = data
             inputs, targets = inputs.to(device), targets.to(device)
