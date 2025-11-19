@@ -70,7 +70,8 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, s
                 qs = torch.tensor([0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0])
                 qs = qs.to(w.device)
                 valori = torch.quantile(w_sample, qs)
-                print(f"Quantiles of weights: {valori.tolist()}", flush=True)
+                valori_rounded = [round(v.item(), 4) for v in valori]
+                print(f"Quantiles of weights: {valori_rounded}", flush=True)
             start_time2 = time.time()
             inputs, targets = data
             inputs, targets = inputs.to(device), targets.to(device)
