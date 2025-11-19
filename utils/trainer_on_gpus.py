@@ -63,6 +63,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, s
             #    print(f"Batch {i} of epoch {epoch + 1}: time {round(time.time() - start_time2, 2)}s", flush=True)
             if((model_name == "AlexNet" or model_name == "VGG16") and local_rank == 0):
                 print(f"Batch {i} of epoch {epoch + 1}: time {round(time.time() - start_time2, 2)}s", flush=True)
+                """
                 w = torch.cat([param.detach().view(-1) for param in model.parameters()]).to(device)
                 num_samples = 1000000
                 idx = torch.randperm(w.numel(), device=w.device)[:num_samples]
@@ -72,6 +73,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, s
                 valori = torch.quantile(w_sample, qs)
                 valori_rounded = [round(v.item(), 4) for v in valori]
                 print(f"Quantiles of weights: {valori_rounded}", flush=True)
+                """
             start_time2 = time.time()
             inputs, targets = data
             inputs, targets = inputs.to(device), targets.to(device)
