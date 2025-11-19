@@ -68,7 +68,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, s
                     num_samples = 1000000
                     idx = torch.randperm(w.numel(), device=w.device)[:num_samples]
                     w_sample = w[idx]                
-                    qs = torch.tensor([0.0, 0.00001, 0.0001, 0.001, 0.01, 0.1, 0.2, 0.4, 0.5, 0.6, 0.8, 0.9, 0.99, 0.999, 0.9999, 0.99999, 1.0])
+                    qs = torch.tensor([0.0, 0.25, 0.5, 0.75, 1.0])
                     qs = qs.to(w.device)
                     valori = torch.quantile(w_sample, qs)
                     valori_rounded = [round(v.item(), 4) for v in valori]
