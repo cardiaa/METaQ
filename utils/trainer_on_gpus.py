@@ -72,9 +72,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, s
                     qs = qs.to(w.device)
                     valori = torch.quantile(w_sample, qs)
                     valori_rounded = [round(v.item(), 4) for v in valori]
-                    print("Quantiles of weights:", flush=True)
-                    print([f"{q:.5f}" for q in qs.tolist()], flush=True)
-                    print(f"{valori_rounded}", flush=True)
+                    print(f"Quartiles of weights: {valori_rounded}", flush=True)
                 
             start_time2 = time.time()
             inputs, targets = data
@@ -138,7 +136,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, s
             print(f"Epoch {epoch + 1}: training_time = {training_time}s\n", flush=True)            
 
         # --- Metrics & Logging ---
-        if epoch % 1 == 0 or epoch == n_epochs - 1:
+        if ((epoch % 1 == 0 or epoch == n_epochs - 1) and alpha != 1):
 
             # --- 0) Synchronize all ranks BEFORE evaluation/CPU-heavy work ---
             if device.type == "cuda":
