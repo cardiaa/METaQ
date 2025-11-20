@@ -62,8 +62,9 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, s
             #if((model_name[:7] == "LeNet-5" or model_name == "LeNet300_100") and delta == 5): 
             #    print(f"Batch {i} of epoch {epoch + 1}: time {round(time.time() - start_time2, 2)}s", flush=True)
             if((model_name == "AlexNet" or model_name == "VGG16") and local_rank == 0):
-                if i % 10 == 0:
+                if i % 1 == 0:
                     print(f"Batch {i} of epoch {epoch + 1}: time {round(time.time() - start_time2, 2)}s", flush=True)
+                    """
                     w = torch.cat([param.detach().view(-1) for param in model.parameters()]).to(device)
                     num_samples = 1000000
                     idx = torch.randperm(w.numel(), device=w.device)[:num_samples]
@@ -73,6 +74,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, s
                     valori = torch.quantile(w_sample, qs)
                     valori_rounded = [round(v.item(), 4) for v in valori]
                     print(f"Quartiles of weights: {valori_rounded}", flush=True)
+                    """
                 
             start_time2 = time.time()
             inputs, targets = data
@@ -136,7 +138,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, s
             print(f"Epoch {epoch + 1}: training_time = {training_time}s\n", flush=True)            
 
         # --- Metrics & Logging ---
-        if (epoch % 10 == 0 or epoch == n_epochs - 1):
+        if (epoch % 1 == 0 or epoch == n_epochs - 1):
 
             # --- 0) Synchronize all ranks BEFORE evaluation/CPU-heavy work ---
             if device.type == "cuda":
