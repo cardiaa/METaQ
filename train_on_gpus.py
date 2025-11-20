@@ -222,11 +222,11 @@ if __name__ == "__main__":
         lr = 1.6e-2
         batch_size = 2048
         lambda_reg = 5e-4
-        alpha = 1
+        alpha = 0.9
         subgradient_step = 1e5 
         bucket_zero = round((C-1)/2) #it must range from 0 to C-2
-        r = 0.07
-        w0 = 0.01
+        r = 1.51
+        w0 = 0.013
         BestQuantization_target_acc = 99.8
         final_target_acc = 99.7
         target_zstd_ratio = 0.0179
