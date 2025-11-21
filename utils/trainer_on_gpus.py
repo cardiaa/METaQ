@@ -14,9 +14,9 @@ from utils.weight_utils import initialize_weights
 from utils.quantize_and_compress import compress_zstd, BestQuantization, pack_bitmask, pack_bitmaskGPU
 from datetime import datetime, timedelta
 
-def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, subgradient_step, w0, r, first_best_indices,
-                        BestQuantization_target_acc, final_target_acc, target_zstd_ratio, min_xi, max_xi, upper_c, lower_c, 
-                        c1, c2, zeta, l, n_epochs, max_iterations, device, train_optimizer, entropy_optimizer, trainloader,
+def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T1_explicit, T2_explicit, subgradient_step, w0, r, 
+                       first_best_indices, BestQuantization_target_acc, final_target_acc, target_zstd_ratio, min_xi, max_xi, upper_c, 
+                       lower_c, c1, c2, zeta, l, n_epochs, max_iterations, device, train_optimizer, entropy_optimizer, trainloader,
                         testloader, train_sampler, delta, pruning, QuantizationType, sparsity_threshold, accuracy_tollerance):
 
     local_rank = dist.get_rank() if dist.is_initialized() else 0
@@ -27,9 +27,9 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, s
 
     # Selection of the optimizer based on the chosen type.
     if train_optimizer == 'ADAM':
-        optimizer = optim.Adam(model.parameters(), lr=lr, betas=(0.9, 0.999), eps=1e-08, weight_decay=lambda_reg * alpha)
+        optimizer = optim.Adam(model.parameters(), lr=lr, betas=(0.9, 0.999), eps=1e-08, weight_decay=T1_explicit)
     elif train_optimizer == 'SGD':
-        optimizer = optim.SGD(model.parameters(), lr=lr, momentum=0.9, weight_decay=lambda_reg * alpha)
+        optimizer = optim.SGD(model.parameters(), lr=lr, momentum=0.9, weight_decay=T1_explicit)
     else:
         raise ValueError(f"Unsupported optimizer: {train_optimizer}")
 
@@ -123,10 +123,10 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, s
                     for param in model.parameters():
                         numel = param.numel()
                         if param.grad is not None:
-                            update = ((1 - alpha) * lambda_reg * (-beta_tensor[idx:idx + numel])).view(param.size())
+                            update = (T2_explicit * (-beta_tensor[idx:idx + numel])).view(param.size())
                             param.grad.add_(update)
                         idx += numel
-
+                """
                 # Debug: compute and print norms of gradients
                 with torch.no_grad():
                     idx = 0
@@ -151,6 +151,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, s
                     if local_rank == 0:
                         print(f"L2 grad norm (core): {norm_l2_total:.4f}, "
                             f"Custom grad norm (core): {norm_custom_total:.4f}")
+                """
 
             optimizer.step()
 

@@ -223,6 +223,8 @@ if __name__ == "__main__":
         batch_size = 2048
         lambda_reg = 5e-2
         alpha = 0.99
+        T1_explicit = 0.9
+        T2_explicit = 1e-5
         subgradient_step = 1e5 
         bucket_zero = round((C-1)/2) #it must range from 0 to C-2
         r = 1.51
@@ -305,6 +307,8 @@ if __name__ == "__main__":
             print(f"batch_size={batch_size}", flush=True) 
             print(f"lambda_reg={lambda_reg}", flush=True)
             print(f"alpha={alpha}", flush=True)    
+            print(f"T1={T1_explicit}", flush=True)
+            print(f"T2={T2_explicit}", flush=True)
             print(f"[T1=lambda_reg*alpha={round(lambda_reg*alpha, 6)}]", flush=True)
             print(f"[T2=lambda_reg*(1-alpha)={round(lambda_reg*(1-alpha), 6)}]", flush=True)
             print(f"subgradient_step={subgradient_step}", flush=True)    
@@ -380,8 +384,8 @@ if __name__ == "__main__":
         testloader = testset
         train_and_evaluate(
             model=model, model_name=model_name, criterion=criterion, C=C, lr=lr, lambda_reg=lambda_reg, alpha=alpha,
-            subgradient_step=subgradient_step, w0=w0, r=r, first_best_indices=first_best_indices,
-            BestQuantization_target_acc=BestQuantization_target_acc, final_target_acc=final_target_acc, 
+            T1_explicit=T1_explicit, T2_explicit=T2_explicit, subgradient_step=subgradient_step, w0=w0, r=r, 
+            first_best_indices=first_best_indices, BestQuantization_target_acc=BestQuantization_target_acc, final_target_acc=final_target_acc, 
             target_zstd_ratio=target_zstd_ratio, min_xi=min_xi, max_xi=max_xi, upper_c=upper_c, lower_c=lower_c, c1=c1, c2=c2, 
             zeta=zeta, l=l, n_epochs=n_epochs, max_iterations=max_iterations, device=device, train_optimizer=train_optimizer,
             entropy_optimizer=entropy_optimizer, trainloader=trainloader, testloader=testloader, train_sampler=train_sampler,
@@ -395,8 +399,8 @@ if __name__ == "__main__":
         testloader = torch.utils.data.DataLoader(testset, batch_size=1000, shuffle=False, num_workers=0)
         train_and_evaluate(
             model=model, model_name=model_name, criterion=criterion, C=C, lr=lr, lambda_reg=lambda_reg, alpha=alpha,
-            subgradient_step=subgradient_step, w0=w0, r=r, first_best_indices=first_best_indices,
-            BestQuantization_target_acc=BestQuantization_target_acc, final_target_acc=final_target_acc, 
+            T1_explicit=T1_explicit, T2_explicit=T2_explicit, subgradient_step=subgradient_step, w0=w0, r=r, 
+            first_best_indices=first_best_indices, BestQuantization_target_acc=BestQuantization_target_acc, final_target_acc=final_target_acc, 
             target_zstd_ratio=target_zstd_ratio, min_xi=min_xi, max_xi=max_xi, upper_c=upper_c, lower_c=lower_c, c1=c1, c2=c2, 
             zeta=zeta, l=l, n_epochs=n_epochs, max_iterations=max_iterations, device=device, train_optimizer=train_optimizer,
             entropy_optimizer=entropy_optimizer, trainloader=trainloader, testloader=testloader, train_sampler=None,
