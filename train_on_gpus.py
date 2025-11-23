@@ -221,8 +221,8 @@ if __name__ == "__main__":
         C = 32
         lr = 1.6e-2
         batch_size = 2048
-        lambda_reg = 5e-2
-        alpha = 0.99
+        lambda_reg = 5e-4
+        alpha = 0.99999
         T1_explicit = 0.9
         T2_explicit = 5e-8
         subgradient_step = 1e5 
