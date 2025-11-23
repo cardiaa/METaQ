@@ -126,32 +126,33 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                             update = (T2_explicit * (-beta_tensor[idx:idx + numel])).view(param.size())
                             param.grad.add_(update)
                         idx += numel
-                """
-                # Debug: compute and print norms of gradients
-                with torch.no_grad():
-                    idx = 0
-                    norm_l2_total = 0.0
-                    norm_custom_total = 0.0
+                
+                if(i % 300 == 0):
+                    # Debug: compute and print norms of gradients
+                    with torch.no_grad():
+                        idx = 0
+                        norm_l2_total = 0.0
+                        norm_custom_total = 0.0
 
-                    for param in model.parameters():
-                        numel = param.numel()
-                        if param.grad is not None:
+                        for param in model.parameters():
+                            numel = param.numel()
+                            if param.grad is not None:
 
-                            # ---- gradiente L2 "grezzo" ----
-                            grad_l2_core = param.detach()  # SOLO w
-                            norm_l2_total += torch.norm(grad_l2_core).item()
+                                # ---- gradiente L2 "grezzo" ----
+                                grad_l2_core = param.detach()  # SOLO w
+                                norm_l2_total += torch.norm(grad_l2_core).item()
 
-                            # ---- gradiente custom "grezzo" ----
-                            grad_custom_core = (-beta_tensor[idx:idx + numel]).view(param.size())
-                            norm_custom_total += torch.norm(grad_custom_core).item()
+                                # ---- gradiente custom "grezzo" ----
+                                grad_custom_core = (-beta_tensor[idx:idx + numel]).view(param.size())
+                                norm_custom_total += torch.norm(grad_custom_core).item()
 
-                        idx += numel
+                            idx += numel
 
-                    # Stampa delle norme
-                    if local_rank == 0:
-                        print(f"L2 grad norm (core): {norm_l2_total:.4f}, "
-                            f"Custom grad norm (core): {norm_custom_total:.4f}")
-                """
+                        # Stampa delle norme
+                        if local_rank == 0:
+                            print(f"L2 grad norm (core): {norm_l2_total:.4f}, "
+                                f"Custom grad norm (core): {norm_custom_total:.4f}")
+            
 
             optimizer.step()
 
