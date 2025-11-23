@@ -8043,3 +8043,128 @@ L2 grad norm (core): 1.0601, Custom grad norm (core): 96888.0723
 Batch 230 of epoch 13: time 2.03s
 L2 grad norm (core): 1.0178, Custom grad norm (core): 99853.9511
 Batch 231 of epoch 13: time 2.03s
+L2 grad norm (core): 1.0797, Custom grad norm (core): 88581.0613
+Batch 232 of epoch 13: time 2.03s
+L2 grad norm (core): 1.3294, Custom grad norm (core): 86752.7149
+Batch 233 of epoch 13: time 2.03s
+L2 grad norm (core): 1.4167, Custom grad norm (core): 88629.1602
+Batch 234 of epoch 13: time 2.04s
+L2 grad norm (core): 1.2425, Custom grad norm (core): 93600.1676
+Batch 235 of epoch 13: time 2.03s
+L2 grad norm (core): 0.9834, Custom grad norm (core): 89871.9935
+Batch 236 of epoch 13: time 2.03s
+L2 grad norm (core): 1.1636, Custom grad norm (core): 95610.6914
+Batch 237 of epoch 13: time 2.02s
+L2 grad norm (core): 1.5157, Custom grad norm (core): 93905.0121
+Batch 238 of epoch 13: time 2.03s
+L2 grad norm (core): 1.5180, Custom grad norm (core): 95564.3081
+Batch 239 of epoch 13: time 2.03s
+L2 grad norm (core): 1.1998, Custom grad norm (core): 96773.7372
+Batch 240 of epoch 13: time 2.03s
+L2 grad norm (core): 1.2068, Custom grad norm (core): 93632.9438
+Batch 241 of epoch 13: time 2.03s
+L2 grad norm (core): 1.6376, Custom grad norm (core): 93210.1508
+Batch 242 of epoch 13: time 2.03s
+L2 grad norm (core): 1.9736, Custom grad norm (core): 93769.6079
+Batch 243 of epoch 13: time 2.03s
+L2 grad norm (core): 1.9491, Custom grad norm (core): 93186.7465
+Batch 244 of epoch 13: time 2.03s
+L2 grad norm (core): 1.7114, Custom grad norm (core): 91362.4591
+Batch 245 of epoch 13: time 2.03s
+L2 grad norm (core): 1.5265, Custom grad norm (core): 86167.1954
+Batch 246 of epoch 13: time 2.02s
+L2 grad norm (core): 1.5828, Custom grad norm (core): 91470.8831
+Batch 247 of epoch 13: time 2.03s
+L2 grad norm (core): 1.7371, Custom grad norm (core): 97462.5247
+Batch 248 of epoch 13: time 2.03s
+L2 grad norm (core): 1.6643, Custom grad norm (core): 99167.9078
+Batch 249 of epoch 13: time 2.03s
+L2 grad norm (core): 1.3235, Custom grad norm (core): 105067.0621
+Batch 250 of epoch 13: time 2.03s
+L2 grad norm (core): 1.2802, Custom grad norm (core): 96367.2948
+Batch 251 of epoch 13: time 2.04s
+L2 grad norm (core): 1.6808, Custom grad norm (core): 91662.8972
+Batch 252 of epoch 13: time 2.03s
+L2 grad norm (core): 1.9493, Custom grad norm (core): 88369.5959
+Batch 253 of epoch 13: time 2.03s
+L2 grad norm (core): 1.8630, Custom grad norm (core): 88328.5460
+Batch 254 of epoch 13: time 2.02s
+L2 grad norm (core): 1.5583, Custom grad norm (core): 91145.6911
+Batch 255 of epoch 13: time 2.04s
+L2 grad norm (core): 1.3426, Custom grad norm (core): 91416.0859
+Batch 256 of epoch 13: time 2.03s
+L2 grad norm (core): 1.4935, Custom grad norm (core): 98309.7730
+Batch 257 of epoch 13: time 2.03s
+L2 grad norm (core): 1.7718, Custom grad norm (core): 102158.9918
+Batch 258 of epoch 13: time 2.03s
+L2 grad norm (core): 1.8158, Custom grad norm (core): 102594.6567
+Batch 259 of epoch 13: time 2.03s
+L2 grad norm (core): 1.5100, Custom grad norm (core): 100084.2271
+Batch 260 of epoch 13: time 2.03s
+L2 grad norm (core): 1.1814, Custom grad norm (core): 97060.1686
+Batch 261 of epoch 13: time 2.03s
+L2 grad norm (core): 1.4710, Custom grad norm (core): 93567.9471
+Batch 262 of epoch 13: time 2.03s
+L2 grad norm (core): 1.8040, Custom grad norm (core): 94288.9266
+Batch 263 of epoch 13: time 2.03s
+L2 grad norm (core): 1.7908, Custom grad norm (core): 97238.8511
+Batch 264 of epoch 13: time 2.03s
+L2 grad norm (core): 1.5474, Custom grad norm (core): 87770.0701
+Batch 265 of epoch 13: time 2.04s
+L2 grad norm (core): 1.3500, Custom grad norm (core): 94487.1846
+Batch 266 of epoch 13: time 2.03s
+L2 grad norm (core): 1.2805, Custom grad norm (core): 98017.4000
+Batch 267 of epoch 13: time 2.02s
+L2 grad norm (core): 1.1993, Custom grad norm (core): 102040.3469
+Batch 268 of epoch 13: time 2.04s
+L2 grad norm (core): 1.1752, Custom grad norm (core): 98540.4222
+Batch 269 of epoch 13: time 2.03s
+L2 grad norm (core): 1.3399, Custom grad norm (core): 93772.3491
+Batch 270 of epoch 13: time 2.02s
+L2 grad norm (core): 1.3979, Custom grad norm (core): 95232.2519
+Batch 271 of epoch 13: time 2.03s
+L2 grad norm (core): 1.3179, Custom grad norm (core): 93128.8760
+Batch 272 of epoch 13: time 2.03s
+L2 grad norm (core): 1.2864, Custom grad norm (core): 100353.4847
+Batch 273 of epoch 13: time 2.03s
+L2 grad norm (core): 1.4289, Custom grad norm (core): 95815.0765
+Batch 274 of epoch 13: time 2.03s
+L2 grad norm (core): 1.5676, Custom grad norm (core): 96609.6564
+Batch 275 of epoch 13: time 2.03s
+L2 grad norm (core): 1.6416, Custom grad norm (core): 85980.3843
+Batch 276 of epoch 13: time 2.03s
+L2 grad norm (core): 1.5680, Custom grad norm (core): 91545.8510
+Batch 277 of epoch 13: time 2.03s
+L2 grad norm (core): 1.4166, Custom grad norm (core): 96928.8291
+Batch 278 of epoch 13: time 2.02s
+L2 grad norm (core): 1.2551, Custom grad norm (core): 95748.2550
+Batch 279 of epoch 13: time 2.04s
+W1121 14:50:52.747000 3074692 torch/distributed/elastic/agent/server/api.py:719] Received 15 death signal, shutting down workers
+Traceback (most recent call last):
+  File "/home/a.cardia/METaQ/venv/bin/torchrun", line 8, in <module>
+    sys.exit(main())
+             ^^^^^^
+  File "/home/a.cardia/METaQ/venv/lib/python3.12/site-packages/torch/distributed/elastic/multiprocessing/errors/__init__.py", line 355, in wrapper
+    return f(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^
+  File "/home/a.cardia/METaQ/venv/lib/python3.12/site-packages/torch/distributed/run.py", line 892, in main
+    run(args)
+  File "/home/a.cardia/METaQ/venv/lib/python3.12/site-packages/torch/distributed/run.py", line 883, in run
+    elastic_launch(
+  File "/home/a.cardia/METaQ/venv/lib/python3.12/site-packages/torch/distributed/launcher/api.py", line 139, in __call__
+    return launch_agent(self._config, self._entrypoint, list(args))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/a.cardia/METaQ/venv/lib/python3.12/site-packages/torch/distributed/launcher/api.py", line 261, in launch_agent
+    result = agent.run()
+             ^^^^^^^^^^^
+  File "/home/a.cardia/METaQ/venv/lib/python3.12/site-packages/torch/distributed/elastic/metrics/api.py", line 138, in wrapper
+    result = f(*args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^
+  File "/home/a.cardia/METaQ/venv/lib/python3.12/site-packages/torch/distributed/elastic/agent/server/api.py", line 711, in run
+    result = self._invoke_run(role)
+             ^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/a.cardia/METaQ/venv/lib/python3.12/site-packages/torch/distributed/elastic/agent/server/api.py", line 870, in _invoke_run
+    time.sleep(monitor_interval)
+  File "/home/a.cardia/METaQ/venv/lib/python3.12/site-packages/torch/distributed/elastic/multiprocessing/api.py", line 84, in _terminate_process_handler
+    raise SignalException(f"Process {os.getpid()} got signal: {sigval}", sigval=sigval)
+torch.distributed.elastic.multiprocessing.api.SignalException: Process 3074692 got signal: 15
