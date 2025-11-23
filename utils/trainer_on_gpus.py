@@ -150,8 +150,10 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
 
                         # Stampa delle norme
                         if local_rank == 0:
-                            print(f"L2 grad norm (core): {norm_l2_total:.4f}, "
-                                f"Custom grad norm (core): {norm_custom_total:.4f}")
+                            print(f"L2 grad norm (core): {norm_l2_total:.4f}\n"
+                                f"Custom grad norm (core): {norm_custom_total:.4f}\n"
+                                f"Weighted L2 grad norm: {(norm_l2_total*T1_explicit):.4f}"
+                                f"Weighted Custom grad norm: {(norm_custom_total*T2_explicit):.4f}", flush=True)
             
 
             optimizer.step()
