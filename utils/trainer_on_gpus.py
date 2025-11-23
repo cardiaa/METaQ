@@ -133,7 +133,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                             param.grad.add_(update)
                         idx += numel
                 
-                if(i % 300 == 0):
+                if(i == 310):
                     # Debug: compute and print norms of gradients
                     with torch.no_grad():
                         idx = 0
@@ -161,12 +161,14 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                                 norm_loss_grad += torch.norm(g).item()
 
                         if local_rank == 0:
+                            print("--- Gradient Norms at Batch 310 ---", flush=True)
                             print(f"L2 grad norm (core): {norm_l2_total:.4f}\n"
                                 f"Custom grad norm (core): {norm_custom_total:.4f}\n"
                                 f"Loss grad norm (pure): {norm_loss_grad:.4f}\n"
                                 f"Weighted L2 grad norm: {(norm_l2_total*T1_explicit):.4f}\n"
                                 f"Weighted Custom grad norm: {(norm_custom_total*T2_explicit):.4f}",
                                 flush=True)
+                            print("-------------------------------------", flush=True)
 
             optimizer.step()
 
