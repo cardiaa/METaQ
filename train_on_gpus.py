@@ -223,8 +223,8 @@ if __name__ == "__main__":
         batch_size = 2048
         lambda_reg = 5e-4
         alpha = 0.99999
-        T1_explicit = 5e-4
-        T2_explicit = 5e-9
+        T1_explicit = 5e-3
+        T2_explicit = 5e-8
         subgradient_step = 1e5 
         bucket_zero = round((C-1)/2) #it must range from 0 to C-2
         r = 1.51
@@ -305,8 +305,8 @@ if __name__ == "__main__":
             print(f"delta={args.delta}", flush=True)
             print(f"lr={lr}", flush=True)   
             print(f"batch_size={batch_size}", flush=True) 
-            print(f"lambda_reg={lambda_reg}", flush=True)
-            print(f"alpha={alpha}", flush=True)    
+            #print(f"lambda_reg={lambda_reg}", flush=True)
+            #print(f"alpha={alpha}", flush=True)    
             print(f"T1={T1_explicit}", flush=True)
             print(f"T2={T2_explicit}", flush=True)
             print(f"[T1=lambda_reg*alpha={round(lambda_reg*alpha, 6)}]", flush=True)
