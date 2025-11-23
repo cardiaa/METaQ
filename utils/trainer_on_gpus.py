@@ -19,8 +19,8 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                        lower_c, c1, c2, zeta, l, n_epochs, max_iterations, device, train_optimizer, entropy_optimizer, trainloader,
                         testloader, train_sampler, delta, pruning, QuantizationType, sparsity_threshold, accuracy_tollerance):
     
-    T1_explicit = lambda_reg * alpha
-    T2_explicit = lambda_reg * (1 - alpha)
+    #T1_explicit = lambda_reg * alpha
+    #T2_explicit = lambda_reg * (1 - alpha)
 
     local_rank = dist.get_rank() if dist.is_initialized() else 0
 
