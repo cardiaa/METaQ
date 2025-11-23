@@ -49,9 +49,23 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
     accuracies, entropies = [], []
 
     log = ""
+    delta_prec = 1e-1
+    delta_regime = delta
 
     # Training loop
     for epoch in range(n_epochs):
+        
+        if epoch == 0:
+            wd = 1e-4
+        elif epoch == 1:
+            wd = 5e-4
+        else:
+            wd = T1_explicit
+        for param_group in optimizer.param_groups:
+            param_group['weight_decay'] = wd   
+
+        delta = delta_prec + 0.9 * np.abs(delta_regime - delta_prec)
+
         # Ensure deterministic sharding for distributed samplers across epochs
         if(train_sampler is not None):
             if hasattr(train_sampler, "set_epoch"):
