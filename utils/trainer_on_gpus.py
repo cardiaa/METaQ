@@ -54,7 +54,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
     # Training loop
     for epoch in range(n_epochs):
         
-        if(delta > 0.2 and T1_explicit > 1e-4): # If delta and T1 are large, use a schedule to ease training
+        if(delta > 0.2 or T1_explicit > 1e-4 or T2_explicit > 5e-7): # If delta and T1 are large, use a schedule to ease training
             if epoch >= 0 and epoch <= 2:
                 wd = 1e-4
                 delta = 2e-1

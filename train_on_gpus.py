@@ -224,7 +224,7 @@ if __name__ == "__main__":
         lambda_reg = 5e-4
         alpha = 0.99999
         T1_explicit = 1e-3
-        T2_explicit = 5e-7
+        T2_explicit = 1e-6
         subgradient_step = 1e5 
         bucket_zero = round((C-1)/2) #it must range from 0 to C-2
         r = 1.51
