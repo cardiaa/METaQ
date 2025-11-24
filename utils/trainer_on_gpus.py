@@ -49,26 +49,27 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
     accuracies, entropies = [], []
 
     log = ""
-    delta_regime = delta
-
+    #delta_regime = delta
+    T1_regime = T1_explicit
+    T2_regime = T2_explicit
+    
     # Training loop
     for epoch in range(n_epochs):
-        
-        if(delta > 0.2 or T1_explicit > 1e-4 or T2_explicit > 5e-7): # If delta and T1 are large, use a schedule to ease training
-            if epoch >= 0 and epoch <= 2:
-                wd = 1e-4
-                delta = 2e-1
-            elif epoch >= 3 and epoch <= 5:
-                wd = 5e-4
-                delta = 5e-1
-            elif epoch >= 6 and epoch <= 8:
-                wd = 1e-3
-                delta = 1
-            else:
-                wd = T1_explicit
-                delta = delta_regime
-            for param_group in optimizer.param_groups:
-                param_group['weight_decay'] = wd   
+        # Use a schedule to ease training
+        if epoch >= 0 and epoch <= 3:
+            T1_explicit = T1_regime / 8
+            T2_explicit = T2_regime / 8
+        elif epoch >= 4 and epoch <= 7:
+            T1_explicit = T1_regime / 4
+            T2_explicit = T2_regime / 4
+        elif epoch >= 8 and epoch <= 11:
+            T1_explicit = T1_regime / 2
+            T2_explicit = T2_regime / 2
+        else:
+            T1_explicit = T1_regime
+            T2_explicit = T2_regime
+        for param_group in optimizer.param_groups:
+            param_group['weight_decay'] = T1_explicit   
 
         # Ensure deterministic sharding for distributed samplers across epochs
         if(train_sampler is not None):
