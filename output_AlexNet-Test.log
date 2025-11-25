@@ -1,7 +1,7 @@
-W1124 14:28:52.434000 458674 torch/distributed/run.py:766] 
-W1124 14:28:52.434000 458674 torch/distributed/run.py:766] *****************************************
-W1124 14:28:52.434000 458674 torch/distributed/run.py:766] Setting OMP_NUM_THREADS environment variable for each process to be 1 in default, to avoid your system being overloaded, please further tune the variable for optimal performance in your application as needed. 
-W1124 14:28:52.434000 458674 torch/distributed/run.py:766] *****************************************
+W1124 21:44:52.374000 594328 torch/distributed/run.py:766] 
+W1124 21:44:52.374000 594328 torch/distributed/run.py:766] *****************************************
+W1124 21:44:52.374000 594328 torch/distributed/run.py:766] Setting OMP_NUM_THREADS environment variable for each process to be 1 in default, to avoid your system being overloaded, please further tune the variable for optimal performance in your application as needed. 
+W1124 21:44:52.374000 594328 torch/distributed/run.py:766] *****************************************
 Using device cuda:0 (NVIDIA H100 80GB HBM3)
 [GPU 0] Using device cuda:0 (NVIDIA H100 80GB HBM3)
 Using device cuda:0 (NVIDIA H100 80GB HBM3)
@@ -41,1236 +41,2155 @@ pruning=Y
 QuantizationType=center
 sparsity_threshold=0.001
 ------------------------------------------------------------
-Batch 0 of epoch 1: time 11.76s
-Batch 10 of epoch 1: time 34.42s
-Batch 20 of epoch 1: time 20.25s
-Batch 30 of epoch 1: time 20.24s
-Batch 40 of epoch 1: time 20.25s
-Batch 50 of epoch 1: time 20.26s
-Batch 60 of epoch 1: time 20.24s
-Batch 70 of epoch 1: time 20.25s
-Batch 80 of epoch 1: time 20.26s
+Batch 0 of epoch 1: time 11.83s
+Batch 10 of epoch 1: time 34.45s
+Batch 20 of epoch 1: time 20.23s
+Batch 30 of epoch 1: time 20.22s
+Batch 40 of epoch 1: time 20.22s
+Batch 50 of epoch 1: time 20.21s
+Batch 60 of epoch 1: time 20.28s
+Batch 70 of epoch 1: time 20.23s
+Batch 80 of epoch 1: time 20.23s
 Batch 90 of epoch 1: time 20.24s
 Batch 100 of epoch 1: time 20.24s
-Batch 110 of epoch 1: time 20.26s
-Batch 120 of epoch 1: time 20.27s
-Batch 130 of epoch 1: time 20.27s
-Batch 140 of epoch 1: time 20.27s
+Batch 110 of epoch 1: time 20.22s
+Batch 120 of epoch 1: time 20.24s
+Batch 130 of epoch 1: time 20.25s
+Batch 140 of epoch 1: time 20.24s
 Batch 150 of epoch 1: time 20.24s
-Batch 160 of epoch 1: time 20.26s
-Batch 170 of epoch 1: time 20.26s
-Batch 180 of epoch 1: time 20.24s
-Batch 190 of epoch 1: time 20.25s
-Batch 200 of epoch 1: time 20.26s
+Batch 160 of epoch 1: time 20.23s
+Batch 170 of epoch 1: time 20.23s
+Batch 180 of epoch 1: time 20.25s
+Batch 190 of epoch 1: time 20.23s
+Batch 200 of epoch 1: time 20.25s
 Batch 210 of epoch 1: time 20.24s
-Batch 220 of epoch 1: time 20.22s
-Batch 230 of epoch 1: time 20.23s
-Batch 240 of epoch 1: time 20.25s
-Batch 250 of epoch 1: time 20.26s
-Batch 260 of epoch 1: time 20.23s
-Batch 270 of epoch 1: time 20.24s
-Batch 280 of epoch 1: time 20.23s
-Batch 290 of epoch 1: time 20.27s
-Batch 300 of epoch 1: time 20.64s
+Batch 220 of epoch 1: time 20.23s
+Batch 230 of epoch 1: time 20.25s
+Batch 240 of epoch 1: time 20.24s
+Batch 250 of epoch 1: time 20.22s
+Batch 260 of epoch 1: time 20.24s
+Batch 270 of epoch 1: time 20.25s
+Batch 280 of epoch 1: time 20.22s
+Batch 290 of epoch 1: time 20.23s
+Batch 300 of epoch 1: time 20.61s
 Batch 310 of epoch 1: time 20.21s
 --- Gradient Norms at Batch 310 ---
-L2 grad norm (core): 129.5731
-Custom grad norm (core): 164629.7438
-Loss grad norm (pure): 0.0536
-Weighted L2 grad norm: 0.1296
-Weighted Custom grad norm: 0.1646
+L2 grad norm (core): 135.2212
+Custom grad norm (core): 162404.5822
+Loss grad norm (pure): 0.1192
+Weighted L2 grad norm: 0.0169
+Weighted Custom grad norm: 0.0203
 -------------------------------------
-Epoch 1: A_NQ = 0.106, H_NQ = 1532884949, A_Q = 0.103, H_Q = 11357270, zstd_ratio = 0.69%, sparse_ratio = 0.69%, sparsity = 0.00% , sparse_accuracy = 0.103, training_time = 944s
+Epoch 1: A_NQ = 0.108, H_NQ = 1529433427, A_Q = 0.104, H_Q = 13149958, zstd_ratio = 0.77%, sparse_ratio = 0.77%, sparsity = 0.00% , sparse_accuracy = 0.104, training_time = 940s
 
-Batch 0 of epoch 2: time 10.81s
-Batch 10 of epoch 2: time 21.4s
-Batch 20 of epoch 2: time 20.26s
-Batch 30 of epoch 2: time 20.25s
-Batch 40 of epoch 2: time 20.26s
-Batch 50 of epoch 2: time 20.25s
-Batch 60 of epoch 2: time 20.24s
-Batch 70 of epoch 2: time 20.26s
-Batch 80 of epoch 2: time 20.25s
-Batch 90 of epoch 2: time 20.24s
-Batch 100 of epoch 2: time 20.26s
-Batch 110 of epoch 2: time 20.25s
-Batch 120 of epoch 2: time 20.27s
-Batch 130 of epoch 2: time 20.26s
-Batch 140 of epoch 2: time 20.25s
-Batch 150 of epoch 2: time 20.25s
-Batch 160 of epoch 2: time 20.25s
-Batch 170 of epoch 2: time 20.25s
-Batch 180 of epoch 2: time 20.25s
-Batch 190 of epoch 2: time 20.24s
-Batch 200 of epoch 2: time 20.25s
-Batch 210 of epoch 2: time 20.24s
-Batch 220 of epoch 2: time 20.23s
-Batch 230 of epoch 2: time 20.26s
-Batch 240 of epoch 2: time 20.24s
-Batch 250 of epoch 2: time 20.26s
-Batch 260 of epoch 2: time 20.26s
-Batch 270 of epoch 2: time 20.26s
-Batch 280 of epoch 2: time 20.25s
-Batch 290 of epoch 2: time 20.26s
-Batch 300 of epoch 2: time 20.27s
-Batch 310 of epoch 2: time 20.21s
+Batch 0 of epoch 2: time 10.56s
+Batch 10 of epoch 2: time 22.41s
+Batch 20 of epoch 2: time 20.2s
+Batch 30 of epoch 2: time 20.21s
+Batch 40 of epoch 2: time 20.2s
+Batch 50 of epoch 2: time 20.21s
+Batch 60 of epoch 2: time 20.2s
+Batch 70 of epoch 2: time 20.2s
+Batch 80 of epoch 2: time 20.2s
+Batch 90 of epoch 2: time 20.21s
+Batch 100 of epoch 2: time 20.2s
+Batch 110 of epoch 2: time 20.2s
+Batch 120 of epoch 2: time 20.22s
+Batch 130 of epoch 2: time 20.2s
+Batch 140 of epoch 2: time 20.21s
+Batch 150 of epoch 2: time 20.21s
+Batch 160 of epoch 2: time 20.22s
+Batch 170 of epoch 2: time 20.21s
+Batch 180 of epoch 2: time 20.21s
+Batch 190 of epoch 2: time 20.22s
+Batch 200 of epoch 2: time 20.21s
+Batch 210 of epoch 2: time 20.22s
+Batch 220 of epoch 2: time 20.24s
+Batch 230 of epoch 2: time 20.22s
+Batch 240 of epoch 2: time 20.23s
+Batch 250 of epoch 2: time 20.21s
+Batch 260 of epoch 2: time 20.23s
+Batch 270 of epoch 2: time 20.22s
+Batch 280 of epoch 2: time 20.22s
+Batch 290 of epoch 2: time 20.21s
+Batch 300 of epoch 2: time 20.23s
+Batch 310 of epoch 2: time 20.18s
 --- Gradient Norms at Batch 310 ---
-L2 grad norm (core): 122.2212
-Custom grad norm (core): 159852.8639
-Loss grad norm (pure): 0.0321
-Weighted L2 grad norm: 0.1222
-Weighted Custom grad norm: 0.1599
+L2 grad norm (core): 133.7087
+Custom grad norm (core): 161452.1978
+Loss grad norm (pure): 1.9754
+Weighted L2 grad norm: 0.0167
+Weighted Custom grad norm: 0.0202
 -------------------------------------
-Epoch 2: A_NQ = 0.114, H_NQ = 1535607813, A_Q = 0.107, H_Q = 8740234, zstd_ratio = 0.55%, sparse_ratio = 0.55%, sparsity = 0.00% , sparse_accuracy = 0.107, training_time = 922s
+Epoch 2: A_NQ = 0.394, H_NQ = 1530099564, A_Q = 0.247, H_Q = 12660201, zstd_ratio = 0.75%, sparse_ratio = 0.75%, sparsity = 0.00% , sparse_accuracy = 0.247, training_time = 928s
 
-Batch 0 of epoch 3: time 12.76s
-Batch 10 of epoch 3: time 20.26s
-Batch 20 of epoch 3: time 20.23s
-Batch 30 of epoch 3: time 20.23s
-Batch 40 of epoch 3: time 20.24s
-Batch 50 of epoch 3: time 20.27s
+Batch 0 of epoch 3: time 13.42s
+Batch 10 of epoch 3: time 20.23s
+Batch 20 of epoch 3: time 20.22s
+Batch 30 of epoch 3: time 20.2s
+Batch 40 of epoch 3: time 20.22s
+Batch 50 of epoch 3: time 20.22s
 Batch 60 of epoch 3: time 20.23s
-Batch 70 of epoch 3: time 20.25s
-Batch 80 of epoch 3: time 20.25s
-Batch 90 of epoch 3: time 20.23s
-Batch 100 of epoch 3: time 20.25s
-Batch 110 of epoch 3: time 20.25s
-Batch 120 of epoch 3: time 20.27s
-Batch 130 of epoch 3: time 20.26s
-Batch 140 of epoch 3: time 20.25s
-Batch 150 of epoch 3: time 20.26s
-Batch 160 of epoch 3: time 20.25s
-Batch 170 of epoch 3: time 20.27s
-Batch 180 of epoch 3: time 20.24s
-Batch 190 of epoch 3: time 20.25s
-Batch 200 of epoch 3: time 20.26s
-Batch 210 of epoch 3: time 20.25s
-Batch 220 of epoch 3: time 20.25s
-Batch 230 of epoch 3: time 20.26s
-Batch 240 of epoch 3: time 20.25s
-Batch 250 of epoch 3: time 20.24s
-Batch 260 of epoch 3: time 20.23s
-Batch 270 of epoch 3: time 20.24s
-Batch 280 of epoch 3: time 20.26s
-Batch 290 of epoch 3: time 20.26s
+Batch 70 of epoch 3: time 20.2s
+Batch 80 of epoch 3: time 20.2s
+Batch 90 of epoch 3: time 20.2s
+Batch 100 of epoch 3: time 20.2s
+Batch 110 of epoch 3: time 20.21s
+Batch 120 of epoch 3: time 20.2s
+Batch 130 of epoch 3: time 20.2s
+Batch 140 of epoch 3: time 20.23s
+Batch 150 of epoch 3: time 20.2s
+Batch 160 of epoch 3: time 20.2s
+Batch 170 of epoch 3: time 20.19s
+Batch 180 of epoch 3: time 20.23s
+Batch 190 of epoch 3: time 20.21s
+Batch 200 of epoch 3: time 20.19s
+Batch 210 of epoch 3: time 20.22s
+Batch 220 of epoch 3: time 20.19s
+Batch 230 of epoch 3: time 20.2s
+Batch 240 of epoch 3: time 20.23s
+Batch 250 of epoch 3: time 20.22s
+Batch 260 of epoch 3: time 20.2s
+Batch 270 of epoch 3: time 20.21s
+Batch 280 of epoch 3: time 20.22s
+Batch 290 of epoch 3: time 20.23s
 Batch 300 of epoch 3: time 20.27s
 Batch 310 of epoch 3: time 20.2s
 --- Gradient Norms at Batch 310 ---
-L2 grad norm (core): 115.1213
-Custom grad norm (core): 158164.6287
-Loss grad norm (pure): 0.0293
-Weighted L2 grad norm: 0.1151
-Weighted Custom grad norm: 0.1582
+L2 grad norm (core): 132.8436
+Custom grad norm (core): 165856.7823
+Loss grad norm (pure): 4.2830
+Weighted L2 grad norm: 0.0166
+Weighted Custom grad norm: 0.0207
 -------------------------------------
-Epoch 3: A_NQ = 0.104, H_NQ = 1536631555, A_Q = 0.102, H_Q = 5839726, zstd_ratio = 0.39%, sparse_ratio = 0.39%, sparsity = 0.00% , sparse_accuracy = 0.102, training_time = 910s
+Epoch 3: A_NQ = 1.043, H_NQ = 1530907668, A_Q = 0.571, H_Q = 12065196, zstd_ratio = 0.72%, sparse_ratio = 0.72%, sparsity = 0.00% , sparse_accuracy = 0.571, training_time = 929s
 
-Batch 0 of epoch 4: time 11.57s
-Batch 10 of epoch 4: time 20.3s
-Batch 20 of epoch 4: time 20.25s
-Batch 30 of epoch 4: time 20.25s
-Batch 40 of epoch 4: time 20.26s
-Batch 50 of epoch 4: time 20.26s
-Batch 60 of epoch 4: time 20.25s
-Batch 70 of epoch 4: time 20.25s
-Batch 80 of epoch 4: time 20.24s
-Batch 90 of epoch 4: time 20.26s
-Batch 100 of epoch 4: time 20.27s
-Batch 110 of epoch 4: time 20.25s
-Batch 120 of epoch 4: time 20.24s
-Batch 130 of epoch 4: time 20.26s
-Batch 140 of epoch 4: time 20.25s
-Batch 150 of epoch 4: time 20.26s
-Batch 160 of epoch 4: time 20.26s
-Batch 170 of epoch 4: time 20.25s
-Batch 180 of epoch 4: time 20.25s
-Batch 190 of epoch 4: time 20.25s
-Batch 200 of epoch 4: time 20.26s
-Batch 210 of epoch 4: time 20.25s
-Batch 220 of epoch 4: time 20.26s
-Batch 230 of epoch 4: time 20.26s
-Batch 240 of epoch 4: time 20.25s
-Batch 250 of epoch 4: time 20.24s
-Batch 260 of epoch 4: time 20.26s
-Batch 270 of epoch 4: time 20.25s
-Batch 280 of epoch 4: time 20.25s
-Batch 290 of epoch 4: time 20.26s
-Batch 300 of epoch 4: time 20.28s
-Batch 310 of epoch 4: time 20.2s
+Batch 0 of epoch 4: time 13.08s
+Batch 10 of epoch 4: time 20.23s
+Batch 20 of epoch 4: time 20.2s
+Batch 30 of epoch 4: time 20.23s
+Batch 40 of epoch 4: time 20.24s
+Batch 50 of epoch 4: time 20.22s
+Batch 60 of epoch 4: time 20.24s
+Batch 70 of epoch 4: time 20.22s
+Batch 80 of epoch 4: time 20.25s
+Batch 90 of epoch 4: time 20.24s
+Batch 100 of epoch 4: time 20.23s
+Batch 110 of epoch 4: time 20.24s
+Batch 120 of epoch 4: time 20.23s
+Batch 130 of epoch 4: time 20.23s
+Batch 140 of epoch 4: time 20.23s
+Batch 150 of epoch 4: time 20.23s
+Batch 160 of epoch 4: time 20.23s
+Batch 170 of epoch 4: time 20.23s
+Batch 180 of epoch 4: time 20.22s
+Batch 190 of epoch 4: time 20.24s
+Batch 200 of epoch 4: time 20.23s
+Batch 210 of epoch 4: time 20.24s
+Batch 220 of epoch 4: time 20.23s
+Batch 230 of epoch 4: time 20.24s
+Batch 240 of epoch 4: time 20.23s
+Batch 250 of epoch 4: time 20.23s
+Batch 260 of epoch 4: time 20.25s
+Batch 270 of epoch 4: time 20.24s
+Batch 280 of epoch 4: time 20.22s
+Batch 290 of epoch 4: time 20.22s
+Batch 300 of epoch 4: time 20.24s
+Batch 310 of epoch 4: time 20.21s
 --- Gradient Norms at Batch 310 ---
-L2 grad norm (core): 106.1534
-Custom grad norm (core): 154078.8413
-Loss grad norm (pure): 0.0267
-Weighted L2 grad norm: 0.1062
-Weighted Custom grad norm: 0.1541
+L2 grad norm (core): 132.7578
+Custom grad norm (core): 167545.6816
+Loss grad norm (pure): 11.2431
+Weighted L2 grad norm: 0.0166
+Weighted Custom grad norm: 0.0209
 -------------------------------------
-Epoch 4: A_NQ = 0.102, H_NQ = 1535926709, A_Q = 0.101, H_Q = 2536978, zstd_ratio = 0.10%, sparse_ratio = 0.10%, sparsity = 0.00% , sparse_accuracy = 0.101, training_time = 797s
+Epoch 4: A_NQ = 3.248, H_NQ = 1531698931, A_Q = 1.674, H_Q = 11471624, zstd_ratio = 0.69%, sparse_ratio = 0.69%, sparsity = 0.00% , sparse_accuracy = 1.674, training_time = 928s
 
-Batch 0 of epoch 5: time 11.64s
-Batch 10 of epoch 5: time 20.4s
-Batch 20 of epoch 5: time 20.24s
-Batch 30 of epoch 5: time 20.25s
-Batch 40 of epoch 5: time 20.25s
-Batch 50 of epoch 5: time 20.25s
-Batch 60 of epoch 5: time 20.27s
-Batch 70 of epoch 5: time 20.27s
-Batch 80 of epoch 5: time 20.25s
-Batch 90 of epoch 5: time 20.25s
-Batch 100 of epoch 5: time 20.27s
-Batch 110 of epoch 5: time 20.25s
-Batch 120 of epoch 5: time 20.25s
-Batch 130 of epoch 5: time 20.26s
-Batch 140 of epoch 5: time 20.27s
-Batch 150 of epoch 5: time 20.25s
-Batch 160 of epoch 5: time 20.26s
-Batch 170 of epoch 5: time 20.28s
-Batch 180 of epoch 5: time 20.24s
-Batch 190 of epoch 5: time 20.26s
-Batch 200 of epoch 5: time 20.25s
-Batch 210 of epoch 5: time 20.27s
-Batch 220 of epoch 5: time 20.26s
-Batch 230 of epoch 5: time 20.27s
-Batch 240 of epoch 5: time 20.26s
-Batch 250 of epoch 5: time 20.26s
-Batch 260 of epoch 5: time 20.25s
-Batch 270 of epoch 5: time 20.25s
-Batch 280 of epoch 5: time 20.28s
-Batch 290 of epoch 5: time 20.25s
-Batch 300 of epoch 5: time 20.28s
-Batch 310 of epoch 5: time 20.21s
+Batch 0 of epoch 5: time 11.89s
+Batch 10 of epoch 5: time 20.22s
+Batch 20 of epoch 5: time 20.18s
+Batch 30 of epoch 5: time 20.19s
+Batch 40 of epoch 5: time 20.21s
+Batch 50 of epoch 5: time 20.19s
+Batch 60 of epoch 5: time 20.19s
+Batch 70 of epoch 5: time 20.23s
+Batch 80 of epoch 5: time 20.22s
+Batch 90 of epoch 5: time 20.21s
+Batch 100 of epoch 5: time 20.21s
+Batch 110 of epoch 5: time 20.22s
+Batch 120 of epoch 5: time 20.22s
+Batch 130 of epoch 5: time 20.2s
+Batch 140 of epoch 5: time 20.2s
+Batch 150 of epoch 5: time 20.21s
+Batch 160 of epoch 5: time 20.23s
+Batch 170 of epoch 5: time 20.2s
+Batch 180 of epoch 5: time 20.19s
+Batch 190 of epoch 5: time 20.21s
+Batch 200 of epoch 5: time 20.19s
+Batch 210 of epoch 5: time 20.21s
+Batch 220 of epoch 5: time 20.2s
+Batch 230 of epoch 5: time 20.19s
+Batch 240 of epoch 5: time 20.19s
+Batch 250 of epoch 5: time 20.19s
+Batch 260 of epoch 5: time 20.19s
+Batch 270 of epoch 5: time 20.19s
+Batch 280 of epoch 5: time 20.2s
+Batch 290 of epoch 5: time 20.19s
+Batch 300 of epoch 5: time 20.21s
+Batch 310 of epoch 5: time 20.17s
 --- Gradient Norms at Batch 310 ---
-L2 grad norm (core): 97.5402
-Custom grad norm (core): 155700.4770
-Loss grad norm (pure): 0.0251
-Weighted L2 grad norm: 0.0975
-Weighted Custom grad norm: 0.1557
+L2 grad norm (core): 131.7338
+Custom grad norm (core): 160205.4218
+Loss grad norm (pure): 8.7034
+Weighted L2 grad norm: 0.0329
+Weighted Custom grad norm: 0.0401
 -------------------------------------
-Epoch 5: A_NQ = 0.1, H_NQ = 1534121787, A_Q = 0.1, H_Q = 2073560, zstd_ratio = 0.08%, sparse_ratio = 0.08%, sparsity = 0.00% , sparse_accuracy = 0.1, training_time = 792s
+Epoch 5: A_NQ = 6.316, H_NQ = 1533054143, A_Q = 3.209, H_Q = 10383426, zstd_ratio = 0.64%, sparse_ratio = 0.64%, sparsity = 0.00% , sparse_accuracy = 3.209, training_time = 925s
 
-Batch 0 of epoch 6: time 10.59s
-Batch 10 of epoch 6: time 20.29s
-Batch 20 of epoch 6: time 20.24s
-Batch 30 of epoch 6: time 20.28s
-Batch 40 of epoch 6: time 20.26s
-Batch 50 of epoch 6: time 20.28s
-Batch 60 of epoch 6: time 20.25s
-Batch 70 of epoch 6: time 20.25s
-Batch 80 of epoch 6: time 20.28s
-Batch 90 of epoch 6: time 20.24s
-Batch 100 of epoch 6: time 20.26s
-Batch 110 of epoch 6: time 20.26s
-Batch 120 of epoch 6: time 20.26s
-Batch 130 of epoch 6: time 20.26s
-Batch 140 of epoch 6: time 20.24s
-Batch 150 of epoch 6: time 20.26s
-Batch 160 of epoch 6: time 20.26s
-Batch 170 of epoch 6: time 20.24s
-Batch 180 of epoch 6: time 20.26s
-Batch 190 of epoch 6: time 20.26s
-Batch 200 of epoch 6: time 20.26s
-Batch 210 of epoch 6: time 20.27s
-Batch 220 of epoch 6: time 20.28s
-Batch 230 of epoch 6: time 20.26s
-Batch 240 of epoch 6: time 20.25s
-Batch 250 of epoch 6: time 20.26s
-Batch 260 of epoch 6: time 20.27s
-Batch 270 of epoch 6: time 20.26s
-Batch 280 of epoch 6: time 20.26s
-Batch 290 of epoch 6: time 20.26s
-Batch 300 of epoch 6: time 20.27s
+Batch 0 of epoch 6: time 11.9s
+Batch 10 of epoch 6: time 20.22s
+Batch 20 of epoch 6: time 20.19s
+Batch 30 of epoch 6: time 20.2s
+Batch 40 of epoch 6: time 20.22s
+Batch 50 of epoch 6: time 20.2s
+Batch 60 of epoch 6: time 20.23s
+Batch 70 of epoch 6: time 20.21s
+Batch 80 of epoch 6: time 20.23s
+Batch 90 of epoch 6: time 20.21s
+Batch 100 of epoch 6: time 20.23s
+Batch 110 of epoch 6: time 20.22s
+Batch 120 of epoch 6: time 20.19s
+Batch 130 of epoch 6: time 20.22s
+Batch 140 of epoch 6: time 20.22s
+Batch 150 of epoch 6: time 20.2s
+Batch 160 of epoch 6: time 20.2s
+Batch 170 of epoch 6: time 20.2s
+Batch 180 of epoch 6: time 20.21s
+Batch 190 of epoch 6: time 20.21s
+Batch 200 of epoch 6: time 20.21s
+Batch 210 of epoch 6: time 20.21s
+Batch 220 of epoch 6: time 20.24s
+Batch 230 of epoch 6: time 20.21s
+Batch 240 of epoch 6: time 20.23s
+Batch 250 of epoch 6: time 20.21s
+Batch 260 of epoch 6: time 20.22s
+Batch 270 of epoch 6: time 20.22s
+Batch 280 of epoch 6: time 20.21s
+Batch 290 of epoch 6: time 20.22s
+Batch 300 of epoch 6: time 20.23s
 Batch 310 of epoch 6: time 20.2s
 --- Gradient Norms at Batch 310 ---
-L2 grad norm (core): 89.3762
-Custom grad norm (core): 154116.0555
-Loss grad norm (pure): 0.0246
-Weighted L2 grad norm: 0.0894
-Weighted Custom grad norm: 0.1541
+L2 grad norm (core): 131.2969
+Custom grad norm (core): 165439.9123
+Loss grad norm (pure): 10.7410
+Weighted L2 grad norm: 0.0328
+Weighted Custom grad norm: 0.0414
 -------------------------------------
-Epoch 6: A_NQ = 0.1, H_NQ = 1531156437, A_Q = 0.1, H_Q = 1766729, zstd_ratio = 0.07%, sparse_ratio = 0.07%, sparsity = 0.00% , sparse_accuracy = 0.1, training_time = 790s
+Epoch 6: A_NQ = 8.038, H_NQ = 1534388584, A_Q = 4.069, H_Q = 9381580, zstd_ratio = 0.60%, sparse_ratio = 0.60%, sparsity = 0.00% , sparse_accuracy = 4.069, training_time = 919s
 
-Batch 0 of epoch 7: time 12.31s
-Batch 10 of epoch 7: time 20.27s
-Batch 20 of epoch 7: time 20.25s
-Batch 30 of epoch 7: time 20.25s
-Batch 40 of epoch 7: time 20.24s
-Batch 50 of epoch 7: time 20.24s
+Batch 0 of epoch 7: time 12.59s
+Batch 10 of epoch 7: time 20.26s
+Batch 20 of epoch 7: time 20.21s
+Batch 30 of epoch 7: time 20.21s
+Batch 40 of epoch 7: time 20.21s
+Batch 50 of epoch 7: time 20.2s
 Batch 60 of epoch 7: time 20.23s
-Batch 70 of epoch 7: time 20.23s
-Batch 80 of epoch 7: time 20.26s
-Batch 90 of epoch 7: time 20.24s
-Batch 100 of epoch 7: time 20.25s
-Batch 110 of epoch 7: time 20.24s
-Batch 120 of epoch 7: time 20.24s
-Batch 130 of epoch 7: time 20.24s
-Batch 140 of epoch 7: time 20.24s
-Batch 150 of epoch 7: time 20.26s
-Batch 160 of epoch 7: time 20.26s
-Batch 170 of epoch 7: time 20.24s
-Batch 180 of epoch 7: time 20.23s
-Batch 190 of epoch 7: time 20.23s
-Batch 200 of epoch 7: time 20.24s
-Batch 210 of epoch 7: time 20.26s
-Batch 220 of epoch 7: time 20.25s
-Batch 230 of epoch 7: time 20.24s
-Batch 240 of epoch 7: time 20.23s
-Batch 250 of epoch 7: time 20.23s
-Batch 260 of epoch 7: time 20.23s
-Batch 270 of epoch 7: time 20.24s
-Batch 280 of epoch 7: time 20.23s
-Batch 290 of epoch 7: time 20.24s
-Batch 300 of epoch 7: time 20.25s
-Batch 310 of epoch 7: time 20.19s
+Batch 70 of epoch 7: time 20.21s
+Batch 80 of epoch 7: time 20.21s
+Batch 90 of epoch 7: time 20.21s
+Batch 100 of epoch 7: time 20.2s
+Batch 110 of epoch 7: time 20.23s
+Batch 120 of epoch 7: time 20.22s
+Batch 130 of epoch 7: time 20.22s
+Batch 140 of epoch 7: time 20.23s
+Batch 150 of epoch 7: time 20.23s
+Batch 160 of epoch 7: time 20.2s
+Batch 170 of epoch 7: time 20.2s
+Batch 180 of epoch 7: time 20.2s
+Batch 190 of epoch 7: time 20.21s
+Batch 200 of epoch 7: time 20.21s
+Batch 210 of epoch 7: time 20.19s
+Batch 220 of epoch 7: time 20.19s
+Batch 230 of epoch 7: time 20.21s
+Batch 240 of epoch 7: time 20.22s
+Batch 250 of epoch 7: time 20.22s
+Batch 260 of epoch 7: time 20.21s
+Batch 270 of epoch 7: time 20.2s
+Batch 280 of epoch 7: time 20.21s
+Batch 290 of epoch 7: time 20.2s
+Batch 300 of epoch 7: time 20.21s
+Batch 310 of epoch 7: time 20.17s
 --- Gradient Norms at Batch 310 ---
-L2 grad norm (core): 79.6397
-Custom grad norm (core): 151531.9786
-Loss grad norm (pure): 0.0231
-Weighted L2 grad norm: 0.0796
-Weighted Custom grad norm: 0.1515
+L2 grad norm (core): 130.9637
+Custom grad norm (core): 162607.1613
+Loss grad norm (pure): 8.7010
+Weighted L2 grad norm: 0.0327
+Weighted Custom grad norm: 0.0407
 -------------------------------------
-Epoch 7: A_NQ = 0.1, H_NQ = 1527299961, A_Q = 0.1, H_Q = 1360998, zstd_ratio = 0.06%, sparse_ratio = 0.06%, sparsity = 0.00% , sparse_accuracy = 0.1, training_time = 792s
+Epoch 7: A_NQ = 13.168, H_NQ = 1535714140, A_Q = 6.633, H_Q = 8505977, zstd_ratio = 0.56%, sparse_ratio = 0.56%, sparsity = 0.00% , sparse_accuracy = 6.633, training_time = 920s
 
-Batch 0 of epoch 8: time 12.08s
-Batch 10 of epoch 8: time 21.94s
-Batch 20 of epoch 8: time 20.24s
+Batch 0 of epoch 8: time 12.79s
+Batch 10 of epoch 8: time 20.23s
+Batch 20 of epoch 8: time 20.23s
 Batch 30 of epoch 8: time 20.24s
-Batch 40 of epoch 8: time 20.24s
-Batch 50 of epoch 8: time 20.24s
-Batch 60 of epoch 8: time 20.23s
-Batch 70 of epoch 8: time 20.24s
-Batch 80 of epoch 8: time 20.23s
-Batch 90 of epoch 8: time 20.24s
-Batch 100 of epoch 8: time 20.24s
-Batch 110 of epoch 8: time 20.25s
+Batch 40 of epoch 8: time 20.21s
+Batch 50 of epoch 8: time 20.21s
+Batch 60 of epoch 8: time 20.22s
+Batch 70 of epoch 8: time 20.2s
+Batch 80 of epoch 8: time 20.2s
+Batch 90 of epoch 8: time 20.22s
+Batch 100 of epoch 8: time 20.22s
+Batch 110 of epoch 8: time 20.2s
 Batch 120 of epoch 8: time 20.24s
-Batch 130 of epoch 8: time 20.24s
-Batch 140 of epoch 8: time 20.25s
-Batch 150 of epoch 8: time 20.26s
-Batch 160 of epoch 8: time 20.23s
+Batch 130 of epoch 8: time 20.22s
+Batch 140 of epoch 8: time 20.22s
+Batch 150 of epoch 8: time 20.23s
+Batch 160 of epoch 8: time 20.2s
 Batch 170 of epoch 8: time 20.23s
-Batch 180 of epoch 8: time 20.24s
-Batch 190 of epoch 8: time 20.24s
-Batch 200 of epoch 8: time 20.27s
-Batch 210 of epoch 8: time 20.25s
-Batch 220 of epoch 8: time 20.26s
-Batch 230 of epoch 8: time 20.27s
-Batch 240 of epoch 8: time 20.26s
-Batch 250 of epoch 8: time 20.25s
-Batch 260 of epoch 8: time 20.24s
-Batch 270 of epoch 8: time 20.25s
-Batch 280 of epoch 8: time 20.24s
-Batch 290 of epoch 8: time 20.25s
-Batch 300 of epoch 8: time 20.28s
-Batch 310 of epoch 8: time 20.19s
+Batch 180 of epoch 8: time 20.22s
+Batch 190 of epoch 8: time 20.22s
+Batch 200 of epoch 8: time 20.22s
+Batch 210 of epoch 8: time 20.22s
+Batch 220 of epoch 8: time 20.23s
+Batch 230 of epoch 8: time 20.21s
+Batch 240 of epoch 8: time 20.21s
+Batch 250 of epoch 8: time 20.22s
+Batch 260 of epoch 8: time 20.21s
+Batch 270 of epoch 8: time 20.22s
+Batch 280 of epoch 8: time 20.19s
+Batch 290 of epoch 8: time 20.21s
+Batch 300 of epoch 8: time 20.23s
+Batch 310 of epoch 8: time 20.18s
 --- Gradient Norms at Batch 310 ---
-L2 grad norm (core): 70.5578
-Custom grad norm (core): 150229.3873
-Loss grad norm (pure): 0.0233
-Weighted L2 grad norm: 0.0706
-Weighted Custom grad norm: 0.1502
+L2 grad norm (core): 130.6424
+Custom grad norm (core): 161767.1762
+Loss grad norm (pure): 13.6433
+Weighted L2 grad norm: 0.0327
+Weighted Custom grad norm: 0.0404
 -------------------------------------
-Epoch 8: A_NQ = 0.1, H_NQ = 1522705352, A_Q = 0.1, H_Q = 913598, zstd_ratio = 0.04%, sparse_ratio = 0.04%, sparsity = 0.00% , sparse_accuracy = 0.1, training_time = 793s
+Epoch 8: A_NQ = 15.739, H_NQ = 1536980790, A_Q = 7.919, H_Q = 7749007, zstd_ratio = 0.52%, sparse_ratio = 0.52%, sparsity = 0.00% , sparse_accuracy = 7.919, training_time = 915s
 
-Batch 0 of epoch 9: time 11.81s
-Batch 10 of epoch 9: time 20.3s
-Batch 20 of epoch 9: time 20.29s
-Batch 30 of epoch 9: time 20.27s
-Batch 40 of epoch 9: time 20.29s
-Batch 50 of epoch 9: time 20.29s
-Batch 60 of epoch 9: time 20.24s
-Batch 70 of epoch 9: time 20.27s
-Batch 80 of epoch 9: time 20.26s
-Batch 90 of epoch 9: time 20.27s
-Batch 100 of epoch 9: time 20.25s
-Batch 110 of epoch 9: time 20.29s
-Batch 120 of epoch 9: time 20.28s
-Batch 130 of epoch 9: time 20.26s
-Batch 140 of epoch 9: time 20.27s
-Batch 150 of epoch 9: time 20.28s
-Batch 160 of epoch 9: time 20.27s
-Batch 170 of epoch 9: time 20.25s
-Batch 180 of epoch 9: time 20.24s
-Batch 190 of epoch 9: time 20.23s
-Batch 200 of epoch 9: time 20.26s
-Batch 210 of epoch 9: time 20.26s
-Batch 220 of epoch 9: time 20.25s
-Batch 230 of epoch 9: time 20.26s
-Batch 240 of epoch 9: time 20.26s
-Batch 250 of epoch 9: time 20.26s
-Batch 260 of epoch 9: time 20.26s
-Batch 270 of epoch 9: time 20.28s
-Batch 280 of epoch 9: time 20.28s
-Batch 290 of epoch 9: time 20.26s
-Batch 300 of epoch 9: time 20.29s
-Batch 310 of epoch 9: time 20.2s
+Batch 0 of epoch 9: time 12.02s
+Batch 10 of epoch 9: time 20.2s
+Batch 20 of epoch 9: time 20.2s
+Batch 30 of epoch 9: time 20.2s
+Batch 40 of epoch 9: time 20.21s
+Batch 50 of epoch 9: time 20.2s
+Batch 60 of epoch 9: time 20.21s
+Batch 70 of epoch 9: time 20.24s
+Batch 80 of epoch 9: time 20.21s
+Batch 90 of epoch 9: time 20.23s
+Batch 100 of epoch 9: time 20.23s
+Batch 110 of epoch 9: time 20.22s
+Batch 120 of epoch 9: time 20.22s
+Batch 130 of epoch 9: time 20.22s
+Batch 140 of epoch 9: time 20.23s
+Batch 150 of epoch 9: time 20.22s
+Batch 160 of epoch 9: time 20.22s
+Batch 170 of epoch 9: time 20.21s
+Batch 180 of epoch 9: time 20.2s
+Batch 190 of epoch 9: time 20.2s
+Batch 200 of epoch 9: time 20.2s
+Batch 210 of epoch 9: time 20.19s
+Batch 220 of epoch 9: time 20.2s
+Batch 230 of epoch 9: time 20.2s
+Batch 240 of epoch 9: time 20.19s
+Batch 250 of epoch 9: time 20.2s
+Batch 260 of epoch 9: time 20.19s
+Batch 270 of epoch 9: time 20.19s
+Batch 280 of epoch 9: time 20.19s
+Batch 290 of epoch 9: time 20.19s
+Batch 300 of epoch 9: time 20.21s
+Batch 310 of epoch 9: time 20.17s
 --- Gradient Norms at Batch 310 ---
-L2 grad norm (core): 62.2095
-Custom grad norm (core): 145687.9291
-Loss grad norm (pure): 0.0223
+L2 grad norm (core): 127.3627
+Custom grad norm (core): 159933.1946
+Loss grad norm (pure): 12.9388
+Weighted L2 grad norm: 0.0637
+Weighted Custom grad norm: 0.0800
+-------------------------------------
+Epoch 9: A_NQ = 17.522, H_NQ = 1539439110, A_Q = 8.812, H_Q = 6261185, zstd_ratio = 0.42%, sparse_ratio = 0.42%, sparsity = 0.00% , sparse_accuracy = 8.812, training_time = 886s
+
+Batch 0 of epoch 10: time 11.71s
+Batch 10 of epoch 10: time 20.23s
+Batch 20 of epoch 10: time 20.2s
+Batch 30 of epoch 10: time 20.2s
+Batch 40 of epoch 10: time 20.2s
+Batch 50 of epoch 10: time 20.22s
+Batch 60 of epoch 10: time 20.2s
+Batch 70 of epoch 10: time 20.21s
+Batch 80 of epoch 10: time 20.21s
+Batch 90 of epoch 10: time 20.21s
+Batch 100 of epoch 10: time 20.2s
+Batch 110 of epoch 10: time 20.19s
+Batch 120 of epoch 10: time 20.21s
+Batch 130 of epoch 10: time 20.2s
+Batch 140 of epoch 10: time 20.22s
+Batch 150 of epoch 10: time 20.22s
+Batch 160 of epoch 10: time 20.2s
+Batch 170 of epoch 10: time 20.19s
+Batch 180 of epoch 10: time 20.22s
+Batch 190 of epoch 10: time 20.2s
+Batch 200 of epoch 10: time 20.2s
+Batch 210 of epoch 10: time 20.22s
+Batch 220 of epoch 10: time 20.22s
+Batch 230 of epoch 10: time 20.19s
+Batch 240 of epoch 10: time 20.19s
+Batch 250 of epoch 10: time 20.19s
+Batch 260 of epoch 10: time 20.19s
+Batch 270 of epoch 10: time 20.2s
+Batch 280 of epoch 10: time 20.18s
+Batch 290 of epoch 10: time 20.2s
+Batch 300 of epoch 10: time 20.21s
+Batch 310 of epoch 10: time 20.17s
+--- Gradient Norms at Batch 310 ---
+L2 grad norm (core): 124.3455
+Custom grad norm (core): 157662.1476
+Loss grad norm (pure): 13.2422
 Weighted L2 grad norm: 0.0622
-Weighted Custom grad norm: 0.1457
+Weighted Custom grad norm: 0.0788
 -------------------------------------
-Epoch 9: A_NQ = 0.1, H_NQ = 1518205977, A_Q = 0.1, H_Q = 596360, zstd_ratio = 0.03%, sparse_ratio = 0.03%, sparsity = 0.00% , sparse_accuracy = 0.1, training_time = 789s
+Epoch 10: A_NQ = 19.828, H_NQ = 1541695417, A_Q = 9.963, H_Q = 5795526, zstd_ratio = 0.39%, sparse_ratio = 0.39%, sparsity = 0.00% , sparse_accuracy = 9.963, training_time = 872s
 
-Batch 0 of epoch 10: time 11.51s
-Batch 10 of epoch 10: time 20.3s
-Batch 20 of epoch 10: time 20.29s
-Batch 30 of epoch 10: time 20.27s
-Batch 40 of epoch 10: time 20.3s
-Batch 50 of epoch 10: time 20.27s
-Batch 60 of epoch 10: time 20.28s
-Batch 70 of epoch 10: time 20.3s
-Batch 80 of epoch 10: time 20.3s
-Batch 90 of epoch 10: time 20.3s
-Batch 100 of epoch 10: time 20.25s
-Batch 110 of epoch 10: time 20.28s
-Batch 120 of epoch 10: time 20.29s
-Batch 130 of epoch 10: time 20.29s
-Batch 140 of epoch 10: time 20.29s
-Batch 150 of epoch 10: time 20.3s
-Batch 160 of epoch 10: time 20.29s
-Batch 170 of epoch 10: time 20.29s
-Batch 180 of epoch 10: time 20.28s
-Batch 190 of epoch 10: time 20.29s
-Batch 200 of epoch 10: time 20.29s
-Batch 210 of epoch 10: time 20.28s
-Batch 220 of epoch 10: time 20.28s
-Batch 230 of epoch 10: time 20.27s
-Batch 240 of epoch 10: time 20.31s
-Batch 250 of epoch 10: time 20.29s
-Batch 260 of epoch 10: time 20.3s
-Batch 270 of epoch 10: time 20.29s
-Batch 280 of epoch 10: time 20.3s
-Batch 290 of epoch 10: time 20.29s
-Batch 300 of epoch 10: time 20.31s
-Batch 310 of epoch 10: time 20.22s
+Batch 0 of epoch 11: time 13.25s
+Batch 10 of epoch 11: time 20.22s
+Batch 20 of epoch 11: time 20.2s
+Batch 30 of epoch 11: time 20.2s
+Batch 40 of epoch 11: time 20.19s
+Batch 50 of epoch 11: time 20.19s
+Batch 60 of epoch 11: time 20.21s
+Batch 70 of epoch 11: time 20.21s
+Batch 80 of epoch 11: time 20.2s
+Batch 90 of epoch 11: time 20.2s
+Batch 100 of epoch 11: time 20.2s
+Batch 110 of epoch 11: time 20.2s
+Batch 120 of epoch 11: time 20.19s
+Batch 130 of epoch 11: time 20.22s
+Batch 140 of epoch 11: time 20.19s
+Batch 150 of epoch 11: time 20.22s
+Batch 160 of epoch 11: time 20.23s
+Batch 170 of epoch 11: time 20.23s
+Batch 180 of epoch 11: time 20.19s
+Batch 190 of epoch 11: time 20.21s
+Batch 200 of epoch 11: time 20.2s
+Batch 210 of epoch 11: time 20.19s
+Batch 220 of epoch 11: time 20.19s
+Batch 230 of epoch 11: time 20.19s
+Batch 240 of epoch 11: time 20.21s
+Batch 250 of epoch 11: time 20.19s
+Batch 260 of epoch 11: time 20.2s
+Batch 270 of epoch 11: time 20.19s
+Batch 280 of epoch 11: time 20.2s
+Batch 290 of epoch 11: time 20.2s
+Batch 300 of epoch 11: time 20.21s
+Batch 310 of epoch 11: time 20.16s
 --- Gradient Norms at Batch 310 ---
-L2 grad norm (core): 54.5499
-Custom grad norm (core): 144727.3850
-Loss grad norm (pure): 0.0205
-Weighted L2 grad norm: 0.0545
-Weighted Custom grad norm: 0.1447
+L2 grad norm (core): 121.7164
+Custom grad norm (core): 160768.5810
+Loss grad norm (pure): 17.6094
+Weighted L2 grad norm: 0.0609
+Weighted Custom grad norm: 0.0804
 -------------------------------------
-Epoch 10: A_NQ = 0.1, H_NQ = 1512831378, A_Q = 0.1, H_Q = 258021, zstd_ratio = 0.02%, sparse_ratio = 0.02%, sparsity = 0.00% , sparse_accuracy = 0.1, training_time = 788s
+Epoch 11: A_NQ = 22.592, H_NQ = 1543532759, A_Q = 11.348, H_Q = 5561454, zstd_ratio = 0.38%, sparse_ratio = 0.38%, sparsity = 0.00% , sparse_accuracy = 11.348, training_time = 871s
 
-Batch 0 of epoch 11: time 13.5s
-Batch 10 of epoch 11: time 20.26s
-Batch 20 of epoch 11: time 20.24s
-Batch 30 of epoch 11: time 20.25s
-Batch 40 of epoch 11: time 20.24s
-Batch 50 of epoch 11: time 20.27s
-Batch 60 of epoch 11: time 20.27s
-Batch 70 of epoch 11: time 20.29s
-Batch 80 of epoch 11: time 20.28s
-Batch 90 of epoch 11: time 20.27s
-Batch 100 of epoch 11: time 20.27s
-Batch 110 of epoch 11: time 20.27s
-Batch 120 of epoch 11: time 20.29s
-Batch 130 of epoch 11: time 20.28s
-Batch 140 of epoch 11: time 20.28s
-Batch 150 of epoch 11: time 20.3s
-Batch 160 of epoch 11: time 20.29s
-Batch 170 of epoch 11: time 20.28s
-Batch 180 of epoch 11: time 20.27s
-Batch 190 of epoch 11: time 20.3s
-Batch 200 of epoch 11: time 20.28s
-Batch 210 of epoch 11: time 20.27s
-Batch 220 of epoch 11: time 20.27s
-Batch 230 of epoch 11: time 20.27s
-Batch 240 of epoch 11: time 20.26s
-Batch 250 of epoch 11: time 20.27s
-Batch 260 of epoch 11: time 20.29s
-Batch 270 of epoch 11: time 20.28s
-Batch 280 of epoch 11: time 20.25s
-Batch 290 of epoch 11: time 20.28s
-Batch 300 of epoch 11: time 20.28s
-Batch 310 of epoch 11: time 20.22s
+Batch 0 of epoch 12: time 10.21s
+Batch 10 of epoch 12: time 22.17s
+Batch 20 of epoch 12: time 20.19s
+Batch 30 of epoch 12: time 20.19s
+Batch 40 of epoch 12: time 20.19s
+Batch 50 of epoch 12: time 20.2s
+Batch 60 of epoch 12: time 20.21s
+Batch 70 of epoch 12: time 20.21s
+Batch 80 of epoch 12: time 20.21s
+Batch 90 of epoch 12: time 20.22s
+Batch 100 of epoch 12: time 20.21s
+Batch 110 of epoch 12: time 20.22s
+Batch 120 of epoch 12: time 20.21s
+Batch 130 of epoch 12: time 20.21s
+Batch 140 of epoch 12: time 20.22s
+Batch 150 of epoch 12: time 20.21s
+Batch 160 of epoch 12: time 20.22s
+Batch 170 of epoch 12: time 20.21s
+Batch 180 of epoch 12: time 20.22s
+Batch 190 of epoch 12: time 20.22s
+Batch 200 of epoch 12: time 20.21s
+Batch 210 of epoch 12: time 20.23s
+Batch 220 of epoch 12: time 20.2s
+Batch 230 of epoch 12: time 20.21s
+Batch 240 of epoch 12: time 20.2s
+Batch 250 of epoch 12: time 20.22s
+Batch 260 of epoch 12: time 20.22s
+Batch 270 of epoch 12: time 20.2s
+Batch 280 of epoch 12: time 20.18s
+Batch 290 of epoch 12: time 20.2s
+Batch 300 of epoch 12: time 20.21s
+Batch 310 of epoch 12: time 20.18s
 --- Gradient Norms at Batch 310 ---
-L2 grad norm (core): 47.5654
-Custom grad norm (core): 140016.3179
-Loss grad norm (pure): 0.0217
-Weighted L2 grad norm: 0.0476
-Weighted Custom grad norm: 0.1400
+L2 grad norm (core): 119.4374
+Custom grad norm (core): 157947.7609
+Loss grad norm (pure): 17.6108
+Weighted L2 grad norm: 0.0597
+Weighted Custom grad norm: 0.0790
 -------------------------------------
-Epoch 11: A_NQ = 0.1, H_NQ = 1506040944, A_Q = 0.1, H_Q = 90319, zstd_ratio = 0.01%, sparse_ratio = 0.01%, sparsity = 0.00% , sparse_accuracy = 0.1, training_time = 787s
+Epoch 12: A_NQ = 23.899, H_NQ = 1545059009, A_Q = 11.999, H_Q = 5415542, zstd_ratio = 0.37%, sparse_ratio = 0.37%, sparsity = 0.00% , sparse_accuracy = 11.999, training_time = 865s
 
-Batch 0 of epoch 12: time 11.85s
-Batch 10 of epoch 12: time 20.95s
-Batch 20 of epoch 12: time 20.28s
-Batch 30 of epoch 12: time 20.28s
-Batch 40 of epoch 12: time 20.27s
-Batch 50 of epoch 12: time 20.29s
-Batch 60 of epoch 12: time 20.29s
-Batch 70 of epoch 12: time 20.27s
-Batch 80 of epoch 12: time 20.29s
-Batch 90 of epoch 12: time 20.29s
-Batch 100 of epoch 12: time 20.29s
-Batch 110 of epoch 12: time 20.28s
-Batch 120 of epoch 12: time 20.3s
-Batch 130 of epoch 12: time 20.28s
-Batch 140 of epoch 12: time 20.28s
-Batch 150 of epoch 12: time 20.29s
-Batch 160 of epoch 12: time 20.26s
-Batch 170 of epoch 12: time 20.3s
-Batch 180 of epoch 12: time 20.29s
-Batch 190 of epoch 12: time 20.27s
-Batch 200 of epoch 12: time 20.29s
-Batch 210 of epoch 12: time 20.29s
-Batch 220 of epoch 12: time 20.29s
-Batch 230 of epoch 12: time 20.28s
-Batch 240 of epoch 12: time 20.29s
-Batch 250 of epoch 12: time 20.29s
-Batch 260 of epoch 12: time 20.31s
-Batch 270 of epoch 12: time 20.29s
-Batch 280 of epoch 12: time 20.3s
-Batch 290 of epoch 12: time 20.28s
-Batch 300 of epoch 12: time 20.32s
-Batch 310 of epoch 12: time 20.21s
+Batch 0 of epoch 13: time 11.39s
+Batch 10 of epoch 13: time 21.72s
+Batch 20 of epoch 13: time 20.19s
+Batch 30 of epoch 13: time 20.19s
+Batch 40 of epoch 13: time 20.2s
+Batch 50 of epoch 13: time 20.2s
+Batch 60 of epoch 13: time 20.2s
+Batch 70 of epoch 13: time 20.2s
+Batch 80 of epoch 13: time 20.19s
+Batch 90 of epoch 13: time 20.19s
+Batch 100 of epoch 13: time 20.21s
+Batch 110 of epoch 13: time 20.22s
+Batch 120 of epoch 13: time 20.22s
+Batch 130 of epoch 13: time 20.24s
+Batch 140 of epoch 13: time 20.21s
+Batch 150 of epoch 13: time 20.22s
+Batch 160 of epoch 13: time 20.23s
+Batch 170 of epoch 13: time 20.23s
+Batch 180 of epoch 13: time 20.22s
+Batch 190 of epoch 13: time 20.21s
+Batch 200 of epoch 13: time 20.21s
+Batch 210 of epoch 13: time 20.19s
+Batch 220 of epoch 13: time 20.19s
+Batch 230 of epoch 13: time 20.2s
+Batch 240 of epoch 13: time 20.19s
+Batch 250 of epoch 13: time 20.19s
+Batch 260 of epoch 13: time 20.21s
+Batch 270 of epoch 13: time 20.19s
+Batch 280 of epoch 13: time 20.19s
+Batch 290 of epoch 13: time 20.2s
+Batch 300 of epoch 13: time 20.21s
+Batch 310 of epoch 13: time 20.16s
 --- Gradient Norms at Batch 310 ---
-L2 grad norm (core): 41.2445
-Custom grad norm (core): 136980.9894
-Loss grad norm (pure): 0.0210
-Weighted L2 grad norm: 0.0412
-Weighted Custom grad norm: 0.1370
+L2 grad norm (core): 112.2380
+Custom grad norm (core): 155940.1955
+Loss grad norm (pure): 11.8660
+Weighted L2 grad norm: 0.1122
+Weighted Custom grad norm: 0.1559
 -------------------------------------
-Epoch 12: A_NQ = 0.1, H_NQ = 1499025043, A_Q = 0.1, H_Q = 85055, zstd_ratio = 0.01%, sparse_ratio = 0.01%, sparsity = 0.00% , sparse_accuracy = 0.1, training_time = 787s
+Epoch 13: A_NQ = 25.745, H_NQ = 1548127761, A_Q = 12.921, H_Q = 4860963, zstd_ratio = 0.33%, sparse_ratio = 0.33%, sparsity = 0.00% , sparse_accuracy = 12.921, training_time = 855s
 
-Batch 0 of epoch 13: time 11.53s
-Batch 10 of epoch 13: time 22.24s
-Batch 20 of epoch 13: time 20.28s
-Batch 30 of epoch 13: time 20.31s
-Batch 40 of epoch 13: time 20.29s
-Batch 50 of epoch 13: time 20.27s
-Batch 60 of epoch 13: time 20.29s
-Batch 70 of epoch 13: time 20.27s
-Batch 80 of epoch 13: time 20.29s
-Batch 90 of epoch 13: time 20.27s
-Batch 100 of epoch 13: time 20.27s
-Batch 110 of epoch 13: time 20.27s
-Batch 120 of epoch 13: time 20.28s
-Batch 130 of epoch 13: time 20.28s
-Batch 140 of epoch 13: time 20.29s
-Batch 150 of epoch 13: time 20.26s
-Batch 160 of epoch 13: time 20.27s
-Batch 170 of epoch 13: time 20.27s
-Batch 180 of epoch 13: time 20.27s
-Batch 190 of epoch 13: time 20.28s
-Batch 200 of epoch 13: time 20.27s
-Batch 210 of epoch 13: time 20.27s
-Batch 220 of epoch 13: time 20.28s
-Batch 230 of epoch 13: time 20.27s
-Batch 240 of epoch 13: time 20.3s
-Batch 250 of epoch 13: time 20.28s
-Batch 260 of epoch 13: time 20.26s
-Batch 270 of epoch 13: time 20.27s
-Batch 280 of epoch 13: time 20.25s
-Batch 290 of epoch 13: time 20.27s
-Batch 300 of epoch 13: time 20.27s
-Batch 310 of epoch 13: time 20.24s
+Batch 0 of epoch 14: time 10.44s
+Batch 10 of epoch 14: time 20.94s
+Batch 20 of epoch 14: time 20.19s
+Batch 30 of epoch 14: time 20.21s
+Batch 40 of epoch 14: time 20.22s
+Batch 50 of epoch 14: time 20.21s
+Batch 60 of epoch 14: time 20.21s
+Batch 70 of epoch 14: time 20.2s
+Batch 80 of epoch 14: time 20.2s
+Batch 90 of epoch 14: time 20.2s
+Batch 100 of epoch 14: time 20.21s
+Batch 110 of epoch 14: time 20.21s
+Batch 120 of epoch 14: time 20.2s
+Batch 130 of epoch 14: time 20.18s
+Batch 140 of epoch 14: time 20.23s
+Batch 150 of epoch 14: time 20.22s
+Batch 160 of epoch 14: time 20.22s
+Batch 170 of epoch 14: time 20.23s
+Batch 180 of epoch 14: time 20.21s
+Batch 190 of epoch 14: time 20.22s
+Batch 200 of epoch 14: time 20.23s
+Batch 210 of epoch 14: time 20.23s
+Batch 220 of epoch 14: time 20.23s
+Batch 230 of epoch 14: time 20.22s
+Batch 240 of epoch 14: time 20.22s
+Batch 250 of epoch 14: time 20.23s
+Batch 260 of epoch 14: time 20.21s
+Batch 270 of epoch 14: time 20.21s
+Batch 280 of epoch 14: time 20.22s
+Batch 290 of epoch 14: time 20.22s
+Batch 300 of epoch 14: time 20.26s
+Batch 310 of epoch 14: time 20.18s
 --- Gradient Norms at Batch 310 ---
-L2 grad norm (core): 35.5693
-Custom grad norm (core): 132319.6751
-Loss grad norm (pure): 0.0194
-Weighted L2 grad norm: 0.0356
-Weighted Custom grad norm: 0.1323
+L2 grad norm (core): 106.0886
+Custom grad norm (core): 154245.7626
+Loss grad norm (pure): 14.5981
+Weighted L2 grad norm: 0.1061
+Weighted Custom grad norm: 0.1542
 -------------------------------------
-Epoch 13: A_NQ = 0.1, H_NQ = 1492323681, A_Q = 0.1, H_Q = 80070, zstd_ratio = 0.01%, sparse_ratio = 0.01%, sparsity = 0.00% , sparse_accuracy = 0.1, training_time = 786s
+Epoch 14: A_NQ = 26.259, H_NQ = 1550990170, A_Q = 13.175, H_Q = 4488118, zstd_ratio = 0.31%, sparse_ratio = 0.31%, sparsity = 0.00% , sparse_accuracy = 13.175, training_time = 845s
 
-Batch 0 of epoch 14: time 10.95s
-Batch 10 of epoch 14: time 21.25s
-Batch 20 of epoch 14: time 20.27s
-Batch 30 of epoch 14: time 20.27s
-Batch 40 of epoch 14: time 20.27s
-Batch 50 of epoch 14: time 20.27s
-Batch 60 of epoch 14: time 20.27s
-Batch 70 of epoch 14: time 20.27s
-Batch 80 of epoch 14: time 20.28s
-Batch 90 of epoch 14: time 20.25s
-Batch 100 of epoch 14: time 20.27s
-Batch 110 of epoch 14: time 20.26s
-Batch 120 of epoch 14: time 20.26s
-Batch 130 of epoch 14: time 20.26s
-Batch 140 of epoch 14: time 20.28s
-Batch 150 of epoch 14: time 20.24s
-Batch 160 of epoch 14: time 20.26s
-Batch 170 of epoch 14: time 20.27s
-Batch 180 of epoch 14: time 20.26s
-Batch 190 of epoch 14: time 20.27s
-Batch 200 of epoch 14: time 20.26s
-Batch 210 of epoch 14: time 20.27s
-Batch 220 of epoch 14: time 20.27s
-Batch 230 of epoch 14: time 20.26s
-Batch 240 of epoch 14: time 20.26s
-Batch 250 of epoch 14: time 20.26s
-Batch 260 of epoch 14: time 20.25s
-Batch 270 of epoch 14: time 20.27s
-Batch 280 of epoch 14: time 20.26s
-Batch 290 of epoch 14: time 20.28s
-Batch 300 of epoch 14: time 20.28s
-Batch 310 of epoch 14: time 20.23s
+Batch 0 of epoch 15: time 12.84s
+Batch 10 of epoch 15: time 20.24s
+Batch 20 of epoch 15: time 20.2s
+Batch 30 of epoch 15: time 20.22s
+Batch 40 of epoch 15: time 20.2s
+Batch 50 of epoch 15: time 20.21s
+Batch 60 of epoch 15: time 20.2s
+Batch 70 of epoch 15: time 20.21s
+Batch 80 of epoch 15: time 20.2s
+Batch 90 of epoch 15: time 20.21s
+Batch 100 of epoch 15: time 20.22s
+Batch 110 of epoch 15: time 20.21s
+Batch 120 of epoch 15: time 20.21s
+Batch 130 of epoch 15: time 20.22s
+Batch 140 of epoch 15: time 20.23s
+Batch 150 of epoch 15: time 20.22s
+Batch 160 of epoch 15: time 20.24s
+Batch 170 of epoch 15: time 20.21s
+Batch 180 of epoch 15: time 20.21s
+Batch 190 of epoch 15: time 20.22s
+Batch 200 of epoch 15: time 20.22s
+Batch 210 of epoch 15: time 20.23s
+Batch 220 of epoch 15: time 20.2s
+Batch 230 of epoch 15: time 20.22s
+Batch 240 of epoch 15: time 20.21s
+Batch 250 of epoch 15: time 20.2s
+Batch 260 of epoch 15: time 20.21s
+Batch 270 of epoch 15: time 20.2s
+Batch 280 of epoch 15: time 20.2s
+Batch 290 of epoch 15: time 20.2s
+Batch 300 of epoch 15: time 20.22s
+Batch 310 of epoch 15: time 20.17s
 --- Gradient Norms at Batch 310 ---
-L2 grad norm (core): 30.5215
-Custom grad norm (core): 127655.7485
-Loss grad norm (pure): 0.0194
-Weighted L2 grad norm: 0.0305
-Weighted Custom grad norm: 0.1277
+L2 grad norm (core): 101.0753
+Custom grad norm (core): 153352.5487
+Loss grad norm (pure): 11.1569
+Weighted L2 grad norm: 0.1011
+Weighted Custom grad norm: 0.1534
 -------------------------------------
-Epoch 14: A_NQ = 0.1, H_NQ = 1482034648, A_Q = 0.1, H_Q = 74512, zstd_ratio = 0.01%, sparse_ratio = 0.01%, sparsity = 0.00% , sparse_accuracy = 0.1, training_time = 783s
+Epoch 15: A_NQ = 27.818, H_NQ = 1553585419, A_Q = 13.958, H_Q = 4248686, zstd_ratio = 0.29%, sparse_ratio = 0.29%, sparsity = 0.00% , sparse_accuracy = 13.958, training_time = 842s
 
-Batch 0 of epoch 15: time 12.42s
-Batch 10 of epoch 15: time 20.75s
-Batch 20 of epoch 15: time 20.28s
-Batch 30 of epoch 15: time 20.27s
-Batch 40 of epoch 15: time 20.27s
-Batch 50 of epoch 15: time 20.27s
-Batch 60 of epoch 15: time 20.29s
-Batch 70 of epoch 15: time 20.27s
-Batch 80 of epoch 15: time 20.28s
-Batch 90 of epoch 15: time 20.3s
-Batch 100 of epoch 15: time 20.28s
-Batch 110 of epoch 15: time 20.26s
-Batch 120 of epoch 15: time 20.29s
-Batch 130 of epoch 15: time 20.27s
-Batch 140 of epoch 15: time 20.28s
-Batch 150 of epoch 15: time 20.28s
-Batch 160 of epoch 15: time 20.3s
-Batch 170 of epoch 15: time 20.28s
-Batch 180 of epoch 15: time 20.28s
-Batch 190 of epoch 15: time 20.28s
-Batch 200 of epoch 15: time 20.27s
-Batch 210 of epoch 15: time 20.28s
-Batch 220 of epoch 15: time 20.3s
-Batch 230 of epoch 15: time 20.27s
-Batch 240 of epoch 15: time 20.27s
-Batch 250 of epoch 15: time 20.28s
-Batch 260 of epoch 15: time 20.27s
-Batch 270 of epoch 15: time 20.27s
-Batch 280 of epoch 15: time 20.29s
-Batch 290 of epoch 15: time 20.29s
-Batch 300 of epoch 15: time 20.28s
-Batch 310 of epoch 15: time 20.24s
+Batch 0 of epoch 16: time 10.07s
+Batch 10 of epoch 16: time 22.8s
+Batch 20 of epoch 16: time 20.21s
+Batch 30 of epoch 16: time 20.19s
+Batch 40 of epoch 16: time 20.2s
+Batch 50 of epoch 16: time 20.21s
+Batch 60 of epoch 16: time 20.21s
+Batch 70 of epoch 16: time 20.23s
+Batch 80 of epoch 16: time 20.22s
+Batch 90 of epoch 16: time 20.23s
+Batch 100 of epoch 16: time 20.21s
+Batch 110 of epoch 16: time 20.22s
+Batch 120 of epoch 16: time 20.22s
+Batch 130 of epoch 16: time 20.24s
+Batch 140 of epoch 16: time 20.21s
+Batch 150 of epoch 16: time 20.22s
+Batch 160 of epoch 16: time 20.23s
+Batch 170 of epoch 16: time 20.2s
+Batch 180 of epoch 16: time 20.2s
+Batch 190 of epoch 16: time 20.21s
+Batch 200 of epoch 16: time 20.2s
+Batch 210 of epoch 16: time 20.19s
+Batch 220 of epoch 16: time 20.19s
+Batch 230 of epoch 16: time 20.2s
+Batch 240 of epoch 16: time 20.21s
+Batch 250 of epoch 16: time 20.2s
+Batch 260 of epoch 16: time 20.21s
+Batch 270 of epoch 16: time 20.2s
+Batch 280 of epoch 16: time 20.21s
+Batch 290 of epoch 16: time 20.2s
+Batch 300 of epoch 16: time 20.23s
+Batch 310 of epoch 16: time 20.17s
 --- Gradient Norms at Batch 310 ---
-L2 grad norm (core): 26.0712
-Custom grad norm (core): 123512.3954
-Loss grad norm (pure): 0.0196
-Weighted L2 grad norm: 0.0261
-Weighted Custom grad norm: 0.1235
+L2 grad norm (core): 96.8291
+Custom grad norm (core): 147402.0494
+Loss grad norm (pure): 17.6717
+Weighted L2 grad norm: 0.0968
+Weighted Custom grad norm: 0.1474
 -------------------------------------
-Epoch 15: A_NQ = 0.1, H_NQ = 1472385257, A_Q = 0.1, H_Q = 69221, zstd_ratio = 0.01%, sparse_ratio = 0.01%, sparsity = 0.00% , sparse_accuracy = 0.1, training_time = 787s
+Epoch 16: A_NQ = 28.895, H_NQ = 1555619401, A_Q = 14.5, H_Q = 4091974, zstd_ratio = 0.28%, sparse_ratio = 0.28%, sparsity = 0.00% , sparse_accuracy = 14.5, training_time = 837s
 
-Batch 0 of epoch 16: time 10.23s
-Batch 10 of epoch 16: time 22.14s
-Batch 20 of epoch 16: time 20.26s
-Batch 30 of epoch 16: time 20.26s
-Batch 40 of epoch 16: time 20.29s
-Batch 50 of epoch 16: time 20.28s
-Batch 60 of epoch 16: time 20.29s
-Batch 70 of epoch 16: time 20.26s
-Batch 80 of epoch 16: time 20.29s
-Batch 90 of epoch 16: time 20.28s
-Batch 100 of epoch 16: time 20.26s
-Batch 110 of epoch 16: time 20.31s
-Batch 120 of epoch 16: time 20.28s
-Batch 130 of epoch 16: time 20.3s
-Batch 140 of epoch 16: time 20.27s
-Batch 150 of epoch 16: time 20.27s
-Batch 160 of epoch 16: time 20.28s
-Batch 170 of epoch 16: time 20.28s
-Batch 180 of epoch 16: time 20.27s
-Batch 190 of epoch 16: time 20.28s
-Batch 200 of epoch 16: time 20.29s
-Batch 210 of epoch 16: time 20.26s
-Batch 220 of epoch 16: time 20.28s
-Batch 230 of epoch 16: time 20.29s
-Batch 240 of epoch 16: time 20.27s
-Batch 250 of epoch 16: time 20.28s
-Batch 260 of epoch 16: time 20.28s
-Batch 270 of epoch 16: time 20.28s
-Batch 280 of epoch 16: time 20.29s
-Batch 290 of epoch 16: time 20.27s
-Batch 300 of epoch 16: time 20.28s
-Batch 310 of epoch 16: time 20.24s
+Batch 0 of epoch 17: time 13.01s
+Batch 10 of epoch 17: time 20.33s
+Batch 20 of epoch 17: time 20.22s
+Batch 30 of epoch 17: time 20.25s
+Batch 40 of epoch 17: time 20.22s
+Batch 50 of epoch 17: time 20.25s
+Batch 60 of epoch 17: time 20.22s
+Batch 70 of epoch 17: time 20.22s
+Batch 80 of epoch 17: time 20.2s
+Batch 90 of epoch 17: time 20.22s
+Batch 100 of epoch 17: time 20.24s
+Batch 110 of epoch 17: time 20.21s
+Batch 120 of epoch 17: time 20.23s
+Batch 130 of epoch 17: time 20.22s
+Batch 140 of epoch 17: time 20.19s
+Batch 150 of epoch 17: time 20.24s
+Batch 160 of epoch 17: time 20.22s
+Batch 170 of epoch 17: time 20.24s
+Batch 180 of epoch 17: time 20.25s
+Batch 190 of epoch 17: time 20.22s
+Batch 200 of epoch 17: time 20.23s
+Batch 210 of epoch 17: time 20.23s
+Batch 220 of epoch 17: time 20.22s
+Batch 230 of epoch 17: time 20.22s
+Batch 240 of epoch 17: time 20.23s
+Batch 250 of epoch 17: time 20.22s
+Batch 260 of epoch 17: time 20.23s
+Batch 270 of epoch 17: time 20.22s
+Batch 280 of epoch 17: time 20.24s
+Batch 290 of epoch 17: time 20.23s
+Batch 300 of epoch 17: time 20.23s
+Batch 310 of epoch 17: time 20.22s
 --- Gradient Norms at Batch 310 ---
-L2 grad norm (core): 22.1491
-Custom grad norm (core): 120414.8066
-Loss grad norm (pure): 0.0193
-Weighted L2 grad norm: 0.0221
-Weighted Custom grad norm: 0.1204
+L2 grad norm (core): 93.5623
+Custom grad norm (core): 151697.9522
+Loss grad norm (pure): 12.9795
+Weighted L2 grad norm: 0.0936
+Weighted Custom grad norm: 0.1517
 -------------------------------------
-Epoch 16: A_NQ = 0.1, H_NQ = 1464189328, A_Q = 0.1, H_Q = 63015, zstd_ratio = 0.01%, sparse_ratio = 0.01%, sparsity = 0.00% , sparse_accuracy = 0.1, training_time = 786s
+Epoch 17: A_NQ = 29.811, H_NQ = 1556963882, A_Q = 14.953, H_Q = 4002342, zstd_ratio = 0.28%, sparse_ratio = 0.28%, sparsity = 0.00% , sparse_accuracy = 14.953, training_time = 840s
 
-Batch 0 of epoch 17: time 13.33s
-Batch 10 of epoch 17: time 20.54s
-Batch 20 of epoch 17: time 20.27s
-Batch 30 of epoch 17: time 20.28s
-Batch 40 of epoch 17: time 20.29s
-Batch 50 of epoch 17: time 20.27s
-Batch 60 of epoch 17: time 20.25s
-Batch 70 of epoch 17: time 20.28s
-Batch 80 of epoch 17: time 20.29s
-Batch 90 of epoch 17: time 20.28s
-Batch 100 of epoch 17: time 20.27s
-Batch 110 of epoch 17: time 20.28s
-Batch 120 of epoch 17: time 20.27s
-Batch 130 of epoch 17: time 20.26s
-Batch 140 of epoch 17: time 20.28s
-Batch 150 of epoch 17: time 20.27s
-Batch 160 of epoch 17: time 20.29s
-Batch 170 of epoch 17: time 20.27s
-Batch 180 of epoch 17: time 20.29s
-Batch 190 of epoch 17: time 20.28s
-Batch 200 of epoch 17: time 20.29s
-Batch 210 of epoch 17: time 20.29s
-Batch 220 of epoch 17: time 20.26s
-Batch 230 of epoch 17: time 20.27s
-Batch 240 of epoch 17: time 20.28s
-Batch 250 of epoch 17: time 20.26s
-Batch 260 of epoch 17: time 20.27s
-Batch 270 of epoch 17: time 20.27s
-Batch 280 of epoch 17: time 20.26s
-Batch 290 of epoch 17: time 20.27s
-Batch 300 of epoch 17: time 20.29s
-Batch 310 of epoch 17: time 20.23s
+Batch 0 of epoch 18: time 11.37s
+Batch 10 of epoch 18: time 21.21s
+Batch 20 of epoch 18: time 20.2s
+Batch 30 of epoch 18: time 20.21s
+Batch 40 of epoch 18: time 20.2s
+Batch 50 of epoch 18: time 20.19s
+Batch 60 of epoch 18: time 20.2s
+Batch 70 of epoch 18: time 20.22s
+Batch 80 of epoch 18: time 20.21s
+Batch 90 of epoch 18: time 20.2s
+Batch 100 of epoch 18: time 20.23s
+Batch 110 of epoch 18: time 20.24s
+Batch 120 of epoch 18: time 20.22s
+Batch 130 of epoch 18: time 20.22s
+Batch 140 of epoch 18: time 20.22s
+Batch 150 of epoch 18: time 20.23s
+Batch 160 of epoch 18: time 20.24s
+Batch 170 of epoch 18: time 20.22s
+Batch 180 of epoch 18: time 20.23s
+Batch 190 of epoch 18: time 20.24s
+Batch 200 of epoch 18: time 20.24s
+Batch 210 of epoch 18: time 20.22s
+Batch 220 of epoch 18: time 20.21s
+Batch 230 of epoch 18: time 20.21s
+Batch 240 of epoch 18: time 20.2s
+Batch 250 of epoch 18: time 20.21s
+Batch 260 of epoch 18: time 20.2s
+Batch 270 of epoch 18: time 20.19s
+Batch 280 of epoch 18: time 20.21s
+Batch 290 of epoch 18: time 20.2s
+Batch 300 of epoch 18: time 20.22s
+Batch 310 of epoch 18: time 20.18s
 --- Gradient Norms at Batch 310 ---
-L2 grad norm (core): 18.6974
-Custom grad norm (core): 115114.3258
-Loss grad norm (pure): 0.0187
-Weighted L2 grad norm: 0.0187
-Weighted Custom grad norm: 0.1151
+L2 grad norm (core): 91.0036
+Custom grad norm (core): 147176.0359
+Loss grad norm (pure): 12.8067
+Weighted L2 grad norm: 0.0910
+Weighted Custom grad norm: 0.1472
 -------------------------------------
-Epoch 17: A_NQ = 0.1, H_NQ = 1450718326, A_Q = 0.1, H_Q = 57045, zstd_ratio = 0.01%, sparse_ratio = 0.01%, sparsity = 0.00% , sparse_accuracy = 0.1, training_time = 787s
+Epoch 18: A_NQ = 31.204, H_NQ = 1557805218, A_Q = 15.65, H_Q = 3953372, zstd_ratio = 0.27%, sparse_ratio = 0.27%, sparsity = 0.00% , sparse_accuracy = 15.65, training_time = 838s
 
-Batch 0 of epoch 18: time 11.14s
-Batch 10 of epoch 18: time 20.54s
-Batch 20 of epoch 18: time 20.27s
-Batch 30 of epoch 18: time 20.26s
-Batch 40 of epoch 18: time 20.28s
-Batch 50 of epoch 18: time 20.27s
-Batch 60 of epoch 18: time 20.29s
-Batch 70 of epoch 18: time 20.28s
-Batch 80 of epoch 18: time 20.27s
-Batch 90 of epoch 18: time 20.28s
-Batch 100 of epoch 18: time 20.28s
-Batch 110 of epoch 18: time 20.31s
-Batch 120 of epoch 18: time 20.3s
-Batch 130 of epoch 18: time 20.29s
-Batch 140 of epoch 18: time 20.27s
-Batch 150 of epoch 18: time 20.27s
-Batch 160 of epoch 18: time 20.29s
-Batch 170 of epoch 18: time 20.26s
-Batch 180 of epoch 18: time 20.28s
-Batch 190 of epoch 18: time 20.29s
-Batch 200 of epoch 18: time 20.3s
-Batch 210 of epoch 18: time 20.29s
-Batch 220 of epoch 18: time 20.29s
-Batch 230 of epoch 18: time 20.3s
-Batch 240 of epoch 18: time 20.28s
-Batch 250 of epoch 18: time 20.27s
-Batch 260 of epoch 18: time 20.28s
-Batch 270 of epoch 18: time 20.28s
-Batch 280 of epoch 18: time 20.27s
-Batch 290 of epoch 18: time 20.28s
-Batch 300 of epoch 18: time 20.27s
-Batch 310 of epoch 18: time 20.26s
+Batch 0 of epoch 19: time 10.4s
+Batch 10 of epoch 19: time 20.23s
+Batch 20 of epoch 19: time 20.21s
+Batch 30 of epoch 19: time 20.21s
+Batch 40 of epoch 19: time 20.21s
+Batch 50 of epoch 19: time 20.21s
+Batch 60 of epoch 19: time 20.21s
+Batch 70 of epoch 19: time 20.22s
+Batch 80 of epoch 19: time 20.23s
+Batch 90 of epoch 19: time 20.23s
+Batch 100 of epoch 19: time 20.23s
+Batch 110 of epoch 19: time 20.23s
+Batch 120 of epoch 19: time 20.23s
+Batch 130 of epoch 19: time 20.24s
+Batch 140 of epoch 19: time 20.25s
+Batch 150 of epoch 19: time 20.23s
+Batch 160 of epoch 19: time 20.22s
+Batch 170 of epoch 19: time 20.25s
+Batch 180 of epoch 19: time 20.26s
+Batch 190 of epoch 19: time 20.21s
+Batch 200 of epoch 19: time 20.21s
+Batch 210 of epoch 19: time 20.23s
+Batch 220 of epoch 19: time 20.23s
+Batch 230 of epoch 19: time 20.24s
+Batch 240 of epoch 19: time 20.23s
+Batch 250 of epoch 19: time 20.24s
+Batch 260 of epoch 19: time 20.23s
+Batch 270 of epoch 19: time 20.22s
+Batch 280 of epoch 19: time 20.22s
+Batch 290 of epoch 19: time 20.23s
+Batch 300 of epoch 19: time 20.23s
+Batch 310 of epoch 19: time 20.18s
 --- Gradient Norms at Batch 310 ---
-L2 grad norm (core): 15.7047
-Custom grad norm (core): 110058.3728
-Loss grad norm (pure): 0.0181
-Weighted L2 grad norm: 0.0157
-Weighted Custom grad norm: 0.1101
+L2 grad norm (core): 89.1036
+Custom grad norm (core): 146145.2074
+Loss grad norm (pure): 19.4409
+Weighted L2 grad norm: 0.0891
+Weighted Custom grad norm: 0.1461
 -------------------------------------
-Epoch 18: A_NQ = 0.1, H_NQ = 1442995971, A_Q = 0.1, H_Q = 50718, zstd_ratio = 0.01%, sparse_ratio = 0.01%, sparsity = 0.00% , sparse_accuracy = 0.1, training_time = 787s
+Epoch 19: A_NQ = 31.101, H_NQ = 1558324201, A_Q = 15.594, H_Q = 3932710, zstd_ratio = 0.27%, sparse_ratio = 0.27%, sparsity = 0.00% , sparse_accuracy = 15.594, training_time = 837s
 
-Batch 0 of epoch 19: time 10.62s
-Batch 10 of epoch 19: time 20.29s
-Batch 20 of epoch 19: time 20.28s
-Batch 30 of epoch 19: time 20.31s
-Batch 40 of epoch 19: time 20.29s
-Batch 50 of epoch 19: time 20.27s
-Batch 60 of epoch 19: time 20.27s
-Batch 70 of epoch 19: time 20.28s
-Batch 80 of epoch 19: time 20.27s
-Batch 90 of epoch 19: time 20.26s
-Batch 100 of epoch 19: time 20.29s
-Batch 110 of epoch 19: time 20.28s
-Batch 120 of epoch 19: time 20.28s
-Batch 130 of epoch 19: time 20.28s
-Batch 140 of epoch 19: time 20.29s
-Batch 150 of epoch 19: time 20.27s
-Batch 160 of epoch 19: time 20.27s
-Batch 170 of epoch 19: time 20.29s
-Batch 180 of epoch 19: time 20.3s
-Batch 190 of epoch 19: time 20.28s
-Batch 200 of epoch 19: time 20.27s
-Batch 210 of epoch 19: time 20.28s
-Batch 220 of epoch 19: time 20.28s
-Batch 230 of epoch 19: time 20.27s
-Batch 240 of epoch 19: time 20.28s
-Batch 250 of epoch 19: time 20.29s
-Batch 260 of epoch 19: time 20.28s
-Batch 270 of epoch 19: time 20.27s
-Batch 280 of epoch 19: time 20.26s
-Batch 290 of epoch 19: time 20.27s
-Batch 300 of epoch 19: time 20.29s
-Batch 310 of epoch 19: time 20.25s
+Batch 0 of epoch 20: time 12.14s
+Batch 10 of epoch 20: time 21.14s
+Batch 20 of epoch 20: time 20.2s
+Batch 30 of epoch 20: time 20.21s
+Batch 40 of epoch 20: time 20.24s
+Batch 50 of epoch 20: time 20.22s
+Batch 60 of epoch 20: time 20.22s
+Batch 70 of epoch 20: time 20.21s
+Batch 80 of epoch 20: time 20.22s
+Batch 90 of epoch 20: time 20.22s
+Batch 100 of epoch 20: time 20.21s
+Batch 110 of epoch 20: time 20.24s
+Batch 120 of epoch 20: time 20.21s
+Batch 130 of epoch 20: time 20.24s
+Batch 140 of epoch 20: time 20.22s
+Batch 150 of epoch 20: time 20.24s
+Batch 160 of epoch 20: time 20.23s
+Batch 170 of epoch 20: time 20.22s
+Batch 180 of epoch 20: time 20.22s
+Batch 190 of epoch 20: time 20.21s
+Batch 200 of epoch 20: time 20.21s
+Batch 210 of epoch 20: time 20.21s
+Batch 220 of epoch 20: time 20.21s
+Batch 230 of epoch 20: time 20.21s
+Batch 240 of epoch 20: time 20.21s
+Batch 250 of epoch 20: time 20.2s
+Batch 260 of epoch 20: time 20.22s
+Batch 270 of epoch 20: time 20.22s
+Batch 280 of epoch 20: time 20.24s
+Batch 290 of epoch 20: time 20.22s
+Batch 300 of epoch 20: time 20.24s
+Batch 310 of epoch 20: time 20.2s
 --- Gradient Norms at Batch 310 ---
-L2 grad norm (core): 13.1606
-Custom grad norm (core): 104837.4383
-Loss grad norm (pure): 0.0175
-Weighted L2 grad norm: 0.0132
-Weighted Custom grad norm: 0.1048
+L2 grad norm (core): 87.8391
+Custom grad norm (core): 142840.3934
+Loss grad norm (pure): 12.1005
+Weighted L2 grad norm: 0.0878
+Weighted Custom grad norm: 0.1428
 -------------------------------------
-Epoch 19: A_NQ = 0.1, H_NQ = 1435093340, A_Q = 0.1, H_Q = 43631, zstd_ratio = 0.01%, sparse_ratio = 0.01%, sparsity = 0.00% , sparse_accuracy = 0.1, training_time = 784s
+Epoch 20: A_NQ = 31.806, H_NQ = 1558523944, A_Q = 15.957, H_Q = 3938867, zstd_ratio = 0.27%, sparse_ratio = 0.27%, sparsity = 0.00% , sparse_accuracy = 15.957, training_time = 837s
 
-Batch 0 of epoch 20: time 12.87s
-Batch 10 of epoch 20: time 20.64s
-Batch 20 of epoch 20: time 20.27s
-Batch 30 of epoch 20: time 20.28s
-Batch 40 of epoch 20: time 20.28s
-Batch 50 of epoch 20: time 20.28s
-Batch 60 of epoch 20: time 20.28s
-Batch 70 of epoch 20: time 20.3s
-Batch 80 of epoch 20: time 20.28s
-Batch 90 of epoch 20: time 20.29s
-Batch 100 of epoch 20: time 20.28s
-Batch 110 of epoch 20: time 20.29s
-Batch 120 of epoch 20: time 20.27s
-Batch 130 of epoch 20: time 20.29s
-Batch 140 of epoch 20: time 20.26s
-Batch 150 of epoch 20: time 20.28s
-Batch 160 of epoch 20: time 20.28s
-Batch 170 of epoch 20: time 20.27s
-Batch 180 of epoch 20: time 20.29s
-Batch 190 of epoch 20: time 20.29s
-Batch 200 of epoch 20: time 20.31s
-Batch 210 of epoch 20: time 20.29s
-Batch 220 of epoch 20: time 20.28s
-Batch 230 of epoch 20: time 20.29s
-Batch 240 of epoch 20: time 20.28s
-Batch 250 of epoch 20: time 20.28s
-Batch 260 of epoch 20: time 20.31s
-Batch 270 of epoch 20: time 20.28s
-Batch 280 of epoch 20: time 20.28s
-Batch 290 of epoch 20: time 20.29s
-Batch 300 of epoch 20: time 20.28s
-Batch 310 of epoch 20: time 20.25s
+Batch 0 of epoch 21: time 10.03s
+Batch 10 of epoch 21: time 21.19s
+Batch 20 of epoch 21: time 20.22s
+Batch 30 of epoch 21: time 20.22s
+Batch 40 of epoch 21: time 20.22s
+Batch 50 of epoch 21: time 20.22s
+Batch 60 of epoch 21: time 20.21s
+Batch 70 of epoch 21: time 20.22s
+Batch 80 of epoch 21: time 20.21s
+Batch 90 of epoch 21: time 20.21s
+Batch 100 of epoch 21: time 20.21s
+Batch 110 of epoch 21: time 20.21s
+Batch 120 of epoch 21: time 20.21s
+Batch 130 of epoch 21: time 20.23s
+Batch 140 of epoch 21: time 20.24s
+Batch 150 of epoch 21: time 20.23s
+Batch 160 of epoch 21: time 20.24s
+Batch 170 of epoch 21: time 20.24s
+Batch 180 of epoch 21: time 20.23s
+Batch 190 of epoch 21: time 20.21s
+Batch 200 of epoch 21: time 20.22s
+Batch 210 of epoch 21: time 20.22s
+Batch 220 of epoch 21: time 20.23s
+Batch 230 of epoch 21: time 20.22s
+Batch 240 of epoch 21: time 20.21s
+Batch 250 of epoch 21: time 20.21s
+Batch 260 of epoch 21: time 20.21s
+Batch 270 of epoch 21: time 20.22s
+Batch 280 of epoch 21: time 20.22s
+Batch 290 of epoch 21: time 20.21s
+Batch 300 of epoch 21: time 20.24s
+Batch 310 of epoch 21: time 20.19s
 --- Gradient Norms at Batch 310 ---
-L2 grad norm (core): 11.0748
-Custom grad norm (core): 98149.5647
-Loss grad norm (pure): 0.0177
-Weighted L2 grad norm: 0.0111
-Weighted Custom grad norm: 0.0981
+L2 grad norm (core): 87.0396
+Custom grad norm (core): 142146.7320
+Loss grad norm (pure): 12.5375
+Weighted L2 grad norm: 0.0870
+Weighted Custom grad norm: 0.1421
 -------------------------------------
-Epoch 20: A_NQ = 0.1, H_NQ = 1456933180, A_Q = 0.1, H_Q = 36675, zstd_ratio = 0.01%, sparse_ratio = 0.01%, sparsity = 0.00% , sparse_accuracy = 0.1, training_time = 788s
+Epoch 21: A_NQ = 33.072, H_NQ = 1558435368, A_Q = 16.586, H_Q = 3952169, zstd_ratio = 0.27%, sparse_ratio = 0.27%, sparsity = 0.00% , sparse_accuracy = 16.586, training_time = 836s
 
-Batch 0 of epoch 21: time 10.25s
-Batch 10 of epoch 21: time 21.46s
-Batch 20 of epoch 21: time 22.38s
-Batch 30 of epoch 21: time 26.84s
-Batch 40 of epoch 21: time 26.85s
-Batch 50 of epoch 21: time 26.75s
-Batch 60 of epoch 21: time 26.81s
-Batch 70 of epoch 21: time 26.88s
-Batch 80 of epoch 21: time 26.19s
-Batch 90 of epoch 21: time 26.9s
-Batch 100 of epoch 21: time 26.88s
-Batch 110 of epoch 21: time 26.71s
-Batch 120 of epoch 21: time 26.78s
-Batch 130 of epoch 21: time 26.1s
-Batch 140 of epoch 21: time 26.45s
-Batch 150 of epoch 21: time 26.79s
-Batch 160 of epoch 21: time 26.69s
-Batch 170 of epoch 21: time 26.78s
-Batch 180 of epoch 21: time 26.64s
-Batch 190 of epoch 21: time 25.82s
-Batch 200 of epoch 21: time 26.8s
-Batch 210 of epoch 21: time 26.89s
-Batch 220 of epoch 21: time 26.78s
-Batch 230 of epoch 21: time 26.71s
-Batch 240 of epoch 21: time 26.76s
-Batch 250 of epoch 21: time 25.99s
-Batch 260 of epoch 21: time 26.87s
-Batch 270 of epoch 21: time 26.72s
-Batch 280 of epoch 21: time 26.81s
-Batch 290 of epoch 21: time 26.75s
-Batch 300 of epoch 21: time 26.71s
-Batch 310 of epoch 21: time 24.85s
---- Gradient Norms at Batch 310 ---
-L2 grad norm (core): 9.4470
-Custom grad norm (core): 93424.9897
-Loss grad norm (pure): 0.0176
-Weighted L2 grad norm: 0.0094
-Weighted Custom grad norm: 0.0934
--------------------------------------
-Epoch 21: A_NQ = 0.1, H_NQ = 1458387195, A_Q = 0.1, H_Q = 28735, zstd_ratio = 0.01%, sparse_ratio = 0.01%, sparsity = 0.00% , sparse_accuracy = 0.1, training_time = 973s
-
-Batch 0 of epoch 22: time 10.28s
-Batch 10 of epoch 22: time 22.11s
-Batch 20 of epoch 22: time 20.29s
-Batch 30 of epoch 22: time 20.26s
-Batch 40 of epoch 22: time 20.28s
-Batch 50 of epoch 22: time 20.28s
-Batch 60 of epoch 22: time 20.25s
-Batch 70 of epoch 22: time 20.27s
-Batch 80 of epoch 22: time 20.27s
-Batch 90 of epoch 22: time 20.27s
-Batch 100 of epoch 22: time 20.27s
-Batch 110 of epoch 22: time 20.27s
-Batch 120 of epoch 22: time 20.27s
-Batch 130 of epoch 22: time 20.28s
-Batch 140 of epoch 22: time 20.27s
-Batch 150 of epoch 22: time 20.27s
-Batch 160 of epoch 22: time 20.25s
+Batch 0 of epoch 22: time 10.81s
+Batch 10 of epoch 22: time 21.84s
+Batch 20 of epoch 22: time 20.21s
+Batch 30 of epoch 22: time 20.21s
+Batch 40 of epoch 22: time 20.21s
+Batch 50 of epoch 22: time 20.23s
+Batch 60 of epoch 22: time 20.24s
+Batch 70 of epoch 22: time 20.23s
+Batch 80 of epoch 22: time 20.23s
+Batch 90 of epoch 22: time 20.22s
+Batch 100 of epoch 22: time 20.23s
+Batch 110 of epoch 22: time 20.24s
+Batch 120 of epoch 22: time 20.23s
+Batch 130 of epoch 22: time 20.24s
+Batch 140 of epoch 22: time 20.22s
+Batch 150 of epoch 22: time 20.24s
+Batch 160 of epoch 22: time 20.22s
 Batch 170 of epoch 22: time 20.25s
-Batch 180 of epoch 22: time 20.27s
-Batch 190 of epoch 22: time 20.26s
-Batch 200 of epoch 22: time 20.27s
-Batch 210 of epoch 22: time 20.27s
-Batch 220 of epoch 22: time 20.26s
-Batch 230 of epoch 22: time 20.27s
-Batch 240 of epoch 22: time 20.26s
-Batch 250 of epoch 22: time 20.28s
-Batch 260 of epoch 22: time 20.27s
-Batch 270 of epoch 22: time 26.0s
-Batch 280 of epoch 22: time 26.72s
-Batch 290 of epoch 22: time 26.73s
-Batch 300 of epoch 22: time 26.73s
-Batch 310 of epoch 22: time 26.85s
+Batch 180 of epoch 22: time 20.23s
+Batch 190 of epoch 22: time 20.23s
+Batch 200 of epoch 22: time 20.24s
+Batch 210 of epoch 22: time 20.22s
+Batch 220 of epoch 22: time 20.23s
+Batch 230 of epoch 22: time 20.24s
+Batch 240 of epoch 22: time 20.23s
+Batch 250 of epoch 22: time 20.24s
+Batch 260 of epoch 22: time 20.23s
+Batch 270 of epoch 22: time 20.24s
+Batch 280 of epoch 22: time 20.23s
+Batch 290 of epoch 22: time 20.22s
+Batch 300 of epoch 22: time 20.24s
+Batch 310 of epoch 22: time 20.18s
 --- Gradient Norms at Batch 310 ---
-L2 grad norm (core): 8.0467
-Custom grad norm (core): 88778.5835
-Loss grad norm (pure): 0.0168
-Weighted L2 grad norm: 0.0080
-Weighted Custom grad norm: 0.0888
+L2 grad norm (core): 86.5462
+Custom grad norm (core): 141440.5321
+Loss grad norm (pure): 14.6365
+Weighted L2 grad norm: 0.0865
+Weighted Custom grad norm: 0.1414
 -------------------------------------
-Epoch 22: A_NQ = 0.1, H_NQ = 1448543601, A_Q = 0.1, H_Q = 20663, zstd_ratio = 0.01%, sparse_ratio = 0.01%, sparsity = 0.00% , sparse_accuracy = 0.1, training_time = 822s
+Epoch 22: A_NQ = 33.228, H_NQ = 1557474822, A_Q = 16.661, H_Q = 3977669, zstd_ratio = 0.27%, sparse_ratio = 0.27%, sparsity = 0.00% , sparse_accuracy = 16.661, training_time = 841s
 
-Batch 0 of epoch 23: time 10.71s
-Batch 10 of epoch 23: time 27.07s
-Batch 20 of epoch 23: time 27.05s
-Batch 30 of epoch 23: time 26.91s
-Batch 40 of epoch 23: time 26.89s
-Batch 50 of epoch 23: time 26.1s
-Batch 60 of epoch 23: time 26.93s
-Batch 70 of epoch 23: time 26.99s
-Batch 80 of epoch 23: time 26.93s
-Batch 90 of epoch 23: time 26.86s
-Batch 100 of epoch 23: time 26.75s
-Batch 110 of epoch 23: time 26.93s
-Batch 120 of epoch 23: time 26.93s
-Batch 130 of epoch 23: time 27.0s
-Batch 140 of epoch 23: time 21.46s
-Batch 150 of epoch 23: time 24.82s
-Batch 160 of epoch 23: time 26.97s
-Batch 170 of epoch 23: time 26.96s
-Batch 180 of epoch 23: time 27.05s
-Batch 190 of epoch 23: time 26.95s
-Batch 200 of epoch 23: time 26.22s
-Batch 210 of epoch 23: time 26.96s
-Batch 220 of epoch 23: time 26.91s
-Batch 230 of epoch 23: time 26.92s
-Batch 240 of epoch 23: time 26.95s
-Batch 250 of epoch 23: time 26.52s
-Batch 260 of epoch 23: time 26.71s
-Batch 270 of epoch 23: time 27.03s
-Batch 280 of epoch 23: time 27.0s
-Batch 290 of epoch 23: time 26.96s
-Batch 300 of epoch 23: time 27.16s
-Batch 310 of epoch 23: time 26.8s
+Batch 0 of epoch 23: time 10.97s
+Batch 10 of epoch 23: time 20.68s
+Batch 20 of epoch 23: time 20.22s
+Batch 30 of epoch 23: time 20.23s
+Batch 40 of epoch 23: time 20.23s
+Batch 50 of epoch 23: time 20.22s
+Batch 60 of epoch 23: time 20.23s
+Batch 70 of epoch 23: time 20.22s
+Batch 80 of epoch 23: time 20.22s
+Batch 90 of epoch 23: time 20.21s
+Batch 100 of epoch 23: time 20.21s
+Batch 110 of epoch 23: time 20.21s
+Batch 120 of epoch 23: time 20.22s
+Batch 130 of epoch 23: time 20.21s
+Batch 140 of epoch 23: time 20.21s
+Batch 150 of epoch 23: time 20.22s
+Batch 160 of epoch 23: time 20.2s
+Batch 170 of epoch 23: time 20.21s
+Batch 180 of epoch 23: time 20.21s
+Batch 190 of epoch 23: time 20.24s
+Batch 200 of epoch 23: time 20.24s
+Batch 210 of epoch 23: time 20.23s
+Batch 220 of epoch 23: time 20.24s
+Batch 230 of epoch 23: time 20.49s
+Batch 240 of epoch 23: time 20.45s
+Batch 250 of epoch 23: time 20.42s
+Batch 260 of epoch 23: time 20.45s
+Batch 270 of epoch 23: time 20.46s
+Batch 280 of epoch 23: time 20.46s
+Batch 290 of epoch 23: time 20.46s
+Batch 300 of epoch 23: time 20.45s
+Batch 310 of epoch 23: time 20.41s
 --- Gradient Norms at Batch 310 ---
-L2 grad norm (core): 6.8320
-Custom grad norm (core): 83773.1255
-Loss grad norm (pure): 0.0166
-Weighted L2 grad norm: 0.0068
-Weighted Custom grad norm: 0.0838
+L2 grad norm (core): 86.3782
+Custom grad norm (core): 138954.8761
+Loss grad norm (pure): 14.1612
+Weighted L2 grad norm: 0.0864
+Weighted Custom grad norm: 0.1390
 -------------------------------------
-Epoch 23: A_NQ = 0.1, H_NQ = 1446704559, A_Q = 0.1, H_Q = 11820, zstd_ratio = 0.01%, sparse_ratio = 0.01%, sparsity = 0.00% , sparse_accuracy = 0.1, training_time = 984s
+Epoch 23: A_NQ = 34.266, H_NQ = 1556407256, A_Q = 17.182, H_Q = 4016808, zstd_ratio = 0.28%, sparse_ratio = 0.28%, sparsity = 0.00% , sparse_accuracy = 17.182, training_time = 841s
 
-Batch 0 of epoch 24: time 11.52s
-Batch 10 of epoch 24: time 28.31s
-Batch 20 of epoch 24: time 26.91s
-Batch 30 of epoch 24: time 26.28s
-Batch 40 of epoch 24: time 26.9s
-Batch 50 of epoch 24: time 27.04s
-Batch 60 of epoch 24: time 27.03s
-Batch 70 of epoch 24: time 26.94s
-Batch 80 of epoch 24: time 27.06s
-Batch 90 of epoch 24: time 26.36s
-Batch 100 of epoch 24: time 27.16s
-Batch 110 of epoch 24: time 27.13s
-Batch 120 of epoch 24: time 27.04s
-Batch 130 of epoch 24: time 26.98s
-Batch 140 of epoch 24: time 26.28s
-Batch 150 of epoch 24: time 27.03s
-Batch 160 of epoch 24: time 26.97s
-Batch 170 of epoch 24: time 27.1s
-Batch 180 of epoch 24: time 26.86s
-Batch 190 of epoch 24: time 26.19s
-Batch 200 of epoch 24: time 26.98s
-Batch 210 of epoch 24: time 26.91s
-Batch 220 of epoch 24: time 26.99s
-Batch 230 of epoch 24: time 26.94s
-Batch 240 of epoch 24: time 27.02s
-Batch 250 of epoch 24: time 26.33s
-Batch 260 of epoch 24: time 27.01s
-Batch 270 of epoch 24: time 26.95s
-Batch 280 of epoch 24: time 27.04s
-Batch 290 of epoch 24: time 26.95s
-Batch 300 of epoch 24: time 26.43s
-Batch 310 of epoch 24: time 27.5s
+Batch 0 of epoch 24: time 12.35s
+Batch 10 of epoch 24: time 20.49s
+Batch 20 of epoch 24: time 20.45s
+Batch 30 of epoch 24: time 20.44s
+Batch 40 of epoch 24: time 20.43s
+Batch 50 of epoch 24: time 20.46s
+Batch 60 of epoch 24: time 20.45s
+Batch 70 of epoch 24: time 20.47s
+Batch 80 of epoch 24: time 20.45s
+Batch 90 of epoch 24: time 20.45s
+Batch 100 of epoch 24: time 20.47s
+Batch 110 of epoch 24: time 20.45s
+Batch 120 of epoch 24: time 20.46s
+Batch 130 of epoch 24: time 20.47s
+Batch 140 of epoch 24: time 20.45s
+Batch 150 of epoch 24: time 20.44s
+Batch 160 of epoch 24: time 20.43s
+Batch 170 of epoch 24: time 20.46s
+Batch 180 of epoch 24: time 20.45s
+Batch 190 of epoch 24: time 20.44s
+Batch 200 of epoch 24: time 20.44s
+Batch 210 of epoch 24: time 20.45s
+Batch 220 of epoch 24: time 20.43s
+Batch 230 of epoch 24: time 20.43s
+Batch 240 of epoch 24: time 20.44s
+Batch 250 of epoch 24: time 20.45s
+Batch 260 of epoch 24: time 20.46s
+Batch 270 of epoch 24: time 20.46s
+Batch 280 of epoch 24: time 20.46s
+Batch 290 of epoch 24: time 20.45s
+Batch 300 of epoch 24: time 20.47s
+Batch 310 of epoch 24: time 20.42s
 --- Gradient Norms at Batch 310 ---
-L2 grad norm (core): 5.7854
-Custom grad norm (core): 79742.4846
-Loss grad norm (pure): 0.0180
-Weighted L2 grad norm: 0.0058
-Weighted Custom grad norm: 0.0797
+L2 grad norm (core): 86.4147
+Custom grad norm (core): 139523.9973
+Loss grad norm (pure): 13.7105
+Weighted L2 grad norm: 0.0864
+Weighted Custom grad norm: 0.1395
 -------------------------------------
-Epoch 24: A_NQ = 0.1, H_NQ = 1434125343, A_Q = 0.1, H_Q = 2249, zstd_ratio = 0.01%, sparse_ratio = 0.01%, sparsity = 0.00% , sparse_accuracy = 0.1, training_time = 995s
+Epoch 24: A_NQ = 34.329, H_NQ = 1555312163, A_Q = 17.213, H_Q = 4055423, zstd_ratio = 0.28%, sparse_ratio = 0.28%, sparsity = 0.00% , sparse_accuracy = 17.213, training_time = 848s
 
-Batch 0 of epoch 25: time 12.84s
-Batch 10 of epoch 25: time 26.97s
-Batch 20 of epoch 25: time 26.82s
-Batch 30 of epoch 25: time 26.43s
-Batch 40 of epoch 25: time 27.03s
-Batch 50 of epoch 25: time 27.07s
-Batch 60 of epoch 25: time 27.03s
-Batch 70 of epoch 25: time 27.02s
-Batch 80 of epoch 25: time 26.28s
-Batch 90 of epoch 25: time 27.09s
-Batch 100 of epoch 25: time 27.06s
-Batch 110 of epoch 25: time 27.01s
-Batch 120 of epoch 25: time 26.98s
-Batch 130 of epoch 25: time 26.26s
-Batch 140 of epoch 25: time 27.07s
-Batch 150 of epoch 25: time 27.05s
-Batch 160 of epoch 25: time 27.01s
-Batch 170 of epoch 25: time 27.06s
-Batch 180 of epoch 25: time 26.81s
-Batch 190 of epoch 25: time 26.45s
-Batch 200 of epoch 25: time 26.96s
-Batch 210 of epoch 25: time 27.02s
-Batch 220 of epoch 25: time 26.97s
-Batch 230 of epoch 25: time 27.24s
-Batch 240 of epoch 25: time 26.15s
-Batch 250 of epoch 25: time 26.96s
-Batch 260 of epoch 25: time 27.07s
-Batch 270 of epoch 25: time 26.98s
-Batch 280 of epoch 25: time 27.03s
-Batch 290 of epoch 25: time 26.32s
-Batch 300 of epoch 25: time 26.98s
-Batch 310 of epoch 25: time 27.33s
+Batch 0 of epoch 25: time 13.1s
+Batch 10 of epoch 25: time 20.45s
+Batch 20 of epoch 25: time 20.43s
+Batch 30 of epoch 25: time 20.42s
+Batch 40 of epoch 25: time 20.41s
+Batch 50 of epoch 25: time 20.44s
+Batch 60 of epoch 25: time 20.43s
+Batch 70 of epoch 25: time 20.42s
+Batch 80 of epoch 25: time 20.42s
+Batch 90 of epoch 25: time 20.43s
+Batch 100 of epoch 25: time 20.41s
+Batch 110 of epoch 25: time 20.44s
+Batch 120 of epoch 25: time 20.43s
+Batch 130 of epoch 25: time 20.44s
+Batch 140 of epoch 25: time 20.47s
+Batch 150 of epoch 25: time 20.45s
+Batch 160 of epoch 25: time 20.44s
+Batch 170 of epoch 25: time 20.43s
+Batch 180 of epoch 25: time 20.45s
+Batch 190 of epoch 25: time 20.44s
+Batch 200 of epoch 25: time 20.44s
+Batch 210 of epoch 25: time 20.45s
+Batch 220 of epoch 25: time 20.42s
+Batch 230 of epoch 25: time 20.42s
+Batch 240 of epoch 25: time 20.42s
+Batch 250 of epoch 25: time 20.44s
+Batch 260 of epoch 25: time 20.43s
+Batch 270 of epoch 25: time 20.49s
+Batch 280 of epoch 25: time 20.46s
+Batch 290 of epoch 25: time 20.43s
+Batch 300 of epoch 25: time 20.44s
+Batch 310 of epoch 25: time 20.42s
 --- Gradient Norms at Batch 310 ---
-L2 grad norm (core): 4.8949
-Custom grad norm (core): 75543.3585
-Loss grad norm (pure): 0.0166
-Weighted L2 grad norm: 0.0049
-Weighted Custom grad norm: 0.0755
+L2 grad norm (core): 86.6829
+Custom grad norm (core): 139391.6311
+Loss grad norm (pure): 14.6145
+Weighted L2 grad norm: 0.0867
+Weighted Custom grad norm: 0.1394
 -------------------------------------
-Epoch 25: A_NQ = 0.1, H_NQ = 1425244449, A_Q = 0.1, H_Q = 671, zstd_ratio = 0.01%, sparse_ratio = 0.01%, sparsity = 0.00% , sparse_accuracy = 0.1, training_time = 992s
+Epoch 25: A_NQ = 35.239, H_NQ = 1553239796, A_Q = 17.669, H_Q = 4107868, zstd_ratio = 0.28%, sparse_ratio = 0.28%, sparsity = 0.00% , sparse_accuracy = 17.669, training_time = 851s
 
-Batch 0 of epoch 26: time 11.56s
-Batch 10 of epoch 26: time 27.88s
-Batch 20 of epoch 26: time 26.27s
-Batch 30 of epoch 26: time 27.03s
-Batch 40 of epoch 26: time 27.07s
-Batch 50 of epoch 26: time 27.14s
-Batch 60 of epoch 26: time 26.99s
-Batch 70 of epoch 26: time 26.95s
-Batch 80 of epoch 26: time 26.45s
-Batch 90 of epoch 26: time 27.1s
-Batch 100 of epoch 26: time 27.06s
-Batch 110 of epoch 26: time 27.04s
-Batch 120 of epoch 26: time 26.91s
-Batch 130 of epoch 26: time 26.27s
-Batch 140 of epoch 26: time 27.02s
-Batch 150 of epoch 26: time 27.05s
-Batch 160 of epoch 26: time 27.02s
-Batch 170 of epoch 26: time 26.99s
-Batch 180 of epoch 26: time 26.3s
-Batch 190 of epoch 26: time 26.95s
-Batch 200 of epoch 26: time 27.02s
-Batch 210 of epoch 26: time 26.85s
-Batch 220 of epoch 26: time 27.01s
-Batch 230 of epoch 26: time 26.99s
-Batch 240 of epoch 26: time 26.32s
-Batch 250 of epoch 26: time 27.0s
-Batch 260 of epoch 26: time 27.04s
-Batch 270 of epoch 26: time 26.97s
-Batch 280 of epoch 26: time 27.02s
-Batch 290 of epoch 26: time 26.32s
-Batch 300 of epoch 26: time 27.07s
-Batch 310 of epoch 26: time 27.39s
+Batch 0 of epoch 26: time 11.05s
+Batch 10 of epoch 26: time 20.61s
+Batch 20 of epoch 26: time 20.43s
+Batch 30 of epoch 26: time 20.44s
+Batch 40 of epoch 26: time 20.43s
+Batch 50 of epoch 26: time 20.42s
+Batch 60 of epoch 26: time 20.41s
+Batch 70 of epoch 26: time 20.43s
+Batch 80 of epoch 26: time 20.44s
+Batch 90 of epoch 26: time 20.47s
+Batch 100 of epoch 26: time 20.45s
+Batch 110 of epoch 26: time 20.45s
+Batch 120 of epoch 26: time 20.44s
+Batch 130 of epoch 26: time 20.46s
+Batch 140 of epoch 26: time 20.45s
+Batch 150 of epoch 26: time 20.42s
+Batch 160 of epoch 26: time 20.45s
+Batch 170 of epoch 26: time 20.45s
+Batch 180 of epoch 26: time 20.43s
+Batch 190 of epoch 26: time 20.43s
+Batch 200 of epoch 26: time 20.43s
+Batch 210 of epoch 26: time 20.42s
+Batch 220 of epoch 26: time 20.42s
+Batch 230 of epoch 26: time 20.44s
+Batch 240 of epoch 26: time 20.42s
+Batch 250 of epoch 26: time 20.43s
+Batch 260 of epoch 26: time 20.41s
+Batch 270 of epoch 26: time 20.43s
+Batch 280 of epoch 26: time 20.45s
+Batch 290 of epoch 26: time 20.44s
+Batch 300 of epoch 26: time 20.44s
+Batch 310 of epoch 26: time 20.41s
 --- Gradient Norms at Batch 310 ---
-L2 grad norm (core): 4.1521
-Custom grad norm (core): 70124.5662
-Loss grad norm (pure): 0.0168
-Weighted L2 grad norm: 0.0042
-Weighted Custom grad norm: 0.0701
+L2 grad norm (core): 86.8911
+Custom grad norm (core): 138697.2996
+Loss grad norm (pure): 14.1502
+Weighted L2 grad norm: 0.0869
+Weighted Custom grad norm: 0.1387
 -------------------------------------
-Epoch 26: A_NQ = 0.1, H_NQ = 1411461975, A_Q = 0.1, H_Q = 671, zstd_ratio = 0.01%, sparse_ratio = 0.01%, sparsity = 0.00% , sparse_accuracy = 0.1, training_time = 992s
+Epoch 26: A_NQ = 36.016, H_NQ = 1552762388, A_Q = 18.058, H_Q = 4152479, zstd_ratio = 0.28%, sparse_ratio = 0.28%, sparsity = 0.00% , sparse_accuracy = 18.058, training_time = 850s
 
-Batch 0 of epoch 27: time 11.94s
-Batch 10 of epoch 27: time 27.6s
-Batch 20 of epoch 27: time 26.16s
-Batch 30 of epoch 27: time 26.95s
-Batch 40 of epoch 27: time 27.02s
-Batch 50 of epoch 27: time 27.01s
-Batch 60 of epoch 27: time 27.21s
-Batch 70 of epoch 27: time 26.32s
-Batch 80 of epoch 27: time 27.02s
-Batch 90 of epoch 27: time 27.08s
-Batch 100 of epoch 27: time 26.99s
-Batch 110 of epoch 27: time 26.95s
-Batch 120 of epoch 27: time 26.71s
-Batch 130 of epoch 27: time 26.49s
-Batch 140 of epoch 27: time 26.92s
-Batch 150 of epoch 27: time 27.02s
-Batch 160 of epoch 27: time 26.9s
-Batch 170 of epoch 27: time 26.99s
-Batch 180 of epoch 27: time 26.15s
-Batch 190 of epoch 27: time 26.91s
-Batch 200 of epoch 27: time 26.76s
-Batch 210 of epoch 27: time 26.76s
-Batch 220 of epoch 27: time 26.76s
-Batch 230 of epoch 27: time 26.82s
-Batch 240 of epoch 27: time 24.68s
-Batch 250 of epoch 27: time 24.57s
-Batch 260 of epoch 27: time 27.06s
-Batch 270 of epoch 27: time 26.99s
-Batch 280 of epoch 27: time 27.01s
-Batch 290 of epoch 27: time 27.0s
-Batch 300 of epoch 27: time 26.38s
-Batch 310 of epoch 27: time 26.94s
+Batch 0 of epoch 27: time 12.15s
+Batch 10 of epoch 27: time 21.27s
+Batch 20 of epoch 27: time 20.43s
+Batch 30 of epoch 27: time 20.42s
+Batch 40 of epoch 27: time 20.42s
+Batch 50 of epoch 27: time 20.41s
+Batch 60 of epoch 27: time 20.43s
+Batch 70 of epoch 27: time 20.42s
+Batch 80 of epoch 27: time 20.43s
+Batch 90 of epoch 27: time 20.44s
+Batch 100 of epoch 27: time 20.44s
+Batch 110 of epoch 27: time 20.43s
+Batch 120 of epoch 27: time 20.43s
+Batch 130 of epoch 27: time 20.41s
+Batch 140 of epoch 27: time 20.43s
+Batch 150 of epoch 27: time 20.44s
+Batch 160 of epoch 27: time 20.43s
+Batch 170 of epoch 27: time 20.43s
+Batch 180 of epoch 27: time 20.42s
+Batch 190 of epoch 27: time 20.42s
+Batch 200 of epoch 27: time 20.44s
+Batch 210 of epoch 27: time 20.43s
+Batch 220 of epoch 27: time 20.42s
+Batch 230 of epoch 27: time 20.43s
+Batch 240 of epoch 27: time 20.43s
+Batch 250 of epoch 27: time 20.4s
+Batch 260 of epoch 27: time 20.41s
+Batch 270 of epoch 27: time 20.42s
+Batch 280 of epoch 27: time 20.43s
+Batch 290 of epoch 27: time 20.44s
+Batch 300 of epoch 27: time 20.44s
+Batch 310 of epoch 27: time 20.41s
 --- Gradient Norms at Batch 310 ---
-L2 grad norm (core): 3.5491
-Custom grad norm (core): 64730.5761
-Loss grad norm (pure): 0.0161
-Weighted L2 grad norm: 0.0035
-Weighted Custom grad norm: 0.0647
+L2 grad norm (core): 87.2289
+Custom grad norm (core): 138681.0304
+Loss grad norm (pure): 13.6659
+Weighted L2 grad norm: 0.0872
+Weighted Custom grad norm: 0.1387
 -------------------------------------
-Epoch 27: A_NQ = 0.1, H_NQ = 1399849522, A_Q = 0.1, H_Q = 671, zstd_ratio = 0.01%, sparse_ratio = 0.01%, sparsity = 0.00% , sparse_accuracy = 0.1, training_time = 989s
+Epoch 27: A_NQ = 35.533, H_NQ = 1559654164, A_Q = 17.82, H_Q = 4200904, zstd_ratio = 0.29%, sparse_ratio = 0.29%, sparsity = 0.00% , sparse_accuracy = 17.82, training_time = 853s
 
-Batch 0 of epoch 28: time 11.23s
-Batch 10 of epoch 28: time 28.58s
-Batch 20 of epoch 28: time 27.03s
-Batch 30 of epoch 28: time 26.31s
-Batch 40 of epoch 28: time 27.06s
-Batch 50 of epoch 28: time 27.13s
-Batch 60 of epoch 28: time 27.03s
-Batch 70 of epoch 28: time 27.01s
-Batch 80 of epoch 28: time 26.37s
-Batch 90 of epoch 28: time 26.95s
-Batch 100 of epoch 28: time 26.94s
-Batch 110 of epoch 28: time 27.07s
-Batch 120 of epoch 28: time 26.99s
-Batch 130 of epoch 28: time 27.02s
-Batch 140 of epoch 28: time 26.25s
-Batch 150 of epoch 28: time 27.03s
-Batch 160 of epoch 28: time 27.2s
-Batch 170 of epoch 28: time 27.43s
-Batch 180 of epoch 28: time 26.96s
-Batch 190 of epoch 28: time 26.3s
-Batch 200 of epoch 28: time 26.91s
-Batch 210 of epoch 28: time 27.21s
-Batch 220 of epoch 28: time 26.88s
-Batch 230 of epoch 28: time 27.12s
-Batch 240 of epoch 28: time 26.32s
-Batch 250 of epoch 28: time 26.98s
-Batch 260 of epoch 28: time 26.95s
-Batch 270 of epoch 28: time 27.11s
-Batch 280 of epoch 28: time 27.08s
-Batch 290 of epoch 28: time 27.05s
-Batch 300 of epoch 28: time 26.46s
-Batch 310 of epoch 28: time 27.07s
+Batch 0 of epoch 28: time 11.4s
+Batch 10 of epoch 28: time 20.87s
+Batch 20 of epoch 28: time 20.42s
+Batch 30 of epoch 28: time 20.43s
+Batch 40 of epoch 28: time 20.41s
+Batch 50 of epoch 28: time 20.43s
+Batch 60 of epoch 28: time 20.42s
+Batch 70 of epoch 28: time 20.42s
+Batch 80 of epoch 28: time 20.46s
+Batch 90 of epoch 28: time 20.44s
+Batch 100 of epoch 28: time 20.43s
+Batch 110 of epoch 28: time 20.47s
+Batch 120 of epoch 28: time 20.42s
+Batch 130 of epoch 28: time 20.42s
+Batch 140 of epoch 28: time 20.45s
+Batch 150 of epoch 28: time 20.45s
+Batch 160 of epoch 28: time 20.45s
+Batch 170 of epoch 28: time 20.44s
+Batch 180 of epoch 28: time 20.44s
+Batch 190 of epoch 28: time 20.45s
+Batch 200 of epoch 28: time 20.43s
+Batch 210 of epoch 28: time 20.42s
+Batch 220 of epoch 28: time 20.41s
+Batch 230 of epoch 28: time 20.44s
+Batch 240 of epoch 28: time 20.43s
+Batch 250 of epoch 28: time 20.42s
+Batch 260 of epoch 28: time 20.45s
+Batch 270 of epoch 28: time 20.43s
+Batch 280 of epoch 28: time 20.42s
+Batch 290 of epoch 28: time 20.43s
+Batch 300 of epoch 28: time 20.45s
+Batch 310 of epoch 28: time 20.4s
 --- Gradient Norms at Batch 310 ---
-L2 grad norm (core): 3.0810
-Custom grad norm (core): 61103.2719
-Loss grad norm (pure): 0.0162
-Weighted L2 grad norm: 0.0031
-Weighted Custom grad norm: 0.0611
+L2 grad norm (core): 87.7297
+Custom grad norm (core): 137975.2282
+Loss grad norm (pure): 11.7175
+Weighted L2 grad norm: 0.0877
+Weighted Custom grad norm: 0.1380
 -------------------------------------
-Epoch 28: A_NQ = 0.1, H_NQ = 1387934607, A_Q = 0.1, H_Q = 671, zstd_ratio = 0.01%, sparse_ratio = 0.01%, sparsity = 0.00% , sparse_accuracy = 0.1, training_time = 994s
+Epoch 28: A_NQ = 36.026, H_NQ = 1561186006, A_Q = 18.063, H_Q = 4253810, zstd_ratio = 0.29%, sparse_ratio = 0.29%, sparsity = 0.00% , sparse_accuracy = 18.063, training_time = 853s
 
-Batch 0 of epoch 29: time 11.61s
-Batch 10 of epoch 29: time 27.12s
-Batch 20 of epoch 29: time 26.43s
-Batch 30 of epoch 29: time 27.03s
-Batch 40 of epoch 29: time 27.06s
-Batch 50 of epoch 29: time 27.13s
-Batch 60 of epoch 29: time 27.1s
-Batch 70 of epoch 29: time 27.07s
-Batch 80 of epoch 29: time 26.32s
-Batch 90 of epoch 29: time 27.1s
-Batch 100 of epoch 29: time 27.11s
-Batch 110 of epoch 29: time 27.1s
-Batch 120 of epoch 29: time 27.05s
-Batch 130 of epoch 29: time 26.33s
-Batch 140 of epoch 29: time 27.16s
-Batch 150 of epoch 29: time 27.48s
-Batch 160 of epoch 29: time 26.94s
-Batch 170 of epoch 29: time 27.01s
-Batch 180 of epoch 29: time 26.15s
-Batch 190 of epoch 29: time 27.1s
-Batch 200 of epoch 29: time 27.03s
-Batch 210 of epoch 29: time 27.06s
-Batch 220 of epoch 29: time 27.09s
-Batch 230 of epoch 29: time 27.0s
-Batch 240 of epoch 29: time 26.34s
-Batch 250 of epoch 29: time 26.99s
-Batch 260 of epoch 29: time 27.09s
-Batch 270 of epoch 29: time 27.16s
-Batch 280 of epoch 29: time 26.99s
-Batch 290 of epoch 29: time 26.17s
-Batch 300 of epoch 29: time 27.12s
-Batch 310 of epoch 29: time 27.09s
+Batch 0 of epoch 29: time 10.97s
+Batch 10 of epoch 29: time 21.13s
+Batch 20 of epoch 29: time 20.46s
+Batch 30 of epoch 29: time 20.43s
+Batch 40 of epoch 29: time 20.45s
+Batch 50 of epoch 29: time 20.45s
+Batch 60 of epoch 29: time 20.44s
+Batch 70 of epoch 29: time 20.47s
+Batch 80 of epoch 29: time 20.44s
+Batch 90 of epoch 29: time 20.46s
+Batch 100 of epoch 29: time 20.46s
+Batch 110 of epoch 29: time 20.46s
+Batch 120 of epoch 29: time 20.45s
+Batch 130 of epoch 29: time 20.45s
+Batch 140 of epoch 29: time 20.42s
+Batch 150 of epoch 29: time 20.46s
+Batch 160 of epoch 29: time 20.44s
+Batch 170 of epoch 29: time 20.46s
+Batch 180 of epoch 29: time 20.46s
+Batch 190 of epoch 29: time 20.47s
+Batch 200 of epoch 29: time 20.46s
+Batch 210 of epoch 29: time 20.44s
+Batch 220 of epoch 29: time 20.44s
+Batch 230 of epoch 29: time 20.43s
+Batch 240 of epoch 29: time 20.47s
+Batch 250 of epoch 29: time 20.44s
+Batch 260 of epoch 29: time 20.41s
+Batch 270 of epoch 29: time 20.46s
+Batch 280 of epoch 29: time 20.44s
+Batch 290 of epoch 29: time 20.45s
+Batch 300 of epoch 29: time 20.47s
+Batch 310 of epoch 29: time 20.4s
 --- Gradient Norms at Batch 310 ---
-L2 grad norm (core): 2.7520
-Custom grad norm (core): 57280.0538
-Loss grad norm (pure): 0.0153
-Weighted L2 grad norm: 0.0028
-Weighted Custom grad norm: 0.0573
+L2 grad norm (core): 88.0990
+Custom grad norm (core): 138611.3461
+Loss grad norm (pure): 13.1947
+Weighted L2 grad norm: 0.0881
+Weighted Custom grad norm: 0.1386
 -------------------------------------
-Epoch 29: A_NQ = 0.1, H_NQ = 1377336120, A_Q = 0.1, H_Q = 693, zstd_ratio = 0.01%, sparse_ratio = 0.01%, sparsity = 0.00% , sparse_accuracy = 0.1, training_time = 994s
+Epoch 29: A_NQ = 36.632, H_NQ = 1557995031, A_Q = 18.364, H_Q = 4295777, zstd_ratio = 0.29%, sparse_ratio = 0.29%, sparsity = 0.00% , sparse_accuracy = 18.364, training_time = 855s
 
-Batch 0 of epoch 30: time 13.59s
-Batch 10 of epoch 30: time 26.94s
-Batch 20 of epoch 30: time 26.28s
-Batch 30 of epoch 30: time 27.05s
-Batch 40 of epoch 30: time 27.05s
-Batch 50 of epoch 30: time 27.12s
-Batch 60 of epoch 30: time 27.04s
-Batch 70 of epoch 30: time 26.29s
-Batch 80 of epoch 30: time 27.0s
-Batch 90 of epoch 30: time 27.04s
-Batch 100 of epoch 30: time 26.95s
-Batch 110 of epoch 30: time 27.08s
-Batch 120 of epoch 30: time 26.84s
-Batch 130 of epoch 30: time 27.07s
-W1124 21:30:40.574000 458674 torch/distributed/elastic/agent/server/api.py:719] Received 15 death signal, shutting down workers
-W1124 21:30:40.579000 458674 torch/distributed/elastic/multiprocessing/api.py:900] Sending process 458743 closing signal SIGTERM
-Traceback (most recent call last):
-  File "/home/a.cardia/METaQ/venv/bin/torchrun", line 8, in <module>
-    sys.exit(main())
-             ^^^^^^
-  File "/home/a.cardia/METaQ/venv/lib/python3.12/site-packages/torch/distributed/elastic/multiprocessing/errors/__init__.py", line 355, in wrapper
-    return f(*args, **kwargs)
-           ^^^^^^^^^^^^^^^^^^
-  File "/home/a.cardia/METaQ/venv/lib/python3.12/site-packages/torch/distributed/run.py", line 892, in main
-    run(args)
-  File "/home/a.cardia/METaQ/venv/lib/python3.12/site-packages/torch/distributed/run.py", line 883, in run
-    elastic_launch(
-  File "/home/a.cardia/METaQ/venv/lib/python3.12/site-packages/torch/distributed/launcher/api.py", line 139, in __call__
-    return launch_agent(self._config, self._entrypoint, list(args))
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/a.cardia/METaQ/venv/lib/python3.12/site-packages/torch/distributed/launcher/api.py", line 261, in launch_agent
-    result = agent.run()
-             ^^^^^^^^^^^
-  File "/home/a.cardia/METaQ/venv/lib/python3.12/site-packages/torch/distributed/elastic/metrics/api.py", line 138, in wrapper
-    result = f(*args, **kwargs)
-             ^^^^^^^^^^^^^^^^^^
-  File "/home/a.cardia/METaQ/venv/lib/python3.12/site-packages/torch/distributed/elastic/agent/server/api.py", line 711, in run
-    result = self._invoke_run(role)
-             ^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/a.cardia/METaQ/venv/lib/python3.12/site-packages/torch/distributed/elastic/agent/server/api.py", line 870, in _invoke_run
-    time.sleep(monitor_interval)
-  File "/home/a.cardia/METaQ/venv/lib/python3.12/site-packages/torch/distributed/elastic/multiprocessing/api.py", line 84, in _terminate_process_handler
-    raise SignalException(f"Process {os.getpid()} got signal: {sigval}", sigval=sigval)
-torch.distributed.elastic.multiprocessing.api.SignalException: Process 458674 got signal: 15
+Batch 0 of epoch 30: time 12.38s
+Batch 10 of epoch 30: time 20.45s
+Batch 20 of epoch 30: time 20.42s
+Batch 30 of epoch 30: time 20.43s
+Batch 40 of epoch 30: time 20.43s
+Batch 50 of epoch 30: time 20.43s
+Batch 60 of epoch 30: time 20.43s
+Batch 70 of epoch 30: time 20.44s
+Batch 80 of epoch 30: time 20.43s
+Batch 90 of epoch 30: time 20.42s
+Batch 100 of epoch 30: time 20.42s
+Batch 110 of epoch 30: time 20.41s
+Batch 120 of epoch 30: time 20.42s
+Batch 130 of epoch 30: time 20.41s
+Batch 140 of epoch 30: time 20.42s
+Batch 150 of epoch 30: time 20.42s
+Batch 160 of epoch 30: time 20.42s
+Batch 170 of epoch 30: time 20.42s
+Batch 180 of epoch 30: time 20.44s
+Batch 190 of epoch 30: time 20.45s
+Batch 200 of epoch 30: time 20.43s
+Batch 210 of epoch 30: time 20.44s
+Batch 220 of epoch 30: time 20.46s
+Batch 230 of epoch 30: time 20.42s
+Batch 240 of epoch 30: time 20.44s
+Batch 250 of epoch 30: time 20.45s
+Batch 260 of epoch 30: time 20.45s
+Batch 270 of epoch 30: time 20.47s
+Batch 280 of epoch 30: time 20.44s
+Batch 290 of epoch 30: time 20.44s
+Batch 300 of epoch 30: time 20.47s
+Batch 310 of epoch 30: time 20.41s
+--- Gradient Norms at Batch 310 ---
+L2 grad norm (core): 88.5382
+Custom grad norm (core): 137977.6261
+Loss grad norm (pure): 14.9279
+Weighted L2 grad norm: 0.0885
+Weighted Custom grad norm: 0.1380
+-------------------------------------
+Epoch 30: A_NQ = 36.634, H_NQ = 1554787688, A_Q = 18.368, H_Q = 4342164, zstd_ratio = 0.30%, sparse_ratio = 0.30%, sparsity = 0.00% , sparse_accuracy = 18.368, training_time = 855s
+
+Batch 0 of epoch 31: time 10.57s
+Batch 10 of epoch 31: time 21.22s
+Batch 20 of epoch 31: time 20.46s
+Batch 30 of epoch 31: time 20.44s
+Batch 40 of epoch 31: time 20.44s
+Batch 50 of epoch 31: time 20.45s
+Batch 60 of epoch 31: time 20.46s
+Batch 70 of epoch 31: time 20.44s
+Batch 80 of epoch 31: time 20.44s
+Batch 90 of epoch 31: time 20.45s
+Batch 100 of epoch 31: time 20.42s
+Batch 110 of epoch 31: time 20.45s
+Batch 120 of epoch 31: time 20.43s
+Batch 130 of epoch 31: time 20.46s
+Batch 140 of epoch 31: time 20.44s
+Batch 150 of epoch 31: time 20.45s
+Batch 160 of epoch 31: time 20.43s
+Batch 170 of epoch 31: time 20.44s
+Batch 180 of epoch 31: time 20.45s
+Batch 190 of epoch 31: time 20.45s
+Batch 200 of epoch 31: time 20.44s
+Batch 210 of epoch 31: time 20.47s
+Batch 220 of epoch 31: time 20.44s
+Batch 230 of epoch 31: time 20.45s
+Batch 240 of epoch 31: time 20.44s
+Batch 250 of epoch 31: time 20.42s
+Batch 260 of epoch 31: time 20.44s
+Batch 270 of epoch 31: time 20.44s
+Batch 280 of epoch 31: time 20.43s
+Batch 290 of epoch 31: time 20.45s
+Batch 300 of epoch 31: time 20.46s
+Batch 310 of epoch 31: time 20.42s
+--- Gradient Norms at Batch 310 ---
+L2 grad norm (core): 89.0311
+Custom grad norm (core): 139785.5273
+Loss grad norm (pure): 14.1845
+Weighted L2 grad norm: 0.0890
+Weighted Custom grad norm: 0.1398
+-------------------------------------
+Epoch 31: A_NQ = 37.051, H_NQ = 1552171195, A_Q = 18.57, H_Q = 4389076, zstd_ratio = 0.30%, sparse_ratio = 0.30%, sparsity = 0.00% , sparse_accuracy = 18.57, training_time = 857s
+
+Batch 0 of epoch 32: time 11.27s
+Batch 10 of epoch 32: time 20.45s
+Batch 20 of epoch 32: time 20.42s
+Batch 30 of epoch 32: time 20.41s
+Batch 40 of epoch 32: time 20.42s
+Batch 50 of epoch 32: time 20.42s
+Batch 60 of epoch 32: time 20.43s
+Batch 70 of epoch 32: time 20.43s
+Batch 80 of epoch 32: time 20.44s
+Batch 90 of epoch 32: time 20.44s
+Batch 100 of epoch 32: time 20.46s
+Batch 110 of epoch 32: time 20.44s
+Batch 120 of epoch 32: time 20.42s
+Batch 130 of epoch 32: time 20.44s
+Batch 140 of epoch 32: time 20.45s
+Batch 150 of epoch 32: time 20.43s
+Batch 160 of epoch 32: time 20.43s
+Batch 170 of epoch 32: time 20.42s
+Batch 180 of epoch 32: time 20.43s
+Batch 190 of epoch 32: time 20.42s
+Batch 200 of epoch 32: time 20.45s
+Batch 210 of epoch 32: time 20.46s
+Batch 220 of epoch 32: time 20.46s
+Batch 230 of epoch 32: time 20.44s
+Batch 240 of epoch 32: time 20.45s
+Batch 250 of epoch 32: time 20.43s
+Batch 260 of epoch 32: time 20.45s
+Batch 270 of epoch 32: time 20.44s
+Batch 280 of epoch 32: time 20.45s
+Batch 290 of epoch 32: time 20.44s
+Batch 300 of epoch 32: time 20.45s
+Batch 310 of epoch 32: time 20.41s
+--- Gradient Norms at Batch 310 ---
+L2 grad norm (core): 89.4354
+Custom grad norm (core): 138519.3202
+Loss grad norm (pure): 15.7822
+Weighted L2 grad norm: 0.0894
+Weighted Custom grad norm: 0.1385
+-------------------------------------
+Epoch 32: A_NQ = 37.322, H_NQ = 1552961362, A_Q = 18.713, H_Q = 4431743, zstd_ratio = 0.30%, sparse_ratio = 0.30%, sparsity = 0.00% , sparse_accuracy = 18.713, training_time = 858s
+
+Batch 0 of epoch 33: time 12.31s
+Batch 10 of epoch 33: time 20.47s
+Batch 20 of epoch 33: time 20.44s
+Batch 30 of epoch 33: time 20.44s
+Batch 40 of epoch 33: time 20.43s
+Batch 50 of epoch 33: time 20.46s
+Batch 60 of epoch 33: time 20.44s
+Batch 70 of epoch 33: time 20.46s
+Batch 80 of epoch 33: time 20.46s
+Batch 90 of epoch 33: time 20.46s
+Batch 100 of epoch 33: time 20.44s
+Batch 110 of epoch 33: time 20.47s
+Batch 120 of epoch 33: time 20.45s
+Batch 130 of epoch 33: time 20.46s
+Batch 140 of epoch 33: time 20.44s
+Batch 150 of epoch 33: time 20.43s
+Batch 160 of epoch 33: time 20.44s
+Batch 170 of epoch 33: time 20.43s
+Batch 180 of epoch 33: time 20.46s
+Batch 190 of epoch 33: time 20.46s
+Batch 200 of epoch 33: time 20.44s
+Batch 210 of epoch 33: time 20.45s
+Batch 220 of epoch 33: time 20.44s
+Batch 230 of epoch 33: time 20.44s
+Batch 240 of epoch 33: time 20.44s
+Batch 250 of epoch 33: time 20.45s
+Batch 260 of epoch 33: time 20.44s
+Batch 270 of epoch 33: time 20.46s
+Batch 280 of epoch 33: time 20.44s
+Batch 290 of epoch 33: time 20.44s
+Batch 300 of epoch 33: time 20.47s
+Batch 310 of epoch 33: time 20.41s
+--- Gradient Norms at Batch 310 ---
+L2 grad norm (core): 89.9443
+Custom grad norm (core): 139456.3641
+Loss grad norm (pure): 17.6675
+Weighted L2 grad norm: 0.0899
+Weighted Custom grad norm: 0.1395
+-------------------------------------
+Epoch 33: A_NQ = 34.843, H_NQ = 1550292904, A_Q = 17.47, H_Q = 4476551, zstd_ratio = 0.30%, sparse_ratio = 0.31%, sparsity = 0.00% , sparse_accuracy = 17.47, training_time = 859s
+
+Batch 0 of epoch 34: time 10.42s
+Batch 10 of epoch 34: time 21.88s
+Batch 20 of epoch 34: time 20.41s
+Batch 30 of epoch 34: time 20.42s
+Batch 40 of epoch 34: time 20.49s
+Batch 50 of epoch 34: time 20.43s
+Batch 60 of epoch 34: time 20.45s
+Batch 70 of epoch 34: time 20.44s
+Batch 80 of epoch 34: time 20.43s
+Batch 90 of epoch 34: time 20.43s
+Batch 100 of epoch 34: time 20.43s
+Batch 110 of epoch 34: time 20.44s
+Batch 120 of epoch 34: time 20.43s
+Batch 130 of epoch 34: time 20.45s
+Batch 140 of epoch 34: time 20.46s
+Batch 150 of epoch 34: time 20.43s
+Batch 160 of epoch 34: time 20.42s
+Batch 170 of epoch 34: time 20.44s
+Batch 180 of epoch 34: time 20.43s
+Batch 190 of epoch 34: time 20.43s
+Batch 200 of epoch 34: time 20.44s
+Batch 210 of epoch 34: time 20.42s
+Batch 220 of epoch 34: time 20.42s
+Batch 230 of epoch 34: time 20.41s
+Batch 240 of epoch 34: time 20.42s
+Batch 250 of epoch 34: time 20.43s
+Batch 260 of epoch 34: time 20.43s
+Batch 270 of epoch 34: time 20.43s
+Batch 280 of epoch 34: time 20.46s
+Batch 290 of epoch 34: time 20.43s
+Batch 300 of epoch 34: time 20.46s
+Batch 310 of epoch 34: time 20.42s
+--- Gradient Norms at Batch 310 ---
+L2 grad norm (core): 90.3049
+Custom grad norm (core): 139055.1300
+Loss grad norm (pure): 19.0810
+Weighted L2 grad norm: 0.0903
+Weighted Custom grad norm: 0.1391
+-------------------------------------
+Epoch 34: A_NQ = 38.15, H_NQ = 1555147716, A_Q = 19.125, H_Q = 4510672, zstd_ratio = 0.31%, sparse_ratio = 0.31%, sparsity = 0.00% , sparse_accuracy = 19.125, training_time = 860s
+
+Batch 0 of epoch 35: time 10.47s
+Batch 10 of epoch 35: time 22.11s
+Batch 20 of epoch 35: time 20.42s
+Batch 30 of epoch 35: time 20.43s
+Batch 40 of epoch 35: time 20.45s
+Batch 50 of epoch 35: time 20.47s
+Batch 60 of epoch 35: time 20.46s
+Batch 70 of epoch 35: time 20.45s
+Batch 80 of epoch 35: time 20.44s
+Batch 90 of epoch 35: time 20.46s
+Batch 100 of epoch 35: time 20.46s
+Batch 110 of epoch 35: time 20.45s
+Batch 120 of epoch 35: time 20.45s
+Batch 130 of epoch 35: time 20.46s
+Batch 140 of epoch 35: time 20.47s
+Batch 150 of epoch 35: time 20.46s
+Batch 160 of epoch 35: time 20.43s
+Batch 170 of epoch 35: time 20.43s
+Batch 180 of epoch 35: time 20.43s
+Batch 190 of epoch 35: time 20.46s
+Batch 200 of epoch 35: time 20.44s
+Batch 210 of epoch 35: time 20.44s
+Batch 220 of epoch 35: time 20.44s
+Batch 230 of epoch 35: time 20.45s
+Batch 240 of epoch 35: time 20.45s
+Batch 250 of epoch 35: time 20.46s
+Batch 260 of epoch 35: time 20.43s
+Batch 270 of epoch 35: time 20.46s
+Batch 280 of epoch 35: time 20.46s
+Batch 290 of epoch 35: time 20.42s
+Batch 300 of epoch 35: time 20.45s
+Batch 310 of epoch 35: time 20.41s
+--- Gradient Norms at Batch 310 ---
+L2 grad norm (core): 90.8376
+Custom grad norm (core): 139222.4675
+Loss grad norm (pure): 12.7234
+Weighted L2 grad norm: 0.0908
+Weighted Custom grad norm: 0.1392
+-------------------------------------
+Epoch 35: A_NQ = 38.282, H_NQ = 1544581713, A_Q = 19.191, H_Q = 4550076, zstd_ratio = 0.31%, sparse_ratio = 0.31%, sparsity = 0.00% , sparse_accuracy = 19.191, training_time = 862s
+
+Batch 0 of epoch 36: time 13.27s
+Batch 10 of epoch 36: time 20.42s
+Batch 20 of epoch 36: time 20.44s
+Batch 30 of epoch 36: time 20.43s
+Batch 40 of epoch 36: time 20.42s
+Batch 50 of epoch 36: time 20.42s
+Batch 60 of epoch 36: time 20.43s
+Batch 70 of epoch 36: time 20.43s
+Batch 80 of epoch 36: time 20.42s
+Batch 90 of epoch 36: time 20.45s
+Batch 100 of epoch 36: time 20.46s
+Batch 110 of epoch 36: time 20.44s
+Batch 120 of epoch 36: time 20.45s
+Batch 130 of epoch 36: time 20.45s
+Batch 140 of epoch 36: time 20.46s
+Batch 150 of epoch 36: time 20.44s
+Batch 160 of epoch 36: time 20.43s
+Batch 170 of epoch 36: time 20.43s
+Batch 180 of epoch 36: time 20.43s
+Batch 190 of epoch 36: time 20.45s
+Batch 200 of epoch 36: time 20.44s
+Batch 210 of epoch 36: time 20.45s
+Batch 220 of epoch 36: time 20.44s
+Batch 230 of epoch 36: time 20.45s
+Batch 240 of epoch 36: time 20.43s
+Batch 250 of epoch 36: time 20.46s
+Batch 260 of epoch 36: time 20.45s
+Batch 270 of epoch 36: time 20.44s
+Batch 280 of epoch 36: time 20.43s
+Batch 290 of epoch 36: time 20.43s
+Batch 300 of epoch 36: time 20.46s
+Batch 310 of epoch 36: time 20.4s
+--- Gradient Norms at Batch 310 ---
+L2 grad norm (core): 91.1769
+Custom grad norm (core): 138665.5445
+Loss grad norm (pure): 18.7387
+Weighted L2 grad norm: 0.0912
+Weighted Custom grad norm: 0.1387
+-------------------------------------
+Epoch 36: A_NQ = 37.849, H_NQ = 1554526033, A_Q = 18.975, H_Q = 4588697, zstd_ratio = 0.31%, sparse_ratio = 0.31%, sparsity = 0.00% , sparse_accuracy = 18.975, training_time = 862s
+
+Batch 0 of epoch 37: time 10.16s
+Batch 10 of epoch 37: time 23.23s
+Batch 20 of epoch 37: time 20.42s
+Batch 30 of epoch 37: time 20.46s
+Batch 40 of epoch 37: time 20.42s
+Batch 50 of epoch 37: time 20.44s
+Batch 60 of epoch 37: time 20.45s
+Batch 70 of epoch 37: time 20.44s
+Batch 80 of epoch 37: time 20.43s
+Batch 90 of epoch 37: time 20.44s
+Batch 100 of epoch 37: time 20.43s
+Batch 110 of epoch 37: time 20.45s
+Batch 120 of epoch 37: time 20.44s
+Batch 130 of epoch 37: time 20.45s
+Batch 140 of epoch 37: time 20.44s
+Batch 150 of epoch 37: time 20.48s
+Batch 160 of epoch 37: time 20.44s
+Batch 170 of epoch 37: time 20.44s
+Batch 180 of epoch 37: time 20.43s
+Batch 190 of epoch 37: time 20.43s
+Batch 200 of epoch 37: time 20.46s
+Batch 210 of epoch 37: time 20.48s
+Batch 220 of epoch 37: time 20.43s
+Batch 230 of epoch 37: time 20.44s
+Batch 240 of epoch 37: time 20.44s
+Batch 250 of epoch 37: time 20.45s
+Batch 260 of epoch 37: time 20.45s
+Batch 270 of epoch 37: time 20.45s
+Batch 280 of epoch 37: time 20.47s
+Batch 290 of epoch 37: time 20.44s
+Batch 300 of epoch 37: time 20.47s
+Batch 310 of epoch 37: time 20.4s
+--- Gradient Norms at Batch 310 ---
+L2 grad norm (core): 91.5557
+Custom grad norm (core): 138049.7089
+Loss grad norm (pure): 23.5505
+Weighted L2 grad norm: 0.0916
+Weighted Custom grad norm: 0.1380
+-------------------------------------
+Epoch 37: A_NQ = 36.539, H_NQ = 1551255957, A_Q = 18.32, H_Q = 4623758, zstd_ratio = 0.32%, sparse_ratio = 0.32%, sparsity = 0.00% , sparse_accuracy = 18.32, training_time = 865s
+
+Batch 0 of epoch 38: time 10.89s
+Batch 10 of epoch 38: time 22.11s
+Batch 20 of epoch 38: time 20.43s
+Batch 30 of epoch 38: time 20.44s
+Batch 40 of epoch 38: time 20.44s
+Batch 50 of epoch 38: time 20.44s
+Batch 60 of epoch 38: time 20.42s
+Batch 70 of epoch 38: time 20.43s
+Batch 80 of epoch 38: time 20.46s
+Batch 90 of epoch 38: time 20.44s
+Batch 100 of epoch 38: time 20.43s
+Batch 110 of epoch 38: time 20.43s
+Batch 120 of epoch 38: time 20.43s
+Batch 130 of epoch 38: time 20.44s
+Batch 140 of epoch 38: time 20.43s
+Batch 150 of epoch 38: time 20.44s
+Batch 160 of epoch 38: time 20.42s
+Batch 170 of epoch 38: time 20.45s
+Batch 180 of epoch 38: time 20.46s
+Batch 190 of epoch 38: time 20.43s
+Batch 200 of epoch 38: time 20.45s
+Batch 210 of epoch 38: time 20.45s
+Batch 220 of epoch 38: time 20.43s
+Batch 230 of epoch 38: time 20.42s
+Batch 240 of epoch 38: time 20.43s
+Batch 250 of epoch 38: time 20.42s
+Batch 260 of epoch 38: time 20.43s
+Batch 270 of epoch 38: time 20.45s
+Batch 280 of epoch 38: time 20.44s
+Batch 290 of epoch 38: time 20.46s
+Batch 300 of epoch 38: time 20.47s
+Batch 310 of epoch 38: time 20.42s
+--- Gradient Norms at Batch 310 ---
+L2 grad norm (core): 91.9472
+Custom grad norm (core): 138177.3482
+Loss grad norm (pure): 13.9973
+Weighted L2 grad norm: 0.0919
+Weighted Custom grad norm: 0.1382
+-------------------------------------
+Epoch 38: A_NQ = 39.178, H_NQ = 1550634319, A_Q = 19.639, H_Q = 4660758, zstd_ratio = 0.32%, sparse_ratio = 0.32%, sparsity = 0.00% , sparse_accuracy = 19.639, training_time = 866s
+
+Batch 0 of epoch 39: time 11.09s
+Batch 10 of epoch 39: time 20.45s
+Batch 20 of epoch 39: time 20.44s
+Batch 30 of epoch 39: time 20.44s
+Batch 40 of epoch 39: time 20.44s
+Batch 50 of epoch 39: time 20.44s
+Batch 60 of epoch 39: time 20.42s
+Batch 70 of epoch 39: time 20.45s
+Batch 80 of epoch 39: time 20.43s
+Batch 90 of epoch 39: time 20.42s
+Batch 100 of epoch 39: time 20.41s
+Batch 110 of epoch 39: time 20.42s
+Batch 120 of epoch 39: time 20.42s
+Batch 130 of epoch 39: time 20.43s
+Batch 140 of epoch 39: time 20.41s
+Batch 150 of epoch 39: time 20.43s
+Batch 160 of epoch 39: time 20.41s
+Batch 170 of epoch 39: time 20.42s
+Batch 180 of epoch 39: time 20.42s
+Batch 190 of epoch 39: time 20.45s
+Batch 200 of epoch 39: time 20.43s
+Batch 210 of epoch 39: time 20.43s
+Batch 220 of epoch 39: time 20.42s
+Batch 230 of epoch 39: time 20.44s
+Batch 240 of epoch 39: time 20.43s
+Batch 250 of epoch 39: time 20.45s
+Batch 260 of epoch 39: time 20.41s
+Batch 270 of epoch 39: time 20.44s
+Batch 280 of epoch 39: time 20.42s
+Batch 290 of epoch 39: time 20.41s
+Batch 300 of epoch 39: time 20.45s
+Batch 310 of epoch 39: time 20.41s
+--- Gradient Norms at Batch 310 ---
+L2 grad norm (core): 92.3549
+Custom grad norm (core): 138055.7552
+Loss grad norm (pure): 12.9377
+Weighted L2 grad norm: 0.0924
+Weighted Custom grad norm: 0.1381
+-------------------------------------
+Epoch 39: A_NQ = 38.989, H_NQ = 1544648209, A_Q = 19.54, H_Q = 4690932, zstd_ratio = 0.32%, sparse_ratio = 0.32%, sparsity = 0.00% , sparse_accuracy = 19.54, training_time = 865s
+
+Batch 0 of epoch 40: time 12.28s
+Batch 10 of epoch 40: time 20.46s
+Batch 20 of epoch 40: time 20.41s
+Batch 30 of epoch 40: time 20.42s
+Batch 40 of epoch 40: time 20.42s
+Batch 50 of epoch 40: time 20.42s
+Batch 60 of epoch 40: time 20.41s
+Batch 70 of epoch 40: time 20.42s
+Batch 80 of epoch 40: time 20.42s
+Batch 90 of epoch 40: time 20.43s
+Batch 100 of epoch 40: time 20.42s
+Batch 110 of epoch 40: time 20.43s
+Batch 120 of epoch 40: time 20.43s
+Batch 130 of epoch 40: time 20.43s
+Batch 140 of epoch 40: time 20.45s
+Batch 150 of epoch 40: time 20.44s
+Batch 160 of epoch 40: time 20.42s
+Batch 170 of epoch 40: time 20.41s
+Batch 180 of epoch 40: time 20.42s
+Batch 190 of epoch 40: time 20.42s
+Batch 200 of epoch 40: time 20.43s
+Batch 210 of epoch 40: time 20.45s
+Batch 220 of epoch 40: time 20.44s
+Batch 230 of epoch 40: time 20.44s
+Batch 240 of epoch 40: time 20.46s
+Batch 250 of epoch 40: time 20.42s
+Batch 260 of epoch 40: time 20.45s
+Batch 270 of epoch 40: time 20.45s
+Batch 280 of epoch 40: time 20.45s
+Batch 290 of epoch 40: time 20.45s
+Batch 300 of epoch 40: time 20.46s
+Batch 310 of epoch 40: time 20.41s
+--- Gradient Norms at Batch 310 ---
+L2 grad norm (core): 92.7912
+Custom grad norm (core): 137213.1303
+Loss grad norm (pure): 13.4898
+Weighted L2 grad norm: 0.0928
+Weighted Custom grad norm: 0.1372
+-------------------------------------
+Epoch 40: A_NQ = 39.195, H_NQ = 1539310107, A_Q = 19.648, H_Q = 4720398, zstd_ratio = 0.32%, sparse_ratio = 0.32%, sparsity = 0.00% , sparse_accuracy = 19.648, training_time = 863s
+
+Batch 0 of epoch 41: time 10.55s
+Batch 10 of epoch 41: time 21.12s
+Batch 20 of epoch 41: time 20.42s
+Batch 30 of epoch 41: time 20.42s
+Batch 40 of epoch 41: time 20.42s
+Batch 50 of epoch 41: time 20.43s
+Batch 60 of epoch 41: time 20.42s
+Batch 70 of epoch 41: time 20.42s
+Batch 80 of epoch 41: time 20.42s
+Batch 90 of epoch 41: time 20.42s
+Batch 100 of epoch 41: time 20.41s
+Batch 110 of epoch 41: time 20.45s
+Batch 120 of epoch 41: time 20.43s
+Batch 130 of epoch 41: time 20.42s
+Batch 140 of epoch 41: time 20.45s
+Batch 150 of epoch 41: time 20.43s
+Batch 160 of epoch 41: time 20.42s
+Batch 170 of epoch 41: time 20.43s
+Batch 180 of epoch 41: time 20.46s
+Batch 190 of epoch 41: time 20.42s
+Batch 200 of epoch 41: time 20.42s
+Batch 210 of epoch 41: time 20.42s
+Batch 220 of epoch 41: time 20.42s
+Batch 230 of epoch 41: time 20.42s
+Batch 240 of epoch 41: time 20.41s
+Batch 250 of epoch 41: time 20.41s
+Batch 260 of epoch 41: time 20.43s
+Batch 270 of epoch 41: time 20.43s
+Batch 280 of epoch 41: time 20.46s
+Batch 290 of epoch 41: time 20.44s
+Batch 300 of epoch 41: time 20.44s
+Batch 310 of epoch 41: time 20.39s
+--- Gradient Norms at Batch 310 ---
+L2 grad norm (core): 93.0788
+Custom grad norm (core): 138301.0430
+Loss grad norm (pure): 16.3088
+Weighted L2 grad norm: 0.0931
+Weighted Custom grad norm: 0.1383
+-------------------------------------
+Epoch 41: A_NQ = 39.142, H_NQ = 1533914522, A_Q = 19.621, H_Q = 4746232, zstd_ratio = 0.32%, sparse_ratio = 0.32%, sparsity = 0.00% , sparse_accuracy = 19.621, training_time = 865s
+
+Batch 0 of epoch 42: time 10.85s
+Batch 10 of epoch 42: time 20.75s
+Batch 20 of epoch 42: time 20.42s
+Batch 30 of epoch 42: time 20.43s
+Batch 40 of epoch 42: time 20.45s
+Batch 50 of epoch 42: time 20.42s
+Batch 60 of epoch 42: time 20.44s
+Batch 70 of epoch 42: time 20.46s
+Batch 80 of epoch 42: time 20.43s
+Batch 90 of epoch 42: time 20.45s
+Batch 100 of epoch 42: time 20.42s
+Batch 110 of epoch 42: time 20.44s
+Batch 120 of epoch 42: time 20.46s
+Batch 130 of epoch 42: time 20.43s
+Batch 140 of epoch 42: time 20.43s
+Batch 150 of epoch 42: time 20.43s
+Batch 160 of epoch 42: time 20.42s
+Batch 170 of epoch 42: time 20.44s
+Batch 180 of epoch 42: time 20.46s
+Batch 190 of epoch 42: time 20.41s
+Batch 200 of epoch 42: time 20.42s
+Batch 210 of epoch 42: time 20.45s
+Batch 220 of epoch 42: time 20.44s
+Batch 230 of epoch 42: time 20.42s
+Batch 240 of epoch 42: time 20.4s
+Batch 250 of epoch 42: time 20.41s
+Batch 260 of epoch 42: time 20.43s
+Batch 270 of epoch 42: time 20.44s
+Batch 280 of epoch 42: time 20.42s
+Batch 290 of epoch 42: time 20.44s
+Batch 300 of epoch 42: time 20.44s
+Batch 310 of epoch 42: time 20.39s
+--- Gradient Norms at Batch 310 ---
+L2 grad norm (core): 93.4355
+Custom grad norm (core): 139792.8746
+Loss grad norm (pure): 15.0965
+Weighted L2 grad norm: 0.0934
+Weighted Custom grad norm: 0.1398
+-------------------------------------
+Epoch 42: A_NQ = 38.861, H_NQ = 1530270979, A_Q = 19.481, H_Q = 4773647, zstd_ratio = 0.32%, sparse_ratio = 0.32%, sparsity = 0.00% , sparse_accuracy = 19.481, training_time = 867s
+
+Batch 0 of epoch 43: time 12.32s
+Batch 10 of epoch 43: time 20.45s
+Batch 20 of epoch 43: time 20.43s
+Batch 30 of epoch 43: time 20.42s
+Batch 40 of epoch 43: time 20.43s
+Batch 50 of epoch 43: time 20.43s
+Batch 60 of epoch 43: time 20.45s
+Batch 70 of epoch 43: time 20.45s
+Batch 80 of epoch 43: time 20.44s
+Batch 90 of epoch 43: time 20.41s
+Batch 100 of epoch 43: time 20.44s
+Batch 110 of epoch 43: time 20.45s
+Batch 120 of epoch 43: time 20.44s
+Batch 130 of epoch 43: time 20.46s
+Batch 140 of epoch 43: time 20.45s
+Batch 150 of epoch 43: time 20.41s
+Batch 160 of epoch 43: time 20.43s
+Batch 170 of epoch 43: time 20.44s
+Batch 180 of epoch 43: time 20.44s
+Batch 190 of epoch 43: time 20.45s
+Batch 200 of epoch 43: time 20.43s
+Batch 210 of epoch 43: time 20.44s
+Batch 220 of epoch 43: time 20.45s
+Batch 230 of epoch 43: time 20.44s
+Batch 240 of epoch 43: time 20.43s
+Batch 250 of epoch 43: time 20.42s
+Batch 260 of epoch 43: time 20.42s
+Batch 270 of epoch 43: time 20.42s
+Batch 280 of epoch 43: time 20.45s
+Batch 290 of epoch 43: time 20.45s
+Batch 300 of epoch 43: time 20.43s
+Batch 310 of epoch 43: time 20.39s
+--- Gradient Norms at Batch 310 ---
+L2 grad norm (core): 93.7792
+Custom grad norm (core): 138593.2695
+Loss grad norm (pure): 16.9413
+Weighted L2 grad norm: 0.0938
+Weighted Custom grad norm: 0.1386
+-------------------------------------
+Epoch 43: A_NQ = 38.002, H_NQ = 1529581327, A_Q = 19.051, H_Q = 4799217, zstd_ratio = 0.33%, sparse_ratio = 0.33%, sparsity = 0.00% , sparse_accuracy = 19.051, training_time = 868s
+
+Batch 0 of epoch 44: time 11.85s
+Batch 10 of epoch 44: time 20.82s
+Batch 20 of epoch 44: time 20.43s
+Batch 30 of epoch 44: time 20.42s
+Batch 40 of epoch 44: time 20.41s
+Batch 50 of epoch 44: time 20.44s
+Batch 60 of epoch 44: time 20.42s
+Batch 70 of epoch 44: time 20.44s
+Batch 80 of epoch 44: time 20.42s
+Batch 90 of epoch 44: time 20.42s
+Batch 100 of epoch 44: time 20.42s
+Batch 110 of epoch 44: time 20.43s
+Batch 120 of epoch 44: time 20.46s
+Batch 130 of epoch 44: time 20.46s
+Batch 140 of epoch 44: time 20.44s
+Batch 150 of epoch 44: time 20.45s
+Batch 160 of epoch 44: time 20.44s
+Batch 170 of epoch 44: time 20.43s
+Batch 180 of epoch 44: time 20.43s
+Batch 190 of epoch 44: time 20.45s
+Batch 200 of epoch 44: time 20.41s
+Batch 210 of epoch 44: time 20.43s
+Batch 220 of epoch 44: time 20.42s
+Batch 230 of epoch 44: time 20.43s
+Batch 240 of epoch 44: time 20.43s
+Batch 250 of epoch 44: time 20.44s
+Batch 260 of epoch 44: time 20.41s
+Batch 270 of epoch 44: time 20.43s
+Batch 280 of epoch 44: time 20.44s
+Batch 290 of epoch 44: time 20.43s
+Batch 300 of epoch 44: time 20.43s
+Batch 310 of epoch 44: time 20.39s
+--- Gradient Norms at Batch 310 ---
+L2 grad norm (core): 94.3364
+Custom grad norm (core): 138659.9517
+Loss grad norm (pure): 15.3983
+Weighted L2 grad norm: 0.0943
+Weighted Custom grad norm: 0.1387
+-------------------------------------
+Epoch 44: A_NQ = 39.647, H_NQ = 1548388811, A_Q = 19.874, H_Q = 4834295, zstd_ratio = 0.33%, sparse_ratio = 0.33%, sparsity = 0.00% , sparse_accuracy = 19.874, training_time = 868s
+
+Batch 0 of epoch 45: time 12.34s
+Batch 10 of epoch 45: time 20.48s
+Batch 20 of epoch 45: time 20.45s
+Batch 30 of epoch 45: time 20.43s
+Batch 40 of epoch 45: time 20.44s
+Batch 50 of epoch 45: time 20.44s
+Batch 60 of epoch 45: time 20.45s
+Batch 70 of epoch 45: time 20.44s
+Batch 80 of epoch 45: time 20.44s
+Batch 90 of epoch 45: time 20.45s
+Batch 100 of epoch 45: time 20.45s
+Batch 110 of epoch 45: time 20.43s
+Batch 120 of epoch 45: time 20.45s
+Batch 130 of epoch 45: time 20.46s
+Batch 140 of epoch 45: time 20.45s
+Batch 150 of epoch 45: time 20.43s
+Batch 160 of epoch 45: time 20.44s
+Batch 170 of epoch 45: time 20.45s
+Batch 180 of epoch 45: time 20.46s
+Batch 190 of epoch 45: time 20.43s
+Batch 200 of epoch 45: time 20.42s
+Batch 210 of epoch 45: time 20.43s
+Batch 220 of epoch 45: time 20.45s
+Batch 230 of epoch 45: time 20.42s
+Batch 240 of epoch 45: time 20.44s
+Batch 250 of epoch 45: time 20.42s
+Batch 260 of epoch 45: time 20.43s
+Batch 270 of epoch 45: time 20.46s
+Batch 280 of epoch 45: time 20.44s
+Batch 290 of epoch 45: time 20.44s
+Batch 300 of epoch 45: time 20.44s
+Batch 310 of epoch 45: time 20.43s
+--- Gradient Norms at Batch 310 ---
+L2 grad norm (core): 94.4248
+Custom grad norm (core): 139454.7852
+Loss grad norm (pure): 14.5557
+Weighted L2 grad norm: 0.0944
+Weighted Custom grad norm: 0.1395
+-------------------------------------
+Epoch 45: A_NQ = 39.992, H_NQ = 1534034948, A_Q = 20.046, H_Q = 4848111, zstd_ratio = 0.33%, sparse_ratio = 0.33%, sparsity = 0.00% , sparse_accuracy = 20.046, training_time = 869s
+
+Batch 0 of epoch 46: time 12.22s
+Batch 10 of epoch 46: time 20.45s
+Batch 20 of epoch 46: time 20.43s
+Batch 30 of epoch 46: time 20.42s
+Batch 40 of epoch 46: time 20.43s
+Batch 50 of epoch 46: time 20.42s
+Batch 60 of epoch 46: time 20.44s
+Batch 70 of epoch 46: time 20.44s
+Batch 80 of epoch 46: time 20.42s
+Batch 90 of epoch 46: time 20.43s
+Batch 100 of epoch 46: time 20.42s
+Batch 110 of epoch 46: time 20.44s
+Batch 120 of epoch 46: time 20.43s
+Batch 130 of epoch 46: time 20.44s
+Batch 140 of epoch 46: time 20.44s
+Batch 150 of epoch 46: time 20.44s
+Batch 160 of epoch 46: time 20.46s
+Batch 170 of epoch 46: time 20.46s
+Batch 180 of epoch 46: time 20.47s
+Batch 190 of epoch 46: time 20.45s
+Batch 200 of epoch 46: time 20.43s
+Batch 210 of epoch 46: time 20.43s
+Batch 220 of epoch 46: time 20.43s
+Batch 230 of epoch 46: time 20.42s
+Batch 240 of epoch 46: time 20.44s
+Batch 250 of epoch 46: time 20.44s
+Batch 260 of epoch 46: time 20.41s
+Batch 270 of epoch 46: time 20.43s
+Batch 280 of epoch 46: time 20.43s
+Batch 290 of epoch 46: time 20.42s
+Batch 300 of epoch 46: time 20.46s
+Batch 310 of epoch 46: time 20.39s
+--- Gradient Norms at Batch 310 ---
+L2 grad norm (core): 94.7515
+Custom grad norm (core): 139380.1983
+Loss grad norm (pure): 15.5298
+Weighted L2 grad norm: 0.0948
+Weighted Custom grad norm: 0.1394
+-------------------------------------
+Epoch 46: A_NQ = 40.113, H_NQ = 1537372326, A_Q = 20.108, H_Q = 4870236, zstd_ratio = 0.33%, sparse_ratio = 0.33%, sparsity = 0.00% , sparse_accuracy = 20.108, training_time = 869s
+
+Batch 0 of epoch 47: time 10.97s
+Batch 10 of epoch 47: time 22.41s
+Batch 20 of epoch 47: time 20.43s
+Batch 30 of epoch 47: time 20.46s
+Batch 40 of epoch 47: time 20.45s
+Batch 50 of epoch 47: time 20.44s
+Batch 60 of epoch 47: time 20.46s
+Batch 70 of epoch 47: time 20.44s
+Batch 80 of epoch 47: time 20.45s
+Batch 90 of epoch 47: time 20.43s
+Batch 100 of epoch 47: time 20.45s
+Batch 110 of epoch 47: time 20.44s
+Batch 120 of epoch 47: time 20.46s
+Batch 130 of epoch 47: time 20.44s
+Batch 140 of epoch 47: time 20.45s
+Batch 150 of epoch 47: time 20.45s
+Batch 160 of epoch 47: time 20.43s
+Batch 170 of epoch 47: time 20.46s
+Batch 180 of epoch 47: time 20.43s
+Batch 190 of epoch 47: time 20.47s
+Batch 200 of epoch 47: time 20.45s
+Batch 210 of epoch 47: time 20.44s
+Batch 220 of epoch 47: time 20.44s
+Batch 230 of epoch 47: time 20.42s
+Batch 240 of epoch 47: time 20.45s
+Batch 250 of epoch 47: time 20.44s
+Batch 260 of epoch 47: time 20.45s
+Batch 270 of epoch 47: time 20.44s
+Batch 280 of epoch 47: time 20.44s
+Batch 290 of epoch 47: time 20.43s
+Batch 300 of epoch 47: time 20.46s
+Batch 310 of epoch 47: time 20.42s
+--- Gradient Norms at Batch 310 ---
+L2 grad norm (core): 95.0679
+Custom grad norm (core): 137833.8118
+Loss grad norm (pure): 19.3674
+Weighted L2 grad norm: 0.0951
+Weighted Custom grad norm: 0.1378
+-------------------------------------
+Epoch 47: A_NQ = 40.081, H_NQ = 1530930132, A_Q = 20.091, H_Q = 4891492, zstd_ratio = 0.33%, sparse_ratio = 0.33%, sparsity = 0.00% , sparse_accuracy = 20.091, training_time = 872s
+
+Batch 0 of epoch 48: time 10.48s
+Batch 10 of epoch 48: time 21.41s
+Batch 20 of epoch 48: time 20.43s
+Batch 30 of epoch 48: time 20.42s
+Batch 40 of epoch 48: time 20.43s
+Batch 50 of epoch 48: time 20.4s
+Batch 60 of epoch 48: time 20.41s
+Batch 70 of epoch 48: time 20.42s
+Batch 80 of epoch 48: time 20.44s
+Batch 90 of epoch 48: time 20.43s
+Batch 100 of epoch 48: time 20.43s
+Batch 110 of epoch 48: time 20.44s
+Batch 120 of epoch 48: time 20.43s
+Batch 130 of epoch 48: time 20.46s
+Batch 140 of epoch 48: time 20.42s
+Batch 150 of epoch 48: time 20.44s
+Batch 160 of epoch 48: time 20.44s
+Batch 170 of epoch 48: time 20.45s
+Batch 180 of epoch 48: time 20.45s
+Batch 190 of epoch 48: time 20.41s
+Batch 200 of epoch 48: time 20.42s
+Batch 210 of epoch 48: time 20.43s
+Batch 220 of epoch 48: time 20.42s
+Batch 230 of epoch 48: time 20.43s
+Batch 240 of epoch 48: time 20.42s
+Batch 250 of epoch 48: time 20.42s
+Batch 260 of epoch 48: time 20.42s
+Batch 270 of epoch 48: time 20.41s
+Batch 280 of epoch 48: time 20.42s
+Batch 290 of epoch 48: time 20.41s
+Batch 300 of epoch 48: time 20.43s
+Batch 310 of epoch 48: time 20.39s
+--- Gradient Norms at Batch 310 ---
+L2 grad norm (core): 95.4269
+Custom grad norm (core): 139236.1638
+Loss grad norm (pure): 13.2954
+Weighted L2 grad norm: 0.0954
+Weighted Custom grad norm: 0.1392
+-------------------------------------
+Epoch 48: A_NQ = 40.931, H_NQ = 1543692549, A_Q = 20.515, H_Q = 4915481, zstd_ratio = 0.33%, sparse_ratio = 0.33%, sparsity = 0.00% , sparse_accuracy = 20.515, training_time = 870s
+
+Batch 0 of epoch 49: time 10.22s
+Batch 10 of epoch 49: time 22.74s
+Batch 20 of epoch 49: time 20.41s
+Batch 30 of epoch 49: time 20.43s
+Batch 40 of epoch 49: time 20.46s
+Batch 50 of epoch 49: time 20.43s
+Batch 60 of epoch 49: time 20.42s
+Batch 70 of epoch 49: time 20.45s
+Batch 80 of epoch 49: time 20.44s
+Batch 90 of epoch 49: time 20.45s
+Batch 100 of epoch 49: time 20.44s
+Batch 110 of epoch 49: time 20.45s
+Batch 120 of epoch 49: time 20.45s
+Batch 130 of epoch 49: time 20.45s
+Batch 140 of epoch 49: time 20.43s
+Batch 150 of epoch 49: time 20.46s
+Batch 160 of epoch 49: time 20.46s
+Batch 170 of epoch 49: time 20.46s
+Batch 180 of epoch 49: time 20.45s
+Batch 190 of epoch 49: time 20.42s
+Batch 200 of epoch 49: time 20.44s
+Batch 210 of epoch 49: time 20.43s
+Batch 220 of epoch 49: time 20.44s
+Batch 230 of epoch 49: time 20.44s
+Batch 240 of epoch 49: time 20.43s
+Batch 250 of epoch 49: time 20.44s
+Batch 260 of epoch 49: time 20.45s
+Batch 270 of epoch 49: time 20.43s
+Batch 280 of epoch 49: time 20.43s
+Batch 290 of epoch 49: time 20.43s
+Batch 300 of epoch 49: time 20.45s
+Batch 310 of epoch 49: time 20.39s
+--- Gradient Norms at Batch 310 ---
+L2 grad norm (core): 95.6160
+Custom grad norm (core): 139582.6887
+Loss grad norm (pure): 11.2523
+Weighted L2 grad norm: 0.0956
+Weighted Custom grad norm: 0.1396
+-------------------------------------
+Epoch 49: A_NQ = 41.209, H_NQ = 1539288283, A_Q = 20.654, H_Q = 4928278, zstd_ratio = 0.33%, sparse_ratio = 0.33%, sparsity = 0.00% , sparse_accuracy = 20.654, training_time = 873s
+
+Batch 0 of epoch 50: time 10.0s
+Batch 10 of epoch 50: time 20.55s
+Batch 20 of epoch 50: time 20.43s
+Batch 30 of epoch 50: time 20.43s
+Batch 40 of epoch 50: time 20.42s
+Batch 50 of epoch 50: time 20.41s
+Batch 60 of epoch 50: time 20.42s
+Batch 70 of epoch 50: time 20.43s
+Batch 80 of epoch 50: time 20.42s
+Batch 90 of epoch 50: time 20.42s
+Batch 100 of epoch 50: time 20.42s
+Batch 110 of epoch 50: time 20.42s
+Batch 120 of epoch 50: time 20.44s
+Batch 130 of epoch 50: time 20.45s
+Batch 140 of epoch 50: time 20.43s
+Batch 150 of epoch 50: time 20.45s
+Batch 160 of epoch 50: time 20.45s
+Batch 170 of epoch 50: time 20.44s
+Batch 180 of epoch 50: time 20.42s
+Batch 190 of epoch 50: time 20.41s
+Batch 200 of epoch 50: time 20.41s
+Batch 210 of epoch 50: time 20.42s
+Batch 220 of epoch 50: time 20.42s
+Batch 230 of epoch 50: time 20.44s
+Batch 240 of epoch 50: time 20.45s
+Batch 250 of epoch 50: time 20.45s
+Batch 260 of epoch 50: time 20.42s
+Batch 270 of epoch 50: time 20.44s
+Batch 280 of epoch 50: time 20.44s
+Batch 290 of epoch 50: time 20.43s
+Batch 300 of epoch 50: time 20.45s
+Batch 310 of epoch 50: time 20.39s
+--- Gradient Norms at Batch 310 ---
+L2 grad norm (core): 95.8966
+Custom grad norm (core): 136837.4059
+Loss grad norm (pure): 14.3845
+Weighted L2 grad norm: 0.0959
+Weighted Custom grad norm: 0.1368
+-------------------------------------
+Epoch 50: A_NQ = 41.013, H_NQ = 1543781249, A_Q = 20.558, H_Q = 4951040, zstd_ratio = 0.33%, sparse_ratio = 0.33%, sparsity = 0.00% , sparse_accuracy = 20.558, training_time = 868s
+
+delta = 0.1
+Epoch 1: A_NQ = 0.108, H_NQ = 1529433427, A_Q = 0.104, H_Q = 13149958, zstd_ratio = 0.77%, sparse_ratio = 0.77%, sparsity = 0.00% , sparse_accuracy = 0.104, training_time = 940s
+
+Epoch 2: A_NQ = 0.394, H_NQ = 1530099564, A_Q = 0.247, H_Q = 12660201, zstd_ratio = 0.75%, sparse_ratio = 0.75%, sparsity = 0.00% , sparse_accuracy = 0.247, training_time = 928s
+
+Epoch 3: A_NQ = 1.043, H_NQ = 1530907668, A_Q = 0.571, H_Q = 12065196, zstd_ratio = 0.72%, sparse_ratio = 0.72%, sparsity = 0.00% , sparse_accuracy = 0.571, training_time = 929s
+
+Epoch 4: A_NQ = 3.248, H_NQ = 1531698931, A_Q = 1.674, H_Q = 11471624, zstd_ratio = 0.69%, sparse_ratio = 0.69%, sparsity = 0.00% , sparse_accuracy = 1.674, training_time = 928s
+
+Epoch 5: A_NQ = 6.316, H_NQ = 1533054143, A_Q = 3.209, H_Q = 10383426, zstd_ratio = 0.64%, sparse_ratio = 0.64%, sparsity = 0.00% , sparse_accuracy = 3.209, training_time = 925s
+
+Epoch 6: A_NQ = 8.038, H_NQ = 1534388584, A_Q = 4.069, H_Q = 9381580, zstd_ratio = 0.60%, sparse_ratio = 0.60%, sparsity = 0.00% , sparse_accuracy = 4.069, training_time = 919s
+
+Epoch 7: A_NQ = 13.168, H_NQ = 1535714140, A_Q = 6.633, H_Q = 8505977, zstd_ratio = 0.56%, sparse_ratio = 0.56%, sparsity = 0.00% , sparse_accuracy = 6.633, training_time = 920s
+
+Epoch 8: A_NQ = 15.739, H_NQ = 1536980790, A_Q = 7.919, H_Q = 7749007, zstd_ratio = 0.52%, sparse_ratio = 0.52%, sparsity = 0.00% , sparse_accuracy = 7.919, training_time = 915s
+
+Epoch 9: A_NQ = 17.522, H_NQ = 1539439110, A_Q = 8.812, H_Q = 6261185, zstd_ratio = 0.42%, sparse_ratio = 0.42%, sparsity = 0.00% , sparse_accuracy = 8.812, training_time = 886s
+
+Epoch 10: A_NQ = 19.828, H_NQ = 1541695417, A_Q = 9.963, H_Q = 5795526, zstd_ratio = 0.39%, sparse_ratio = 0.39%, sparsity = 0.00% , sparse_accuracy = 9.963, training_time = 872s
+
+Epoch 11: A_NQ = 22.592, H_NQ = 1543532759, A_Q = 11.348, H_Q = 5561454, zstd_ratio = 0.38%, sparse_ratio = 0.38%, sparsity = 0.00% , sparse_accuracy = 11.348, training_time = 871s
+
+Epoch 12: A_NQ = 23.899, H_NQ = 1545059009, A_Q = 11.999, H_Q = 5415542, zstd_ratio = 0.37%, sparse_ratio = 0.37%, sparsity = 0.00% , sparse_accuracy = 11.999, training_time = 865s
+
+Epoch 13: A_NQ = 25.745, H_NQ = 1548127761, A_Q = 12.921, H_Q = 4860963, zstd_ratio = 0.33%, sparse_ratio = 0.33%, sparsity = 0.00% , sparse_accuracy = 12.921, training_time = 855s
+
+Epoch 14: A_NQ = 26.259, H_NQ = 1550990170, A_Q = 13.175, H_Q = 4488118, zstd_ratio = 0.31%, sparse_ratio = 0.31%, sparsity = 0.00% , sparse_accuracy = 13.175, training_time = 845s
+
+Epoch 15: A_NQ = 27.818, H_NQ = 1553585419, A_Q = 13.958, H_Q = 4248686, zstd_ratio = 0.29%, sparse_ratio = 0.29%, sparsity = 0.00% , sparse_accuracy = 13.958, training_time = 842s
+
+Epoch 16: A_NQ = 28.895, H_NQ = 1555619401, A_Q = 14.5, H_Q = 4091974, zstd_ratio = 0.28%, sparse_ratio = 0.28%, sparsity = 0.00% , sparse_accuracy = 14.5, training_time = 837s
+
+Epoch 17: A_NQ = 29.811, H_NQ = 1556963882, A_Q = 14.953, H_Q = 4002342, zstd_ratio = 0.28%, sparse_ratio = 0.28%, sparsity = 0.00% , sparse_accuracy = 14.953, training_time = 840s
+
+Epoch 18: A_NQ = 31.204, H_NQ = 1557805218, A_Q = 15.65, H_Q = 3953372, zstd_ratio = 0.27%, sparse_ratio = 0.27%, sparsity = 0.00% , sparse_accuracy = 15.65, training_time = 838s
+
+Epoch 19: A_NQ = 31.101, H_NQ = 1558324201, A_Q = 15.594, H_Q = 3932710, zstd_ratio = 0.27%, sparse_ratio = 0.27%, sparsity = 0.00% , sparse_accuracy = 15.594, training_time = 837s
+
+Epoch 20: A_NQ = 31.806, H_NQ = 1558523944, A_Q = 15.957, H_Q = 3938867, zstd_ratio = 0.27%, sparse_ratio = 0.27%, sparsity = 0.00% , sparse_accuracy = 15.957, training_time = 837s
+
+Epoch 21: A_NQ = 33.072, H_NQ = 1558435368, A_Q = 16.586, H_Q = 3952169, zstd_ratio = 0.27%, sparse_ratio = 0.27%, sparsity = 0.00% , sparse_accuracy = 16.586, training_time = 836s
+
+Epoch 22: A_NQ = 33.228, H_NQ = 1557474822, A_Q = 16.661, H_Q = 3977669, zstd_ratio = 0.27%, sparse_ratio = 0.27%, sparsity = 0.00% , sparse_accuracy = 16.661, training_time = 841s
+
+Epoch 23: A_NQ = 34.266, H_NQ = 1556407256, A_Q = 17.182, H_Q = 4016808, zstd_ratio = 0.28%, sparse_ratio = 0.28%, sparsity = 0.00% , sparse_accuracy = 17.182, training_time = 841s
+
+Epoch 24: A_NQ = 34.329, H_NQ = 1555312163, A_Q = 17.213, H_Q = 4055423, zstd_ratio = 0.28%, sparse_ratio = 0.28%, sparsity = 0.00% , sparse_accuracy = 17.213, training_time = 848s
+
+Epoch 25: A_NQ = 35.239, H_NQ = 1553239796, A_Q = 17.669, H_Q = 4107868, zstd_ratio = 0.28%, sparse_ratio = 0.28%, sparsity = 0.00% , sparse_accuracy = 17.669, training_time = 851s
+
+Epoch 26: A_NQ = 36.016, H_NQ = 1552762388, A_Q = 18.058, H_Q = 4152479, zstd_ratio = 0.28%, sparse_ratio = 0.28%, sparsity = 0.00% , sparse_accuracy = 18.058, training_time = 850s
+
+Epoch 27: A_NQ = 35.533, H_NQ = 1559654164, A_Q = 17.82, H_Q = 4200904, zstd_ratio = 0.29%, sparse_ratio = 0.29%, sparsity = 0.00% , sparse_accuracy = 17.82, training_time = 853s
+
+Epoch 28: A_NQ = 36.026, H_NQ = 1561186006, A_Q = 18.063, H_Q = 4253810, zstd_ratio = 0.29%, sparse_ratio = 0.29%, sparsity = 0.00% , sparse_accuracy = 18.063, training_time = 853s
+
+Epoch 29: A_NQ = 36.632, H_NQ = 1557995031, A_Q = 18.364, H_Q = 4295777, zstd_ratio = 0.29%, sparse_ratio = 0.29%, sparsity = 0.00% , sparse_accuracy = 18.364, training_time = 855s
+
+Epoch 30: A_NQ = 36.634, H_NQ = 1554787688, A_Q = 18.368, H_Q = 4342164, zstd_ratio = 0.30%, sparse_ratio = 0.30%, sparsity = 0.00% , sparse_accuracy = 18.368, training_time = 855s
+
+Epoch 31: A_NQ = 37.051, H_NQ = 1552171195, A_Q = 18.57, H_Q = 4389076, zstd_ratio = 0.30%, sparse_ratio = 0.30%, sparsity = 0.00% , sparse_accuracy = 18.57, training_time = 857s
+
+Epoch 32: A_NQ = 37.322, H_NQ = 1552961362, A_Q = 18.713, H_Q = 4431743, zstd_ratio = 0.30%, sparse_ratio = 0.30%, sparsity = 0.00% , sparse_accuracy = 18.713, training_time = 858s
+
+Epoch 33: A_NQ = 34.843, H_NQ = 1550292904, A_Q = 17.47, H_Q = 4476551, zstd_ratio = 0.30%, sparse_ratio = 0.31%, sparsity = 0.00% , sparse_accuracy = 17.47, training_time = 859s
+
+Epoch 34: A_NQ = 38.15, H_NQ = 1555147716, A_Q = 19.125, H_Q = 4510672, zstd_ratio = 0.31%, sparse_ratio = 0.31%, sparsity = 0.00% , sparse_accuracy = 19.125, training_time = 860s
+
+Epoch 35: A_NQ = 38.282, H_NQ = 1544581713, A_Q = 19.191, H_Q = 4550076, zstd_ratio = 0.31%, sparse_ratio = 0.31%, sparsity = 0.00% , sparse_accuracy = 19.191, training_time = 862s
+
+Epoch 36: A_NQ = 37.849, H_NQ = 1554526033, A_Q = 18.975, H_Q = 4588697, zstd_ratio = 0.31%, sparse_ratio = 0.31%, sparsity = 0.00% , sparse_accuracy = 18.975, training_time = 862s
+
+Epoch 37: A_NQ = 36.539, H_NQ = 1551255957, A_Q = 18.32, H_Q = 4623758, zstd_ratio = 0.32%, sparse_ratio = 0.32%, sparsity = 0.00% , sparse_accuracy = 18.32, training_time = 865s
+
+Epoch 38: A_NQ = 39.178, H_NQ = 1550634319, A_Q = 19.639, H_Q = 4660758, zstd_ratio = 0.32%, sparse_ratio = 0.32%, sparsity = 0.00% , sparse_accuracy = 19.639, training_time = 866s
+
+Epoch 39: A_NQ = 38.989, H_NQ = 1544648209, A_Q = 19.54, H_Q = 4690932, zstd_ratio = 0.32%, sparse_ratio = 0.32%, sparsity = 0.00% , sparse_accuracy = 19.54, training_time = 865s
+
+Epoch 40: A_NQ = 39.195, H_NQ = 1539310107, A_Q = 19.648, H_Q = 4720398, zstd_ratio = 0.32%, sparse_ratio = 0.32%, sparsity = 0.00% , sparse_accuracy = 19.648, training_time = 863s
+
+Epoch 41: A_NQ = 39.142, H_NQ = 1533914522, A_Q = 19.621, H_Q = 4746232, zstd_ratio = 0.32%, sparse_ratio = 0.32%, sparsity = 0.00% , sparse_accuracy = 19.621, training_time = 865s
+
+Epoch 42: A_NQ = 38.861, H_NQ = 1530270979, A_Q = 19.481, H_Q = 4773647, zstd_ratio = 0.32%, sparse_ratio = 0.32%, sparsity = 0.00% , sparse_accuracy = 19.481, training_time = 867s
+
+Epoch 43: A_NQ = 38.002, H_NQ = 1529581327, A_Q = 19.051, H_Q = 4799217, zstd_ratio = 0.33%, sparse_ratio = 0.33%, sparsity = 0.00% , sparse_accuracy = 19.051, training_time = 868s
+
+Epoch 44: A_NQ = 39.647, H_NQ = 1548388811, A_Q = 19.874, H_Q = 4834295, zstd_ratio = 0.33%, sparse_ratio = 0.33%, sparsity = 0.00% , sparse_accuracy = 19.874, training_time = 868s
+
+Epoch 45: A_NQ = 39.992, H_NQ = 1534034948, A_Q = 20.046, H_Q = 4848111, zstd_ratio = 0.33%, sparse_ratio = 0.33%, sparsity = 0.00% , sparse_accuracy = 20.046, training_time = 869s
+
+Epoch 46: A_NQ = 40.113, H_NQ = 1537372326, A_Q = 20.108, H_Q = 4870236, zstd_ratio = 0.33%, sparse_ratio = 0.33%, sparsity = 0.00% , sparse_accuracy = 20.108, training_time = 869s
+
+Epoch 47: A_NQ = 40.081, H_NQ = 1530930132, A_Q = 20.091, H_Q = 4891492, zstd_ratio = 0.33%, sparse_ratio = 0.33%, sparsity = 0.00% , sparse_accuracy = 20.091, training_time = 872s
+
+Epoch 48: A_NQ = 40.931, H_NQ = 1543692549, A_Q = 20.515, H_Q = 4915481, zstd_ratio = 0.33%, sparse_ratio = 0.33%, sparsity = 0.00% , sparse_accuracy = 20.515, training_time = 870s
+
+Epoch 49: A_NQ = 41.209, H_NQ = 1539288283, A_Q = 20.654, H_Q = 4928278, zstd_ratio = 0.33%, sparse_ratio = 0.33%, sparsity = 0.00% , sparse_accuracy = 20.654, training_time = 873s
+
+Epoch 50: A_NQ = 41.013, H_NQ = 1543781249, A_Q = 20.558, H_Q = 4951040, zstd_ratio = 0.33%, sparse_ratio = 0.33%, sparsity = 0.00% , sparse_accuracy = 20.558, training_time = 868s
+
+------------------------------------------------------------
