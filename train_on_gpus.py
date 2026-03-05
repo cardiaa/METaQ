@@ -11,7 +11,17 @@ from torch.utils.data import DataLoader, DistributedSampler
 
 def setup():
     dist.init_process_group(backend="nccl")
-    local_rank = int(os.environ["LOCAL_RANK"])
+
+    # Compatibile sia con torchrun che con SLURM
+    if "LOCAL_RANK" in os.environ:
+        local_rank = int(os.environ["LOCAL_RANK"])
+    elif "SLURM_LOCALID" in os.environ:
+        local_rank = int(os.environ["SLURM_LOCALID"])
+    else:
+        raise RuntimeError(
+            "Missing LOCAL_RANK/SLURM_LOCALID. Launch with torchrun or proper SLURM env."
+        )
+
     torch.cuda.set_device(local_rank)
     return local_rank, dist.get_world_size()
 
@@ -19,7 +29,7 @@ def cleanup():
     dist.destroy_process_group()
 
 # Function to load the MNIST dataset
-def load_data(model_name, batch_size):
+def load_data(model_name, batch_size, data_root, local_rank=None, world_size=None, workers=8):
 
     if(model_name[:7] == "LeNet-5"):
         if(model_name[-9:] == "(rotated)"):
@@ -36,9 +46,9 @@ def load_data(model_name, batch_size):
                 transforms.ToTensor(),
             ])
             # Load the training set of MNIST dataset with the specified transformation
-            trainset = datasets.MNIST(root='./data', train=True, download=True, transform=transform_train)
+            trainset = datasets.MNIST(root=data_root, train=True, download=True, transform=transform_train)
             # Load the test set of MNIST dataset with the specified transformation
-            testset = datasets.MNIST(root='./data', train=False, download=True, transform=transform_test)     
+            testset = datasets.MNIST(root=data_root, train=False, download=True, transform=transform_test)     
         else:
             # No Data Augmentation + Resizing images to 32x32
             transform = transforms.Compose([
@@ -46,17 +56,17 @@ def load_data(model_name, batch_size):
                 transforms.ToTensor(),
             ])
             # Load the training set of MNIST dataset with the specified transformation
-            trainset = datasets.MNIST(root='./data', train=True, download=True, transform=transform)
+            trainset = datasets.MNIST(root=data_root, train=True, download=True, transform=transform)
             # Load the test set of MNIST dataset with the specified transformation
-            testset = datasets.MNIST(root='./data', train=False, download=True, transform=transform)   
+            testset = datasets.MNIST(root=data_root, train=False, download=True, transform=transform)   
     # --------------------------------------------------------------------------------------------------------------
     elif(model_name[:12] == "LeNet300_100"):
         transform = transforms.Compose([
             transforms.ToTensor(),
             transforms.Normalize((0.1307,), (0.3081,))  # Media e dev. std di MNIST
         ])
-        trainset = datasets.MNIST(root='./data', train=True, download=True, transform=transform)
-        testset = datasets.MNIST(root='./data', train=False, download=True, transform=transform)
+        trainset = datasets.MNIST(root=data_root, train=True, download=True, transform=transform)
+        testset = datasets.MNIST(root=data_root, train=False, download=True, transform=transform)
     # --------------------------------------------------------------------------------------------------------------
     elif(model_name == "AlexNet"):
         transform_train = transforms.Compose([
@@ -75,13 +85,28 @@ def load_data(model_name, batch_size):
                                 [0.229, 0.224, 0.225])
         ])   
 
-        train_dataset = datasets.ImageFolder('/disk1/a.cardia/imagenet/train', transform=transform_train)
-        val_dataset = datasets.ImageFolder('/disk1/a.cardia/imagenet/val', transform=transform_val)
+        imagenet_train = os.path.join(data_root, "imagenet", "train")
+        imagenet_val = os.path.join(data_root, "imagenet", "val")
+        train_dataset = datasets.ImageFolder(imagenet_train, transform=transform_train)
+        val_dataset = datasets.ImageFolder(imagenet_val, transform=transform_val)
 
         train_sampler = DistributedSampler(train_dataset, num_replicas=world_size, rank=local_rank, shuffle=True, drop_last=True)
 
-        trainset = DataLoader(train_dataset, batch_size=batch_size, sampler=train_sampler, num_workers=8, pin_memory=True)
-        testset = DataLoader(val_dataset, batch_size=batch_size, shuffle=False, num_workers=8, pin_memory=True)
+        trainset = DataLoader(
+            train_dataset,
+            batch_size=batch_size,
+            sampler=train_sampler,
+            num_workers=workers,
+            pin_memory=True
+        )
+
+        testset = DataLoader(
+            val_dataset,
+            batch_size=batch_size,
+            shuffle=False,
+            num_workers=workers,
+            pin_memory=True
+        )
     # --------------------------------------------------------------------------------------------------------------
     elif(model_name == "VGG16"):
         transform_train = transforms.Compose([
@@ -100,13 +125,32 @@ def load_data(model_name, batch_size):
                                 [0.229, 0.224, 0.225])
         ])   
 
-        train_dataset = datasets.ImageFolder('/disk1/a.cardia/imagenet/train', transform=transform_train)
-        val_dataset = datasets.ImageFolder('/disk1/a.cardia/imagenet/val', transform=transform_val)
+        imagenet_train = os.path.join(data_root, "imagenet", "train")
+        imagenet_val = os.path.join(data_root, "imagenet", "val")
+        train_dataset = datasets.ImageFolder(imagenet_train, transform=transform_train)
+        val_dataset = datasets.ImageFolder(imagenet_val, transform=transform_val)
 
         train_sampler = DistributedSampler(train_dataset, num_replicas=world_size, rank=local_rank, shuffle=True, drop_last=True)
 
-        trainset = DataLoader(train_dataset, batch_size=batch_size, sampler=train_sampler, num_workers=8, pin_memory=True) #with 512 and C=4 it works
-        testset = DataLoader(val_dataset, batch_size=batch_size, shuffle=False, num_workers=8, pin_memory=True)        
+        # Old configuration. I keep it because with batch_size=512 and C=4 it works, while with the new configuration (for Leonardo) I still do not know.
+        # trainset = DataLoader(train_dataset, batch_size=batch_size, sampler=train_sampler, num_workers=8, pin_memory=True) #with 512 and C=4 it works
+        # testset = DataLoader(val_dataset, batch_size=batch_size, shuffle=False, num_workers=8, pin_memory=True)     
+
+        trainset = DataLoader(
+        train_dataset,
+        batch_size=batch_size,
+        sampler=train_sampler,
+        num_workers=workers,
+        pin_memory=True
+    )
+
+    testset = DataLoader(
+        val_dataset,
+        batch_size=batch_size,
+        shuffle=False,
+        num_workers=workers,
+        pin_memory=True
+    )   
 
     # Return the loaded training and test datasets
     if(model_name == "AlexNet" or model_name == "VGG16"):
@@ -127,6 +171,19 @@ if __name__ == "__main__":
         choices=["LeNet-5", "LeNet-5 (rotated)", "LeNet300_100", "AlexNet", "VGG16"],
         help="Name of the model to train"
     )
+    # New arguments for launchiing on Leonardo with SLURM
+    parser.add_argument(
+        "--data_root",
+        type=str,
+        default="./data",
+        help="Root directory for datasets. For ImageNet expects data_root/imagenet/train and val"
+    )
+    parser.add_argument(
+        "--workers",
+        type=int,
+        default=8,
+        help="Number of DataLoader workers (for ImageNet)"
+    )    
     # Parse the command-line arguments
     args = parser.parse_args()
 
@@ -379,7 +436,14 @@ if __name__ == "__main__":
 
     # Load the training and test datasets using the load_data function
     if(model_name == "AlexNet" or model_name == "VGG16"):
-        trainset, testset, train_sampler = load_data(model_name, batch_size)
+        trainset, testset, train_sampler = load_data(
+            model_name,
+            batch_size,
+            args.data_root,
+            local_rank=local_rank,
+            world_size=world_size,
+            workers=args.workers,
+        )
         trainloader = trainset
         testloader = testset
         train_and_evaluate(
@@ -394,7 +458,11 @@ if __name__ == "__main__":
         )   
         cleanup()     
     else:
-        trainset, testset = load_data(model_name, batch_size=None)
+        trainset, testset = load_data(
+            model_name,
+            batch_size=None,
+            data_root=args.data_root,
+        )
         trainloader = torch.utils.data.DataLoader(trainset, batch_size=64, shuffle=True, drop_last=True, num_workers=0)
         testloader = torch.utils.data.DataLoader(testset, batch_size=1000, shuffle=False, num_workers=0)
         train_and_evaluate(
