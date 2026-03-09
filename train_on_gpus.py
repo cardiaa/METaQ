@@ -277,7 +277,8 @@ if __name__ == "__main__":
         criterion, criterion_name = nn.CrossEntropyLoss(), "CrossEntropy" 
         C = 32
         lr = 1.6e-2
-        batch_size = 2048
+        #batch_size = 2048
+        batch_size = 128 # For the first test in Leonardo, I use a smaller batch size to avoid OOM. As soon as I find good configurations, I will increase it.
         lambda_reg = 5e-4
         alpha = 0.99999
         T1_explicit = 1e-3
@@ -299,7 +300,8 @@ if __name__ == "__main__":
         accuracy_tollerance = 0.2
         zeta = 50000
         l = 0.5
-        n_epochs = 50 # To be increased as soon as I find good configurations
+        #n_epochs = 50 # To be increased as soon as I find good configurations
+        n_epochs = 2 # For the first test in Leonardo, I use a smaller number of epochs to quickly check if everything works. As soon as I find good configurations, I will increase it.
         max_iterations = 15
         train_optimizer = "SGD"  
         entropy_optimizer = "FISTA"  
