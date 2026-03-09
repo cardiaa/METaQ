@@ -1,479 +1,553 @@
 import argparse
-import torch
 import os
+import glob
+import tarfile
+
+import torch
 import torch.distributed as dist
-from utils.trainer_on_gpus import train_and_evaluate
-from utils.networks import LeNet5, LeNet5_enhanced, LeNet5_Original, LeNet300_100
-from torchvision import datasets, transforms, models
-import torch.nn as nn 
+import torch.nn as nn
+
 from torch.nn.parallel import DistributedDataParallel as DDP
 from torch.utils.data import DataLoader, DistributedSampler
+from torchvision import datasets, transforms, models
+import webdataset as wds
 
-def setup():
+from utils.trainer_on_gpus import train_and_evaluate
+from utils.networks import LeNet5, LeNet5_Original, LeNet300_100
+
+
+# -------------------------
+# DDP utilities
+# -------------------------
+def ddp_needed(model_name: str) -> bool:
+    return model_name in ("AlexNet", "VGG16")
+
+
+def setup_ddp():
     dist.init_process_group(backend="nccl")
 
-    # Compatibile sia con torchrun che con SLURM
+    # Compatible with torchrun (LOCAL_RANK) e SLURM (SLURM_LOCALID)
     if "LOCAL_RANK" in os.environ:
         local_rank = int(os.environ["LOCAL_RANK"])
     elif "SLURM_LOCALID" in os.environ:
         local_rank = int(os.environ["SLURM_LOCALID"])
     else:
-        raise RuntimeError(
-            "Missing LOCAL_RANK/SLURM_LOCALID. Launch with torchrun or proper SLURM env."
-        )
+        raise RuntimeError("Missing LOCAL_RANK/SLURM_LOCALID. Launch with torchrun or proper SLURM env.")
 
     torch.cuda.set_device(local_rank)
-    return local_rank, dist.get_world_size()
+    world_size = dist.get_world_size()
+    return local_rank, world_size
 
-def cleanup():
-    dist.destroy_process_group()
 
-# Function to load the MNIST dataset
-def load_data(model_name, batch_size, data_root, local_rank=None, world_size=None, workers=8):
+def cleanup_ddp():
+    if dist.is_initialized():
+        dist.destroy_process_group()
 
-    if(model_name[:7] == "LeNet-5"):
-        if(model_name[-9:] == "(rotated)"):
-            # Data Augmentation + Resizing images to 32x32
-            transform_train = transforms.Compose([
-                transforms.Resize(32),
-                transforms.RandomRotation(10),
-                transforms.RandomAffine(0, translate=(0.1, 0.1)),
-                transforms.ToTensor(),
-            ])
 
-            transform_test = transforms.Compose([
-                transforms.Resize(32),
-                transforms.ToTensor(),
-            ])
-            # Load the training set of MNIST dataset with the specified transformation
-            trainset = datasets.MNIST(root=data_root, train=True, download=True, transform=transform_train)
-            # Load the test set of MNIST dataset with the specified transformation
-            testset = datasets.MNIST(root=data_root, train=False, download=True, transform=transform_test)     
-        else:
-            # No Data Augmentation + Resizing images to 32x32
-            transform = transforms.Compose([
-                transforms.Resize(32),
-                transforms.ToTensor(),
-            ])
-            # Load the training set of MNIST dataset with the specified transformation
-            trainset = datasets.MNIST(root=data_root, train=True, download=True, transform=transform)
-            # Load the test set of MNIST dataset with the specified transformation
-            testset = datasets.MNIST(root=data_root, train=False, download=True, transform=transform)   
-    # --------------------------------------------------------------------------------------------------------------
-    elif(model_name[:12] == "LeNet300_100"):
-        transform = transforms.Compose([
-            transforms.ToTensor(),
-            transforms.Normalize((0.1307,), (0.3081,))  # Media e dev. std di MNIST
-        ])
-        trainset = datasets.MNIST(root=data_root, train=True, download=True, transform=transform)
-        testset = datasets.MNIST(root=data_root, train=False, download=True, transform=transform)
-    # --------------------------------------------------------------------------------------------------------------
-    elif(model_name == "AlexNet"):
+# -------------------------
+# Paths + dataset detection
+# -------------------------
+def imagenet_paths(data_root: str):
+    base = os.path.join(data_root, "imagenet")
+    shards_dir = os.path.join(base, "shards")
+
+    shards_train = os.path.join(shards_dir, "train-*.tar")
+    shards_val = os.path.join(shards_dir, "val-*.tar")
+
+    folder_train = os.path.join(base, "train")
+    folder_val = os.path.join(base, "val")
+
+    has_shards = len(glob.glob(shards_train)) > 0
+    has_folders = os.path.isdir(folder_train) and os.path.isdir(folder_val)
+
+    return {
+        "base": base,
+        "shards_train": shards_train,
+        "shards_val": shards_val,
+        "folder_train": folder_train,
+        "folder_val": folder_val,
+        "has_shards": has_shards,
+        "has_folders": has_folders,
+    }
+
+
+# -------------------------
+# Synset -> idx from shards
+# -------------------------
+def build_synset_to_idx_from_shards(shards_pattern: str):
+    """
+    Reads the shard tarfiles to extract unique synsets (class names) and builds a synset->index mapping.
+    """
+    synsets = set()
+    for tar_path in sorted(glob.glob(shards_pattern)):
+        with tarfile.open(tar_path) as tf:
+            for m in tf.getmembers():
+                if m.isfile() and "/" in m.name:
+                    synsets.add(m.name.split("/", 1)[0])
+
+    synsets = sorted(synsets)
+    syn2idx = {s: i for i, s in enumerate(synsets)}
+    return syn2idx, synsets
+
+
+# -------------------------
+# Model + hyperparameters
+# -------------------------
+def build_model_and_hparams(model_name: str, device: torch.device, args, local_rank=None):
+    # Defaults: in this way we can easily print all hyperparameters in a unified way, even those that are not used for some models.
+    h = dict(
+        criterion=nn.CrossEntropyLoss(),
+        criterion_name="CrossEntropy",
+        C=None,
+        lr=None,
+        batch_size=None,
+        lambda_reg=0.0,
+        alpha=1.0,
+        T1_explicit=0.0,
+        T2_explicit=0.0,
+        subgradient_step=1e5,
+        r=2.0,
+        w0=0.0,
+        BestQuantization_target_acc=99.8,
+        final_target_acc=99.7,
+        target_zstd_ratio=0.0179,
+        min_xi=0.0,
+        max_xi=1.0,
+        upper_c=None,
+        lower_c=1e-2,
+        c1=10,
+        c2=1000,
+        first_best_indices=20,
+        accuracy_tollerance=0.2,
+        zeta=50000,
+        l=0.5,
+        n_epochs=1,
+        max_iterations=15,
+        train_optimizer="SGD",
+        entropy_optimizer="FISTA",
+        pruning="Y",
+        QuantizationType="center",
+        sparsity_threshold=1e-3,
+    )
+
+    if model_name.startswith("LeNet-5"):
+        model = LeNet5_Original().to(device)
+
+        C = 6
+        lambda_reg = 0.0002
+        alpha = 0.1
+        r = 2
+        bucket_zero = round((C - 1) / 2)
+        w0 = round(r - (bucket_zero + 0.5) * 2 * r * (1 - 1 / C) / (C - 1), 3)
+
+        h.update(
+            C=C,
+            lr=0.001,
+            lambda_reg=lambda_reg,
+            alpha=alpha,
+            T1_explicit=lambda_reg * alpha,
+            T2_explicit=lambda_reg * (1 - alpha),
+            r=r,
+            w0=w0,
+            n_epochs=100,
+            train_optimizer="ADAM",
+        )
+        h["upper_c"] = sum(p.numel() for p in LeNet5().parameters())
+
+    elif model_name == "LeNet300_100":
+        model = LeNet300_100().to(device)
+
+        C = 64
+        lambda_reg = 0.0002
+        alpha = 0.6
+        r = 2
+        bucket_zero = round((C - 1) / 2)
+        w0 = round(r - (bucket_zero + 0.5) * 2 * r * (1 - 1 / C) / (C - 1), 3)
+
+        h.update(
+            C=C,
+            lr=0.001,
+            lambda_reg=lambda_reg,
+            alpha=alpha,
+            T1_explicit=lambda_reg * alpha,
+            T2_explicit=lambda_reg * (1 - alpha),
+            r=r,
+            w0=w0,
+            n_epochs=100,
+            train_optimizer="ADAM",
+        )
+        h["upper_c"] = sum(p.numel() for p in LeNet300_100().parameters())
+
+    elif model_name == "AlexNet":
+        if local_rank is None:
+            raise RuntimeError("AlexNet requires DDP setup (local_rank is None).")
+
+        model = models.alexnet(weights=None)
+        model.classifier[6] = nn.Linear(4096, 1000)
+        model = model.to(device)
+        model = DDP(model, device_ids=[local_rank])
+
+        h.update(
+            C=32,
+            lr=1.6e-2,
+            #batch_size=2048,  
+            batch_size=128,  # First test on Leonardo
+            lambda_reg=5e-4,
+            alpha=0.99999,
+            T1_explicit=1e-3,
+            T2_explicit=1e-6,
+            r=1.51,
+            w0=0.013,
+            n_epochs=2,
+            train_optimizer="SGD",
+        )
+        h["upper_c"] = sum(p.numel() for p in model.parameters())
+
+    elif model_name == "VGG16":
+        if local_rank is None:
+            raise RuntimeError("VGG16 requires DDP setup (local_rank is None).")
+
+        model = models.vgg16(weights=None)
+        model.classifier[6] = nn.Linear(4096, 1000)
+        model = model.to(device)
+        model = DDP(model, device_ids=[local_rank])
+
+        C = 8
+        lambda_reg = 0.0005
+        alpha = 0.9
+        r = 2
+        bucket_zero = round((C - 1) / 2)
+        w0 = round(r - (bucket_zero + 0.5) * 2 * r * (1 - 1 / C) / (C - 1), 3)
+
+        h.update(
+            C=C,
+            lr=0.01,
+            batch_size=512,
+            lambda_reg=lambda_reg,
+            alpha=alpha,
+            T1_explicit=lambda_reg * alpha,
+            T2_explicit=lambda_reg * (1 - alpha),
+            r=r,
+            w0=w0,
+            n_epochs=20,
+            train_optimizer="SGD",
+        )
+        h["upper_c"] = sum(p.numel() for p in model.parameters())
+
+    else:
+        raise ValueError(f"Unsupported model_name: {model_name}")
+
+    return model, h
+
+
+# -------------------------
+# Data loading: MNIST
+# -------------------------
+def load_mnist_lenet5(model_name: str, data_root: str):
+    if model_name.endswith("(rotated)"):
         transform_train = transforms.Compose([
-            transforms.RandomResizedCrop(224),
-            transforms.RandomHorizontalFlip(),
+            transforms.Resize(32),
+            transforms.RandomRotation(10),
+            transforms.RandomAffine(0, translate=(0.1, 0.1)),
             transforms.ToTensor(),
-            transforms.Normalize([0.485, 0.456, 0.406], 
-                                [0.229, 0.224, 0.225])
+        ])
+        transform_test = transforms.Compose([
+            transforms.Resize(32),
+            transforms.ToTensor(),
+        ])
+    else:
+        transform_train = transforms.Compose([
+            transforms.Resize(32),
+            transforms.ToTensor(),
+        ])
+        transform_test = transforms.Compose([
+            transforms.Resize(32),
+            transforms.ToTensor(),
         ])
 
-        transform_val = transforms.Compose([
-            transforms.Resize(256),
-            transforms.CenterCrop(224),
-            transforms.ToTensor(),
-            transforms.Normalize([0.485, 0.456, 0.406], 
-                                [0.229, 0.224, 0.225])
-        ])   
+    trainset = datasets.MNIST(root=data_root, train=True, download=True, transform=transform_train)
+    testset = datasets.MNIST(root=data_root, train=False, download=True, transform=transform_test)
+    return trainset, testset
 
-        imagenet_train = os.path.join(data_root, "imagenet", "train")
-        imagenet_val = os.path.join(data_root, "imagenet", "val")
-        train_dataset = datasets.ImageFolder(imagenet_train, transform=transform_train)
-        val_dataset = datasets.ImageFolder(imagenet_val, transform=transform_val)
 
-        train_sampler = DistributedSampler(train_dataset, num_replicas=world_size, rank=local_rank, shuffle=True, drop_last=True)
+def load_mnist_lenet300(data_root: str):
+    transform = transforms.Compose([
+        transforms.ToTensor(),
+        transforms.Normalize((0.1307,), (0.3081,)),
+    ])
+    trainset = datasets.MNIST(root=data_root, train=True, download=True, transform=transform)
+    testset = datasets.MNIST(root=data_root, train=False, download=True, transform=transform)
+    return trainset, testset
 
-        trainset = DataLoader(
+
+# -------------------------
+# Data loading: ImageNet (shards or folders)
+# -------------------------
+def load_imagenet_dataloaders(batch_size, data_root, local_rank, world_size, workers):
+    t_train = transforms.Compose([
+        transforms.RandomResizedCrop(224),
+        transforms.RandomHorizontalFlip(),
+        transforms.ToTensor(),
+        transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
+    ])
+    t_val = transforms.Compose([
+        transforms.Resize(256),
+        transforms.CenterCrop(224),
+        transforms.ToTensor(),
+        transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
+    ])
+
+    p = imagenet_paths(data_root)
+
+    # --- Leonardo: WebDataset shards ---
+    if p["has_shards"]:
+        # Creates synset->idx mapping from shard contents. 
+        # Important: this ensures that all processes have the same mapping, 
+        # even if the order of shards is not guaranteed to be the same across processes.
+        if dist.is_initialized():
+            rank = dist.get_rank()
+            obj = [None]
+            if rank == 0:
+                _, synsets = build_synset_to_idx_from_shards(p["shards_train"])
+                obj[0] = synsets
+            dist.broadcast_object_list(obj, src=0)
+            synsets = obj[0]
+            syn2idx = {s: i for i, s in enumerate(synsets)}
+        else:
+            syn2idx, _ = build_synset_to_idx_from_shards(p["shards_train"])
+
+        def key_to_label(key: str):
+            syn = key.split("/", 1)[0]
+            return torch.tensor(syn2idx[syn], dtype=torch.long)
+
+        # ImageNet sizes (standard)
+        train_size = 1281167
+        val_size = 50000
+        steps_per_epoch = max(1, train_size // (batch_size * max(1, world_size)))
+        val_steps = max(1, val_size // batch_size)
+
+        # Nota: in my shards the key is of the form "n01440764/xxx.JPEG", 
+        # so the synset is the first part before "/".
+        train_ds = (
+            wds.WebDataset(p["shards_train"], shardshuffle=True)
+            .shuffle(10000)
+            .decode("pil")
+            .to_tuple("__key__", "jpg;JPEG;jpeg;png")
+            .map_tuple(lambda k: k, t_train)
+            .map(lambda k_img: (k_img[1], key_to_label(k_img[0])))
+            .batched(batch_size, partial=False)
+            .with_epoch(steps_per_epoch)
+        )
+
+        val_ds = (
+            wds.WebDataset(p["shards_val"], shardshuffle=False)
+            .decode("pil")
+            .to_tuple("__key__", "jpg;JPEG;jpeg;png")
+            .map_tuple(lambda k: k, t_val)
+            .map(lambda k_img: (k_img[1], key_to_label(k_img[0])))
+            .batched(batch_size, partial=False)
+            .with_epoch(val_steps)
+        )
+
+        trainloader = wds.WebLoader(train_ds, batch_size=None, num_workers=workers, pin_memory=True)
+        testloader = wds.WebLoader(val_ds, batch_size=None, num_workers=workers, pin_memory=True)
+        train_sampler = None
+        return trainloader, testloader, train_sampler
+
+    # --- 4-GPU machine: ImageFolder ---
+    if p["has_folders"]:
+        train_dataset = datasets.ImageFolder(p["folder_train"], transform=t_train)
+        val_dataset = datasets.ImageFolder(p["folder_val"], transform=t_val)
+
+        train_sampler = DistributedSampler(
+            train_dataset,
+            num_replicas=world_size,
+            rank=local_rank,
+            shuffle=True,
+            drop_last=True,
+        )
+
+        trainloader = DataLoader(
             train_dataset,
             batch_size=batch_size,
             sampler=train_sampler,
             num_workers=workers,
-            pin_memory=True
+            pin_memory=True,
         )
 
-        testset = DataLoader(
+        testloader = DataLoader(
             val_dataset,
             batch_size=batch_size,
             shuffle=False,
             num_workers=workers,
-            pin_memory=True
+            pin_memory=True,
         )
-    # --------------------------------------------------------------------------------------------------------------
-    elif(model_name == "VGG16"):
-        transform_train = transforms.Compose([
-            transforms.RandomResizedCrop(224),
-            transforms.RandomHorizontalFlip(),
-            transforms.ToTensor(),
-            transforms.Normalize([0.485, 0.456, 0.406], 
-                                [0.229, 0.224, 0.225])
-        ])
 
-        transform_val = transforms.Compose([
-            transforms.Resize(256),
-            transforms.CenterCrop(224),
-            transforms.ToTensor(),
-            transforms.Normalize([0.485, 0.456, 0.406], 
-                                [0.229, 0.224, 0.225])
-        ])   
+        return trainloader, testloader, train_sampler
 
-        imagenet_train = os.path.join(data_root, "imagenet", "train")
-        imagenet_val = os.path.join(data_root, "imagenet", "val")
-        train_dataset = datasets.ImageFolder(imagenet_train, transform=transform_train)
-        val_dataset = datasets.ImageFolder(imagenet_val, transform=transform_val)
-
-        train_sampler = DistributedSampler(train_dataset, num_replicas=world_size, rank=local_rank, shuffle=True, drop_last=True)
-
-        # Old configuration. I keep it because with batch_size=512 and C=4 it works, while with the new configuration (for Leonardo) I still do not know.
-        # trainset = DataLoader(train_dataset, batch_size=batch_size, sampler=train_sampler, num_workers=8, pin_memory=True) #with 512 and C=4 it works
-        # testset = DataLoader(val_dataset, batch_size=batch_size, shuffle=False, num_workers=8, pin_memory=True)     
-
-        trainset = DataLoader(
-        train_dataset,
-        batch_size=batch_size,
-        sampler=train_sampler,
-        num_workers=workers,
-        pin_memory=True
+    raise RuntimeError(
+        f"ImageNet not found. Expected either shards in {p['shards_train']} or folders in {p['folder_train']}."
     )
 
-    testset = DataLoader(
-        val_dataset,
-        batch_size=batch_size,
-        shuffle=False,
-        num_workers=workers,
-        pin_memory=True
-    )   
 
-    # Return the loaded training and test datasets
-    if(model_name == "AlexNet" or model_name == "VGG16"):
-        return trainset, testset, train_sampler
-    else:
-        return trainset, testset
+# -------------------------
+# Logging
+# -------------------------
+def print_config(model_name, args, h, local_rank_to_print):
+    if local_rank_to_print != 0:
+        return
 
-if __name__ == "__main__":
-    # Initialize argument parser for command-line arguments
+    print("=================================================================", flush=True)
+    print("==================== PARAMETER CONFIGURATION ====================", flush=True)
+    print("=================================================================", flush=True)
+    print(f"model={model_name}", flush=True)
+    print(f"criterion={h['criterion_name']}", flush=True)
+    print(f"C={h['C']}", flush=True)
+    print(f"delta={args.delta}", flush=True)
+    print(f"lr={h['lr']}", flush=True)
+    if h["batch_size"] is not None:
+        print(f"batch_size={h['batch_size']}", flush=True)
+    print(f"T1={h['T1_explicit']}", flush=True)
+    print(f"T2={h['T2_explicit']}", flush=True)
+    print(f"subgradient_step={h['subgradient_step']}", flush=True)
+    print(f"w0={h['w0']}", flush=True)
+    print(f"r={h['r']}", flush=True)
+    print(f"BestQuantization_target_acc={h['BestQuantization_target_acc']}", flush=True)
+    print(f"final_target_acc={h['final_target_acc']}", flush=True)
+    print(f"target_zstd_ratio={h['target_zstd_ratio']}", flush=True)
+    print(f"min_xi={h['min_xi']}", flush=True)
+    print(f"max_xi={h['max_xi']}", flush=True)
+    print(f"upper_c={h['upper_c']}", flush=True)
+    print(f"lower_c={h['lower_c']}", flush=True)
+    print(f"c1={h['c1']}", flush=True)
+    print(f"c2={h['c2']}", flush=True)
+    print(f"first_best_indices={h['first_best_indices']}", flush=True)
+    print(f"accuracy_tollerance={h['accuracy_tollerance']}", flush=True)
+    print(f"zeta={h['zeta']}", flush=True)
+    print(f"l={h['l']}", flush=True)
+    print(f"n_epochs={h['n_epochs']}", flush=True)
+    print(f"max_iterations={h['max_iterations']}", flush=True)
+    print(f"train_optimizer={h['train_optimizer']}", flush=True)
+    print(f"entropy_optimizer={h['entropy_optimizer']}", flush=True)
+    print(f"pruning={h['pruning']}", flush=True)
+    print(f"QuantizationType={h['QuantizationType']}", flush=True)
+    print(f"sparsity_threshold={h['sparsity_threshold']}", flush=True)
+    print("-" * 60, flush=True)
+
+
+# -------------------------
+# Main
+# -------------------------
+def main():
     parser = argparse.ArgumentParser()
-    # Add argument for 'delta', which is required for the training
     parser.add_argument("--delta", type=float, required=True, help="Value of delta")
-    # Add argument for model name, so the user can choose the architecture from the command line
     parser.add_argument(
         "--model_name",
         type=str,
         required=True,
         choices=["LeNet-5", "LeNet-5 (rotated)", "LeNet300_100", "AlexNet", "VGG16"],
-        help="Name of the model to train"
+        help="Name of the model to train",
     )
-    # New arguments for launchiing on Leonardo with SLURM
     parser.add_argument(
         "--data_root",
         type=str,
         default="./data",
-        help="Root directory for datasets. For ImageNet expects data_root/imagenet/train and val"
+        help="Root directory for datasets. Expects data_root/imagenet/(shards|train,val)",
     )
-    parser.add_argument(
-        "--workers",
-        type=int,
-        default=8,
-        help="Number of DataLoader workers (for ImageNet)"
-    )    
-    # Parse the command-line arguments
+    parser.add_argument("--workers", type=int, default=8, help="Number of DataLoader workers (for ImageNet)")
     args = parser.parse_args()
 
-    # Limit the number of threads used by PyTorch to 1 for CPU execution
+    # CPU thread control
     torch.set_num_threads(1)
-    # Set the OpenMP number of threads to 1 for parallel processing on CPU
     os.environ["OMP_NUM_THREADS"] = "1"
 
-    # Use model name from command line instead of hardcoding
     model_name = args.model_name
 
-    if torch.cuda.is_available():
-        device = torch.device("cuda:0")
-        if(model_name == "AlexNet" or model_name == "VGG16"):
+    local_rank = None
+    world_size = 1
+
+    if ddp_needed(model_name):
+        local_rank, world_size = setup_ddp()
+        device = torch.device(f"cuda:{local_rank}")
+        print(f"[GPU {local_rank}] Using device {device} ({torch.cuda.get_device_name(device)})", flush=True)
+    else:
+        device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+        if torch.cuda.is_available():
             print(f"Using device {device} ({torch.cuda.get_device_name(device)})", flush=True)
+        else:
+            print("Using CPU.", flush=True)
+
+    model, h = build_model_and_hparams(model_name, device, args, local_rank=local_rank)
+
+    # Data
+    if model_name.startswith("LeNet-5"):
+        trainset, testset = load_mnist_lenet5(model_name, args.data_root)
+        trainloader = DataLoader(trainset, batch_size=64, shuffle=True, drop_last=True, num_workers=0)
+        testloader = DataLoader(testset, batch_size=1000, shuffle=False, num_workers=0)
+        train_sampler = None
+
+    elif model_name == "LeNet300_100":
+        trainset, testset = load_mnist_lenet300(args.data_root)
+        trainloader = DataLoader(trainset, batch_size=64, shuffle=True, drop_last=True, num_workers=0)
+        testloader = DataLoader(testset, batch_size=1000, shuffle=False, num_workers=0)
+        train_sampler = None
+
     else:
-        device = torch.device("cpu")
-
-    if(model_name[:7] == "LeNet-5"):
-        model = LeNet5_Original()
-        model = model.to(device)         
-        criterion, criterion_name = nn.CrossEntropyLoss(), "CrossEntropy" 
-        C = 6
-        lr = 0.001
-        lambda_reg = 0.0002
-        alpha = 0.1
-        subgradient_step = 1e5 
-        bucket_zero = round((C-1)/2) #it must range from 0 to C-2
-        r = 2
-        w0 = round(r - (bucket_zero + 0.5) * 2 * r * (1 - 1/C) / (C - 1), 3)
-        BestQuantization_target_acc = 99.8
-        final_target_acc = 99.7
-        target_zstd_ratio = 0.0179
-        min_xi = 0  
-        max_xi = 1  
-        upper_c = sum(p.numel() for p in LeNet5().parameters())
-        lower_c = 1e-2
-        c1 = 10
-        c2 = 1000
-        first_best_indices = 20
-        accuracy_tollerance = 0.2
-        zeta = 50000
-        l = 0.5
-        n_epochs = 100 # To be increased as soon as I find good configurations
-        max_iterations = 15
-        train_optimizer = "ADAM"  
-        entropy_optimizer = "FISTA"  
-        pruning = "Y"
-        QuantizationType = "center"
-        sparsity_threshold = 1e-3
-    elif(model_name == "LeNet300_100"):
-        model = LeNet300_100()
-        model = model.to(device)            
-        criterion, criterion_name = nn.CrossEntropyLoss(), "CrossEntropy" 
-        C = 64
-        lr = 0.001
-        lambda_reg = 0.0002
-        alpha = 0.6
-        subgradient_step = 1e5 
-        bucket_zero = round((C-1)/2) #it must range from 0 to C-2
-        r = 2
-        w0 = round(r - (bucket_zero + 0.5) * 2 * r * (1 - 1/C) / (C - 1), 3)
-        BestQuantization_target_acc = 99.8
-        final_target_acc = 99.7
-        target_zstd_ratio = 0.0179
-        min_xi = 0  
-        max_xi = 1  
-        upper_c = sum(p.numel() for p in LeNet300_100().parameters())
-        lower_c = 1e-2
-        c1 = 10
-        c2 = 1000
-        first_best_indices = 20
-        accuracy_tollerance = 0.2
-        zeta = 50000
-        l = 0.5
-        n_epochs = 100 # To be increased as soon as I find good configurations
-        max_iterations = 15
-        train_optimizer = "ADAM"  
-        entropy_optimizer = "FISTA"  
-        pruning = "Y"
-        QuantizationType = "center"
-        sparsity_threshold = 1e-3  
-    elif(model_name == "AlexNet"):
-        local_rank, world_size = setup()
-        device = torch.device(f"cuda:{local_rank}")
-        print(f"[GPU {local_rank}] Using device {device} ({torch.cuda.get_device_name(device)})", flush=True)        
-        model = models.alexnet(weights=None)
-        model.classifier[6] = nn.Linear(4096, 1000)
-        model = model.to(device)  
-        model = DDP(model, device_ids=[local_rank])     
-        criterion, criterion_name = nn.CrossEntropyLoss(), "CrossEntropy" 
-        C = 32
-        lr = 1.6e-2
-        #batch_size = 2048
-        batch_size = 128 # For the first test in Leonardo, I use a smaller batch size to avoid OOM. As soon as I find good configurations, I will increase it.
-        lambda_reg = 5e-4
-        alpha = 0.99999
-        T1_explicit = 1e-3
-        T2_explicit = 1e-6
-        subgradient_step = 1e5 
-        bucket_zero = round((C-1)/2) #it must range from 0 to C-2
-        r = 1.51
-        w0 = 0.013
-        BestQuantization_target_acc = 99.8
-        final_target_acc = 99.7
-        target_zstd_ratio = 0.0179
-        min_xi = 0  
-        max_xi = 1  
-        upper_c = sum(p.numel() for p in model.parameters())
-        lower_c = 1e-2
-        c1 = 10
-        c2 = 1000
-        first_best_indices = 20
-        accuracy_tollerance = 0.2
-        zeta = 50000
-        l = 0.5
-        #n_epochs = 50 # To be increased as soon as I find good configurations
-        n_epochs = 2 # For the first test in Leonardo, I use a smaller number of epochs to quickly check if everything works. As soon as I find good configurations, I will increase it.
-        max_iterations = 15
-        train_optimizer = "SGD"  
-        entropy_optimizer = "FISTA"  
-        pruning = "Y"
-        QuantizationType = "center"
-        sparsity_threshold = 1e-3  
-    elif(model_name == "VGG16"):
-        local_rank, world_size = setup()
-        device = torch.device(f"cuda:{local_rank}")
-        print(f"[GPU {local_rank}] Using device {device} ({torch.cuda.get_device_name(device)})", flush=True)        
-        model = models.vgg16(weights=None)
-        model.classifier[6] = nn.Linear(4096, 1000)
-        model = model.to(device)  
-        model = DDP(model, device_ids=[local_rank])     
-        criterion, criterion_name = nn.CrossEntropyLoss(), "CrossEntropy" 
-        C = 8
-        lr = 0.01
-        batch_size = 512
-        lambda_reg = 0.0005
-        alpha = 0.9
-        subgradient_step = 1e5 
-        bucket_zero = round((C-1)/2) #it must range from 0 to C-2
-        r = 2
-        w0 = round(r - (bucket_zero + 0.5) * 2 * r * (1 - 1/C) / (C - 1), 3)
-        BestQuantization_target_acc = 99.8
-        final_target_acc = 99.7
-        target_zstd_ratio = 0.0179
-        min_xi = 0  
-        max_xi = 1  
-        upper_c = sum(p.numel() for p in model.parameters())
-        lower_c = 1e-2
-        c1 = 10
-        c2 = 1000
-        first_best_indices = 20
-        accuracy_tollerance = 0.2
-        zeta = 50000
-        l = 0.5
-        n_epochs = 20 # To be increased as soon as I find good configurations
-        max_iterations = 15
-        train_optimizer = "SGD"  
-        entropy_optimizer = "FISTA"  
-        pruning = "Y"
-        QuantizationType = "center"
-        sparsity_threshold = 1e-3          
-
-    # Only print parameters from the first process/GPU
-    if(model_name == "AlexNet" or model_name == "VGG16"):
-        local_rank_to_print = local_rank
-    else:
-        local_rank_to_print = 0
-
-    if torch.cuda.is_available():
-        if(local_rank_to_print == 0):
-            print("=================================================================", flush = True)
-            print("==================== PARAMETER CONFIGURATION ====================", flush = True)
-            print("=================================================================", flush = True)
-            print(f"model={model_name}", flush=True)
-            print(f"criterion={criterion_name}", flush=True)
-            print(f"C={C}", flush=True)
-            print(f"delta={args.delta}", flush=True)
-            print(f"lr={lr}", flush=True)   
-            print(f"batch_size={batch_size}", flush=True) 
-            #print(f"lambda_reg={lambda_reg}", flush=True)
-            #print(f"alpha={alpha}", flush=True)    
-            print(f"T1={T1_explicit}", flush=True)
-            print(f"T2={T2_explicit}", flush=True)
-            #print(f"[T1=lambda_reg*alpha={round(lambda_reg*alpha, 6)}]", flush=True)
-            #print(f"[T2=lambda_reg*(1-alpha)={round(lambda_reg*(1-alpha), 6)}]", flush=True)
-            print(f"subgradient_step={subgradient_step}", flush=True)    
-            print(f"w0={w0}", flush=True)    
-            print(f"r={r}", flush=True)  
-            #print(f"bucket_zero={bucket_zero}", flush=True)  
-            print(f"BestQuantization_target_acc={BestQuantization_target_acc}", flush=True)    
-            print(f"final_target_acc={final_target_acc}", flush=True)
-            print(f"target_zstd_ratio={target_zstd_ratio}", flush=True)    
-            print(f"min_xi={min_xi}", flush=True)    
-            print(f"max_xi={max_xi}", flush=True)  
-            print(f"upper_c={upper_c}", flush=True)
-            print(f"lower_c={lower_c}", flush=True)  
-            print(f"c1={c1}", flush=True)
-            print(f"c2={c2}", flush=True)
-            print(f"first_best_indices={first_best_indices}", flush=True)
-            print(f"accuracy_tollerance={accuracy_tollerance}", flush=True)
-            print(f"zeta={zeta}", flush=True)
-            print(f"l={l}", flush=True)
-            print(f"n_epochs={n_epochs}", flush=True) 
-            print(f"max_iterations={max_iterations}", flush=True)    
-            print(f"train_optimizer={train_optimizer}", flush=True)    
-            print(f"entropy_optimizer={entropy_optimizer}", flush=True) 
-            print(f"pruning={pruning}", flush=True)
-            print(f"QuantizationType={QuantizationType}", flush=True)
-            print(f"sparsity_threshold={sparsity_threshold}", flush=True)
-            print("-"*60, flush=True)       
-    else:
-        if(args.delta == 5): 
-            print("=================================================================", flush = True)
-            print("==================== PARAMETER CONFIGURATION ====================", flush = True)
-            print("=================================================================", flush = True)
-            print(f"model={model_name}", flush=True)
-            print(f"criterion={criterion_name}", flush=True)
-            print(f"C={C}", flush=True)
-            print(f"delta={args.delta}", flush=True)
-            print(f"lr={lr}", flush=True) 
-            print(f"lambda_reg={lambda_reg}", flush=True)
-            print(f"alpha={alpha}", flush=True)    
-            print(f"[T1=lambda_reg*alpha={round(lambda_reg*alpha, 6)}]", flush=True)
-            print(f"[T2=lambda_reg*(1-alpha)={round(lambda_reg*(1-alpha), 6)}]", flush=True)
-            print(f"subgradient_step={subgradient_step}", flush=True)    
-            print(f"w0={w0}", flush=True)    
-            print(f"r={r}", flush=True)  
-            print(f"bucket_zero={bucket_zero}", flush=True)  
-            print(f"BestQuantization_target_acc={BestQuantization_target_acc}", flush=True)    
-            print(f"final_target_acc={final_target_acc}", flush=True)
-            print(f"target_zstd_ratio={target_zstd_ratio}", flush=True)    
-            print(f"min_xi={min_xi}", flush=True)    
-            print(f"max_xi={max_xi}", flush=True)  
-            print(f"upper_c={upper_c}", flush=True)
-            print(f"lower_c={lower_c}", flush=True)  
-            print(f"c1={c1}", flush=True)
-            print(f"c2={c2}", flush=True)
-            print(f"first_best_indices={first_best_indices}", flush=True)
-            print(f"accuracy_tollerance={accuracy_tollerance}", flush=True)
-            print(f"zeta={zeta}", flush=True)
-            print(f"l={l}", flush=True)
-            print(f"n_epochs={n_epochs}", flush=True) 
-            print(f"max_iterations={max_iterations}", flush=True)    
-            print(f"train_optimizer={train_optimizer}", flush=True)    
-            print(f"entropy_optimizer={entropy_optimizer}", flush=True) 
-            print(f"pruning={pruning}", flush=True)
-            print(f"QuantizationType={QuantizationType}", flush=True)
-            print(f"sparsity_threshold={sparsity_threshold}", flush=True)
-            print("-"*60, flush=True)   
-            print("Using CPU.", flush=True)          
-
-    # Load the training and test datasets using the load_data function
-    if(model_name == "AlexNet" or model_name == "VGG16"):
-        trainset, testset, train_sampler = load_data(
-            model_name,
-            batch_size,
-            args.data_root,
+        trainloader, testloader, train_sampler = load_imagenet_dataloaders(
+            batch_size=h["batch_size"],
+            data_root=args.data_root,
             local_rank=local_rank,
             world_size=world_size,
             workers=args.workers,
         )
-        trainloader = trainset
-        testloader = testset
-        train_and_evaluate(
-            model=model, model_name=model_name, criterion=criterion, C=C, lr=lr, lambda_reg=lambda_reg, alpha=alpha,
-            T1_explicit=T1_explicit, T2_explicit=T2_explicit, subgradient_step=subgradient_step, w0=w0, r=r, 
-            first_best_indices=first_best_indices, BestQuantization_target_acc=BestQuantization_target_acc, final_target_acc=final_target_acc, 
-            target_zstd_ratio=target_zstd_ratio, min_xi=min_xi, max_xi=max_xi, upper_c=upper_c, lower_c=lower_c, c1=c1, c2=c2, 
-            zeta=zeta, l=l, n_epochs=n_epochs, max_iterations=max_iterations, device=device, train_optimizer=train_optimizer,
-            entropy_optimizer=entropy_optimizer, trainloader=trainloader, testloader=testloader, train_sampler=train_sampler,
-            delta=args.delta, pruning=pruning, QuantizationType=QuantizationType, sparsity_threshold=sparsity_threshold, 
-            accuracy_tollerance=accuracy_tollerance
-        )   
-        cleanup()     
-    else:
-        trainset, testset = load_data(
-            model_name,
-            batch_size=None,
-            data_root=args.data_root,
-        )
-        trainloader = torch.utils.data.DataLoader(trainset, batch_size=64, shuffle=True, drop_last=True, num_workers=0)
-        testloader = torch.utils.data.DataLoader(testset, batch_size=1000, shuffle=False, num_workers=0)
-        train_and_evaluate(
-            model=model, model_name=model_name, criterion=criterion, C=C, lr=lr, lambda_reg=lambda_reg, alpha=alpha,
-            T1_explicit=T1_explicit, T2_explicit=T2_explicit, subgradient_step=subgradient_step, w0=w0, r=r, 
-            first_best_indices=first_best_indices, BestQuantization_target_acc=BestQuantization_target_acc, final_target_acc=final_target_acc, 
-            target_zstd_ratio=target_zstd_ratio, min_xi=min_xi, max_xi=max_xi, upper_c=upper_c, lower_c=lower_c, c1=c1, c2=c2, 
-            zeta=zeta, l=l, n_epochs=n_epochs, max_iterations=max_iterations, device=device, train_optimizer=train_optimizer,
-            entropy_optimizer=entropy_optimizer, trainloader=trainloader, testloader=testloader, train_sampler=None,
-            delta=args.delta, pruning=pruning, QuantizationType=QuantizationType, sparsity_threshold=sparsity_threshold, 
-            accuracy_tollerance=accuracy_tollerance
-        )
+
+    local_rank_to_print = 0 if not ddp_needed(model_name) else local_rank
+    print_config(model_name, args, h, local_rank_to_print)
+
+    # Training
+    train_and_evaluate(
+        model=model,
+        model_name=model_name,
+        criterion=h["criterion"],
+        C=h["C"],
+        lr=h["lr"],
+        lambda_reg=h["lambda_reg"],
+        alpha=h["alpha"],
+        T1_explicit=h["T1_explicit"],
+        T2_explicit=h["T2_explicit"],
+        subgradient_step=h["subgradient_step"],
+        w0=h["w0"],
+        r=h["r"],
+        first_best_indices=h["first_best_indices"],
+        BestQuantization_target_acc=h["BestQuantization_target_acc"],
+        final_target_acc=h["final_target_acc"],
+        target_zstd_ratio=h["target_zstd_ratio"],
+        min_xi=h["min_xi"],
+        max_xi=h["max_xi"],
+        upper_c=h["upper_c"],
+        lower_c=h["lower_c"],
+        c1=h["c1"],
+        c2=h["c2"],
+        zeta=h["zeta"],
+        l=h["l"],
+        n_epochs=h["n_epochs"],
+        max_iterations=h["max_iterations"],
+        device=device,
+        train_optimizer=h["train_optimizer"],
+        entropy_optimizer=h["entropy_optimizer"],
+        trainloader=trainloader,
+        testloader=testloader,
+        train_sampler=train_sampler,
+        delta=args.delta,
+        pruning=h["pruning"],
+        QuantizationType=h["QuantizationType"],
+        sparsity_threshold=h["sparsity_threshold"],
+        accuracy_tollerance=h["accuracy_tollerance"],
+    )
+
+    if ddp_needed(model_name):
+        cleanup_ddp()
+
+
+if __name__ == "__main__":
+    main()
