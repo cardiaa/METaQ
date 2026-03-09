@@ -2,6 +2,7 @@ import argparse
 import os
 import glob
 import tarfile
+import json
 
 import torch
 import torch.distributed as dist
@@ -74,10 +75,19 @@ def imagenet_paths(data_root: str):
 # -------------------------
 # Synset -> idx from shards
 # -------------------------
-def build_synset_to_idx_from_shards(shards_pattern: str):
+def build_synset_to_idx_from_shards(shards_pattern: str, cache_path: str | None = None):
     """
     Reads the shard tarfiles to extract unique synsets (class names) and builds a synset->index mapping.
+    If cache_path is provided, it saves/loads synsets from disk to avoid re-scanning tar files every run.
     """
+    if cache_path is not None and os.path.exists(cache_path):
+        with open(cache_path, "r") as f:
+            synsets = json.load(f)
+        synsets = list(synsets)
+        synsets = sorted(synsets)
+        syn2idx = {s: i for i, s in enumerate(synsets)}
+        return syn2idx, synsets
+
     synsets = set()
     for tar_path in sorted(glob.glob(shards_pattern)):
         with tarfile.open(tar_path) as tf:
@@ -86,6 +96,10 @@ def build_synset_to_idx_from_shards(shards_pattern: str):
                     synsets.add(m.name.split("/", 1)[0])
 
     synsets = sorted(synsets)
+    if cache_path is not None:
+        with open(cache_path, "w") as f:
+            json.dump(synsets, f)
+
     syn2idx = {s: i for i, s in enumerate(synsets)}
     return syn2idx, synsets
 
@@ -304,17 +318,19 @@ def load_imagenet_dataloaders(batch_size, data_root, local_rank, world_size, wor
         # Creates synset->idx mapping from shard contents. 
         # Important: this ensures that all processes have the same mapping, 
         # even if the order of shards is not guaranteed to be the same across processes.
+        cache_path = os.path.join(p["base"], "shards", "synsets.json")
+
         if dist.is_initialized():
             rank = dist.get_rank()
             obj = [None]
             if rank == 0:
-                _, synsets = build_synset_to_idx_from_shards(p["shards_train"])
+                _, synsets = build_synset_to_idx_from_shards(p["shards_train"], cache_path=cache_path)
                 obj[0] = synsets
             dist.broadcast_object_list(obj, src=0)
             synsets = obj[0]
             syn2idx = {s: i for i, s in enumerate(synsets)}
         else:
-            syn2idx, _ = build_synset_to_idx_from_shards(p["shards_train"])
+            syn2idx, _ = build_synset_to_idx_from_shards(p["shards_train"], cache_path=cache_path)
 
         def key_to_label(key: str):
             syn = key.split("/", 1)[0]
