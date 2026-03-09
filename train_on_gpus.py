@@ -455,6 +455,7 @@ def main():
         help="Root directory for datasets. Expects data_root/imagenet/(shards|train,val)",
     )
     parser.add_argument("--workers", type=int, default=8, help="Number of DataLoader workers (for ImageNet)")
+    parser.add_argument("--n_epochs", type=int, default=None, help="Override number of epochs (if set)")
     args = parser.parse_args()
 
     # CPU thread control
@@ -478,6 +479,8 @@ def main():
             print("Using CPU.", flush=True)
 
     model, h = build_model_and_hparams(model_name, device, args, local_rank=local_rank)
+    if args.n_epochs is not None:
+        h["n_epochs"] = args.n_epochs
 
     # Data
     if model_name.startswith("LeNet-5"):
