@@ -483,6 +483,7 @@ def main():
     )
     parser.add_argument("--workers", type=int, default=8, help="Number of DataLoader workers (for ImageNet)")
     parser.add_argument("--n_epochs", type=int, default=None, help="Override number of epochs (if set)")
+    parser.add_argument("--batch_size", type=int, default=None, help="Override batch size (if set)")
     args = parser.parse_args()
 
     # CPU thread control
@@ -506,8 +507,11 @@ def main():
             print("Using CPU.", flush=True)
 
     model, h = build_model_and_hparams(model_name, device, args, local_rank=local_rank)
+    
     if args.n_epochs is not None:
         h["n_epochs"] = args.n_epochs
+    if args.batch_size is not None:
+        h["batch_size"] = args.batch_size        
 
     # Data
     if model_name.startswith("LeNet-5"):
