@@ -342,11 +342,14 @@ def load_imagenet_dataloaders(batch_size, data_root, local_rank, world_size, wor
         steps_per_epoch = max(1, train_size // (batch_size * max(1, world_size)))
         val_steps = max(1, val_size // batch_size)
 
+        train_urls = sorted(glob.glob(p["shards_train"]))
+        val_urls   = sorted(glob.glob(p["shards_val"]))
+
         # Note: in the shards the key is of the form "n01440764/xxx.JPEG", 
         # so the synset is the first part before "/".
         train_ds = (
             wds.WebDataset(
-                p["shards_train"],
+                train_urls,
                 shardshuffle=1000,              
                 nodesplitter=wds.split_by_node, 
             )
@@ -361,7 +364,7 @@ def load_imagenet_dataloaders(batch_size, data_root, local_rank, world_size, wor
 
         val_ds = (
             wds.WebDataset(
-                p["shards_val"],
+                val_urls,
                 shardshuffle=False,
                 nodesplitter=wds.split_by_node,
             )
