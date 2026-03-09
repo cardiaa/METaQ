@@ -531,6 +531,183 @@ def knapsack_specialized_pruning_sparse(xi, v, w, C, device, delta):
 
     return x, lambda_opt, objective_values
 
+def knapsack_specialized_pruning_sparse_leonardo(xi, v, w, C, device, delta):
+    """
+    Memory-light version of knapsack_specialized_pruning with same logic as the dense version,
+    but without materializing the dense x of shape (M, C).
+
+    Returns:
+        x_placeholder: (M, 3) with [idx_left, idx_right, theta] (int32, int32, float32)
+        lambda_opt:    (M,)
+        objective_values: (M,)
+    """
+
+    # === Step 0: Cast + move (same as dense) ===
+    xi = xi.to(dtype=torch.float32, device=device)
+    v = v.to(dtype=torch.float32, device=device)
+    w = w.to(dtype=torch.float32, device=device)
+
+    # Pruning shift (same as dense)
+    xi = xi - delta
+    M = w.shape[0]
+
+    # === Step 1: Compute x_plus (same as dense) ===
+    b_list = []
+    b = 0
+    while True:
+        delta_xi = xi[b + 1:] - xi[b]
+        delta_v = v[b + 1:] - v[b]
+        b = torch.argmin(delta_xi / delta_v) + 1 + b_list[-1] if b_list else 0
+        if b != C - 1:
+            b_list.append(int(b))
+        if b + 1 > C - 1:
+            break
+    b_list.append(C - 1)
+
+    x_plus = torch.zeros(C, dtype=torch.int32, device=device)
+    x_plus[torch.tensor(b_list, device=device, dtype=torch.long)] = 1
+
+    # === Step 2: Precompute (same as dense; kept for identical behavior) ===
+    ratio = xi / v
+    neg_indices = torch.where(v < 0)[0]
+    pos_indices = torch.where(v >= 0)[0]
+    neg_sorted = neg_indices[torch.argsort(ratio[neg_indices], descending=True)]
+    pos_sorted = pos_indices[torch.argsort(ratio[pos_indices])]
+    b_vector = torch.cat([neg_sorted, pos_sorted], dim=0).to(device)
+
+    # === Step 3: Masks (same as dense) ===
+    mask_small = w < v[0]
+    mask_large = w > v[-1]
+    mask_mid = (~mask_small) & (~mask_large)
+    mask_edge = mask_small | mask_large
+
+    # === Step 4: Outputs in 2-sparse form ===
+    idx_left = torch.zeros(M, dtype=torch.long, device=device)
+    idx_right = torch.zeros(M, dtype=torch.long, device=device)
+    theta = torch.zeros(M, dtype=torch.float32, device=device)
+
+    # === Step 5: Edge cases (IDENTICAL BRANCHING to dense) ===
+    if mask_edge.any():
+        edge_idx = torch.nonzero(mask_edge, as_tuple=True)[0]
+        w_edge = w[mask_edge]
+
+        # Precompute ratios used in dense
+        w_div_v0 = w_edge / v[0]
+        w_div_v_last = w_edge / v[-1]
+
+        edge_small = w_edge < v[0]
+        edge_large = w_edge > v[-1]
+
+        # ---- w < v[0] ----
+        mask_cond_small = (w_div_v0 >= 0) & (w_div_v0 <= 1) & edge_small
+        mask_else_small = edge_small & (~mask_cond_small)
+
+        if mask_cond_small.any():
+            inds = edge_idx[mask_cond_small]
+            w_small = w_edge[mask_cond_small].unsqueeze(1)          # (k,1)
+            div_mat = w_small / v.unsqueeze(0)                       # (k,C)
+            val_mat = div_mat * xi.unsqueeze(0)                      # (k,C)
+            i_min = torch.argmin(val_mat, dim=1)                     # (k,)
+            vals_min = div_mat[torch.arange(i_min.shape[0], device=device), i_min]
+
+            idx_left[inds] = i_min
+            idx_right[inds] = i_min
+            theta[inds] = vals_min
+
+        if mask_else_small.any():
+            inds = edge_idx[mask_else_small]
+            idx_left[inds] = 0
+            idx_right[inds] = 0
+            theta[inds] = 1.0
+
+        # ---- w > v[-1] ----
+        mask_cond_large = (w_div_v_last >= 0) & (w_div_v_last <= 1) & edge_large
+        mask_else_large = edge_large & (~mask_cond_large)
+
+        if mask_cond_large.any():
+            inds = edge_idx[mask_cond_large]
+            w_large = w_edge[mask_cond_large].unsqueeze(1)          # (k,1)
+            div_mat = w_large / v.unsqueeze(0)                       # (k,C)
+            val_mat = div_mat * xi.unsqueeze(0)                      # (k,C)
+            i_min = torch.argmin(val_mat, dim=1)                     # (k,)
+            vals_min = div_mat[torch.arange(i_min.shape[0], device=device), i_min]
+
+            idx_left[inds] = i_min
+            idx_right[inds] = i_min
+            theta[inds] = vals_min
+
+        if mask_else_large.any():
+            inds = edge_idx[mask_else_large]
+            idx_left[inds] = C - 1
+            idx_right[inds] = C - 1
+            theta[inds] = 1.0
+
+    # === Step 6: Intermediate case (same as dense: compare method1 vs method2) ===
+    if mask_mid.any():
+        mid_idx = torch.nonzero(mask_mid, as_tuple=True)[0]
+        w_mid = w[mask_mid]
+        M_mid = w_mid.shape[0]
+
+        # ---- First method (dense builds x1_sol; we compute obj1 directly) ----
+        ratio_b = w_mid[:, None] / v[b_vector]
+        valid = (ratio_b >= 0) & (ratio_b <= 1) & (x_plus[b_vector] == 1).unsqueeze(0)
+
+        valid_i0 = torch.where(
+            valid,
+            torch.arange(C, device=device)[None, :],
+            torch.tensor(float("inf"), device=device)
+        )
+        i0_pos = valid_i0.argmin(dim=1)
+        i0 = b_vector[i0_pos]             # (M_mid,)
+        v_i0 = v[i0]
+
+        theta1 = w_mid / v_i0             # (M_mid,)
+        obj1 = theta1 * xi[i0]            # since x has only one nonzero: theta1 at i0
+        obj1 = torch.where(theta1 < 0, torch.tensor(float("inf"), device=device), obj1)
+
+        # ---- Second method (dense builds x2_sol; we compute obj2 directly) ----
+        one_indices = torch.nonzero(x_plus, as_tuple=True)[0].to(device=device, dtype=torch.long)
+        i_right = torch.searchsorted(v[one_indices], w_mid, right=False)
+        i_right = i_right.clamp(min=1, max=one_indices.shape[0] - 1)
+
+        idx_r = one_indices[i_right]
+        idx_l = one_indices[i_right - 1]
+
+        v_left = v[idx_l]
+        v_right = v[idx_r]
+        theta2 = (w_mid - v_right) / (v_left - v_right + 1e-8)  # same epsilon as dense
+
+        obj2 = theta2 * xi[idx_l] + (1.0 - theta2) * xi[idx_r]
+
+        # ---- Choose better (same criterion as dense) ----
+        better_first = obj1 < obj2
+
+        idx_left[mid_idx] = torch.where(better_first, i0, idx_l)
+        idx_right[mid_idx] = torch.where(better_first, i0, idx_r)
+        theta[mid_idx] = torch.where(better_first, theta1, theta2)
+
+    # === Step 7: Compute lambda_opt (same as dense) ===
+    denominator = v[idx_right] - v[idx_left]
+    denominator_zero_mask = denominator == 0
+
+    lambda_opt_nonzero = -(xi[idx_right] - xi[idx_left]) / denominator
+    lambda_opt_zero_full = -(xi + delta) / v
+    lambda_opt_zero = lambda_opt_zero_full[idx_left]
+
+    lambda_opt = torch.where(denominator_zero_mask, lambda_opt_zero, lambda_opt_nonzero)
+
+    # === Step 8: Objective (same as dense, but without x @ xi) ===
+    objective_values = delta + theta * xi[idx_left] + (1.0 - theta) * xi[idx_right]
+
+    # === Step 9: Placeholder "x" to keep signature ===
+    x_placeholder = torch.stack(
+        [idx_left.to(torch.int32), idx_right.to(torch.int32), theta],
+        dim=1
+    )  # (M, 3)
+
+    # (No aggressive cleanup here: identical results are the goal; freeing is caller’s choice)
+    return x_placeholder, lambda_opt, objective_values
+
 def knapsack_specialized_histo(xi, v, w, C, device):
     """
     Solves the specialized knapsack problem in the vectorized way to construct the histogram in the complexity analysis

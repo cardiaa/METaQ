@@ -9,7 +9,7 @@ import torch.optim as optim
 import torch.distributed as dist
 import gc
 from utils.quantize_and_compress import compute_entropy, quantize_weights_center, compute_entropyGPU, quantize_weights_centerGPU
-from utils.optimization import FISTA, ProximalBM, test_accuracy, test_accuracyGPU
+from utils.optimization import FISTA, FISTA_leonardo, ProximalBM, test_accuracy, test_accuracyGPU
 from utils.weight_utils import initialize_weights
 from utils.quantize_and_compress import compress_zstd, BestQuantization, pack_bitmask, pack_bitmaskGPU
 from datetime import datetime, timedelta
@@ -133,8 +133,12 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                         #xi = xi.to(device)
                         #beta_tensor = beta_tensor.to(device)
                         
+                        """
                         xi, beta_tensor = FISTA(xi, v, w, C, upper_c, lower_c, delta, 
                                                 subgradient_step, device, max_iterations, pruning) 
+                        """
+                        xi, beta_tensor = FISTA_leonardo(xi, v, w, C, upper_c, lower_c, delta, 
+                                                        subgradient_step, device, max_iterations, pruning)
                         
                     elif(entropy_optimizer == 'PROXIMAL BM'):
                         #xi, beta_tensor = ProximalBM(xi, v, w_quantized, C, upper_c, lower_c, delta, 

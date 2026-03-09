@@ -1,6 +1,6 @@
 import torch  
 from torch.linalg import norm  
-from .knapsack import knapsack_specialized, knapsack_specialized_pruning, knapsack_specialized_pruning_sparse
+from .knapsack import knapsack_specialized, knapsack_specialized_pruning, knapsack_specialized_pruning_sparse, knapsack_specialized_pruning_sparse_leonardo
 
 def test_accuracy(model, dataloader, device):
     """
@@ -116,6 +116,92 @@ def FISTA(xi, v, w, C, upper_c, lower_c, delta, subgradient_step, device, max_it
     #return xi, lambda_plus, x_i_star, phi
     return xi, lambda_plus
 
+def FISTA_leonardo(xi, v, w, C, upper_c, lower_c, delta, subgradient_step, device, max_iterations, pruning):
+    """
+    Implements the Fast Iterative Shrinking-Thresholding Algorithm (FISTA) 
+    for optimizing a constrained objective function.
+
+    Args:
+        xi (torch.Tensor): Initial parameter vector.
+        v (torch.Tensor): Constraint-related vector.
+        w (torch.Tensor): Weight vector.
+        C (float): Constraint parameter.
+        subgradient_step (float): Step size for subgradient descent.
+        max_iterations (int): Maximum number of iterations.
+
+    Returns:
+        tuple: Updated xi, lambda_plus (Lagrange multiplier), 
+               x_i_star (optimal allocation), and phi (objective function value).
+    """
+
+    # Initialize previous values for FISTA acceleration
+    xi_prev = xi.clone().to(device)
+    t_prev = torch.tensor(1.0, device=device)
+
+    for iteration in range(1, max_iterations + 1):
+        # Solve the simil-knapsack problem for the current xi
+        if(pruning == "Y"):
+            if(device.type == "cuda"):
+                #x_i_star, lambda_plus, phi_plus = knapsack_specialized_pruning_sparse(xi, v, w, C, device, delta)
+                x_i_star, lambda_plus, phi_plus = knapsack_specialized_pruning_sparse_leonardo(xi, v, w, C, device, delta)
+            else:
+                x_i_star, lambda_plus, phi_plus = knapsack_specialized_pruning(xi, v, w, C, device, delta)
+        elif(pruning == "N"):
+            x_i_star, lambda_plus, phi_plus = knapsack_specialized(xi, v, w, C, device)
+
+        # === Step: sum_x_star ===
+        # Old behavior: x_i_star is dense (M, C) -> sum along rows
+        # New memory-light behavior: x_i_star is (M, 3) = [idx_left, idx_right, theta]
+        if x_i_star.dim() == 2 and x_i_star.size(1) == 3:
+            # === Memory-light sum (NO dense x) ===
+            idx_left = x_i_star[:, 0].to(dtype=torch.long, device=device)
+            idx_right = x_i_star[:, 1].to(dtype=torch.long, device=device)
+            theta = x_i_star[:, 2].to(dtype=torch.float32, device=device)
+
+            sum_x_star = torch.zeros(C, dtype=torch.float32, device=device)
+
+            # Add theta contribution on idx_left
+            sum_x_star.scatter_add_(0, idx_left, theta)
+
+            # Add (1-theta) contribution on idx_right
+            # BUT: if idx_left == idx_right (1-sparse case), we must not double count
+            mask_diff = idx_right != idx_left
+            if mask_diff.any():
+                sum_x_star.scatter_add_(0, idx_right[mask_diff], (1.0 - theta[mask_diff]))
+
+        else:
+            # === Dense sum ===
+            sum_x_star = torch.sum(x_i_star, dim=0)
+
+        # Compute the optimal c values c_star
+        c_star = torch.exp(torch.log(torch.tensor(2.0, device=device)) * xi - 1)
+        c_star = torch.clamp(c_star, min=lower_c, max=upper_c)
+
+        # Compute the super-gradient
+        g = -(c_star - sum_x_star)
+
+        # Compute the objective function value phi
+        phi1 = torch.sum(c_star * torch.log(c_star) / torch.log(torch.tensor(2.0, device=device)))
+        phi2 = -torch.sum(xi * c_star)
+        phi3 = torch.sum(xi * sum_x_star)
+        phi = phi1 + phi2 + phi3
+
+        # FISTA acceleration step
+        t_current = (1 + torch.sqrt(1 + 4 * t_prev**2)) / 2
+        y = xi + ((t_prev - 1) / t_current) * (xi - xi_prev)
+
+        # Gradient update step
+        xi_next = y + (1 / subgradient_step) * g 
+
+        # Update variables for next iteration
+        xi_prev = xi.clone()
+        xi = xi_next.clone()
+        t_prev = t_current
+
+        # Ensure xi remains sorted
+        xi = torch.sort(xi)[0]
+
+    return xi, lambda_plus
 
 def ProximalBM(xi, v, w, C, upper_c, lower_c, delta, zeta, subgradient_step, device, max_iterations, pruning):
     """
