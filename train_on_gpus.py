@@ -334,7 +334,21 @@ def load_imagenet_dataloaders(batch_size, data_root, local_rank, world_size, wor
 
         def key_to_label(key: str):
             syn = key.split("/", 1)[0]
-            return torch.tensor(syn2idx[syn], dtype=torch.long)
+
+            # Standard case: synset type n01440764
+            if syn in syn2idx:
+                return torch.tensor(syn2idx[syn], dtype=torch.long)
+
+            # Leonardo shards case: numeric key type "490" / "922"
+            if syn.isdigit():
+                k = int(syn)
+                # Choses 0-based if already in [0,999], otherwise 1-based
+                if 0 <= k <= 999:
+                    return torch.tensor(k, dtype=torch.long)
+                if 1 <= k <= 1000:
+                    return torch.tensor(k - 1, dtype=torch.long)
+
+            raise KeyError(f"Unrecognized sample key format: {key}")
 
         # ImageNet sizes (standard)
         train_size = 1281167

@@ -215,129 +215,114 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                 else:
                     dist.barrier()
 
-            # --- 1) Compute accuracy on ALL ranks ---
-            t0_acc = time.time()
+            # --- 1) Compute non-quantized accuracy on ALL ranks ---
             with torch.no_grad():
                 accuracy = test_accuracyGPU(model, testloader, device)  # all ranks must participate
             if local_rank == 0:
                 accuracies.append(accuracy)
-                #print("Debug 1 - Time:", round(time.time() - t0_acc, 2), "s", flush=True)
 
-            # --- Optional sync: make sure all ranks finished accuracy ---
+            # --- 1b) Barrier: ensure all ranks finished accuracy ---
             if dist.is_initialized():
                 if dist.get_backend() == "nccl" and device.type == "cuda":
                     dist.barrier(device_ids=[torch.cuda.current_device()])
                 else:
                     dist.barrier()
 
-            # --- 2) Rank 0 performs CPU-heavy computations ---
-            if local_rank == 0:
-                # --- 2.1) Collect weights on CPU ---
-                t0 = time.time()
-                with torch.no_grad():
-                    w = torch.cat([param.detach().view(-1) for param in model.parameters()]).cpu()
-                #print("Debug 2 - Time:", round(time.time() - t0, 2), "s", flush=True)
+            # --- 2) Quantized/Sparse evaluation WITHOUT deepcopy(model) ---
+            # Helper: load a flat tensor into model parameters (in-place).
+            def _load_flat_params_(flat: torch.Tensor):
+                offset = 0
+                for p_ in model.parameters():
+                    n = p_.numel()
+                    p_.data.copy_(flat[offset:offset + n].view_as(p_))
+                    offset += n
 
-                # --- 2.2) Non-quantized entropy ---
-                t0 = time.time()
-                w_np = w.numpy().astype(np.float32)
+            # 2.0) Backup current weights on EVERY rank (fast restore)
+            with torch.no_grad():
+                w_backup = torch.cat([p_.detach().view(-1) for p_ in model.parameters()]).clone()
+
+            # 2.1) Rank 0 computes CPU-heavy stuff (entropy/quantization/compression) using CPU copy
+            if local_rank == 0:
+                with torch.no_grad():
+                    w_cpu = w_backup.detach().cpu()
+
+                # --- Non-quantized entropy ---
+                w_np = w_cpu.numpy().astype(np.float32)
                 entropy = round(compute_entropyGPU(w_np.tolist())) + 1
                 entropies.append(entropy)
-                #print("Debug 3 - Time:", round(time.time() - t0, 2), "s", flush=True)
 
-                # --- 2.3) Quantization on CPU ---
-                t0 = time.time()
+                # --- Quantization on CPU ---
                 if QuantizationType == "center":
-                    v_centers_cpu = ((v[:-1] + v[1:]) / 2).cpu()
-                    w_quantized = quantize_weights_centerGPU(w, v.cpu(), v_centers_cpu, device='cpu')
+                    v_centers_cpu = ((v[:-1] + v[1:]) / 2).detach().cpu()
+                    wq_cpu = quantize_weights_centerGPU(w_cpu, v.detach().cpu(), v_centers_cpu, device="cpu")
                 else:
-                    w_quantized = w.clone()
-                #print("Debug 4 - Time:", round(time.time() - t0, 2), "s", flush=True)
+                    wq_cpu = w_cpu.clone()
 
-                # --- 2.4) Build CPU model with quantized weights ---
-                t0 = time.time()
-                model_quantized = copy.deepcopy(model).cpu()
-                start_idx = 0
-                wq_np = w_quantized.numpy().astype(np.float32)
-                for param in model_quantized.parameters():
-                    numel = param.data.numel()
-                    param.data.copy_(torch.from_numpy(wq_np[start_idx:start_idx + numel].reshape(param.data.size())))
-                    start_idx += numel
-                model_quantized.eval()
-            else:
-                # Gli altri rank devono avere la variabile pronta per il collective,
-                # ma il contenuto può essere un dummy model
-                model_quantized = copy.deepcopy(model).cpu()
-                model_quantized.eval()
+                # Normalize -0.0 to +0.0 (stable entropy/compression)
+                wq_np = wq_cpu.numpy().astype(np.float32)
+                mask_negzero = np.signbit(wq_np) & (wq_np == 0.0)
+                wq_np[mask_negzero] = 0.0
 
-            # --- 2.5) Evaluate quantized model accuracy on ALL ranks ---
-            model_quantized = model_quantized.to(device)  # tutti i rank spostano il model sul device
-            t0_qacc = time.time()
-            with torch.no_grad():
-                quantized_accuracy = test_accuracyGPU(model_quantized, testloader, device)
-            #if local_rank == 0:
-                #print("Debug 5 - Time:", round(time.time() - t0_qacc, 2), "s", flush=True)
+                # --- Quantized entropy ---
+                quantized_entropy = round(compute_entropyGPU(wq_np.tolist())) + 1
 
-            if local_rank == 0:
-                # --- 2.6) Normalize -0.0 to +0.0 ---
-                t0 = time.time()
-                arr = wq_np
-                mask_negzero = np.signbit(arr) & (arr == 0.0)
-                arr[mask_negzero] = 0.0
-                #print("Debug 6 - Time:", round(time.time() - t0, 2), "s", flush=True)
-
-                # --- 2.7) Quantized entropy ---
-                t0 = time.time()
-                quantized_entropy = round(compute_entropyGPU(arr.tolist())) + 1
-                #print("Debug 7 - Time:", round(time.time() - t0, 2), "s", flush=True)
-
-                # --- 2.8) Bytes and compression ---
-                t0 = time.time()
-                input_bytes = arr.tobytes()
+                # --- Bytes and compression (quantized) ---
+                input_bytes = wq_np.tobytes()
                 zstd_compressed = compress_zstd(input_bytes, level=22)
                 original_size_bytes = len(input_bytes)
-                zstd_size = len(zstd_compressed)
-                zstd_ratio = zstd_size / original_size_bytes
-                #print("Debug 8 - Time:", round(time.time() - t0, 2), "s", flush=True)
+                zstd_ratio = len(zstd_compressed) / original_size_bytes
 
-                # --- 2.9) Sparse representation ---
-                t0 = time.time()
-                mask = (np.abs(arr) > sparsity_threshold).astype(np.uint8)
-                nonzero_values = arr[mask == 1]
+                # --- Sparse representation (from quantized weights) ---
+                mask = (np.abs(wq_np) > sparsity_threshold).astype(np.uint8)
+                nonzero_values = wq_np[mask == 1]
                 bitmask_bytes = pack_bitmaskGPU(mask.tolist())
                 packed_nonzeros = nonzero_values.tobytes()
                 compressed_mask = compress_zstd(bitmask_bytes, level=22)
                 compressed_values = compress_zstd(packed_nonzeros, level=22)
-                sparse_compressed_size = len(compressed_mask) + len(compressed_values)
-                sparse_ratio = sparse_compressed_size / original_size_bytes
+                sparse_ratio = (len(compressed_mask) + len(compressed_values)) / original_size_bytes
                 sparsity = 1.0 - mask.sum() / mask.size
-                #print("Debug 9 - Time:", round(time.time() - t0, 2), "s", flush=True)
 
-                # --- 2.10) Build sparse model and evaluate accuracy ---
-                t0 = time.time()
-                w_sparse_np = arr.copy()
-                w_sparse_np[mask == 0] = 0.0
-                model_sparse = copy.deepcopy(model).cpu()
-                start_idx = 0
-                for param in model_sparse.parameters():
-                    numel = param.data.numel()
-                    param.data.copy_(torch.from_numpy(w_sparse_np[start_idx:start_idx + numel].reshape(param.data.size())))
-                    start_idx += numel
-                model_sparse.eval()
+                # Build sparse weights (still on CPU)
+                ws_cpu = torch.from_numpy(wq_np.copy())
+                ws_cpu[mask == 0] = 0.0
             else:
-                # Dummy model per gli altri rank
-                model_sparse = copy.deepcopy(model).cpu()
-                model_sparse.eval()
+                entropy = None
+                quantized_entropy = None
+                zstd_ratio = None
+                sparse_ratio = None
+                sparsity = None
+                wq_cpu = None
+                ws_cpu = None
 
-            # Tutti i rank eseguono la valutazione finale
-            model_sparse = model_sparse.to(device)
-            t0_sacc = time.time()
+            # 2.2) Broadcast QUANTIZED flat weights to all ranks
+            flat_q = torch.empty_like(w_backup)
+            if local_rank == 0:
+                flat_q.copy_(wq_cpu.to(device))
+            if dist.is_initialized():
+                dist.broadcast(flat_q, src=0)
+
+            # 2.3) Evaluate quantized accuracy on ALL ranks (all ranks participate)
             with torch.no_grad():
-                sparse_accuracy = test_accuracyGPU(model_sparse, testloader, device)
-            #if local_rank == 0:
-            #    print("Debug 10 - Time:", round(time.time() - t0_sacc, 2), "s", flush=True)
+                _load_flat_params_(flat_q)
+                quantized_accuracy = test_accuracyGPU(model, testloader, device)
 
-            # --- 2.11) Logging rank 0 ---
+            # 2.4) Broadcast SPARSE flat weights to all ranks
+            flat_s = torch.empty_like(w_backup)
+            if local_rank == 0:
+                flat_s.copy_(ws_cpu.to(device))
+            if dist.is_initialized():
+                dist.broadcast(flat_s, src=0)
+
+            # 2.5) Evaluate sparse accuracy on ALL ranks
+            with torch.no_grad():
+                _load_flat_params_(flat_s)
+                sparse_accuracy = test_accuracyGPU(model, testloader, device)
+
+            # 2.6) Restore original weights on ALL ranks
+            with torch.no_grad():
+                _load_flat_params_(w_backup)
+
+            # --- 2.7) Logging rank 0 ---
             if local_rank == 0:
                 training_time = round(time.time() - start_time)
                 if epoch == 0:
@@ -349,8 +334,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                     f"zstd_ratio = {zstd_ratio:.2%}, sparse_ratio = {sparse_ratio:.2%}, "
                     f"sparsity = {sparsity:.2%} , sparse_accuracy = {sparse_accuracy}, training_time = {training_time}s\n\n"
                 )
-                if(model_name == "AlexNet" or model_name == "VGG16"): # In this case I'm not training the model 
-                                                                      # a lot of times in parallel with Dantzig or Fenchel
+                if model_name in ("AlexNet", "VGG16"):
                     print(
                         f"Epoch {epoch + 1}: "
                         f"A_NQ = {accuracy}, H_NQ = {entropy}, "
