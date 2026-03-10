@@ -507,7 +507,7 @@ def main():
             print("Using CPU.", flush=True)
 
     model, h = build_model_and_hparams(model_name, device, args, local_rank=local_rank)
-    
+
     if args.n_epochs is not None:
         h["n_epochs"] = args.n_epochs
     if args.batch_size is not None:
@@ -535,8 +535,11 @@ def main():
             workers=args.workers,
         )
 
-    local_rank_to_print = 0 if not ddp_needed(model_name) else local_rank
-    print_config(model_name, args, h, local_rank_to_print)
+    if not ddp_needed(model_name):
+        print_config(model_name, args, h, 0)
+    else:
+        if dist.is_initialized() and dist.get_rank() == 0:
+            print_config(model_name, args, h, 0)
 
     # Training
     train_and_evaluate(
