@@ -221,6 +221,8 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
             if local_rank == 0:
                 accuracies.append(accuracy)
 
+            print(f"#DEBUG1# Epoch {epoch + 1}: Computed non-quantized accuracy\n", flush=True)
+
             # --- 1b) Barrier: ensure all ranks finished accuracy ---
             if dist.is_initialized():
                 if dist.get_backend() == "nccl" and device.type == "cuda":
@@ -248,7 +250,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
 
                 # --- Non-quantized entropy ---
                 w_np = w_cpu.numpy().astype(np.float32)
-                entropy = round(compute_entropyGPU(w_np.tolist())) + 1
+                entropy = round(compute_entropyGPU(w_np)) + 1
                 entropies.append(entropy)
 
                 # --- Quantization on CPU ---
@@ -264,7 +266,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                 wq_np[mask_negzero] = 0.0
 
                 # --- Quantized entropy ---
-                quantized_entropy = round(compute_entropyGPU(wq_np.tolist())) + 1
+                quantized_entropy = round(compute_entropyGPU(wq_np)) + 1
 
                 # --- Bytes and compression (quantized) ---
                 input_bytes = wq_np.tobytes()
@@ -275,7 +277,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                 # --- Sparse representation (from quantized weights) ---
                 mask = (np.abs(wq_np) > sparsity_threshold).astype(np.uint8)
                 nonzero_values = wq_np[mask == 1]
-                bitmask_bytes = pack_bitmaskGPU(mask.tolist())
+                bitmask_bytes = pack_bitmaskGPU(mask)
                 packed_nonzeros = nonzero_values.tobytes()
                 compressed_mask = compress_zstd(bitmask_bytes, level=22)
                 compressed_values = compress_zstd(packed_nonzeros, level=22)
@@ -293,7 +295,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                 sparsity = None
                 wq_cpu = None
                 ws_cpu = None
-
+            print(f"#DEBUG2.1# Epoch {epoch + 1}: Quantized weights\n", flush=True)
             # 2.2) Broadcast QUANTIZED flat weights to all ranks
             flat_q = torch.empty_like(w_backup)
             if local_rank == 0:
@@ -305,7 +307,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
             with torch.no_grad():
                 _load_flat_params_(flat_q)
                 quantized_accuracy = test_accuracyGPU(model, testloader, device)
-
+            print(f"#DEBUG2.3# Epoch {epoch + 1}: Computed quantized accuracy\n", flush=True)
             # 2.4) Broadcast SPARSE flat weights to all ranks
             flat_s = torch.empty_like(w_backup)
             if local_rank == 0:
