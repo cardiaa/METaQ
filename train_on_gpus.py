@@ -380,7 +380,7 @@ def load_imagenet_dataloaders(batch_size, data_root, local_rank, world_size, wor
             wds.WebDataset(
                 val_urls,
                 shardshuffle=False,
-                nodesplitter=wds.split_by_node,
+                empty_check=False,
             )
             .decode("pil")
             .to_tuple("__key__", "jpg;JPEG;jpeg;png")
