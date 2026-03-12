@@ -361,7 +361,7 @@ def load_imagenet_dataloaders(batch_size, data_root, local_rank, world_size, wor
         train_size = 1281167
         val_size = 50000
         steps_per_epoch = max(1, train_size // (batch_size * max(1, world_size)))
-        val_steps = max(1, val_size // batch_size)
+        val_steps = max(1, val_size // (batch_size * max(1, world_size)))
 
         train_urls = sorted(glob.glob(p["shards_train"]))
         val_urls   = sorted(glob.glob(p["shards_val"]))
@@ -387,7 +387,7 @@ def load_imagenet_dataloaders(batch_size, data_root, local_rank, world_size, wor
             wds.WebDataset(
                 val_urls,
                 shardshuffle=False,
-                nodesplitter=identity_nodesplitter,
+                nodesplitter=wds.split_by_node,
                 empty_check=False,
             )
             .decode("pil")
@@ -424,9 +424,20 @@ def load_imagenet_dataloaders(batch_size, data_root, local_rank, world_size, wor
             pin_memory=True,
         )
 
+        val_sampler = None
+        if dist.is_initialized() and world_size > 1:
+            val_sampler = DistributedSampler(
+                val_dataset,
+                num_replicas=world_size,
+                rank=local_rank,
+                shuffle=False,
+                drop_last=False,
+            )
+
         testloader = DataLoader(
             val_dataset,
             batch_size=batch_size,
+            sampler=val_sampler,
             shuffle=False,
             num_workers=workers,
             pin_memory=True,

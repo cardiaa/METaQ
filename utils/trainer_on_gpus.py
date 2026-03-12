@@ -243,77 +243,75 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
             with torch.no_grad():
                 w_backup = torch.cat([p_.detach().view(-1) for p_ in model.parameters()]).clone()
 
-            # 2.1) Rank 0 computes CPU-heavy stuff (entropy/quantization/compression) using CPU copy
+            # 2.1) Build quantized + sparse weights on GPU on EVERY rank (no broadcast).
+            #      Rank 0 still computes CPU-only metrics (entropy/compression) for logging.
+            with torch.no_grad():
+                # --- Quantization on GPU (all ranks) ---
+                if QuantizationType == "center":
+                    # centers computed on GPU
+                    v_centers = (v[:-1] + v[1:]) / 2
+                    v_centers = torch.cat([v_centers, v[-1:]])  
+                    flat_q = quantize_weights_centerGPU(w_backup, v, v_centers, device=device)
+                else:
+                    flat_q = w_backup.clone()
+
+                # --- Sparse weights on GPU (all ranks) ---
+                flat_s = flat_q.clone()
+                flat_s[flat_s.abs() <= sparsity_threshold] = 0.0
+
+            # --- Rank 0: CPU metrics only ---
             if local_rank == 0:
                 with torch.no_grad():
-                    w_cpu = w_backup.detach().cpu()
+                    # Non-quantized entropy (CPU view)
+                    w_np = w_backup.detach().cpu().numpy().astype(np.float32)
+                    entropy = round(compute_entropyGPU(w_np)) + 1
+                    entropies.append(entropy)
 
-                # --- Non-quantized entropy ---
-                w_np = w_cpu.numpy().astype(np.float32)
-                entropy = round(compute_entropyGPU(w_np)) + 1
-                entropies.append(entropy)
+                    # Quantized entropy + compression (CPU view of GPU-quantized weights)
+                    wq_np = flat_q.detach().cpu().numpy().astype(np.float32)
 
-                # --- Quantization on CPU ---
-                if QuantizationType == "center":
-                    v_centers_cpu = ((v[:-1] + v[1:]) / 2).detach().cpu()
-                    wq_cpu = quantize_weights_centerGPU(w_cpu, v.detach().cpu(), v_centers_cpu, device="cpu")
-                else:
-                    wq_cpu = w_cpu.clone()
+                    # Normalize -0.0 to +0.0 (stable entropy/compression)
+                    mask_negzero = np.signbit(wq_np) & (wq_np == 0.0)
+                    wq_np[mask_negzero] = 0.0
 
-                # Normalize -0.0 to +0.0 (stable entropy/compression)
-                wq_np = wq_cpu.numpy().astype(np.float32)
-                mask_negzero = np.signbit(wq_np) & (wq_np == 0.0)
-                wq_np[mask_negzero] = 0.0
+                    quantized_entropy = round(compute_entropyGPU(wq_np)) + 1
 
-                # --- Quantized entropy ---
-                quantized_entropy = round(compute_entropyGPU(wq_np)) + 1
+                    # Bytes and compression (quantized)
+                    input_bytes = wq_np.tobytes()
+                    zstd_compressed = compress_zstd(input_bytes, level=22)
+                    original_size_bytes = len(input_bytes)
+                    zstd_ratio = len(zstd_compressed) / original_size_bytes
 
-                # --- Bytes and compression (quantized) ---
-                input_bytes = wq_np.tobytes()
-                zstd_compressed = compress_zstd(input_bytes, level=22)
-                original_size_bytes = len(input_bytes)
-                zstd_ratio = len(zstd_compressed) / original_size_bytes
-
-                # --- Sparse representation (from quantized weights) ---
-                mask = (np.abs(wq_np) > sparsity_threshold).astype(np.uint8)
-                nonzero_values = wq_np[mask == 1]
-                bitmask_bytes = pack_bitmaskGPU(mask)
-                packed_nonzeros = nonzero_values.tobytes()
-                compressed_mask = compress_zstd(bitmask_bytes, level=22)
-                compressed_values = compress_zstd(packed_nonzeros, level=22)
-                sparse_ratio = (len(compressed_mask) + len(compressed_values)) / original_size_bytes
-                sparsity = 1.0 - mask.sum() / mask.size
-
-                # Build sparse weights (still on CPU)
-                ws_cpu = torch.from_numpy(wq_np.copy())
-                ws_cpu[mask == 0] = 0.0
+                    # Sparse representation (from quantized weights)
+                    mask = (np.abs(wq_np) > sparsity_threshold).astype(np.uint8)
+                    nonzero_values = wq_np[mask == 1]
+                    bitmask_bytes = pack_bitmaskGPU(mask)              
+                    packed_nonzeros = nonzero_values.tobytes()
+                    compressed_mask = compress_zstd(bitmask_bytes, level=22)
+                    compressed_values = compress_zstd(packed_nonzeros, level=22)
+                    sparse_ratio = (len(compressed_mask) + len(compressed_values)) / original_size_bytes
+                    sparsity = 1.0 - mask.sum() / mask.size
             else:
                 entropy = None
                 quantized_entropy = None
                 zstd_ratio = None
                 sparse_ratio = None
                 sparsity = None
-                wq_cpu = None
-                ws_cpu = None
-            print(f"#DEBUG2.1# Epoch {epoch + 1}: Quantized weights\n", flush=True)
-            # 2.2) Broadcast QUANTIZED flat weights to all ranks
-            flat_q = torch.empty_like(w_backup)
-            if local_rank == 0:
-                flat_q.copy_(wq_cpu.to(device))
-            if dist.is_initialized():
-                dist.broadcast(flat_q, src=0)
+
+            print(f"#DEBUG2.1# Epoch {epoch + 1}: Built quantized/sparse weights (no broadcast)\n", flush=True)
 
             # 2.3) Evaluate quantized accuracy on ALL ranks (all ranks participate)
             with torch.no_grad():
                 _load_flat_params_(flat_q)
                 quantized_accuracy = test_accuracyGPU(model, testloader, device)
+
             print(f"#DEBUG2.3# Epoch {epoch + 1}: Computed quantized accuracy\n", flush=True)
-            # 2.4) Broadcast SPARSE flat weights to all ranks
-            flat_s = torch.empty_like(w_backup)
-            if local_rank == 0:
-                flat_s.copy_(ws_cpu.to(device))
-            if dist.is_initialized():
-                dist.broadcast(flat_s, src=0)
+
+            # 2.4) (No broadcast anymore) `flat_s` is already available on all ranks
+            # If you later need sparse accuracy, you can do:
+            # with torch.no_grad():
+            #     _load_flat_params_(flat_s)
+            #     sparse_accuracy = test_accuracyGPU(model, testloader, device)
 
             # 2.5) Evaluate sparse accuracy on ALL ranks
             with torch.no_grad():
