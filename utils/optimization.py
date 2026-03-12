@@ -18,34 +18,40 @@ def test_accuracy(model, dataloader, device):
     accuracy = 100 * correct / total  # Compute accuracy percentage
     return accuracy
 
+@torch.no_grad()
 def test_accuracyGPU(model, dataloader, device):
     """
-    Efficiently compute model accuracy on the given dataloader.
-    This version runs on all ranks and aggregates results with torch.distributed.
-    If running in single-process mode, it behaves normally.
+    Fast accuracy: no per-batch GPU->CPU sync (no .item() in loop).
+    Aggregates across ranks with all_reduce on GPU tensors.
     """
-    correct, total = 0, 0
-    model.eval()  # Ensure model is in evaluation mode
+    was_training = model.training
+    model.eval()
 
-    with torch.no_grad():  # Disable gradient computation for evaluation
+    # Keep counters ON GPU to avoid sync each iteration
+    correct = torch.zeros((), device=device, dtype=torch.long)
+    total   = torch.zeros((), device=device, dtype=torch.long)
+
+    # inference_mode è ancora più leggero di no_grad (meno overhead Autograd)
+    with torch.inference_mode():
         for images, labels in dataloader:
-            images, labels = images.to(device), labels.to(device)
-            outputs = model(images)  # Forward pass
-            _, predicted = torch.max(outputs.data, 1)  # Class with highest probability
-            total += labels.size(0)
-            correct += (predicted == labels).sum().item()
+            images = images.to(device, non_blocking=True)
+            labels = labels.to(device, non_blocking=True)
 
-    # If using Distributed Data Parallel (DDP), aggregate results across ranks
+            outputs = model(images)
+            predicted = outputs.argmax(dim=1)
+
+            correct += (predicted == labels).sum()
+            total   += labels.numel()
+
     if torch.distributed.is_initialized():
-        total_tensor = torch.tensor(total, device=device)
-        correct_tensor = torch.tensor(correct, device=device)
-        torch.distributed.all_reduce(total_tensor, op=torch.distributed.ReduceOp.SUM)
-        torch.distributed.all_reduce(correct_tensor, op=torch.distributed.ReduceOp.SUM)
-        total = total_tensor.item()
-        correct = correct_tensor.item()
+        torch.distributed.all_reduce(correct, op=torch.distributed.ReduceOp.SUM)
+        torch.distributed.all_reduce(total,   op=torch.distributed.ReduceOp.SUM)
 
-    accuracy = 100.0 * correct / total if total > 0 else 0.0
-    return accuracy
+    acc = (correct.float() * 100.0 / total.float()).item() if total.item() > 0 else 0.0
+
+    if was_training:
+        model.train()
+    return acc
 
 def FISTA(xi, v, w, C, upper_c, lower_c, delta, subgradient_step, device, max_iterations, pruning):
     """
