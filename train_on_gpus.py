@@ -295,6 +295,13 @@ def load_mnist_lenet300(data_root: str):
 
 
 # -------------------------
+# DDP node splitter for WebDataset (no splitting, all processes can read all shards)
+# -------------------------
+def identity_nodesplitter(urls):
+    return urls
+
+
+# -------------------------
 # Data loading: ImageNet (shards or folders)
 # -------------------------
 def load_imagenet_dataloaders(batch_size, data_root, local_rank, world_size, workers):
@@ -380,6 +387,7 @@ def load_imagenet_dataloaders(batch_size, data_root, local_rank, world_size, wor
             wds.WebDataset(
                 val_urls,
                 shardshuffle=False,
+                nodesplitter=identity_nodesplitter,
                 empty_check=False,
             )
             .decode("pil")
