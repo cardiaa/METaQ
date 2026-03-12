@@ -1,5 +1,6 @@
 import argparse
 import os
+import itertools
 import glob
 import tarfile
 import json
@@ -307,7 +308,8 @@ def identity_nodesplitter(urls):
 def split_by_rank(urls):
     rank = int(os.environ.get("RANK", "0"))
     world = int(os.environ.get("WORLD_SIZE", "1"))
-    return urls[rank::world]
+    # takes urls and returns an iterator that yields only the urls for the current rank (round-robin)
+    return itertools.islice(urls, rank, None, world)
 
 
 # -------------------------
