@@ -258,8 +258,8 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                 # --- Sparse weights on GPU (all ranks) ---
                 flat_s = flat_q.clone()
                 flat_s[flat_s.abs() <= sparsity_threshold] = 0.0
-
-            # --- Rank 0: CPU metrics only ---
+            print(f"#DEBUG2.1# Epoch {epoch + 1}", flush=True)
+            # 2.2) --- Rank 0: CPU metrics only ---
             if local_rank == 0:
                 with torch.no_grad():
                     # Non-quantized entropy (CPU view)
@@ -298,14 +298,14 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                 sparse_ratio = None
                 sparsity = None
 
-            print(f"#DEBUG2.1# Epoch {epoch + 1}: Built quantized/sparse weights (no broadcast)\n", flush=True)
+            print(f"#DEBUG2.2# Epoch {epoch + 1}", flush=True)
 
             # 2.3) Evaluate quantized accuracy on ALL ranks (all ranks participate)
             with torch.no_grad():
                 _load_flat_params_(flat_q)
                 quantized_accuracy = test_accuracyGPU(model, testloader, device)
 
-            print(f"#DEBUG2.3# Epoch {epoch + 1}: Computed quantized accuracy\n", flush=True)
+            print(f"#DEBUG2.3# Epoch {epoch + 1}", flush=True)
 
             # 2.4) (No broadcast anymore) `flat_s` is already available on all ranks
             # If you later need sparse accuracy, you can do:
@@ -317,11 +317,11 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
             with torch.no_grad():
                 _load_flat_params_(flat_s)
                 sparse_accuracy = test_accuracyGPU(model, testloader, device)
-
+            print(f"#DEBUG2.5# Epoch {epoch + 1}", flush=True)
             # 2.6) Restore original weights on ALL ranks
             with torch.no_grad():
                 _load_flat_params_(w_backup)
-
+            print(f"#DEBUG2.6# Epoch {epoch + 1}", flush=True)
             # --- 2.7) Logging rank 0 ---
             if local_rank == 0:
                 training_time = round(time.time() - start_time)
