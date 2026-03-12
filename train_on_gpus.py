@@ -302,6 +302,15 @@ def identity_nodesplitter(urls):
 
 
 # -------------------------
+# DDP node splitter for WebDataset (split shards across processes, but no shard-level shuffling)
+# -------------------------
+def split_by_rank(urls):
+    rank = int(os.environ.get("RANK", "0"))
+    world = int(os.environ.get("WORLD_SIZE", "1"))
+    return urls[rank::world]
+
+
+# -------------------------
 # Data loading: ImageNet (shards or folders)
 # -------------------------
 def load_imagenet_dataloaders(batch_size, data_root, local_rank, world_size, workers):
@@ -372,7 +381,7 @@ def load_imagenet_dataloaders(batch_size, data_root, local_rank, world_size, wor
             wds.WebDataset(
                 train_urls,
                 shardshuffle=1000,              
-                nodesplitter=wds.split_by_node, 
+                nodesplitter=wds.split_by_rank, 
             )
             .shuffle(10000)
             .decode("pil")
@@ -387,7 +396,7 @@ def load_imagenet_dataloaders(batch_size, data_root, local_rank, world_size, wor
             wds.WebDataset(
                 val_urls,
                 shardshuffle=False,
-                nodesplitter=wds.split_by_node,
+                nodesplitter=wds.split_by_rank,
                 empty_check=False,
             )
             .decode("pil")

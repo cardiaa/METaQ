@@ -32,7 +32,7 @@ def test_accuracyGPU(model, dataloader, device):
     total   = torch.zeros((), device=device, dtype=torch.long)
 
     # inference_mode è ancora più leggero di no_grad (meno overhead Autograd)
-    with torch.inference_mode():
+    with torch.inference_mode(), torch.autocast(device_type=device.type, enabled=(device.type=="cuda"), dtype=torch.bfloat16):
         for images, labels in dataloader:
             images = images.to(device, non_blocking=True)
             labels = labels.to(device, non_blocking=True)
