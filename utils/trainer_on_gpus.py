@@ -8,7 +8,7 @@ import sys
 import torch.optim as optim
 import torch.distributed as dist
 import gc
-from utils.quantize_and_compress import compute_entropy, quantize_weights_center, compute_entropyGPU, quantize_weights_centerGPU
+from utils.quantize_and_compress import compute_entropy, quantize_weights_center, compute_entropyGPU, quantize_weights_centerGPU, compute_entropy_hist
 from utils.optimization import FISTA, FISTA_leonardo, ProximalBM, test_accuracy, test_accuracyGPU
 from utils.weight_utils import initialize_weights
 from utils.quantize_and_compress import compress_zstd, BestQuantization, pack_bitmask, pack_bitmaskGPU
@@ -282,33 +282,36 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
             start_time = time.time()              
             if local_rank == 0:
                 with torch.no_grad():
-                    # Non-quantized entropy (CPU view)
-                    w_np = w_backup.detach().cpu().numpy().astype(np.float32)
-                    entropy = round(compute_entropyGPU(w_np)) + 1
+                    # --- Non-quantized entropy (FAST histogram estimate) ---
+                    w_cpu = w_backup.detach().to(device="cpu", dtype=torch.float32)
+                    w_np = w_cpu.numpy()  # already float32, no extra astype copy
+                    entropy = round(compute_entropy_hist(w_np, bins=2048)) + 1
                     entropies.append(entropy)
 
-                    # Quantized entropy + compression (CPU view of GPU-quantized weights)
-                    wq_np = flat_q.detach().cpu().numpy().astype(np.float32)
+                    # --- Quantized entropy + compression ---
+                    wq_cpu = flat_q.detach().to(device="cpu", dtype=torch.float32)
+                    wq_np = wq_cpu.numpy()
 
-                    # Normalize -0.0 to +0.0 (stable entropy/compression)
+                    # Normalize -0.0 to +0.0
                     mask_negzero = np.signbit(wq_np) & (wq_np == 0.0)
                     wq_np[mask_negzero] = 0.0
 
+                    # quantized entropy: unique is OK here (few symbols)
                     quantized_entropy = round(compute_entropyGPU(wq_np)) + 1
 
-                    # Bytes and compression (quantized)
                     input_bytes = wq_np.tobytes()
-                    zstd_compressed = compress_zstd(input_bytes, level=22)
+                    zstd_compressed = compress_zstd(input_bytes, level=22, threads=-1)
                     original_size_bytes = len(input_bytes)
                     zstd_ratio = len(zstd_compressed) / original_size_bytes
 
-                    # Sparse representation (from quantized weights)
                     mask = (np.abs(wq_np) > sparsity_threshold).astype(np.uint8)
                     nonzero_values = wq_np[mask == 1]
-                    bitmask_bytes = pack_bitmaskGPU(mask)              
+                    bitmask_bytes = pack_bitmaskGPU(mask)
                     packed_nonzeros = nonzero_values.tobytes()
-                    compressed_mask = compress_zstd(bitmask_bytes, level=22)
-                    compressed_values = compress_zstd(packed_nonzeros, level=22)
+
+                    compressed_mask = compress_zstd(bitmask_bytes, level=22, threads=-1)
+                    compressed_values = compress_zstd(packed_nonzeros, level=22, threads=-1)
+
                     sparse_ratio = (len(compressed_mask) + len(compressed_values)) / original_size_bytes
                     sparsity = 1.0 - mask.sum() / mask.size
             else:

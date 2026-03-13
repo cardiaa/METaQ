@@ -10,6 +10,8 @@ from decimal import Decimal
 from collections import Counter
 from .optimization import test_accuracy
 
+_ZSTD_CCTX = {}
+
 def compute_entropy(string):
     """
     Function to compute the entropy of a given string.
@@ -71,6 +73,26 @@ def compute_entropy_new(string, pruning_threshold):
         entropy_new_formula = m * (2 + math.ceil(math.log2(n / m))) + entropy_non_zeros
 
     return entropy_new_formula
+
+def compute_entropy_hist(arr, bins: int = 2048) -> float:
+    """
+    Fast entropy estimate via histogram (O(N)).
+    Returns Shannon entropy (bits) * N.
+    """
+    arr = np.asarray(arr, dtype=np.float32)
+    lo = float(arr.min())
+    hi = float(arr.max())
+    if lo == hi:
+        return 0.0
+
+    hist, _ = np.histogram(arr, bins=bins, range=(lo, hi))
+    n = hist.sum()
+    if n == 0:
+        return 0.0
+
+    p = hist[hist > 0].astype(np.float64) / float(n)
+    ent = -(p * np.log2(p)).sum()
+    return float(ent * n)
 
 def quantize_weights_center(weights, v, v_centers, device):
     """
@@ -182,9 +204,20 @@ def decode_arithmetic(encoded_value, symb2freq, length_of_symbols):
 def compress_gzip(data):
     return gzip.compress(data, compresslevel=9)
 
-# Compresses with zstd-22
-def compress_zstd(data, level):
-    cctx = zstd.ZstdCompressor(level=level)  # Creates a compressor object with level 22
+def compress_zstd(data: bytes, level: int, threads: int = -1) -> bytes:
+    """
+    Zstd compress with cached context (much faster than creating a new compressor each call).
+    threads=-1 => all available CPU threads (zstandard feature).
+    """
+    key = (level, threads)
+    cctx = _ZSTD_CCTX.get(key)
+    if cctx is None:
+        try:
+            cctx = zstd.ZstdCompressor(level=level, threads=threads)
+        except TypeError:
+            # older zstandard: no threads argument
+            cctx = zstd.ZstdCompressor(level=level)
+        _ZSTD_CCTX[key] = cctx
     return cctx.compress(data)
 
 # Decompresses with gzip-9
@@ -338,3 +371,4 @@ def pack_bitmaskGPU(mask):
     # Pack bits into bytes
     packed = np.packbits(mask.reshape(-1, 8), axis=1, bitorder='big')
     return packed.flatten().tobytes()
+
