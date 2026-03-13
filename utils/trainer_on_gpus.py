@@ -77,7 +77,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                 train_sampler.set_epoch(epoch)
         #if local_rank == 0:
         #    print(f"Beginning epoch {epoch} at {(datetime.now() + timedelta(hours=2)).strftime('%Y-%m-%d %H:%M:%S')}", flush=True)
-        start_time = time.time()
+        start_time_global = time.time()
         start_time2 = time.time()
         for i, data in enumerate(trainloader, 0):
             #if i % 100 == 0:
@@ -195,7 +195,9 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
 
             optimizer.step()
 
-        training_time = round(time.time() - start_time)
+        training_time_without_metrics = round(time.time() - start_time_global)
+        print(f"Epoch {epoch + 1}: training_time_without_metrics = {training_time_without_metrics}s", flush=True)
+        
         #if local_rank == 0:
         #    print(f"Epoch {epoch + 1}: training_time = {training_time}s\n", flush=True)
         if(model_name[:7] == "LeNet-5" and delta == 5): # To modify if delta's tests are different
@@ -207,6 +209,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
         if (epoch % 1 == 0 or epoch == n_epochs - 1):
 
             # --- 0) Synchronize all ranks BEFORE evaluation/CPU-heavy work ---
+            start_time = time.time()
             if device.type == "cuda":
                 torch.cuda.synchronize(device)
             if dist.is_initialized():
@@ -214,24 +217,32 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                     dist.barrier(device_ids=[torch.cuda.current_device()])
                 else:
                     dist.barrier()
+            training_time = round(time.time() - start_time)
+            print(f"#DEBUG0# Epoch {epoch + 1}, training_time = {training_time}s", flush=True)
+
 
             # --- 1) Compute non-quantized accuracy on ALL ranks ---
+            start_time = time.time()
             with torch.no_grad():
                 accuracy = test_accuracyGPU(model, testloader, device)  # all ranks must participate
             if local_rank == 0:
                 accuracies.append(accuracy)
-
-            print(f"#DEBUG1# Epoch {epoch + 1}: Computed non-quantized accuracy\n", flush=True)
+            training_time = round(time.time() - start_time)
+            print(f"#DEBUG1# Epoch {epoch + 1}, training_time = {training_time}s", flush=True)
 
             # --- 1b) Barrier: ensure all ranks finished accuracy ---
+            start_time = time.time()
             if dist.is_initialized():
                 if dist.get_backend() == "nccl" and device.type == "cuda":
                     dist.barrier(device_ids=[torch.cuda.current_device()])
                 else:
                     dist.barrier()
+            training_time = round(time.time() - start_time)
+            print(f"#DEBUG1b# Epoch {epoch + 1}, training_time = {training_time}s", flush=True)                    
 
             # --- 2) Quantized/Sparse evaluation WITHOUT deepcopy(model) ---
             # Helper: load a flat tensor into model parameters (in-place).
+            start_time = time.time()
             def _load_flat_params_(flat: torch.Tensor):
                 offset = 0
                 for p_ in model.parameters():
@@ -258,8 +269,12 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                 # --- Sparse weights on GPU (all ranks) ---
                 flat_s = flat_q.clone()
                 flat_s[flat_s.abs() <= sparsity_threshold] = 0.0
-            print(f"#DEBUG2.1# Epoch {epoch + 1}", flush=True)
+            
+            training_time = round(time.time() - start_time)
+            print(f"#DEBUG2.1# Epoch {epoch + 1}, training_time = {training_time}s", flush=True)       
+            
             # 2.2) --- Rank 0: CPU metrics only ---
+            start_time = time.time()              
             if local_rank == 0:
                 with torch.no_grad():
                     # Non-quantized entropy (CPU view)
@@ -298,14 +313,18 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                 sparse_ratio = None
                 sparsity = None
 
-            print(f"#DEBUG2.2# Epoch {epoch + 1}", flush=True)
+            training_time = round(time.time() - start_time)
+            print(f"#DEBUG2.2# Epoch {epoch + 1}, training_time = {training_time}s", flush=True)       
+            
 
             # 2.3) Evaluate quantized accuracy on ALL ranks (all ranks participate)
+            start_time = time.time()
             with torch.no_grad():
                 _load_flat_params_(flat_q)
                 quantized_accuracy = test_accuracyGPU(model, testloader, device)
 
-            print(f"#DEBUG2.3# Epoch {epoch + 1}", flush=True)
+            training_time = round(time.time() - start_time)
+            print(f"#DEBUG2.3# Epoch {epoch + 1}, training_time = {training_time}s", flush=True)       
 
             # 2.4) (No broadcast anymore) `flat_s` is already available on all ranks
             # If you later need sparse accuracy, you can do:
@@ -314,17 +333,26 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
             #     sparse_accuracy = test_accuracyGPU(model, testloader, device)
 
             # 2.5) Evaluate sparse accuracy on ALL ranks
+            start_time = time.time()
             with torch.no_grad():
                 _load_flat_params_(flat_s)
                 sparse_accuracy = test_accuracyGPU(model, testloader, device)
-            print(f"#DEBUG2.5# Epoch {epoch + 1}", flush=True)
+            
+            training_time = round(time.time() - start_time)
+            print(f"#DEBUG2.5# Epoch {epoch + 1}, training_time = {training_time}s", flush=True)       
+                   
             # 2.6) Restore original weights on ALL ranks
+            start_time = time.time()
             with torch.no_grad():
                 _load_flat_params_(w_backup)
-            print(f"#DEBUG2.6# Epoch {epoch + 1}", flush=True)
+
+            training_time = round(time.time() - start_time)
+            print(f"#DEBUG2.6# Epoch {epoch + 1}, training_time = {training_time}s", flush=True)       
+
             # --- 2.7) Logging rank 0 ---
+            start_time = time.time()
             if local_rank == 0:
-                training_time = round(time.time() - start_time)
+                training_time_global = round(time.time() - start_time_global)
                 if epoch == 0:
                     log += f"delta = {delta}\n"
                 log += (
@@ -332,7 +360,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                     f"A_NQ = {accuracy}, H_NQ = {entropy}, "
                     f"A_Q = {quantized_accuracy}, H_Q = {quantized_entropy}, "
                     f"zstd_ratio = {zstd_ratio:.2%}, sparse_ratio = {sparse_ratio:.2%}, "
-                    f"sparsity = {sparsity:.2%} , sparse_accuracy = {sparse_accuracy}, training_time = {training_time}s\n\n"
+                    f"sparsity = {sparsity:.2%} , sparse_accuracy = {sparse_accuracy}, training_time = {training_time_global}s\n\n"
                 )
                 if model_name in ("AlexNet", "VGG16"):
                     print(
@@ -340,9 +368,11 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                         f"A_NQ = {accuracy}, H_NQ = {entropy}, "
                         f"A_Q = {quantized_accuracy}, H_Q = {quantized_entropy}, "
                         f"zstd_ratio = {zstd_ratio:.2%}, sparse_ratio = {sparse_ratio:.2%}, "
-                        f"sparsity = {sparsity:.2%} , sparse_accuracy = {sparse_accuracy}, training_time = {training_time}s\n",
+                        f"sparsity = {sparsity:.2%} , sparse_accuracy = {sparse_accuracy}, training_time = {training_time_global}s\n",
                         flush=True
                     )
+            training_time = round(time.time() - start_time)
+            print(f"#DEBUG2.7# Epoch {epoch + 1}, training_time = {training_time}s", flush=True)                           
 
             # --- 3) Final barrier: allow all ranks to resume training ---
             if device.type == "cuda":

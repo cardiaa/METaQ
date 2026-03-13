@@ -21,21 +21,33 @@ def test_accuracy(model, dataloader, device):
 @torch.no_grad()
 def test_accuracyGPU(model, dataloader, device):
     """
-    Fast accuracy: no per-batch GPU->CPU sync (no .item() in loop).
-    Aggregates across ranks with all_reduce on GPU tensors.
+    Fast accuracy:
+    - counters on GPU (no sync per batch)
+    - inference_mode
+    - autocast bf16 on CUDA (A100-friendly)
+    - optional channels_last for images (often helps conv nets)
     """
     was_training = model.training
     model.eval()
 
-    # Keep counters ON GPU to avoid sync each iteration
     correct = torch.zeros((), device=device, dtype=torch.long)
     total   = torch.zeros((), device=device, dtype=torch.long)
 
-    # inference_mode è ancora più leggero di no_grad (meno overhead Autograd)
-    with torch.inference_mode(), torch.autocast(device_type=device.type, enabled=(device.type=="cuda"), dtype=torch.bfloat16):
+    use_cuda = (device.type == "cuda")
+    autocast_ctx = torch.autocast(
+        device_type="cuda",
+        dtype=torch.bfloat16,
+        enabled=use_cuda,
+    )
+
+    with torch.inference_mode(), autocast_ctx:
         for images, labels in dataloader:
             images = images.to(device, non_blocking=True)
             labels = labels.to(device, non_blocking=True)
+
+            # helps convs (AlexNet/VGG) in many cases
+            if use_cuda:
+                images = images.contiguous(memory_format=torch.channels_last)
 
             outputs = model(images)
             predicted = outputs.argmax(dim=1)
@@ -47,6 +59,7 @@ def test_accuracyGPU(model, dataloader, device):
         torch.distributed.all_reduce(correct, op=torch.distributed.ReduceOp.SUM)
         torch.distributed.all_reduce(total,   op=torch.distributed.ReduceOp.SUM)
 
+    # one final sync (inevitable to print/return a Python float)
     acc = (correct.float() * 100.0 / total.float()).item() if total.item() > 0 else 0.0
 
     if was_training:
