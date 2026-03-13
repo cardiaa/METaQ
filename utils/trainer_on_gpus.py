@@ -78,11 +78,11 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
         #if local_rank == 0:
         #    print(f"Beginning epoch {epoch} at {(datetime.now() + timedelta(hours=2)).strftime('%Y-%m-%d %H:%M:%S')}", flush=True)
         start_time_global = time.time()
+        start_time2 = time.time()
         for i, data in enumerate(trainloader, 0):
             #if i % 100 == 0:
             #if((model_name[:7] == "LeNet-5" or model_name == "LeNet300_100") and delta == 5): 
             #    print(f"Batch {i} of epoch {epoch + 1}: time {round(time.time() - start_time2, 2)}s", flush=True)
-            start_time2 = time.time()
             if((model_name == "AlexNet" or model_name == "VGG16") and local_rank == 0):
                 if i % 1 == 0:
                     print(f"Batch {i} of epoch {epoch + 1}: time {round(time.time() - start_time2, 2)}s", flush=True)
