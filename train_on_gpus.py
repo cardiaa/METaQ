@@ -13,6 +13,7 @@ from torch.nn.parallel import DistributedDataParallel as DDP
 from torch.utils.data import DataLoader, DistributedSampler
 from torchvision import datasets, transforms, models
 import webdataset as wds
+import socket
 
 from utils.trainer_on_gpus import train_and_evaluate
 from utils.networks import LeNet5, LeNet5_Original, LeNet300_100
@@ -506,6 +507,43 @@ def print_config(model_name, args, h, local_rank_to_print):
     print("-" * 60, flush=True)
 
 
+def print_allocated_gpus_once(device: torch.device):
+    """
+    Each process gathers the hostname and GPU info of all processes, 
+    and rank 0 prints a summary grouped by hostname.
+     - This is useful to verify that the expected GPUs are allocated and visible to each process, 
+     especially in multi-node setups where GPU visibility can be tricky.
+     - The function is designed to be called once at the beginning of training, 
+     to avoid cluttering logs with repeated GPU info every epoch.
+    """
+    rank = dist.get_rank()
+    hostname = socket.gethostname()
+
+    if device.type == "cuda":
+        local_cuda = torch.cuda.current_device()
+        gpu_name = torch.cuda.get_device_name(local_cuda)
+        msg = f"cuda:{local_cuda} ({gpu_name})"
+    else:
+        msg = str(device)
+
+    payload = (hostname, msg)
+
+    gathered = [None] * dist.get_world_size()
+    dist.all_gather_object(gathered, payload)
+
+    if rank == 0:
+        by_node = {}
+        for host, gpu in gathered:
+            by_node.setdefault(host, []).append(gpu)
+
+        # stampa ordinata e pulita
+        for host in sorted(by_node):
+            print(f"### {host}", flush=True)
+            for gpu in sorted(by_node[host]):
+                print(gpu, flush=True)
+            print("", flush=True)    
+
+
 # -------------------------
 # Main
 # -------------------------
@@ -542,7 +580,8 @@ def main():
     if ddp_needed(model_name):
         local_rank, world_size = setup_ddp()
         device = torch.device(f"cuda:{local_rank}")
-        print(f"[GPU {local_rank}] Using device {device} ({torch.cuda.get_device_name(device)})", flush=True)
+        #print(f"[GPU {local_rank}] Using device {device} ({torch.cuda.get_device_name(device)})", flush=True)
+        print_allocated_gpus_once(device)
     else:
         device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         if torch.cuda.is_available():
