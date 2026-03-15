@@ -383,9 +383,10 @@ def load_imagenet_dataloaders(batch_size, data_root, local_rank, world_size, wor
         train_ds = (
             wds.WebDataset(
                 train_urls,
-                shardshuffle=1000,              
-                nodesplitter=split_by_rank, 
+                shardshuffle=1000,
+                nodesplitter=split_by_rank,
             )
+            .split_by_worker()
             .shuffle(10000)
             .decode("pil")
             .to_tuple("__key__", "jpg;JPEG;jpeg;png")
@@ -402,6 +403,7 @@ def load_imagenet_dataloaders(batch_size, data_root, local_rank, world_size, wor
                 nodesplitter=split_by_rank,
                 empty_check=False,
             )
+            .split_by_worker()
             .decode("pil")
             .to_tuple("__key__", "jpg;JPEG;jpeg;png")
             .map_tuple(lambda k: k, t_val)
