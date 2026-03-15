@@ -282,48 +282,57 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
             start_time = time.time()              
             if local_rank == 0:
                 with torch.no_grad():
-                    # --- Non-quantized entropy (FAST histogram estimate) ---
-                    w_cpu = w_backup.detach().to(device="cpu", dtype=torch.float32)
-                    w_np = w_cpu.numpy()  # already float32, no extra astype copy
-                    entropy = round(compute_entropy_hist(w_np, bins=2048)) + 1
+                    # 2.2.1) ---- Quantization indices on GPU (0..C-1) ----
+                    q_idx = (torch.bucketize(w_backup, v, right=False) - 1).clamp_(0, C-1)
+                    training_time = round(time.time() - start_time)
+                    print(f"#DEBUG2.2.1# Epoch {epoch + 1}, training_time = {training_time}s", flush=True)     
+ 
+                    # 2.2.2) ---- Entropy (FAST) via bincount on GPU ----
+                    start_time = time.time()
+                    counts = torch.bincount(q_idx, minlength=C).to(torch.float32)
+                    p = counts / counts.sum()
+                    p = p[p > 0]
+                    quantized_entropy = float((-(p * torch.log2(p)).sum() * counts.sum()).item())  # *N
+                    quantized_entropy = round(quantized_entropy) + 1
+
+                    entropy = quantized_entropy
                     entropies.append(entropy)
+                    training_time = round(time.time() - start_time)
+                    print(f"#DEBUG2.2.2# Epoch {epoch + 1}, training_time = {training_time}s", flush=True)   
 
-                    # --- Quantized entropy + compression ---
-                    wq_cpu = flat_q.detach().to(device="cpu", dtype=torch.float32)
-                    wq_np = wq_cpu.numpy()
-
-                    # Normalize -0.0 to +0.0
-                    mask_negzero = np.signbit(wq_np) & (wq_np == 0.0)
-                    wq_np[mask_negzero] = 0.0
-
-                    # quantized entropy: unique is OK here (few symbols)
-                    quantized_entropy = round(compute_entropyGPU(wq_np)) + 1
-
-                    input_bytes = wq_np.tobytes()
-                    zstd_compressed = compress_zstd(input_bytes, level=22, threads=-1)
-                    original_size_bytes = len(input_bytes)
+                    # 2.2.3) ---- Compression on CPU of *uint8 indices* (4x smaller than float32) ----
+                    start_time = time.time()
+                    q_bytes = q_idx.to(torch.uint8).cpu().numpy().tobytes()
+                    zstd_compressed = compress_zstd(q_bytes, level=22)
+                    original_size_bytes = len(q_bytes)
                     zstd_ratio = len(zstd_compressed) / original_size_bytes
+                    training_time = round(time.time() - start_time)
+                    print(f"#DEBUG2.2.3# Epoch {epoch + 1}, training_time = {training_time}s", flush=True)   
 
-                    mask = (np.abs(wq_np) > sparsity_threshold).astype(np.uint8)
-                    nonzero_values = wq_np[mask == 1]
-                    bitmask_bytes = pack_bitmaskGPU(mask)
-                    packed_nonzeros = nonzero_values.tobytes()
+                    # 2.2.4) ---- Sparse: mask + values (still store indices of nonzeros as uint8) ----
+                    # decide nonzero based on quantized centers:
+                    start_time = time.time()
+                    v_centers = (v[:-1] + v[1:]) / 2
+                    v_centers = torch.cat([v_centers, v[-1:]])
+                    q_vals = v_centers[q_idx]  # float32 GPU
 
-                    compressed_mask = compress_zstd(bitmask_bytes, level=22, threads=-1)
-                    compressed_values = compress_zstd(packed_nonzeros, level=22, threads=-1)
+                    nz_mask = (q_vals.abs() > sparsity_threshold)
+                    mask_np = nz_mask.to(torch.uint8).cpu().numpy()
+                    bitmask_bytes = pack_bitmaskGPU(mask_np)
+
+                    nz_idx_bytes = q_idx[nz_mask].to(torch.uint8).cpu().numpy().tobytes()
+
+                    compressed_mask = compress_zstd(bitmask_bytes, level=22)
+                    compressed_values = compress_zstd(nz_idx_bytes, level=22)
 
                     sparse_ratio = (len(compressed_mask) + len(compressed_values)) / original_size_bytes
-                    sparsity = 1.0 - mask.sum() / mask.size
+                    sparsity = 1.0 - float(mask_np.sum()) / float(mask_np.size)
             else:
-                entropy = None
-                quantized_entropy = None
-                zstd_ratio = None
-                sparse_ratio = None
-                sparsity = None
+                entropy = quantized_entropy = zstd_ratio = sparse_ratio = sparsity = None
 
             training_time = round(time.time() - start_time)
             if(local_rank == 0):
-                print(f"#DEBUG2.2# Epoch {epoch + 1}, training_time = {training_time}s", flush=True)       
+                print(f"#DEBUG2.2.4# Epoch {epoch + 1}, training_time = {training_time}s", flush=True)       
             
 
             # 2.3) Evaluate quantized accuracy on ALL ranks (all ranks participate)
