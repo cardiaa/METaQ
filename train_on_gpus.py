@@ -385,8 +385,8 @@ def load_imagenet_dataloaders(batch_size, data_root, local_rank, world_size, wor
                 train_urls,
                 shardshuffle=1000,
                 nodesplitter=split_by_rank,
+                workersplitter=wds.split_by_worker,
             )
-            .split_by_worker()
             .shuffle(10000)
             .decode("pil")
             .to_tuple("__key__", "jpg;JPEG;jpeg;png")
@@ -401,9 +401,9 @@ def load_imagenet_dataloaders(batch_size, data_root, local_rank, world_size, wor
                 val_urls,
                 shardshuffle=False,
                 nodesplitter=split_by_rank,
+                workersplitter=wds.split_by_worker,
                 empty_check=False,
             )
-            .split_by_worker()
             .decode("pil")
             .to_tuple("__key__", "jpg;JPEG;jpeg;png")
             .map_tuple(lambda k: k, t_val)
