@@ -283,49 +283,80 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
             if local_rank == 0:
                 with torch.no_grad():
                     # 2.2.1) ---- Quantization indices on GPU (0..C-1) ----
+                    # It maps each weight to its corresponding quantization bin index.
                     q_idx = (torch.bucketize(w_backup, v, right=False) - 1).clamp_(0, C-1)
                     training_time = round(time.time() - start_time)
                     print(f"#DEBUG2.2.1# Epoch {epoch + 1}, training_time = {training_time}s", flush=True)     
- 
+
                     # 2.2.2) ---- Entropy (FAST) via bincount on GPU ----
+                    # It computes the empirical distribution of quantized indices
+                    # and evaluates the entropy in bits (scaled by number of elements).
                     start_time = time.time()
                     counts = torch.bincount(q_idx, minlength=C).to(torch.float32)
                     p = counts / counts.sum()
                     p = p[p > 0]
-                    quantized_entropy = float((-(p * torch.log2(p)).sum() * counts.sum()).item())  # *N
+                    quantized_entropy = float((-(p * torch.log2(p)).sum() * counts.sum()).item())
                     quantized_entropy = round(quantized_entropy) + 1
-
                     entropy = quantized_entropy
                     entropies.append(entropy)
                     training_time = round(time.time() - start_time)
                     print(f"#DEBUG2.2.2# Epoch {epoch + 1}, training_time = {training_time}s", flush=True)   
 
-                    # 2.2.3) ---- Compression on CPU of *uint8 indices* (4x smaller than float32) ----
+                    # 2.2.3) ---- Compression ratio (%) w.r.t. original FP32 model ----
                     start_time = time.time()
-                    q_bytes = q_idx.to(torch.uint8).cpu().numpy().tobytes()
+                    # It selects the minimal storage dtype depending on C to avoid overflow.
+                    if C <= 256:
+                        dtype = torch.uint8
+                        index_bits = 8
+                    elif C <= 65536:
+                        dtype = torch.uint16
+                        index_bits = 16
+                    else:
+                        dtype = torch.int32
+                        index_bits = 32
+                    # It converts quantized indices to bytes and compresses them using Zstd.
+                    q_bytes = q_idx.to(dtype).cpu().numpy().tobytes()
                     zstd_compressed = compress_zstd(q_bytes, level=22)
-                    original_size_bytes = len(q_bytes)
-                    zstd_ratio = len(zstd_compressed) / original_size_bytes
+                    # It computes the size of the original FP32 model (baseline).
+                    N = q_idx.numel()
+                    original_bits = N * 32  # each weight stored as float32
+                    # It accounts for metadata required to reconstruct the quantization grid:
+                    # - index_bits: storage type of indices
+                    # - min_w and max_w: needed to rebuild v (uniform quantization grid)
+                    metadata_bits = index_bits + 32 + 32
+                    # It computes total compressed size in bits (data + metadata).
+                    compressed_bits = (len(zstd_compressed) * 8) + metadata_bits
+                    # It expresses compression as percentage of original FP32 model size.
+                    zstd_ratio = 100.0 * compressed_bits / original_bits
                     training_time = round(time.time() - start_time)
                     print(f"#DEBUG2.2.3# Epoch {epoch + 1}, training_time = {training_time}s", flush=True)   
 
-                    # 2.2.4) ---- Sparse: mask + values (still store indices of nonzeros as uint8) ----
-                    # decide nonzero based on quantized centers:
+                    # 2.2.4) ---- Sparse: mask + values ----
+                    # It builds a sparse representation by thresholding quantized values.
                     start_time = time.time()
+                    # It reconstructs quantized values from bin centers.
                     v_centers = (v[:-1] + v[1:]) / 2
                     v_centers = torch.cat([v_centers, v[-1:]])
-                    q_vals = v_centers[q_idx]  # float32 GPU
-
+                    q_vals = v_centers[q_idx]
+                    # It defines the sparsity mask based on a threshold.
                     nz_mask = (q_vals.abs() > sparsity_threshold)
+                    # It packs the binary mask efficiently as bits.
                     mask_np = nz_mask.to(torch.uint8).cpu().numpy()
                     bitmask_bytes = pack_bitmaskGPU(mask_np)
-
-                    nz_idx_bytes = q_idx[nz_mask].to(torch.uint8).cpu().numpy().tobytes()
-
+                    # It extracts and serializes only non-zero indices.
+                    nz_idx_bytes = q_idx[nz_mask].to(dtype).cpu().numpy().tobytes()
+                    # It compresses mask and non-zero indices separately.
                     compressed_mask = compress_zstd(bitmask_bytes, level=22)
                     compressed_values = compress_zstd(nz_idx_bytes, level=22)
-
-                    sparse_ratio = (len(compressed_mask) + len(compressed_values)) / original_size_bytes
+                    # It computes total compressed size in bits (data + metadata).
+                    compressed_sparse_bits = (
+                        len(compressed_mask) * 8 +
+                        len(compressed_values) * 8 +
+                        metadata_bits
+                    )
+                    # It expresses sparse compression as percentage of original FP32 model size.
+                    sparse_ratio = 100.0 * compressed_sparse_bits / original_bits
+                    # It computes sparsity level (fraction of zeros).
                     sparsity = 1.0 - float(mask_np.sum()) / float(mask_np.size)
             else:
                 entropy = quantized_entropy = zstd_ratio = sparse_ratio = sparsity = None
