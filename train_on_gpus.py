@@ -430,6 +430,7 @@ def load_imagenet_dataloaders(batch_size, data_root, local_rank, world_size, tra
             .to_tuple("__key__", "jpg;JPEG;jpeg;png")
             .map_tuple(lambda k: k, t_train)
             .map(lambda k_img: (k_img[1], key_to_label(k_img[0])))
+            .repeat()
             .batched(batch_size, partial=False)
         )
 
@@ -451,7 +452,7 @@ def load_imagenet_dataloaders(batch_size, data_root, local_rank, world_size, tra
         trainloader = wds.WebLoader(train_ds, batch_size=None, num_workers=train_workers, pin_memory=True)
         testloader = wds.WebLoader(val_ds, batch_size=None, num_workers=val_workers, pin_memory=True)
         train_sampler = None
-        
+
         return trainloader, testloader, train_sampler, steps_per_epoch
 
     # --- 4-GPU machine: ImageFolder ---
