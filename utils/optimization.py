@@ -102,6 +102,8 @@ def test_accuracyGPU(model, dataloader, device):
     )
 
     it = iter(dataloader)
+    
+    seen_local = 0
 
     with torch.inference_mode(), autocast_ctx:
         while True:
@@ -124,6 +126,8 @@ def test_accuracyGPU(model, dataloader, device):
             t1 = time.time()
             images = images.to(device, non_blocking=True)
             labels = labels.to(device, non_blocking=True)
+
+            seen_local += labels.numel()
 
             if use_cuda:
                 torch.cuda.synchronize(device)
@@ -152,16 +156,19 @@ def test_accuracyGPU(model, dataloader, device):
         dist.all_reduce(correct, op=dist.ReduceOp.SUM)
         dist.all_reduce(total,   op=dist.ReduceOp.SUM)
 
+    seen_total = torch.tensor(seen_local, device=device, dtype=torch.long)
+    if dist.is_initialized():
+        dist.all_reduce(seen_total, op=dist.ReduceOp.SUM)        
+
     acc = (correct.float() * 100.0 / total.float()).item() if total.item() > 0 else 0.0
 
     total_measured = data_wait_time + h2d_time + forward_time
 
     if local_rank == 0:
         print(
-            f"[test_accuracyGPU] batches={num_batches} | "
-            f"data_wait={data_wait_time:.2f}s | "
-            f"h2d={h2d_time:.2f}s | "
-            f"forward={forward_time:.2f}s | "
+            f"[test_accuracyGPU] batches={num_batches} | seen_local={seen_local} | "
+            f"seen_total={seen_total.item()} | data_wait={data_wait_time:.2f}s | "
+            f"h2d={h2d_time:.2f}s | forward={forward_time:.2f}s | "
             f"measured_total={total_measured:.2f}s",
             flush=True
         )

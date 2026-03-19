@@ -339,7 +339,7 @@ def split_by_rank_and_worker(urls):
 # -------------------------
 # Data loading: ImageNet (shards or folders)
 # -------------------------
-def load_imagenet_dataloaders(batch_size, data_root, local_rank, world_size, workers):
+def load_imagenet_dataloaders(batch_size, data_root, local_rank, world_size, train_workers, val_workers):
     t_train = transforms.Compose([
         transforms.RandomResizedCrop(224),
         transforms.RandomHorizontalFlip(),
@@ -410,9 +410,10 @@ def load_imagenet_dataloaders(batch_size, data_root, local_rank, world_size, wor
             print(
                 f"[ImageNet loader] batch_size={batch_size}, world_size={world_size}, "
                 f"steps_per_epoch={steps_per_epoch}, "
-                f"train_shards={len(train_urls)}, val_shards={len(val_urls)}, workers={workers}",
+                f"train_shards={len(train_urls)}, val_shards={len(val_urls)}, "
+                f"train_workers={train_workers}, val_workers={val_workers}",
                 flush=True
-            )   
+            ) 
         # ---------------------------------------------------------------------     
 
         # Note: in the shards the key is of the form "n01440764/xxx.JPEG", 
@@ -448,8 +449,8 @@ def load_imagenet_dataloaders(batch_size, data_root, local_rank, world_size, wor
             .batched(batch_size, partial=True)
         )
 
-        trainloader = wds.WebLoader(train_ds, batch_size=None, num_workers=workers, pin_memory=True)
-        testloader = wds.WebLoader(val_ds, batch_size=None, num_workers=workers, pin_memory=True)
+        trainloader = wds.WebLoader(train_ds, batch_size=None, num_workers=train_workers, pin_memory=True)
+        testloader = wds.WebLoader(val_ds, batch_size=None, num_workers=val_workers, pin_memory=True)
         train_sampler = None
         return trainloader, testloader, train_sampler
 
@@ -470,7 +471,7 @@ def load_imagenet_dataloaders(batch_size, data_root, local_rank, world_size, wor
             train_dataset,
             batch_size=batch_size,
             sampler=train_sampler,
-            num_workers=workers,
+            num_workers=train_workers,
             pin_memory=True,
         )
 
@@ -489,7 +490,7 @@ def load_imagenet_dataloaders(batch_size, data_root, local_rank, world_size, wor
             batch_size=batch_size,
             sampler=val_sampler,
             shuffle=False,
-            num_workers=workers,
+            num_workers=val_workers,
             pin_memory=True,
         )
 
@@ -601,7 +602,8 @@ def main():
         default="./data",
         help="Root directory for datasets. Expects data_root/imagenet/(shards|train,val)",
     )
-    parser.add_argument("--workers", type=int, default=8, help="Number of DataLoader workers (for ImageNet)")
+    parser.add_argument("--train_workers", type=int, default=1, help="Number of DataLoader workers for training")
+    parser.add_argument("--val_workers", type=int, default=2, help="Number of DataLoader workers for validation")
     parser.add_argument("--n_epochs", type=int, default=None, help="Override number of epochs (if set)")
     parser.add_argument("--batch_size", type=int, default=None, help="Override batch size (if set)")
     args = parser.parse_args()
@@ -653,7 +655,8 @@ def main():
             data_root=args.data_root,
             local_rank=local_rank,
             world_size=world_size,
-            workers=args.workers,
+            train_workers=args.train_workers,
+            val_workers=args.val_workers,
         )
 
     if not ddp_needed(model_name):
