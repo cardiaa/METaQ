@@ -451,7 +451,8 @@ def load_imagenet_dataloaders(batch_size, data_root, local_rank, world_size, tra
         trainloader = wds.WebLoader(train_ds, batch_size=None, num_workers=train_workers, pin_memory=True)
         testloader = wds.WebLoader(val_ds, batch_size=None, num_workers=val_workers, pin_memory=True)
         train_sampler = None
-        return trainloader, testloader, train_sampler
+        
+        return trainloader, testloader, train_sampler, steps_per_epoch
 
     # --- 4-GPU machine: ImageFolder ---
     if p["has_folders"]:
