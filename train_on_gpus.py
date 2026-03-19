@@ -431,7 +431,6 @@ def load_imagenet_dataloaders(batch_size, data_root, local_rank, world_size, tra
             .map_tuple(lambda k: k, t_train)
             .map(lambda k_img: (k_img[1], key_to_label(k_img[0])))
             .batched(batch_size, partial=False)
-            .with_epoch(steps_per_epoch)
         )
 
         val_ds = (
@@ -494,7 +493,7 @@ def load_imagenet_dataloaders(batch_size, data_root, local_rank, world_size, tra
             pin_memory=True,
         )
 
-        return trainloader, testloader, train_sampler
+        return trainloader, testloader, train_sampler, steps_per_epoch
 
     raise RuntimeError(
         f"ImageNet not found. Expected either shards in {p['shards_train']} or folders in {p['folder_train']}."
@@ -642,15 +641,17 @@ def main():
         trainloader = DataLoader(trainset, batch_size=64, shuffle=True, drop_last=True, num_workers=0)
         testloader = DataLoader(testset, batch_size=1000, shuffle=False, num_workers=0)
         train_sampler = None
+        steps_per_epoch = None
 
     elif model_name == "LeNet300_100":
         trainset, testset = load_mnist_lenet300(args.data_root)
         trainloader = DataLoader(trainset, batch_size=64, shuffle=True, drop_last=True, num_workers=0)
         testloader = DataLoader(testset, batch_size=1000, shuffle=False, num_workers=0)
         train_sampler = None
+        steps_per_epoch = None
 
     else:
-        trainloader, testloader, train_sampler = load_imagenet_dataloaders(
+        trainloader, testloader, train_sampler, steps_per_epoch = load_imagenet_dataloaders(
             batch_size=h["batch_size"],
             data_root=args.data_root,
             local_rank=local_rank,
@@ -699,6 +700,7 @@ def main():
         trainloader=trainloader,
         testloader=testloader,
         train_sampler=train_sampler,
+        steps_per_epoch=steps_per_epoch,
         delta=args.delta,
         pruning=h["pruning"],
         QuantizationType=h["QuantizationType"],

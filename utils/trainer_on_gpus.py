@@ -17,7 +17,7 @@ from datetime import datetime, timedelta
 def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T1_explicit, T2_explicit, subgradient_step, w0, r, 
                        first_best_indices, BestQuantization_target_acc, final_target_acc, target_zstd_ratio, min_xi, max_xi, upper_c, 
                        lower_c, c1, c2, zeta, l, n_epochs, max_iterations, device, train_optimizer, entropy_optimizer, trainloader,
-                        testloader, train_sampler, delta, pruning, QuantizationType, sparsity_threshold, accuracy_tollerance):
+                       testloader, train_sampler, steps_per_epoch, delta, pruning, QuantizationType, sparsity_threshold, accuracy_tollerance):
     
     #T1_explicit = lambda_reg * alpha
     #T2_explicit = lambda_reg * (1 - alpha)
@@ -80,6 +80,8 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
         start_time_global = time.time()
         
         for i, data in enumerate(trainloader, 0):
+            if steps_per_epoch is not None and i >= steps_per_epoch:
+                break
             #if i % 100 == 0:
             #if((model_name[:7] == "LeNet-5" or model_name == "LeNet300_100") and delta == 5): 
             #    print(f"Batch {i} of epoch {epoch + 1}: time {round(time.time() - start_time2, 2)}s", flush=True)
@@ -204,7 +206,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
             optimizer.step()
 
         if local_rank == 0:
-            print(f"[TRAIN DEBUG] epoch {epoch+1}: batches={i+1}, seen_samples_rank0={seen_samples}", flush=True)
+            print(f"[TRAIN DEBUG] epoch {epoch+1}: batches={i+1}, ⚠️seen_samples_rank0={seen_samples}", flush=True)
 
         training_time_without_metrics = round(time.time() - start_time_global)
         if(local_rank == 0):
