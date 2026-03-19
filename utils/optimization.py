@@ -18,6 +18,7 @@ def test_accuracy(model, dataloader, device):
     accuracy = 100 * correct / total  # Compute accuracy percentage
     return accuracy
 
+''' TO UNCOMMENT OUT OF TESTING
 @torch.no_grad()
 def test_accuracyGPU(model, dataloader, device):
     """
@@ -64,6 +65,110 @@ def test_accuracyGPU(model, dataloader, device):
 
     if was_training:
         model.train()
+    return acc
+'''
+
+""" USED TO MAKE A DIAGNOSTIC PRINT IN test_accuracyGPU, TO CHECK IF THE TIME WAS SPENT WAITING FOR THE DATALOADER OR ON THE GPU  """
+@torch.no_grad()
+def test_accuracyGPU(model, dataloader, device):
+    """
+    Fast accuracy + timing breakdown:
+    - data_wait_time: time spent waiting for the next batch from the dataloader
+    - h2d_time: transfer time host -> device
+    - forward_time: forward pass time
+    """
+    import time
+    import torch
+    import torch.distributed as dist
+
+    was_training = model.training
+    model.eval()
+
+    correct = torch.zeros((), device=device, dtype=torch.long)
+    total   = torch.zeros((), device=device, dtype=torch.long)
+
+    use_cuda = (device.type == "cuda")
+    local_rank = dist.get_rank() if dist.is_initialized() else 0
+
+    data_wait_time = 0.0
+    h2d_time = 0.0
+    forward_time = 0.0
+    num_batches = 0
+
+    autocast_ctx = torch.autocast(
+        device_type="cuda",
+        dtype=torch.bfloat16,
+        enabled=use_cuda,
+    )
+
+    it = iter(dataloader)
+
+    with torch.inference_mode(), autocast_ctx:
+        while True:
+            # -------------------------
+            # 1) Wait for data (host) --- this is the "hidden" 
+            # part of the dataloader time, which includes CPU 
+            # processing and potential waiting for the next 
+            # batch to be ready
+            # -------------------------
+            t0 = time.time()
+            try:
+                images, labels = next(it)
+            except StopIteration:
+                break
+            data_wait_time += time.time() - t0
+
+            # -------------------------
+            # 2) Host -> Device
+            # -------------------------
+            t1 = time.time()
+            images = images.to(device, non_blocking=True)
+            labels = labels.to(device, non_blocking=True)
+
+            if use_cuda:
+                torch.cuda.synchronize(device)
+            h2d_time += time.time() - t1
+
+            # -------------------------
+            # 3) Forward GPU
+            # -------------------------
+            t2 = time.time()
+            if use_cuda:
+                images = images.contiguous(memory_format=torch.channels_last)
+
+            outputs = model(images)
+            predicted = outputs.argmax(dim=1)
+
+            correct += (predicted == labels).sum()
+            total   += labels.numel()
+
+            if use_cuda:
+                torch.cuda.synchronize(device)
+            forward_time += time.time() - t2
+
+            num_batches += 1
+
+    if dist.is_initialized():
+        dist.all_reduce(correct, op=dist.ReduceOp.SUM)
+        dist.all_reduce(total,   op=dist.ReduceOp.SUM)
+
+    acc = (correct.float() * 100.0 / total.float()).item() if total.item() > 0 else 0.0
+
+    total_measured = data_wait_time + h2d_time + forward_time
+
+    if local_rank == 0:
+        print(
+            f"[test_accuracyGPU] batches={num_batches} | "
+            f"data_wait={data_wait_time:.2f}s | "
+            f"h2d={h2d_time:.2f}s | "
+            f"forward={forward_time:.2f}s | "
+            f"measured_total={total_measured:.2f}s",
+            flush=True
+        )
+
+    if was_training:
+        model.train()
+
     return acc
 
 def FISTA(xi, v, w, C, upper_c, lower_c, delta, subgradient_step, device, max_iterations, pruning):
