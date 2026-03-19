@@ -99,11 +99,17 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                 valori = torch.quantile(w_sample, qs)
                 valori_rounded = [round(v.item(), 4) for v in valori]
                 print(f"Quartiles of weights: {valori_rounded}", flush=True)
-                """
-                    
+                """       
+                                
             inputs, targets = data
             inputs, targets = inputs.to(device), targets.to(device)
             optimizer.zero_grad()
+
+            # DEBUG: counting number of seen samples
+            if local_rank == 0 and i == 0:
+                seen_samples = 0  
+            if local_rank == 0:
+                seen_samples += targets.size(0)               
 
             outputs = model(inputs)
             loss = criterion(outputs, targets)
@@ -196,6 +202,9 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                             print("-------------------------------------", flush=True)
 
             optimizer.step()
+
+        if local_rank == 0:
+            print(f"[TRAIN DEBUG] epoch {epoch+1}: batches={i+1}, seen_samples_rank0={seen_samples}", flush=True)
 
         training_time_without_metrics = round(time.time() - start_time_global)
         if(local_rank == 0):
