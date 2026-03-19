@@ -82,15 +82,12 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
         for i, data in enumerate(trainloader, 0):
             if steps_per_epoch is not None and i >= steps_per_epoch:
                 break
-            #if i % 100 == 0:
-            #if((model_name[:7] == "LeNet-5" or model_name == "LeNet300_100") and delta == 5): 
-            #    print(f"Batch {i} of epoch {epoch + 1}: time {round(time.time() - start_time2, 2)}s", flush=True)
+            if local_rank == 0:
+                batch_computation_time = time.time()            
+
             if((model_name == "AlexNet" or model_name == "VGG16") and local_rank == 0):
-                if i == 0:
-                    start_time2 = time.time()
-                else:
-                    print(f"Ended batch {i} of epoch {epoch + 1}: time {round(time.time() - start_time2, 2)}s", flush=True)
-                    start_time2 = time.time()
+
+
                 """
                 w = torch.cat([param.detach().view(-1) for param in model.parameters()]).to(device)
                 num_samples = 1000000
@@ -204,9 +201,12 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                             print("-------------------------------------", flush=True)
 
             optimizer.step()
+            
+            if local_rank == 0:
+                print(f"Ended batch {i+1} of epoch {epoch + 1}: time {round(time.time() - batch_computation_time, 2)}s", flush=True)      
 
         if local_rank == 0:
-            print(f"[TRAIN DEBUG] epoch {epoch+1}: batches={i+1}, ⚠️seen_samples_rank0={seen_samples}", flush=True)
+            print(f"[TRAIN DEBUG] epoch {epoch+1}: batches={i+1}, ⚠️ seen_samples_rank0={seen_samples}", flush=True)
 
         training_time_without_metrics = round(time.time() - start_time_global)
         if(local_rank == 0):
@@ -435,10 +435,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                         f"zstd_ratio = {zstd_ratio:.2%}, sparse_ratio = {sparse_ratio:.2%}, "
                         f"sparsity = {sparsity:.2%} , sparse_accuracy = {sparse_accuracy}, training_time = {training_time_global}s\n",
                         flush=True
-                    )
-            training_time = round(time.time() - start_time)
-            if(local_rank == 0):
-                print(f"#DEBUG2.7# Epoch {epoch + 1}, training_time = {training_time}s", flush=True)                           
+                    )                        
 
             # --- 3) Final barrier: allow all ranks to resume training ---
             if device.type == "cuda":
