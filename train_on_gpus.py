@@ -1,5 +1,6 @@
 import argparse
 import os
+import math
 import itertools
 import glob
 import tarfile
@@ -314,6 +315,28 @@ def split_by_rank(urls):
 
 
 # -------------------------
+# Split shards among DataLoader workers inside the same rank.
+# This avoids duplicated work when num_workers > 1.
+# -------------------------
+def split_by_worker(urls):
+    info = torch.utils.data.get_worker_info()
+    if info is None:
+        return urls
+
+    worker_id = info.id
+    num_workers = info.num_workers
+    return itertools.islice(urls, worker_id, None, num_workers)
+
+
+# -------------------------
+# First split across distributed ranks, 
+# then split across workers inside each rank.
+# -------------------------
+def split_by_rank_and_worker(urls):
+    return split_by_worker(split_by_rank(urls))
+
+
+# -------------------------
 # Data loading: ImageNet (shards or folders)
 # -------------------------
 def load_imagenet_dataloaders(batch_size, data_root, local_rank, world_size, workers):
@@ -373,18 +396,33 @@ def load_imagenet_dataloaders(batch_size, data_root, local_rank, world_size, wor
         train_size = 1281167
         val_size = 50000
         steps_per_epoch = max(1, train_size // (batch_size * max(1, world_size)))
-        val_steps = max(1, val_size // (batch_size * max(1, world_size)))
+        val_steps = max(1, math.ceil(val_size / (batch_size * max(1, world_size))))
 
         train_urls = sorted(glob.glob(p["shards_train"]))
         val_urls   = sorted(glob.glob(p["shards_val"]))
+        
+        # ---------------------------------------------------------------------
+        # DEBUG
+        # Diagnostic print after building the dataset but before training, 
+        # to verify that the expected number of shards and samples are detected, 
+        # and that the batch size and world size are correctly accounted 
+        # for in the steps per epoch.
+        if (not dist.is_initialized()) or dist.get_rank() == 0:
+            print(
+                f"[ImageNet loader] batch_size={batch_size}, world_size={world_size}, "
+                f"steps_per_epoch={steps_per_epoch}, val_steps={val_steps}, "
+                f"train_shards={len(train_urls)}, val_shards={len(val_urls)}, workers={workers}",
+                flush=True
+            )   
+        # ---------------------------------------------------------------------     
 
         # Note: in the shards the key is of the form "n01440764/xxx.JPEG", 
         # so the synset is the first part before "/".
         train_ds = (
             wds.WebDataset(
                 train_urls,
-                shardshuffle=1000,              
-                nodesplitter=split_by_rank, 
+                shardshuffle=1000,
+                nodesplitter=split_by_rank_and_worker,
             )
             .shuffle(10000)
             .decode("pil")
@@ -399,7 +437,7 @@ def load_imagenet_dataloaders(batch_size, data_root, local_rank, world_size, wor
             wds.WebDataset(
                 val_urls,
                 shardshuffle=False,
-                nodesplitter=split_by_rank,
+                nodesplitter=split_by_rank_and_worker,
                 empty_check=False,
             )
             .decode("pil")
