@@ -296,13 +296,13 @@ def load_mnist_lenet300(data_root: str):
     testset = datasets.MNIST(root=data_root, train=False, download=True, transform=transform)
     return trainset, testset
 
-
+"""
 # -------------------------
 # DDP node splitter for WebDataset (no splitting, all processes can read all shards)
 # -------------------------
 def identity_nodesplitter(urls):
     return urls
-
+"""
 
 # -------------------------
 # DDP node splitter for WebDataset (split shards across processes, but no shard-level shuffling)
@@ -313,7 +313,7 @@ def split_by_rank(urls):
     # takes urls and returns an iterator that yields only the urls for the current rank (round-robin)
     return itertools.islice(urls, rank, None, world)
 
-
+"""
 # -------------------------
 # Split shards among DataLoader workers inside the same rank.
 # This avoids duplicated work when num_workers > 1.
@@ -326,15 +326,15 @@ def split_by_worker(urls):
     worker_id = info.id
     num_workers = info.num_workers
     return itertools.islice(urls, worker_id, None, num_workers)
-
-
+"""
+"""
 # -------------------------
 # First split across distributed ranks, 
 # then split across workers inside each rank.
 # -------------------------
 def split_by_rank_and_worker(urls):
     return split_by_worker(split_by_rank(urls))
-
+"""
 
 # -------------------------
 # Data loading: ImageNet (shards or folders)
@@ -396,7 +396,6 @@ def load_imagenet_dataloaders(batch_size, data_root, local_rank, world_size, wor
         train_size = 1281167
         val_size = 50000
         steps_per_epoch = max(1, train_size // (batch_size * max(1, world_size)))
-        val_steps = max(1, math.ceil(val_size / (batch_size * max(1, world_size))))
 
         train_urls = sorted(glob.glob(p["shards_train"]))
         val_urls   = sorted(glob.glob(p["shards_val"]))
@@ -410,7 +409,7 @@ def load_imagenet_dataloaders(batch_size, data_root, local_rank, world_size, wor
         if (not dist.is_initialized()) or dist.get_rank() == 0:
             print(
                 f"[ImageNet loader] batch_size={batch_size}, world_size={world_size}, "
-                f"steps_per_epoch={steps_per_epoch}, val_steps={val_steps}, "
+                f"steps_per_epoch={steps_per_epoch}, "
                 f"train_shards={len(train_urls)}, val_shards={len(val_urls)}, workers={workers}",
                 flush=True
             )   
@@ -446,8 +445,7 @@ def load_imagenet_dataloaders(batch_size, data_root, local_rank, world_size, wor
             .to_tuple("__key__", "jpg;JPEG;jpeg;png")
             .map_tuple(lambda k: k, t_val)
             .map(lambda k_img: (k_img[1], key_to_label(k_img[0])))
-            .batched(batch_size, partial=False)
-            .with_epoch(val_steps)
+            .batched(batch_size, partial=True)
         )
 
         trainloader = wds.WebLoader(train_ds, batch_size=None, num_workers=workers, pin_memory=True)
