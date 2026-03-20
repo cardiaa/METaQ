@@ -150,7 +150,7 @@ def build_model_and_hparams(model_name: str, device: torch.device, args, local_r
     if model_name.startswith("LeNet-5"):
         model = LeNet5_Original().to(device)
 
-        C = 6
+        C = 16
         lambda_reg = 0.0015
         alpha = 0.533
         r = 1.114
