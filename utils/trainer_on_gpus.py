@@ -45,7 +45,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
 
     xi = min_xi + (max_xi - min_xi) * torch.rand(C, device=device)
     xi = torch.sort(xi)[0]   
-    entropy, accuracy = 0, 0
+    accuracy = 0
     accuracies, entropies = [], []
 
     log = ""
@@ -279,7 +279,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                 w_backup = torch.cat([p_.detach().view(-1) for p_ in model.parameters()]).clone()
 
             # 2.1) Build quantized + sparse weights on GPU on EVERY rank (no broadcast).
-            #      Rank 0 still computes CPU-only metrics (entropy/compression) for logging.
+            # Rank 0 computes logging/compression metrics only.
             with torch.no_grad():
                 # --- Quantization on GPU (all ranks) ---
                 if QuantizationType == "center":
@@ -298,7 +298,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
             #if(local_rank == 0):
             #    print(f"#DEBUG2.1# Epoch {epoch + 1}, training_time = {training_time}s", flush=True)       
             
-            # 2.2) --- Rank 0: CPU metrics only ---
+            # 2.2) --- Rank 0: logging/compression metrics only ---
             #start_time = time.time()              
             if local_rank == 0:
                 with torch.no_grad():
@@ -317,8 +317,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                     p = p[p > 0]
                     quantized_entropy = float((-(p * torch.log2(p)).sum() * counts.sum()).item())
                     quantized_entropy = round(quantized_entropy) + 1
-                    entropy = quantized_entropy
-                    entropies.append(entropy)
+                    entropies.append(quantized_entropy)
                     #training_time = round(time.time() - start_time)
                     #print(f"#DEBUG2.2.2# Epoch {epoch + 1}, training_time = {training_time}s", flush=True)   
 
@@ -347,7 +346,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                     # It computes total compressed size in bits (data + metadata).
                     compressed_bits = (len(zstd_compressed) * 8) + metadata_bits
                     # It expresses compression as percentage of original FP32 model size.
-                    zstd_ratio = 100.0 * compressed_bits / original_bits
+                    zstd_ratio = compressed_bits / original_bits
                     #training_time = round(time.time() - start_time)
                     #print(f"#DEBUG2.2.3# Epoch {epoch + 1}, training_time = {training_time}s", flush=True)   
 
@@ -375,11 +374,12 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                         metadata_bits
                     )
                     # It expresses sparse compression as percentage of original FP32 model size.
-                    sparse_ratio = 100.0 * compressed_sparse_bits / original_bits
+                    sparse_ratio = compressed_sparse_bits / original_bits
                     # It computes sparsity level (fraction of zeros).
                     sparsity = 1.0 - float(mask_np.sum()) / float(mask_np.size)
             else:
-                entropy = quantized_entropy = zstd_ratio = sparse_ratio = sparsity = None
+                quantized_entropy = zstd_ratio = sparse_ratio = sparsity = None
+
 
             #training_time = round(time.time() - start_time)
             #if(local_rank == 0):
@@ -432,16 +432,19 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                     log += f"delta = {delta}\n"
                 log += (
                     f"Epoch {epoch + 1}: "
-                    f"A_NQ = {accuracy}, H_NQ = {entropy}, "
+                    f"A_NQ = {accuracy}, "
                     f"A_Q = {quantized_accuracy}, H_Q = {quantized_entropy}, "
                     f"zstd_ratio = {zstd_ratio:.2%}, sparse_ratio = {sparse_ratio:.2%}, "
-                    f"sparsity = {sparsity:.2%} , sparse_accuracy = {sparse_accuracy}, training_time = {training_time_global}s\n\n"
+                    f"sparsity = {sparsity:.2%} , sparse_accuracy = {sparse_accuracy}, "
+                    f"training_time = {training_time_global}s\n\n"
                 )
-                print(f"Epoch {epoch + 1}: "
-                    f"A_NQ = {accuracy}, H_NQ = {entropy}, "
+                print(
+                    f"Epoch {epoch + 1}: "
+                    f"A_NQ = {accuracy}, "
                     f"A_Q = {quantized_accuracy}, H_Q = {quantized_entropy}, "
                     f"zstd_ratio = {zstd_ratio:.2%}, sparse_ratio = {sparse_ratio:.2%}, "
-                    f"sparsity = {sparsity:.2%} , sparse_accuracy = {sparse_accuracy}, training_time = {training_time_global}s\n\n",
+                    f"sparsity = {sparsity:.2%} , sparse_accuracy = {sparse_accuracy}, "
+                    f"training_time = {training_time_global}s\n\n",
                     flush=True)                        
 
             # --- 3) Final barrier: allow all ranks to resume training ---
