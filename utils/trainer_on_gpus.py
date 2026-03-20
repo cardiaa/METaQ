@@ -217,13 +217,15 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
         if(local_rank == 0):
             print(f"Epoch {epoch + 1}: training_time_without_metrics = {training_time_without_metrics}s", flush=True)
 
+        """
         #if local_rank == 0:
         #    print(f"Epoch {epoch + 1}: training_time = {training_time}s\n", flush=True)
         if(model_name[:7] == "LeNet-5" and delta == 5): # To modify if delta's tests are different
             print(f"Epoch {epoch + 1}: training_time = {training_time}s\n", flush=True)
         if(model_name == "LeNet300_100" and delta == 5): # To modify if delta's tests are different
             print(f"Epoch {epoch + 1}: training_time = {training_time}s\n", flush=True)            
-
+        """
+        
         # --- Metrics & Logging ---
         if (epoch % 1 == 0 or epoch == n_epochs - 1):
 
