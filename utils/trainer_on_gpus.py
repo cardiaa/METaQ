@@ -83,12 +83,13 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
             if steps_per_epoch is not None and i >= steps_per_epoch:
                 break
             if local_rank == 0:
-                batch_computation_time = time.time()            
-
-            if((model_name == "AlexNet" or model_name == "VGG16") and local_rank == 0):
-
-
-                """
+                if(model_name == "AlexNet" or model_name == "VGG16"):
+                    batch_computation_time = time.time()            
+                elif(model_name[:7] == "LeNet-5" or model_name == "LeNet300_100"):
+                    if(i % 10 == 0):
+                        batch_computation_time = time.time()
+            """
+            if((model_name == "AlexNet" or model_name == "VGG16") and local_rank == 0):                
                 w = torch.cat([param.detach().view(-1) for param in model.parameters()]).to(device)
                 num_samples = 1000000
                 idx = torch.randperm(w.numel(), device=w.device)[:num_samples]
@@ -98,7 +99,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                 valori = torch.quantile(w_sample, qs)
                 valori_rounded = [round(v.item(), 4) for v in valori]
                 print(f"Quartiles of weights: {valori_rounded}", flush=True)
-                """       
+            """       
                                 
             inputs, targets = data
             inputs, targets = inputs.to(device), targets.to(device)
@@ -207,7 +208,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                     print(f"Ended batch {i+1} of epoch {epoch + 1}: time {round(time.time() - batch_computation_time, 2)}s", flush=True)      
                 elif(model_name[:7] == "LeNet-5" or model_name == "LeNet300_100"):
                     if(i % 10 == 0):
-                        print(f"Ended batch {i+1} of epoch {epoch + 1}: time {round(time.time() - batch_computation_time, 2)}s", flush=True)
+                        """print(f"Ended batch {i+1} of epoch {epoch + 1}: time {round(time.time() - batch_computation_time, 2)}s", flush=True)"""
 
         if local_rank == 0:
             print(f"[TRAIN DEBUG] epoch {epoch+1}: batches={i+1}, ⚠️ seen_samples_rank0={seen_samples}", flush=True)
