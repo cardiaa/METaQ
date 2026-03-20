@@ -24,7 +24,7 @@ from utils.networks import LeNet5, LeNet5_Original, LeNet300_100
 # DDP utilities
 # -------------------------
 def ddp_needed(model_name: str) -> bool:
-    return model_name in ("AlexNet", "VGG16")
+    return model_name in ("AlexNet", "VGG16", "LeNet-5", "LeNet-5 (rotated)", "LeNet300_100")
 
 
 def setup_ddp():
@@ -149,6 +149,8 @@ def build_model_and_hparams(model_name: str, device: torch.device, args, local_r
 
     if model_name.startswith("LeNet-5"):
         model = LeNet5_Original().to(device)
+        if local_rank is not None:
+            model = DDP(model, device_ids=[local_rank])        
 
         C = 16
         lambda_reg = 0.0015
@@ -173,6 +175,8 @@ def build_model_and_hparams(model_name: str, device: torch.device, args, local_r
 
     elif model_name == "LeNet300_100":
         model = LeNet300_100().to(device)
+        if local_rank is not None:
+            model = DDP(model, device_ids=[local_rank])        
 
         C = 64
         lambda_reg = 0.0002
@@ -640,9 +644,41 @@ def main():
     # Data
     if model_name.startswith("LeNet-5"):
         trainset, testset = load_mnist_lenet5(model_name, args.data_root)
-        trainloader = DataLoader(trainset, batch_size=64, shuffle=True, drop_last=True, num_workers=0)
-        testloader = DataLoader(testset, batch_size=1000, shuffle=False, num_workers=0)
-        train_sampler = None
+
+        if ddp_needed(model_name):
+            train_sampler = DistributedSampler(
+                trainset,
+                num_replicas=world_size,
+                rank=local_rank,
+                shuffle=True,
+            )
+
+            test_sampler = DistributedSampler(
+                testset,
+                num_replicas=world_size,
+                rank=local_rank,
+                shuffle=False,
+            )
+
+            trainloader = DataLoader(
+                trainset,
+                batch_size=64,
+                sampler=train_sampler,
+                num_workers=0,
+                drop_last=True,
+            )
+
+            testloader = DataLoader(
+                testset,
+                batch_size=1000,
+                sampler=test_sampler,
+                num_workers=0,
+            )
+        else:
+            trainloader = DataLoader(trainset, batch_size=64, shuffle=True, drop_last=True, num_workers=0)
+            testloader = DataLoader(testset, batch_size=1000, shuffle=False, num_workers=0)
+            train_sampler = None
+
         steps_per_epoch = None
 
     elif model_name == "LeNet300_100":
