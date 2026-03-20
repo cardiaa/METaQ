@@ -203,7 +203,11 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
             optimizer.step()
             
             if local_rank == 0:
-                print(f"Ended batch {i+1} of epoch {epoch + 1}: time {round(time.time() - batch_computation_time, 2)}s", flush=True)      
+                if(model_name == "AlexNet" or model_name == "VGG16"):
+                    print(f"Ended batch {i+1} of epoch {epoch + 1}: time {round(time.time() - batch_computation_time, 2)}s", flush=True)      
+                elif(model_name[:7] == "LeNet-5" or model_name == "LeNet300_100"):
+                    if(i % 10 == 0):
+                        print(f"Ended batch {i+1} of epoch {epoch + 1}: time {round(time.time() - batch_computation_time, 2)}s", flush=True)
 
         if local_rank == 0:
             print(f"[TRAIN DEBUG] epoch {epoch+1}: batches={i+1}, ⚠️ seen_samples_rank0={seen_samples}", flush=True)
@@ -395,11 +399,15 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
             #     _load_flat_params_(flat_s)
             #     sparse_accuracy = test_accuracyGPU(model, testloader, device)
 
-            # 2.5) Evaluate sparse accuracy on ALL ranks
+            # 2.5) Evaluate sparse accuracy on ALL ranks only if there are discrepancies
             start_time = time.time()
-            with torch.no_grad():
-                _load_flat_params_(flat_s)
-                sparse_accuracy = test_accuracyGPU(model, testloader, device)
+            same_q_s = torch.equal(flat_q, flat_s)
+            if same_q_s:
+                sparse_accuracy = quantized_accuracy
+            else:            
+                with torch.no_grad():
+                    _load_flat_params_(flat_s)
+                    sparse_accuracy = test_accuracyGPU(model, testloader, device)
             
             training_time = round(time.time() - start_time)
             if(local_rank == 0):
