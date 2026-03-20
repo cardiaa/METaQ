@@ -210,8 +210,8 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                     if(i % 10 == 0):
                         """print(f"Ended batch {i+1} of epoch {epoch + 1}: time {round(time.time() - batch_computation_time, 2)}s", flush=True)"""
 
-        if local_rank == 0:
-            print(f"[TRAIN DEBUG] epoch {epoch+1}: batches={i+1}, ⚠️ seen_samples_rank0={seen_samples}", flush=True)
+        #if local_rank == 0:
+        #    print(f"[TRAIN DEBUG] epoch {epoch+1}: batches={i+1}, ⚠️ seen_samples_rank0={seen_samples}", flush=True)
 
         training_time_without_metrics = round(time.time() - start_time_global)
         if(local_rank == 0):
@@ -437,7 +437,12 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                     f"zstd_ratio = {zstd_ratio:.2%}, sparse_ratio = {sparse_ratio:.2%}, "
                     f"sparsity = {sparsity:.2%} , sparse_accuracy = {sparse_accuracy}, training_time = {training_time_global}s\n\n"
                 )
-                print(log, flush=True)                        
+                print(f"Epoch {epoch + 1}: "
+                    f"A_NQ = {accuracy}, H_NQ = {entropy}, "
+                    f"A_Q = {quantized_accuracy}, H_Q = {quantized_entropy}, "
+                    f"zstd_ratio = {zstd_ratio:.2%}, sparse_ratio = {sparse_ratio:.2%}, "
+                    f"sparsity = {sparsity:.2%} , sparse_accuracy = {sparse_accuracy}, training_time = {training_time_global}s\n\n",
+                    flush=True)                        
 
             # --- 3) Final barrier: allow all ranks to resume training ---
             if device.type == "cuda":

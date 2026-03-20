@@ -154,9 +154,9 @@ def build_model_and_hparams(model_name: str, device: torch.device, args, local_r
         lambda_reg = 0.0015
         alpha = 0.533
         r = 1.114
-        bucket_zero = round((C - 1) / 2)
-        w0 = round(r - (bucket_zero + 0.5) * 2 * r * (1 - 1 / C) / (C - 1), 3)
-
+        #bucket_zero = round((C - 1) / 2)
+        #w0 = round(r - (bucket_zero + 0.5) * 2 * r * (1 - 1 / C) / (C - 1), 3)
+        w0 = -0.11
         h.update(
             C=C,
             lr=0.0007,

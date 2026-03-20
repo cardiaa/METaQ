@@ -164,14 +164,14 @@ def test_accuracyGPU(model, dataloader, device):
 
     total_measured = data_wait_time + h2d_time + forward_time
 
-    if local_rank == 0:
-        print(
-            f"[test_accuracyGPU] batches={num_batches} | seen_local={seen_local} | "
-            f"seen_total={seen_total.item()} | data_wait={data_wait_time:.2f}s | "
-            f"h2d={h2d_time:.2f}s | forward={forward_time:.2f}s | "
-            f"measured_total={total_measured:.2f}s",
-            flush=True
-        )
+    #if local_rank == 0:
+    #    print(
+    #        f"[test_accuracyGPU] batches={num_batches} | seen_local={seen_local} | "
+    #        f"seen_total={seen_total.item()} | data_wait={data_wait_time:.2f}s | "
+    #        f"h2d={h2d_time:.2f}s | forward={forward_time:.2f}s | "
+    #        f"measured_total={total_measured:.2f}s",
+    #        flush=True
+    #    )
 
     if was_training:
         model.train()
