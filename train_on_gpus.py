@@ -151,15 +151,15 @@ def build_model_and_hparams(model_name: str, device: torch.device, args, local_r
         model = LeNet5_Original().to(device)
 
         C = 6
-        lambda_reg = 0.0002
-        alpha = 0.1
-        r = 2
+        lambda_reg = 0.0015
+        alpha = 0.533
+        r = 1.114
         bucket_zero = round((C - 1) / 2)
         w0 = round(r - (bucket_zero + 0.5) * 2 * r * (1 - 1 / C) / (C - 1), 3)
 
         h.update(
             C=C,
-            lr=0.001,
+            lr=0.0007,
             lambda_reg=lambda_reg,
             alpha=alpha,
             T1_explicit=lambda_reg * alpha,
