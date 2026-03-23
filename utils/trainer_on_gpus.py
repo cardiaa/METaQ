@@ -163,43 +163,6 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                             update = (T2_explicit * (-beta_tensor[idx:idx + numel])).view(param.size())
                             param.grad.add_(update)
                         idx += numel
-                
-                if(i == 310):
-                    # Debug: compute and print norms of gradients
-                    with torch.no_grad():
-                        idx = 0
-                        norm_l2_total = 0.0
-                        norm_custom_total = 0.0
-
-                        for param in model.parameters():
-                            numel = param.numel()
-                            if param.grad is not None:
-
-                                # ---- gradiente L2 "grezzo" ----
-                                grad_l2_core = param.detach()  # SOLO w
-                                norm_l2_total += torch.norm(grad_l2_core).item()
-
-                                # ---- gradiente custom "grezzo" ----
-                                grad_custom_core = (-beta_tensor[idx:idx + numel]).view(param.size())
-                                norm_custom_total += torch.norm(grad_custom_core).item()
-
-                            idx += numel
-
-                        # Stampa delle norme
-                        norm_loss_grad = 0.0
-                        for g in grads_loss:
-                            if g is not None:
-                                norm_loss_grad += torch.norm(g).item()
-
-                        if local_rank == 0:
-                            print("--- Gradient Norms at Batch 310 ---", flush=True)
-                            print(f"L2 grad norm (core): {norm_l2_total:.4f}\n"
-                                f"Custom grad norm (core): {norm_custom_total:.4f}\n"
-                                f"Loss grad norm (pure): {norm_loss_grad:.4f}\n"
-                                f"Weighted L2 grad norm: {(norm_l2_total*T1_explicit):.4f}\n"
-                                f"Weighted Custom grad norm: {(norm_custom_total*T2_explicit):.4f}",
-                                flush=True)
-                            print("-------------------------------------", flush=True)
 
             optimizer.step()
             
@@ -426,7 +389,40 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
             #    print(f"#DEBUG2.6# Epoch {epoch + 1}, training_time = {training_time}s", flush=True)       
 
             # --- 2.7) Logging rank 0 ---
-            if local_rank == 0:
+            if local_rank == 0:           
+                with torch.no_grad():
+                    idx = 0
+                    norm_l2_total = 0.0
+                    norm_custom_total = 0.0
+
+                    for param in model.parameters():
+                        numel = param.numel()
+                        if param.grad is not None:
+
+                            # ---- gradiente L2 "grezzo" ----
+                            grad_l2_core = param.detach()  # SOLO w
+                            norm_l2_total += torch.norm(grad_l2_core).item()
+
+                            # ---- gradiente custom "grezzo" ----
+                            grad_custom_core = (-beta_tensor[idx:idx + numel]).view(param.size())
+                            norm_custom_total += torch.norm(grad_custom_core).item()
+
+                        idx += numel
+
+                    # Stampa delle norme
+                    norm_loss_grad = 0.0
+                    for g in grads_loss:
+                        if g is not None:
+                            norm_loss_grad += torch.norm(g).item()
+                    print(f"============== Epoch {epoch + 1}: ==============", flush=True)   
+                    print(f"L2 grad norm (core): {norm_l2_total:.4f}\n"
+                        f"Custom grad norm (core): {norm_custom_total:.4f}\n"
+                        f"Loss grad norm (pure): {norm_loss_grad:.4f}\n"
+                        f"Weighted L2 grad norm: {(norm_l2_total*T1_explicit):.4f}\n"
+                        f"Weighted Custom grad norm: {(norm_custom_total*T2_explicit):.4f}",
+                        flush=True)
+                    print("------------------------------------", flush=True)   
+
                 training_time_global = round(time.time() - start_time_global)
                 if epoch == 0:
                     log += f"delta = {delta}\n"
@@ -439,13 +435,16 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                     f"training_time = {training_time_global}s\n\n"
                 )
                 print(
-                    f"Epoch {epoch + 1}: "
-                    f"A_NQ = {accuracy}, "
-                    f"A_Q = {quantized_accuracy}, H_Q = {quantized_entropy}, "
-                    f"zstd_ratio = {zstd_ratio:.2%}, sparse_ratio = {sparse_ratio:.2%}, "
-                    f"sparsity = {sparsity:.2%} , sparse_accuracy = {sparse_accuracy}, "
-                    f"training_time = {training_time_global}s\n\n",
-                    flush=True)                        
+                    f"A_NQ = {accuracy}\n"
+                    f"A_Q = {quantized_accuracy}\n"
+                    f"H_Q = {quantized_entropy}\n"
+                    f"zstd_ratio = {zstd_ratio:.2%}\n"
+                    f"sparse_ratio = {sparse_ratio:.2%}\n"
+                    f"sparsity = {sparsity:.2%}\n"
+                    f"sparse_accuracy = {sparse_accuracy}\n"
+                    f"training_time = {training_time_global}s\n",
+                    flush=True)                                  
+                print("====================================\n\n\n", flush=True)              
 
             # --- 3) Final barrier: allow all ranks to resume training ---
             if device.type == "cuda":
