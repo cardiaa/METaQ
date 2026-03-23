@@ -549,6 +549,7 @@ def print_config(model_name, args, h, local_rank_to_print):
     print(f"QuantizationType={h['QuantizationType']}", flush=True)
     print(f"sparsity_threshold={h['sparsity_threshold']}", flush=True)
     print("-" * 60, flush=True)
+    print("", flush=True)
 
 
 def print_allocated_gpus_once(device: torch.device):

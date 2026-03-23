@@ -177,8 +177,6 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
         #    print(f"[TRAIN DEBUG] epoch {epoch+1}: batches={i+1}, ⚠️ seen_samples_rank0={seen_samples}", flush=True)
 
         training_time_without_metrics = round(time.time() - start_time_global)
-        if(local_rank == 0):
-            print(f"Epoch {epoch + 1}: training_time_without_metrics = {training_time_without_metrics}s", flush=True)
 
         """
         #if local_rank == 0:
@@ -415,6 +413,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                         if g is not None:
                             norm_loss_grad += torch.norm(g).item()
                     print(f"============== Epoch {epoch + 1}: ==============", flush=True)   
+                    print(f"Epoch {epoch + 1}: training_time_without_metrics = {training_time_without_metrics}s", flush=True)
                     print(f"L2 grad norm (core): {norm_l2_total:.4f}\n"
                         f"Custom grad norm (core): {norm_custom_total:.4f}\n"
                         f"Loss grad norm (pure): {norm_loss_grad:.4f}\n"
@@ -442,9 +441,9 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                     f"sparse_ratio = {sparse_ratio:.2%}\n"
                     f"sparsity = {sparsity:.2%}\n"
                     f"sparse_accuracy = {sparse_accuracy}\n"
-                    f"training_time = {training_time_global}s\n",
+                    f"training_time = {training_time_global}s",
                     flush=True)                                  
-                print("====================================\n\n\n", flush=True)              
+                print("====================================\n\n", flush=True)              
 
             # --- 3) Final barrier: allow all ranks to resume training ---
             if device.type == "cuda":
