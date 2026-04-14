@@ -153,8 +153,8 @@ def build_model_and_hparams(model_name: str, device: torch.device, args, local_r
             model = DDP(model, device_ids=[local_rank])        
 
         C = 256
-        lambda_reg = 0.0015
-        alpha = 0.533
+        #lambda_reg = 0.0015
+        #alpha = 0.533
         r = 1.114
         #bucket_zero = round((C - 1) / 2)
         #w0 = round(r - (bucket_zero + 0.5) * 2 * r * (1 - 1 / C) / (C - 1), 3)
@@ -162,13 +162,16 @@ def build_model_and_hparams(model_name: str, device: torch.device, args, local_r
         h.update(
             C=C,
             lr=0.0007,
-            lambda_reg=lambda_reg,
-            alpha=alpha,
-            T1_explicit=lambda_reg * alpha,
-            T2_explicit=lambda_reg * (1 - alpha),
+            #lambda_reg=lambda_reg,
+            #alpha=alpha,
+            #T1_explicit=lambda_reg * alpha,
+            #T2_explicit=lambda_reg * (1 - alpha),
+            # Override
+            T1_explicit=0.001,
+            T2_explicit=0.0005,            
             r=r,
             w0=w0,
-            n_epochs=100,
+            n_epochs=500,
             train_optimizer="ADAM",
         )
         h["upper_c"] = sum(p.numel() for p in LeNet5().parameters())
@@ -179,8 +182,8 @@ def build_model_and_hparams(model_name: str, device: torch.device, args, local_r
             model = DDP(model, device_ids=[local_rank])        
 
         C = 64
-        lambda_reg = 0.0002
-        alpha = 0.6
+        #lambda_reg = 0.0002
+        #alpha = 0.6
         r = 2
         bucket_zero = round((C - 1) / 2)
         w0 = round(r - (bucket_zero + 0.5) * 2 * r * (1 - 1 / C) / (C - 1), 3)
@@ -188,10 +191,13 @@ def build_model_and_hparams(model_name: str, device: torch.device, args, local_r
         h.update(
             C=C,
             lr=0.001,
-            lambda_reg=lambda_reg,
-            alpha=alpha,
-            T1_explicit=lambda_reg * alpha,
-            T2_explicit=lambda_reg * (1 - alpha),
+            #lambda_reg=lambda_reg,
+            #alpha=alpha,
+            #T1_explicit=lambda_reg * alpha,
+            #T2_explicit=lambda_reg * (1 - alpha),
+            # Override
+            T1_explicit=0.001,
+            T2_explicit=0.0005,             
             r=r,
             w0=w0,
             n_epochs=100,
@@ -213,8 +219,8 @@ def build_model_and_hparams(model_name: str, device: torch.device, args, local_r
             lr=1.6e-2,
             #batch_size=2048,  
             batch_size=128,  # First test on Leonardo
-            lambda_reg=5e-4,
-            alpha=0.99999,
+            #lambda_reg=5e-4,
+            #alpha=0.99999,
             T1_explicit=1e-3,
             T2_explicit=1e-6,
             r=1.51,
@@ -234,8 +240,8 @@ def build_model_and_hparams(model_name: str, device: torch.device, args, local_r
         model = DDP(model, device_ids=[local_rank])
 
         C = 8
-        lambda_reg = 0.0005
-        alpha = 0.9
+        #lambda_reg = 0.0005
+        #alpha = 0.9
         r = 2
         bucket_zero = round((C - 1) / 2)
         w0 = round(r - (bucket_zero + 0.5) * 2 * r * (1 - 1 / C) / (C - 1), 3)
@@ -244,10 +250,13 @@ def build_model_and_hparams(model_name: str, device: torch.device, args, local_r
             C=C,
             lr=0.01,
             batch_size=512,
-            lambda_reg=lambda_reg,
-            alpha=alpha,
-            T1_explicit=lambda_reg * alpha,
-            T2_explicit=lambda_reg * (1 - alpha),
+            #lambda_reg=lambda_reg,
+            #alpha=alpha,
+            #T1_explicit=lambda_reg * alpha,
+            #T2_explicit=lambda_reg * (1 - alpha),
+            # Override
+            T1_explicit=0.001,
+            T2_explicit=0.0005,             
             r=r,
             w0=w0,
             n_epochs=20,
@@ -612,6 +621,8 @@ def main():
     parser.add_argument("--val_workers", type=int, default=2, help="Number of DataLoader workers for validation")
     parser.add_argument("--n_epochs", type=int, default=None, help="Override number of epochs (if set)")
     parser.add_argument("--batch_size", type=int, default=None, help="Override batch size (if set)")
+    parser.add_argument("--T1", type=float, default=0, help="Override T1 (if set)")
+    parser.add_argument("--T2", type=float, default=0, help="Override T2 (if set)")
     args = parser.parse_args()
 
     # CPU thread control
@@ -640,7 +651,11 @@ def main():
     if args.n_epochs is not None:
         h["n_epochs"] = args.n_epochs
     if args.batch_size is not None:
-        h["batch_size"] = args.batch_size        
+        h["batch_size"] = args.batch_size    
+    if args.T1 > 0:
+        h["T1_explicit"] = args.T1
+    if args.T2 > 0:
+        h["T2_explicit"] = args.T2    
 
     # Data
     if model_name.startswith("LeNet-5"):
