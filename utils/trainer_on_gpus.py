@@ -55,6 +55,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
     
     # Training loop
     for epoch in range(n_epochs):
+        """
         # Use a schedule to ease training
         if epoch >= 0 and epoch <= 3:
             T1_explicit = T1_regime / 8
@@ -68,6 +69,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
         else:
             T1_explicit = T1_regime
             T2_explicit = T2_regime
+        """
         for param_group in optimizer.param_groups:
             param_group['weight_decay'] = T1_explicit   
 
