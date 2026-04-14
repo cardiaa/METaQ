@@ -50,13 +50,17 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
 
     log = ""
     #delta_regime = delta
+    """
     T1_regime = T1_explicit
     T2_regime = T2_explicit
-    
+    """
+    T2_explicit_start = T2_explicit / 8
+    T2_explicit_end = T2_explicit
     # Training loop
     for epoch in range(n_epochs):
-        """
         # Use a schedule to ease training
+        # First Method: 4 regimes of 4 epochs each with fixed T1_explicit and T2_explicit values
+        """
         if epoch >= 0 and epoch <= 3:
             T1_explicit = T1_regime / 8
             T2_explicit = T2_regime / 8
@@ -68,8 +72,12 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
             T2_explicit = T2_regime / 2
         else:
             T1_explicit = T1_regime
-            T2_explicit = T2_regime
+            T2_explicit = T2_regime    
         """
+        # Second Method: exponential schedule with 3 parameters: 
+        # T2_explicit_start, T2_explicit_end, and the schedule function (here exponential)
+        T2_explicit = T2_explicit_end * (1 - np.exp(-epoch)) + T2_explicit_start * np.exp(-epoch)
+
         for param_group in optimizer.param_groups:
             param_group['weight_decay'] = T1_explicit   
 
