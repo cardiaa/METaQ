@@ -225,7 +225,7 @@ def build_model_and_hparams(model_name: str, device: torch.device, args, local_r
             T2_explicit=1e-6,
             r=1.51,
             w0=0.013,
-            n_epochs=2,
+            n_epochs=20,
             train_optimizer="SGD",
         )
         h["upper_c"] = sum(p.numel() for p in model.parameters())
