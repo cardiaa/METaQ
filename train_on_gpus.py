@@ -215,7 +215,7 @@ def build_model_and_hparams(model_name: str, device: torch.device, args, local_r
         model = DDP(model, device_ids=[local_rank])
 
         h.update(
-            C=32,
+            C=16,
             lr=1.6e-2,
             #batch_size=2048,  
             batch_size=128,  # First test on Leonardo
