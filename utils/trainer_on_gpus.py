@@ -478,6 +478,24 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
         """
 
         # ---------------------------------------------------------------------------------------------------------
+        if((model_name == "AlexNet" or model_name == "VGG16") and accuracy < 0.12 and epoch >= 3):
+            log += (
+                f"Accuracy is too low! (A1.0), delta: {delta}\n"
+            )
+            log += "-"*60
+
+            print(log, flush = True)
+            return
+        
+        if((model_name == "LeNet5" or model_name == "LeNet300_100") and accuracy < 12 and epoch >= 3):
+            log += (
+                f"Accuracy is too low! (A1.0), delta: {delta}\n"
+            )
+            log += "-"*60
+
+            print(log, flush = True)
+            return        
+
         
         """
         # No-pruning exit conditions
