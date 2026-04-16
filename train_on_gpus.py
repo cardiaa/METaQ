@@ -436,14 +436,13 @@ def load_imagenet_dataloaders(batch_size, data_root, local_rank, world_size, tra
                 train_urls,
                 shardshuffle=1000,
                 nodesplitter=split_by_rank,
-                workersplitter=wds.split_by_worker,
             )
             .decode("pil")
             .to_tuple("__key__", "jpg;JPEG;jpeg;png")
             .map_tuple(lambda k: k, t_train)
             .map(lambda k_img: (k_img[1], key_to_label(k_img[0])))
             .repeat()
-            .shuffle(1024, initial=1024)
+            .shuffle(4096, initial=4096)
         )
 
         val_ds = (
