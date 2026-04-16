@@ -443,7 +443,7 @@ def load_imagenet_dataloaders(batch_size, data_root, local_rank, world_size, tra
             .map_tuple(lambda k: k, t_train)
             .map(lambda k_img: (k_img[1], key_to_label(k_img[0])))
             .repeat()
-            .shuffle(50000, initial=50000)
+            .shuffle(1024, initial=1024)
         )
 
         val_ds = (
