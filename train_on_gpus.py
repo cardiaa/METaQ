@@ -432,17 +432,13 @@ def load_imagenet_dataloaders(batch_size, data_root, local_rank, world_size, tra
         # Note: in the shards the key is of the form "n01440764/xxx.JPEG", 
         # so the synset is the first part before "/".
         train_ds = (
-            wds.WebDataset(
-                train_urls,
-                shardshuffle=1000,
-                nodesplitter=split_by_rank,
-            )
+            wds.ResampledShards(train_urls)
             .decode("pil")
             .to_tuple("__key__", "jpg;JPEG;jpeg;png")
             .map_tuple(lambda k: k, t_train)
             .map(lambda k_img: (k_img[1], key_to_label(k_img[0])))
-            .repeat()
-            .shuffle(4096, initial=4096)
+            .shuffle(4096, initial=1024)
+            .batched(batch_size, partial=False)
         )
 
         val_ds = (
@@ -461,7 +457,7 @@ def load_imagenet_dataloaders(batch_size, data_root, local_rank, world_size, tra
 
         trainloader = wds.WebLoader(
             train_ds,
-            batch_size=batch_size,
+            batch_size=None,
             num_workers=train_workers,
             pin_memory=True,
         )
