@@ -442,23 +442,8 @@ def load_imagenet_dataloaders(batch_size, data_root, local_rank, world_size, tra
             .to_tuple("__key__", "jpg;JPEG;jpeg;png")
             .map_tuple(lambda k: k, t_train)
             .map(lambda k_img: (k_img[1], key_to_label(k_img[0])))
-            .shuffle(50000)
             .repeat()
-        )
-
-        val_ds = (
-            wds.WebDataset(
-                val_urls,
-                shardshuffle=False,
-                nodesplitter=split_by_rank,
-                workersplitter=wds.split_by_worker,
-                empty_check=False,
-            )
-            .decode("pil")
-            .to_tuple("__key__", "jpg;JPEG;jpeg;png")
-            .map_tuple(lambda k: k, t_val)
-            .map(lambda k_img: (k_img[1], key_to_label(k_img[0])))
-            .batched(batch_size, partial=True)
+            .shuffle(50000, initial=50000)
         )
 
         val_ds = (
