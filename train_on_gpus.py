@@ -438,13 +438,12 @@ def load_imagenet_dataloaders(batch_size, data_root, local_rank, world_size, tra
                 nodesplitter=split_by_rank,
                 workersplitter=wds.split_by_worker,
             )
-            .shuffle(10000)
             .decode("pil")
             .to_tuple("__key__", "jpg;JPEG;jpeg;png")
             .map_tuple(lambda k: k, t_train)
             .map(lambda k_img: (k_img[1], key_to_label(k_img[0])))
+            .shuffle(50000)
             .repeat()
-            .batched(batch_size, partial=False)
         )
 
         val_ds = (
@@ -462,8 +461,32 @@ def load_imagenet_dataloaders(batch_size, data_root, local_rank, world_size, tra
             .batched(batch_size, partial=True)
         )
 
-        trainloader = wds.WebLoader(train_ds, batch_size=None, num_workers=train_workers, pin_memory=True)
-        testloader = wds.WebLoader(val_ds, batch_size=None, num_workers=val_workers, pin_memory=True)
+        val_ds = (
+            wds.WebDataset(
+                val_urls,
+                shardshuffle=False,
+                nodesplitter=split_by_rank,
+                workersplitter=wds.split_by_worker,
+                empty_check=False,
+            )
+            .decode("pil")
+            .to_tuple("__key__", "jpg;JPEG;jpeg;png")
+            .map_tuple(lambda k: k, t_val)
+            .map(lambda k_img: (k_img[1], key_to_label(k_img[0])))
+        )
+
+        trainloader = wds.WebLoader(
+            train_ds,
+            batch_size=batch_size,
+            num_workers=train_workers,
+            pin_memory=True,
+        )
+        testloader = wds.WebLoader(
+            val_ds,
+            batch_size=batch_size,
+            num_workers=val_workers,
+            pin_memory=True,
+        )
         train_sampler = None
 
         return trainloader, testloader, train_sampler, steps_per_epoch
