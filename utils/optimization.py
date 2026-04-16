@@ -143,6 +143,20 @@ def test_accuracyGPU(model, dataloader, device):
             outputs = model(images)
             predicted = outputs.argmax(dim=1)
 
+            """ DEBUG 16/04/26 """
+            if local_rank == 0 and num_batches == 0:
+                print("=== VAL DEBUG ===", flush=True)
+                print(f"labels[:20]: {labels[:20].tolist()}", flush=True)
+                print(f"preds[:20]:  {predicted[:20].tolist()}", flush=True)
+
+                unique_preds, counts_preds = torch.unique(predicted, return_counts=True)
+                print(f"num unique preds in first val batch: {unique_preds.numel()}", flush=True)
+
+                topk = min(10, unique_preds.numel())
+                for c, n in zip(unique_preds[:topk], counts_preds[:topk]):
+                    print(f"  predicted class {c.item()}: {n.item()} samples", flush=True)
+                print("=================", flush=True)            
+
             correct += (predicted == labels).sum()
             total   += labels.numel()
 

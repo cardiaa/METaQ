@@ -124,6 +124,24 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
             outputs = model(inputs)
             loss = criterion(outputs, targets)
 
+            """ DEBUG 16/04/26 """
+            if local_rank == 0 and i == 0:
+                with torch.no_grad():
+                    preds = outputs.argmax(dim=1)
+                    print("=== TRAIN DEBUG ===", flush=True)
+                    print(f"targets min/max: {targets.min().item()} / {targets.max().item()}", flush=True)
+                    print(f"targets[:20]: {targets[:20].tolist()}", flush=True)
+                    print(f"preds[:20]:   {preds[:20].tolist()}", flush=True)
+                    print(f"loss: {loss.item():.6f}", flush=True)
+
+                    unique_preds, counts_preds = torch.unique(preds, return_counts=True)
+                    topk = min(10, unique_preds.numel())
+                    print(f"num unique preds in batch: {unique_preds.numel()}", flush=True)
+                    print("top predicted classes in batch:", flush=True)
+                    for c, n in zip(unique_preds[:topk], counts_preds[:topk]):
+                        print(f"  class {c.item()}: {n.item()} samples", flush=True)
+                    print("===================", flush=True)
+
             # Backpropagation
             loss.backward()
 
