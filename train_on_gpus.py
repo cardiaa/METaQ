@@ -211,7 +211,7 @@ def build_model_and_hparams(model_name: str, device: torch.device, args, local_r
 
         model = models.alexnet(weights=None)
         model.classifier[6] = nn.Linear(4096, 1000)
-        model = model.to(device)
+        model = model.to(device, memory_format=torch.channels_last)
         model = DDP(model, device_ids=[local_rank])
 
         h.update(

@@ -112,8 +112,8 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
             """       
                                 
             inputs, targets = data
-            inputs, targets = inputs.to(device), targets.to(device)
-            optimizer.zero_grad()
+            inputs = inputs.to(device, non_blocking=True)
+            targets = targets.to(device, non_blocking=True)
 
             # DEBUG: counting number of seen samples
             if local_rank == 0 and i == 0:
@@ -121,8 +121,18 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
             if local_rank == 0:
                 seen_samples += targets.size(0)               
 
-            outputs = model(inputs)
-            loss = criterion(outputs, targets)
+            if device.type == "cuda":
+                inputs = inputs.contiguous(memory_format=torch.channels_last)
+
+            optimizer.zero_grad(set_to_none=True)
+
+            with torch.autocast(
+                device_type="cuda",
+                dtype=torch.bfloat16,
+                enabled=(device.type == "cuda")
+            ):
+                outputs = model(inputs)
+                loss = criterion(outputs, targets)
 
             """ DEBUG 16/04/26 """
             if local_rank == 0 and i == 0:
