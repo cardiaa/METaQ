@@ -41,7 +41,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
     v = torch.linspace(min_w, max_w - (max_w - min_w)/C, steps=C, device=device)
     #initialize_weights(model, min_w, max_w)
     with torch.no_grad():
-        w = torch.cat([param.detach().view(-1) for param in model.parameters()]).to(device)
+        w = torch.cat([param.detach().reshape(-1) for param in model.parameters()]).to(device)
 
     xi = min_xi + (max_xi - min_xi) * torch.rand(C, device=device)
     xi = torch.sort(xi)[0]   
@@ -161,7 +161,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
             beta_tensor = None
             if T2_explicit > 0:                
                 with torch.no_grad():
-                    w = torch.cat([param.detach().view(-1) for param in model.parameters()]).to(device)
+                    w = torch.cat([param.detach().reshape(-1) for param in model.parameters()]).to(device)
 
                     #unique_weights = torch.unique(w).numel() # Alternative version
                     #indices = torch.searchsorted(v, w, right=True) - 1
@@ -276,7 +276,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
 
             # 2.0) Backup current weights on EVERY rank (fast restore)
             with torch.no_grad():
-                w_backup = torch.cat([p_.detach().view(-1) for p_ in model.parameters()]).clone()
+                w_backup = torch.cat([p_.detach().reshape(-1) for p_ in model.parameters()]).clone()
 
             # 2.1) Build quantized + sparse weights on GPU on EVERY rank (no broadcast).
             # Rank 0 computes logging/compression metrics only.

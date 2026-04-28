@@ -1,5 +1,6 @@
 import argparse
 import os
+import sys
 import math
 import itertools
 import glob
@@ -767,4 +768,12 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except Exception as e:
+        rank = int(os.environ.get("RANK", "0"))
+        if rank == 0:
+            raise
+        else:
+            print(f"[rank {rank}] failed; traceback suppressed: {type(e).__name__}: {e}", flush=True)
+            sys.exit(1)
