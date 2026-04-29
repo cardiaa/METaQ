@@ -217,7 +217,7 @@ def build_model_and_hparams(model_name: str, device: torch.device, args, local_r
 
         h.update(
             C=16,
-            lr=5e-2,
+            lr=1e-1,
             #batch_size=2048,  
             batch_size=128,  # First test on Leonardo
             #lambda_reg=5e-4,
