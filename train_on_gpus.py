@@ -624,6 +624,12 @@ def main():
     parser.add_argument("--batch_size", type=int, default=None, help="Override batch size (if set)")
     parser.add_argument("--T1", type=float, default=0, help="Override T1 (if set)")
     parser.add_argument("--T2", type=float, default=0, help="Override T2 (if set)")
+    parser.add_argument(
+        "--epoch_fraction",
+        type=float,
+        default=1.0,
+        help="Fraction of ImageNet seen per epoch, e.g. 0.25 means 25%"
+    )    
     args = parser.parse_args()
 
     # CPU thread control
@@ -714,6 +720,18 @@ def main():
             train_workers=args.train_workers,
             val_workers=args.val_workers,
         )
+        if steps_per_epoch is not None:
+            if not (0 < args.epoch_fraction <= 1):
+                raise ValueError("--epoch_fraction must be in (0, 1].")
+
+            steps_per_epoch = max(1, int(steps_per_epoch * args.epoch_fraction))
+
+            if dist.is_initialized() and dist.get_rank() == 0:
+                print(
+                    f"[ImageNet loader] using epoch_fraction={args.epoch_fraction}, "
+                    f"effective_steps_per_epoch={steps_per_epoch}",
+                    flush=True
+                )        
 
     if not ddp_needed(model_name):
         print_config(model_name, args, h, 0)
