@@ -174,6 +174,14 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                             param.grad.add_(update)
                         idx += numel
 
+                    if dist.is_initialized():
+                        for param in model.parameters():
+                            if param.grad is not None:
+                                dist.all_reduce(param.grad, op=dist.ReduceOp.SUM)
+                                param.grad.div_(dist.get_world_size())
+
+                        dist.broadcast(xi, src=0)                        
+
                     entropy_steps += 1
                     if local_rank == 0:
                         last_custom_beta_norm = beta_tensor.float().norm().item()
