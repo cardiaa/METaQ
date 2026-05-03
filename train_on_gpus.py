@@ -141,6 +141,10 @@ def build_model_and_hparams(model_name: str, device: torch.device, args, local_r
         l=0.5,
         n_epochs=1,
         max_iterations=15,
+        metrics_interval=1,
+        entropy_warmup_epochs=0,
+        entropy_every=1,
+        check_ddp_sync=False,
         train_optimizer="SGD",
         entropy_optimizer="FISTA",
         pruning="Y",
@@ -473,6 +477,7 @@ def load_imagenet_dataloaders(batch_size, data_root, local_rank, world_size, tra
     if p["has_folders"]:
         train_dataset = datasets.ImageFolder(p["folder_train"], transform=t_train)
         val_dataset = datasets.ImageFolder(p["folder_val"], transform=t_val)
+        steps_per_epoch = max(1, len(train_dataset) // (batch_size * max(1, world_size)))
 
         train_sampler = DistributedSampler(
             train_dataset,
@@ -531,10 +536,16 @@ def print_config(model_name, args, h, local_rank_to_print):
     print(f"C={h['C']}", flush=True)
     print(f"delta={args.delta}", flush=True)
     print(f"lr={h['lr']}", flush=True)
+    world_size = dist.get_world_size() if dist.is_initialized() else 1
     if h["batch_size"] is not None:
-        print(f"batch_size={h['batch_size']}", flush=True)
+        print(f"batch_size_per_gpu={h['batch_size']}", flush=True)
+        print(f"global_batch_size={h['batch_size'] * world_size}", flush=True)
     print(f"T1={h['T1_explicit']}", flush=True)
     print(f"T2={h['T2_explicit']}", flush=True)
+    print(f"metrics_interval={h['metrics_interval']}", flush=True)
+    print(f"entropy_warmup_epochs={h['entropy_warmup_epochs']}", flush=True)
+    print(f"entropy_every={h['entropy_every']}", flush=True)
+    print(f"check_ddp_sync={h['check_ddp_sync']}", flush=True)
     print(f"subgradient_step={h['subgradient_step']}", flush=True)
     print(f"w0={h['w0']}", flush=True)
     print(f"r={h['r']}", flush=True)
@@ -621,9 +632,15 @@ def main():
     parser.add_argument("--train_workers", type=int, default=1, help="Number of DataLoader workers for training")
     parser.add_argument("--val_workers", type=int, default=2, help="Number of DataLoader workers for validation")
     parser.add_argument("--n_epochs", type=int, default=None, help="Override number of epochs (if set)")
-    parser.add_argument("--batch_size", type=int, default=None, help="Override batch size (if set)")
-    parser.add_argument("--T1", type=float, default=0, help="Override T1 (if set)")
-    parser.add_argument("--T2", type=float, default=0, help="Override T2 (if set)")
+    parser.add_argument("--batch_size", type=int, default=None, help="Override per-GPU batch size (if set)")
+    parser.add_argument("--lr", type=float, default=None, help="Override learning rate (if set)")
+    parser.add_argument("--T1", type=float, default=None, help="Override L2 weight decay term; 0 disables it")
+    parser.add_argument("--T2", type=float, default=None, help="Override entropy term; 0 disables it")
+    parser.add_argument("--max_iterations", type=int, default=None, help="Override FISTA/PBM iterations (if set)")
+    parser.add_argument("--metrics_interval", type=int, default=1, help="Evaluate/compress every N epochs")
+    parser.add_argument("--entropy_warmup_epochs", type=int, default=0, help="Epochs with entropy term disabled")
+    parser.add_argument("--entropy_every", type=int, default=1, help="Apply entropy term every N optimizer steps")
+    parser.add_argument("--check_ddp_sync", action="store_true", help="Print a parameter checksum range after evaluation")
     parser.add_argument(
         "--epoch_fraction",
         type=float,
@@ -658,11 +675,25 @@ def main():
     if args.n_epochs is not None:
         h["n_epochs"] = args.n_epochs
     if args.batch_size is not None:
-        h["batch_size"] = args.batch_size    
-    if args.T1 > 0:
+        h["batch_size"] = args.batch_size
+    if args.lr is not None:
+        h["lr"] = args.lr
+    if args.T1 is not None:
         h["T1_explicit"] = args.T1
-    if args.T2 > 0:
-        h["T2_explicit"] = args.T2    
+    if args.T2 is not None:
+        h["T2_explicit"] = args.T2
+    if args.max_iterations is not None:
+        h["max_iterations"] = args.max_iterations
+    if args.metrics_interval < 1:
+        raise ValueError("--metrics_interval must be >= 1.")
+    if args.entropy_warmup_epochs < 0:
+        raise ValueError("--entropy_warmup_epochs must be >= 0.")
+    if args.entropy_every < 1:
+        raise ValueError("--entropy_every must be >= 1.")
+    h["metrics_interval"] = args.metrics_interval
+    h["entropy_warmup_epochs"] = args.entropy_warmup_epochs
+    h["entropy_every"] = args.entropy_every
+    h["check_ddp_sync"] = args.check_ddp_sync
 
     # Data
     if model_name.startswith("LeNet-5"):
@@ -779,6 +810,10 @@ def main():
         QuantizationType=h["QuantizationType"],
         sparsity_threshold=h["sparsity_threshold"],
         accuracy_tollerance=h["accuracy_tollerance"],
+        metrics_interval=h["metrics_interval"],
+        entropy_warmup_epochs=h["entropy_warmup_epochs"],
+        entropy_every=h["entropy_every"],
+        check_ddp_sync=h["check_ddp_sync"],
     )
 
     if ddp_needed(model_name):

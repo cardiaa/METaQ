@@ -68,124 +68,48 @@ def test_accuracyGPU(model, dataloader, device):
     return acc
 '''
 
-""" USED TO MAKE A DIAGNOSTIC PRINT IN test_accuracyGPU, TO CHECK IF THE TIME WAS SPENT WAITING FOR THE DATALOADER OR ON THE GPU  """
 @torch.no_grad()
 def test_accuracyGPU(model, dataloader, device):
     """
-    Fast accuracy + timing breakdown:
-    - data_wait_time: time spent waiting for the next batch from the dataloader
-    - h2d_time: transfer time host -> device
-    - forward_time: forward pass time
+    Fast distributed accuracy:
+    - GPU counters, with one all-reduce at the end
+    - inference_mode/autocast bf16 on CUDA
+    - no per-batch debug prints or timing synchronizations
     """
-    import time
-    import torch
     import torch.distributed as dist
 
     was_training = model.training
     model.eval()
 
     correct = torch.zeros((), device=device, dtype=torch.long)
-    total   = torch.zeros((), device=device, dtype=torch.long)
+    total = torch.zeros((), device=device, dtype=torch.long)
 
     use_cuda = (device.type == "cuda")
-    local_rank = dist.get_rank() if dist.is_initialized() else 0
-
-    data_wait_time = 0.0
-    h2d_time = 0.0
-    forward_time = 0.0
-    num_batches = 0
-
     autocast_ctx = torch.autocast(
         device_type="cuda",
         dtype=torch.bfloat16,
         enabled=use_cuda,
     )
 
-    it = iter(dataloader)
-    
-    seen_local = 0
-
     with torch.inference_mode(), autocast_ctx:
-        while True:
-            # -------------------------
-            # 1) Wait for data (host) --- this is the "hidden" 
-            # part of the dataloader time, which includes CPU 
-            # processing and potential waiting for the next 
-            # batch to be ready
-            # -------------------------
-            t0 = time.time()
-            try:
-                images, labels = next(it)
-            except StopIteration:
-                break
-            data_wait_time += time.time() - t0
-
-            # -------------------------
-            # 2) Host -> Device
-            # -------------------------
-            t1 = time.time()
+        for images, labels in dataloader:
             images = images.to(device, non_blocking=True)
             labels = labels.to(device, non_blocking=True)
 
-            seen_local += labels.numel()
-
-            if use_cuda:
-                torch.cuda.synchronize(device)
-            h2d_time += time.time() - t1
-
-            # -------------------------
-            # 3) Forward GPU
-            # -------------------------
-            t2 = time.time()
             if use_cuda:
                 images = images.contiguous(memory_format=torch.channels_last)
 
             outputs = model(images)
             predicted = outputs.argmax(dim=1)
 
-            """ DEBUG 16/04/26 """
-            if local_rank == 0 and num_batches == 0:
-                print("=== VAL DEBUG ===", flush=True)
-                print(f"labels[:20]: {labels[:20].tolist()}", flush=True)
-                print(f"preds[:20]:  {predicted[:20].tolist()}", flush=True)
-
-                unique_preds, counts_preds = torch.unique(predicted, return_counts=True)
-                print(f"num unique preds in first val batch: {unique_preds.numel()}", flush=True)
-
-                topk = min(10, unique_preds.numel())
-                for c, n in zip(unique_preds[:topk], counts_preds[:topk]):
-                    print(f"  predicted class {c.item()}: {n.item()} samples", flush=True)
-                print("=================", flush=True)            
-
             correct += (predicted == labels).sum()
-            total   += labels.numel()
-
-            if use_cuda:
-                torch.cuda.synchronize(device)
-            forward_time += time.time() - t2
-
-            num_batches += 1
+            total += labels.numel()
 
     if dist.is_initialized():
         dist.all_reduce(correct, op=dist.ReduceOp.SUM)
-        dist.all_reduce(total,   op=dist.ReduceOp.SUM)
-
-    seen_total = torch.tensor(seen_local, device=device, dtype=torch.long)
-    if dist.is_initialized():
-        dist.all_reduce(seen_total, op=dist.ReduceOp.SUM)        
+        dist.all_reduce(total, op=dist.ReduceOp.SUM)
 
     acc = (correct.float() * 100.0 / total.float()).item() if total.item() > 0 else 0.0
-
-    total_measured = data_wait_time + h2d_time + forward_time
-
-    #if local_rank == 0:
-    #    print(
-    #        f"[test_accuracyGPU] batches={num_batches} | seen_local={seen_local} | "
-    #        f"seen_total={seen_total.item()} | data_wait={data_wait_time:.2f}s | "
-    #        f"h2d={h2d_time:.2f}s | forward={forward_time:.2f}s | "
-    #        f"measured_total={total_measured:.2f}s",
-    #        flush=True
-    #    )
 
     if was_training:
         model.train()
