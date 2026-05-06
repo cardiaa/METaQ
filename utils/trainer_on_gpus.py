@@ -1,3 +1,27 @@
+"""
+trainer_on_gpus.py
+
+Distributed training utilities for METaQ experiments on ImageNet-scale models.
+
+Responsibilities:
+- Run a DDP training loop for AlexNet/VGG-style models.
+- Apply optional entropy regularization through FISTA/Proximal-BM.
+- Keep the custom entropy state synchronized across ranks.
+- Optionally reset the quantization grid from weight percentiles when entropy
+  regularization first starts.
+- Evaluate non-quantized, quantized, and sparse/quantized accuracies.
+- Log compact diagnostics useful for tuning compression-vs-accuracy trade-offs.
+
+Important design choices:
+- T2=0 disables the entropy term completely.
+- Entropy is applied only every `entropy_every` steps to control cost.
+- `xi` and custom gradients are explicitly synchronized because the entropy
+  update is added after DDP has synchronized the cross-entropy gradients.
+- The adaptive grid reset is performed once, at the first actual entropy step,
+  using global model weights, which are identical across ranks when DDP sync is
+  correct.
+"""
+
 import torch
 import os
 import time 
@@ -19,14 +43,27 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                        lower_c, c1, c2, zeta, l, n_epochs, max_iterations, device, train_optimizer, entropy_optimizer, trainloader,
                        testloader, train_sampler, steps_per_epoch, delta, pruning, QuantizationType, sparsity_threshold, accuracy_tollerance,
                        metrics_interval=1, entropy_warmup_epochs=0, entropy_every=1, check_ddp_sync=False):
-    """Train and evaluate a DDP model with optional entropy regularization.
+    """Train and evaluate a model with optional entropy regularization.
 
-    Main changes vs. the previous version:
-    - xi is broadcast from rank 0, so the custom entropy gradient is identical on every rank.
-    - T2 can really be set to 0, which disables the entropy/FISTA step.
-    - entropy_warmup_epochs and entropy_every let us pay the entropy cost less often.
-    - metrics_interval controls expensive validation/compression passes.
-    - debug prints are reduced to one compact epoch block on rank 0.
+    This function is intentionally self-contained because the compression
+    experiments require tight control over the training loop.  The regular
+    cross-entropy gradient is produced by `loss.backward()` and synchronized by
+    DDP.  The entropy gradient is then added manually; therefore, when DDP is
+    active, we explicitly all-reduce the final gradients before `optimizer.step()`.
+
+    Args related to entropy:
+        T2_explicit: final weight of the entropy regularizer.  If zero, FISTA is
+            never called.
+        entropy_warmup_epochs: number of full epochs to train before enabling
+            entropy regularization.
+        entropy_every: apply entropy only every N global optimizer steps.
+        max_iterations: number of FISTA/Proximal-BM iterations per entropy step.
+
+    Args related to diagnostics:
+        metrics_interval: run expensive validation/compression metrics every N
+            epochs.
+        check_ddp_sync: if true, log a checksum range across ranks to detect DDP
+            divergence.
     """
 
     torch.set_num_threads(1)
@@ -43,6 +80,8 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
     else:
         raise ValueError(f"Unsupported optimizer: {train_optimizer}")
 
+    # Initial quantization grid.  This may later be replaced by an adaptive
+    # percentile-based grid at the first entropy step.
     min_w, max_w = w0 - r, w0 + r
     v = torch.linspace(min_w, max_w - (max_w - min_w) / C, steps=C, device=device)
 
@@ -57,8 +96,13 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
     accuracy = None
     accuracies, entropies = [], []
     global_step = 0
-    grid_reset_done = False    
 
+    # The adaptive grid must be reset only once for the whole run, not once per
+    # epoch.  It is triggered at the first real entropy step, so it remains
+    # correct even when `global_step % entropy_every != 0` at batch 0.
+    grid_reset_done = False
+
+    # NCCL barriers need the CUDA device id on some multi-node launches.
     def _dist_barrier():
         if dist.is_initialized():
             if dist.get_backend() == "nccl" and device.type == "cuda":
@@ -66,6 +110,9 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
             else:
                 dist.barrier()
 
+    # Temporarily overwrite model parameters with a flat vector.
+    # Used to evaluate quantized/sparse weights without creating a deepcopy of
+    # the whole DDP model.
     def _load_flat_params_(flat: torch.Tensor):
         offset = 0
         for p_ in model.parameters():
@@ -73,6 +120,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
             p_.data.copy_(flat[offset:offset + n].view_as(p_))
             offset += n
 
+    # Diagnostic norm of the currently accumulated gradients on this rank.
     def _grad_norm_from_current_grads() -> float:
         with torch.no_grad():
             total_sq = torch.zeros((), device=device)
@@ -81,6 +129,8 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                     total_sq += p_.grad.detach().float().pow(2).sum()
             return torch.sqrt(total_sq).item()
 
+    # DDP correctness check: all ranks should have identical parameters after
+    # each optimizer step.  A non-zero range indicates a rank-local update.
     def _param_checksum_range() -> float | None:
         if not dist.is_initialized():
             return None
@@ -96,7 +146,9 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
     for epoch in range(n_epochs):
         should_eval_epoch = ((epoch + 1) % metrics_interval == 0) or (epoch == n_epochs - 1)
 
-        # T2 schedule: no entropy during warmup, then a gentle exponential ramp from T2/8 to T2.
+        # T2 schedule: no entropy during warmup, then a gentle exponential ramp
+        # from T2/8 to T2.  This avoids abruptly injecting a large custom
+        # gradient after many epochs of standard training.
         if T2_explicit > 0 and epoch >= entropy_warmup_epochs:
             t = epoch - entropy_warmup_epochs
             T2_current = T2_explicit * (1.0 - np.exp(-t)) + (T2_explicit / 8.0) * np.exp(-t)
@@ -147,11 +199,18 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                 last_loss_grad_norm = _grad_norm_from_current_grads()
 
             beta_tensor = None
+            # Entropy/FISTA is the expensive part of the method.  Applying it
+            # every N global steps keeps the computational cost controlled.
             apply_entropy = T2_current > 0 and (global_step % entropy_every == 0)
             if apply_entropy:
                 if not grid_reset_done:
+                    # Build a tighter quantization grid from the current weight
+                    # distribution.  The fixed default grid can be too wide for
+                    # trained AlexNet weights, making C=16 quantization collapse
+                    # accuracy.  Percentiles avoid extreme outliers.
                     with torch.no_grad():
                         w_for_grid = torch.cat([p.detach().reshape(-1).float() for p in model.parameters()])
+                        # p0.1 and p99.9 define the adaptive grid range.
                         qs = torch.tensor([0.001, 0.999], device=device)
                         lo, hi = torch.quantile(w_for_grid, qs)
 
@@ -176,8 +235,10 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                                 flush=True
                             )  
                     grid_reset_done = True
-
+                                  
                 with torch.no_grad():
+                    # FISTA works on the current flat parameter vector and
+                    # returns beta multipliers with one entry per parameter.
                     w = torch.cat([param.detach().reshape(-1) for param in model.parameters()]).to(device)
                     zeta *= 1 + l
                     l = l / 1.5
@@ -195,6 +256,9 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                     else:
                         raise ValueError(f"Unsupported entropy optimizer: {entropy_optimizer}")
 
+                    # Add the entropy gradient to the already-computed loss
+                    # gradient.  The sign convention follows the existing METaQ
+                    # formulation: the beta multipliers enter with a minus sign.
                     idx = 0
                     for param in model.parameters():
                         numel = param.numel()
@@ -204,6 +268,10 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                         idx += numel
 
                     if dist.is_initialized():
+                        # DDP synchronized only the loss gradient inside
+                        # loss.backward().  Since the entropy term is added
+                        # afterwards, we must synchronize the final gradients
+                        # manually before optimizer.step().
                         for param in model.parameters():
                             if param.grad is not None:
                                 dist.all_reduce(param.grad, op=dist.ReduceOp.SUM)
@@ -232,6 +300,8 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
             _dist_barrier()
 
             with torch.no_grad():
+                # Backup float weights, then evaluate quantized/sparse variants
+                # in-place.  The original weights are restored after metrics.
                 w_backup = torch.cat([p_.detach().reshape(-1) for p_ in model.parameters()]).clone()
 
                 if QuantizationType == "center":
@@ -246,6 +316,9 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
 
             if local_rank == 0:
                 with torch.no_grad():
+                    # Quantized index stream used for entropy and zstd metrics.
+                    # This is an index-only compression proxy, not by itself a
+                    # deployable Deep-Compression-style model format.
                     q_idx = (torch.bucketize(w_backup, v, right=False) - 1).clamp_(0, C - 1)
 
                     counts = torch.bincount(q_idx, minlength=C).to(torch.float32)
@@ -265,6 +338,8 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                         dtype = torch.int32
                         index_bits = 32
 
+                    # Compress the quantized indices with zstd.  The ratio is
+                    # measured against the FP32 model size.
                     q_bytes = q_idx.to(dtype).cpu().numpy().tobytes()
                     zstd_compressed = compress_zstd(q_bytes, level=22)
                     N = q_idx.numel()
@@ -276,6 +351,8 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                     v_centers = (v[:-1] + v[1:]) / 2
                     v_centers = torch.cat([v_centers, v[-1:]])
                     q_vals = v_centers[q_idx]
+                    # Sparse proxy: keep a bitmask plus compressed non-zero
+                    # quantized indices.
                     nz_mask = (q_vals.abs() > sparsity_threshold)
                     mask_np = nz_mask.to(torch.uint8).cpu().numpy()
                     bitmask_bytes = pack_bitmaskGPU(mask_np)
@@ -325,6 +402,8 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                 )
 
                 with torch.no_grad():
+                    # Log weight percentiles to understand whether the active
+                    # quantization grid covers the useful weight range.
                     w_stats = torch.cat([p.detach().reshape(-1).float() for p in model.parameters()])
                     qs = torch.tensor([0.001, 0.01, 0.5, 0.99, 0.999], device=w_stats.device)
                     qvals = torch.quantile(w_stats, qs)
