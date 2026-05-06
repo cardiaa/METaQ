@@ -1,27 +1,3 @@
-"""
-trainer_on_gpus.py
-
-Distributed training utilities for METaQ experiments on ImageNet-scale models.
-
-Responsibilities:
-- Run a DDP training loop for AlexNet/VGG-style models.
-- Apply optional entropy regularization through FISTA/Proximal-BM.
-- Keep the custom entropy state synchronized across ranks.
-- Optionally reset the quantization grid from weight percentiles when entropy
-  regularization first starts.
-- Evaluate non-quantized, quantized, and sparse/quantized accuracies.
-- Log compact diagnostics useful for tuning compression-vs-accuracy trade-offs.
-
-Important design choices:
-- T2=0 disables the entropy term completely.
-- Entropy is applied only every `entropy_every` steps to control cost.
-- `xi` and custom gradients are explicitly synchronized because the entropy
-  update is added after DDP has synchronized the cross-entropy gradients.
-- The adaptive grid reset is performed once, at the first actual entropy step,
-  using global model weights, which are identical across ranks when DDP sync is
-  correct.
-"""
-
 import torch
 import os
 import time 
