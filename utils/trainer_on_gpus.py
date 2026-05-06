@@ -118,6 +118,15 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
             dist.all_gather(gathered, checksum)
             values = torch.stack(gathered)
             return (values.max() - values.min()).item()
+        
+    def _percentiles_large_tensor(x: torch.Tensor, probs: list[float]) -> torch.Tensor:
+        x = x.flatten().float()
+        n = x.numel()
+        vals = []
+        for p in probs:
+            k = max(1, min(n, int(round(p * (n - 1))) + 1))
+            vals.append(torch.kthvalue(x, k).values)
+        return torch.stack(vals)        
 
     for epoch in range(n_epochs):
         should_eval_epoch = ((epoch + 1) % metrics_interval == 0) or (epoch == n_epochs - 1)
@@ -187,8 +196,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                     with torch.no_grad():
                         w_for_grid = torch.cat([p.detach().reshape(-1).float() for p in model.parameters()])
                         # p0.1 and p99.9 define the adaptive grid range.
-                        qs = torch.tensor([0.001, 0.999], device=device)
-                        lo, hi = torch.quantile(w_for_grid, qs)
+                        lo, hi = _percentiles_large_tensor(w_for_grid, [0.001, 0.999])
 
                         w0 = ((lo + hi) / 2).item()
                         r = ((hi - lo) / 2).item()
@@ -381,8 +389,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                     # Log weight percentiles to understand whether the active
                     # quantization grid covers the useful weight range.
                     w_stats = torch.cat([p.detach().reshape(-1).float() for p in model.parameters()])
-                    qs = torch.tensor([0.001, 0.01, 0.5, 0.99, 0.999], device=w_stats.device)
-                    qvals = torch.quantile(w_stats, qs)
+                    qvals = _percentiles_large_tensor(w_stats, [0.001, 0.01, 0.5, 0.99, 0.999])
 
                     p001 = qvals[0].item()
                     p01 = qvals[1].item()
