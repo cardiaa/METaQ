@@ -57,6 +57,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
     accuracy = None
     accuracies, entropies = [], []
     global_step = 0
+    grid_reset_done = False    
 
     def _dist_barrier():
         if dist.is_initialized():
@@ -148,6 +149,34 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
             beta_tensor = None
             apply_entropy = T2_current > 0 and (global_step % entropy_every == 0)
             if apply_entropy:
+                if not grid_reset_done:
+                    with torch.no_grad():
+                        w_for_grid = torch.cat([p.detach().reshape(-1).float() for p in model.parameters()])
+                        qs = torch.tensor([0.001, 0.999], device=device)
+                        lo, hi = torch.quantile(w_for_grid, qs)
+
+                        w0 = ((lo + hi) / 2).item()
+                        r = ((hi - lo) / 2).item()
+
+                        v = torch.linspace(
+                            w0 - r,
+                            w0 + r - (2 * r) / C,
+                            steps=C,
+                            device=device
+                        )
+
+                        if dist.is_initialized():
+                            dist.broadcast(v, src=0)
+
+                        if local_rank == 0:
+                            print(
+                                f"[GRID RESET] epoch={epoch + 1}, "
+                                f"w0={w0:.6e}, r={r:.6e}, "
+                                f"lo={lo.item():.6e}, hi={hi.item():.6e}",
+                                flush=True
+                            )  
+                    grid_reset_done = True
+
                 with torch.no_grad():
                     w = torch.cat([param.detach().reshape(-1) for param in model.parameters()]).to(device)
                     zeta *= 1 + l
@@ -295,6 +324,17 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                     f"training_time = {training_time_global}s\n"
                 )
 
+                with torch.no_grad():
+                    w_stats = torch.cat([p.detach().reshape(-1).float() for p in model.parameters()])
+                    qs = torch.tensor([0.001, 0.01, 0.5, 0.99, 0.999], device=w_stats.device)
+                    qvals = torch.quantile(w_stats, qs)
+
+                    p001 = qvals[0].item()
+                    p01 = qvals[1].item()
+                    p50 = qvals[2].item()
+                    p99 = qvals[3].item()
+                    p999 = qvals[4].item()                
+
                 print(f"============== Epoch {epoch + 1}/{n_epochs} ==============", flush=True)
                 print(f"train_batches = {train_batches}", flush=True)
                 print(f"training_time_without_metrics = {training_time_without_metrics}s", flush=True)
@@ -317,8 +357,14 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                 print(f"sparse_ratio = {sparse_ratio:.2%}", flush=True)
                 print(f"sparsity = {sparsity:.2%}", flush=True)
                 print(f"sparse_accuracy = {sparse_accuracy}", flush=True)
+                print(
+                    f"weight_percentiles: "
+                    f"p0.1={p001:.6e}, p1={p01:.6e}, "
+                    f"p50={p50:.6e}, p99={p99:.6e}, p99.9={p999:.6e}",
+                    flush=True
+                )                
                 print(f"training_time = {training_time_global}s", flush=True)
-                print("====================================\n", flush=True)
+                print("====================================\n", flush=True)                
 
             if device.type == "cuda":
                 torch.cuda.synchronize(device)
