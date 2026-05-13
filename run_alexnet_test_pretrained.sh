@@ -85,7 +85,7 @@ srun --ntasks=$SLURM_NTASKS --ntasks-per-node=1 bash -lc '
             --rdzv_backend=c10d \
             --rdzv_endpoint=$MASTER_ADDR:$MASTER_PORT \
             --rdzv_id=$SLURM_JOB_ID \
-            train_on_gpus.py \
+            train_on_gpus_pretrained.py \
             --model_name AlexNet \
             --delta '"$DELTA"' \
             --data_root /leonardo_work/IscrC_ObCTDoNN/acardia0/datasets \
