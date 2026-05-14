@@ -659,6 +659,12 @@ def main():
         help="Fraction of ImageNet seen per epoch, e.g. 0.25 means 25%"
     )
     parser.add_argument(
+        "--C",
+        type=int,
+        default=None,
+        help="Override number of quantization buckets"
+    )    
+    parser.add_argument(
         "--pretrained",
         type=str,
         default="N",
@@ -708,6 +714,8 @@ def main():
         h["T2_explicit"] = args.T2
     if args.max_iterations is not None:
         h["max_iterations"] = args.max_iterations
+    if args.C is not None:
+        h["C"] = args.C        
     if args.metrics_interval < 1:
         raise ValueError("--metrics_interval must be >= 1.")
     if args.entropy_warmup_epochs < 0:

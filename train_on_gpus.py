@@ -647,12 +647,6 @@ def main():
         default=1.0,
         help="Fraction of ImageNet seen per epoch, e.g. 0.25 means 25%"
     )    
-    parser.add_argument(
-        "--C",
-        type=int,
-        default=None,
-        help="Override number of quantization buckets"
-    )    
     args = parser.parse_args()
 
     # CPU thread control
@@ -700,8 +694,6 @@ def main():
     h["entropy_warmup_epochs"] = args.entropy_warmup_epochs
     h["entropy_every"] = args.entropy_every
     h["check_ddp_sync"] = args.check_ddp_sync
-    if args.C is not None:
-        h["C"] = args.C    
 
     # Data
     if model_name.startswith("LeNet-5"):
