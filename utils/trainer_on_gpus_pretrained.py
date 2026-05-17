@@ -1,6 +1,7 @@
 import torch
 import os
 import time 
+import math
 import numpy as np
 import copy
 import struct
@@ -62,17 +63,26 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
         gamma=0.1
     )
 
-    # Initial quantization grid.  This may later be replaced by an adaptive
-    # percentile-based grid at the first entropy step.
-    min_w, max_w = w0 - r, w0 + r
-    v = torch.linspace(min_w, max_w - (max_w - min_w) / C, steps=C, device=device)
+    # Per-parameter-tensor quantization state.
+    # Each layer/tensor gets its own quantization grid v and its own xi.
+    # C is still shared, so C=16 still means 16 levels per tensor, i.e. INT4.
+    params_for_quant = list(model.parameters())
+    num_param_tensors = len(params_for_quant)
 
-    # The xi vector must be identical on every rank. Otherwise, the custom gradient differs
-    # after DDP has already synchronized the loss gradient.
-    xi = min_xi + (max_xi - min_xi) * torch.rand(C, device=device)
-    xi = torch.sort(xi)[0]
-    if dist.is_initialized():
-        dist.broadcast(xi, src=0)
+    min_w, max_w = w0 - r, w0 + r
+    v_init = torch.linspace(min_w, max_w - (max_w - min_w) / C, steps=C, device=device)
+
+    v_list = [v_init.clone() for _ in params_for_quant]
+
+    xi_list = []
+    for _ in params_for_quant:
+        xi_layer = min_xi + (max_xi - min_xi) * torch.rand(C, device=device)
+        xi_layer = torch.sort(xi_layer)[0]
+
+        if dist.is_initialized():
+            dist.broadcast(xi_layer, src=0)
+
+        xi_list.append(xi_layer)
 
     log = ""
     accuracy = None
@@ -132,7 +142,37 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
         for p in probs:
             k = max(1, min(n, int(round(p * (n - 1))) + 1))
             vals.append(torch.kthvalue(x, k).values)
-        return torch.stack(vals)        
+        return torch.stack(vals)    
+
+    def _pack_quant_indices(idx: torch.Tensor, C_local: int) -> bytes:
+        """
+        Pack quantization indices.
+
+        For C <= 16, stores two 4-bit indices per byte.
+        For larger C, falls back to uint8/uint16/int32.
+        """
+        if idx.numel() == 0:
+            return b""
+
+        if C_local <= 16:
+            arr = idx.detach().to(torch.uint8).cpu().numpy()
+
+            if arr.size % 2 == 1:
+                arr = np.pad(arr, (0, 1), constant_values=0)
+
+            packed = ((arr[0::2] & 0x0F) << 4) | (arr[1::2] & 0x0F)
+            return packed.astype(np.uint8).tobytes()
+
+        if C_local <= 256:
+            return idx.detach().to(torch.uint8).cpu().numpy().tobytes()
+
+        if C_local <= 65536:
+            return idx.detach().to(torch.uint16).cpu().numpy().tobytes()
+
+        return idx.detach().to(torch.int32).cpu().numpy().tobytes()
+
+    def _index_bits_for_C(C_local: int) -> int:
+        return int(math.ceil(math.log2(C_local)))        
 
     for epoch in range(n_epochs):
         should_eval_epoch = ((epoch + 1) % metrics_interval == 0) or (epoch == n_epochs - 1)
@@ -195,67 +235,105 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
             apply_entropy = T2_current > 0 and (global_step % entropy_every == 0)
             if apply_entropy:
                 if not grid_reset_done:
-                    # Build a tighter quantization grid from the current weight
-                    # distribution.  The fixed default grid can be too wide for
-                    # trained AlexNet weights, making C=16 quantization collapse
-                    # accuracy.  Percentiles avoid extreme outliers.
+                    # Build one adaptive quantization grid per parameter tensor.
+                    # This keeps C fixed but lets each layer/tensor have its own scale.
                     with torch.no_grad():
-                        w_for_grid = torch.cat([p.detach().reshape(-1).float() for p in model.parameters()])
-                        # p0.1 and p99.9 define the adaptive grid range.
-                        lo, hi = _percentiles_large_tensor(w_for_grid, [0.001, 0.999])
+                        new_v_list = []
+                        grid_infos = []
 
-                        w0 = ((lo + hi) / 2).item()
-                        r = ((hi - lo) / 2).item()
+                        for p_idx, param in enumerate(params_for_quant):
+                            w_layer = param.detach().reshape(-1).float()
 
-                        v = torch.linspace(
-                            w0 - r,
-                            w0 + r - (2 * r) / C,
-                            steps=C,
-                            device=device
-                        )
+                            lo, hi = _percentiles_large_tensor(w_layer, [0.001, 0.999])
 
-                        if dist.is_initialized():
-                            dist.broadcast(v, src=0)
+                            # Avoid degenerate grids for nearly constant tensors.
+                            if (hi - lo).abs() < 1e-12:
+                                center = 0.5 * (lo + hi)
+                                lo = center - 1e-6
+                                hi = center + 1e-6
+
+                            w0_layer = ((lo + hi) / 2).item()
+                            r_layer = ((hi - lo) / 2).item()
+
+                            v_layer = torch.linspace(
+                                w0_layer - r_layer,
+                                w0_layer + r_layer - (2 * r_layer) / C,
+                                steps=C,
+                                device=device
+                            )
+
+                            if dist.is_initialized():
+                                dist.broadcast(v_layer, src=0)
+
+                            new_v_list.append(v_layer)
+                            grid_infos.append((p_idx, w_layer.numel(), lo.item(), hi.item()))
+
+                        v_list = new_v_list
 
                         if local_rank == 0:
+                            first = grid_infos[:4]
                             print(
-                                f"[GRID RESET] epoch={epoch + 1}, "
-                                f"w0={w0:.6e}, r={r:.6e}, "
-                                f"lo={lo.item():.6e}, hi={hi.item():.6e}",
+                                f"[GRID RESET PER-LAYER] epoch={epoch + 1}, "
+                                f"num_tensors={len(v_list)}, first_tensors={first}",
                                 flush=True
-                            )  
+                            )
+
                     grid_reset_done = True
-                                  
+
                 with torch.no_grad():
-                    # FISTA works on the current flat parameter vector and
-                    # returns beta multipliers with one entry per parameter.
-                    w = torch.cat([param.detach().reshape(-1) for param in model.parameters()]).to(device)
+                    # FISTA is applied independently to each parameter tensor.
+                    # Each tensor has its own xi and v, but the same C.
                     zeta *= 1 + l
                     l = l / 1.5
 
-                    if entropy_optimizer == 'FISTA':
-                        xi, beta_tensor = FISTA_leonardo(
-                            xi, v, w, C, upper_c, lower_c, delta,
-                            subgradient_step, device, max_iterations, pruning
-                        )
-                    elif entropy_optimizer == 'PROXIMAL BM':
-                        xi, beta_tensor = ProximalBM(
-                            xi, v, w, C, upper_c, lower_c, delta,
-                            zeta, subgradient_step, device, max_iterations, pruning
-                        )
-                    else:
-                        raise ValueError(f"Unsupported entropy optimizer: {entropy_optimizer}")
+                    beta_norm_sq = torch.zeros((), device=device)
 
-                    # The loop adds the entropy gradient to the already-computed loss
-                    # gradient.  The sign convention follows the existing METaQ
-                    # formulation: the beta multipliers enter with a minus sign.
-                    idx = 0
-                    for param in model.parameters():
-                        numel = param.numel()
-                        if param.grad is not None:
-                            update = (T2_current * (-beta_tensor[idx:idx + numel])).view(param.size())
-                            param.grad.add_(update)
-                        idx += numel
+                    for p_idx, param in enumerate(params_for_quant):
+                        if param.grad is None:
+                            continue
+
+                        w_layer = param.detach().reshape(-1).to(device)
+
+                        # upper_c should be local because c_star represents
+                        # bucket occupancies for this tensor, not for the whole network.
+                        upper_c_layer = float(w_layer.numel())
+
+                        if entropy_optimizer == 'FISTA':
+                            xi_list[p_idx], beta_layer = FISTA_leonardo(
+                                xi_list[p_idx],
+                                v_list[p_idx],
+                                w_layer,
+                                C,
+                                upper_c_layer,
+                                lower_c,
+                                delta,
+                                subgradient_step,
+                                device,
+                                max_iterations,
+                                pruning
+                            )
+                        elif entropy_optimizer == 'PROXIMAL BM':
+                            xi_list[p_idx], beta_layer = ProximalBM(
+                                xi_list[p_idx],
+                                v_list[p_idx],
+                                w_layer,
+                                C,
+                                upper_c_layer,
+                                lower_c,
+                                delta,
+                                zeta,
+                                subgradient_step,
+                                device,
+                                max_iterations,
+                                pruning
+                            )
+                        else:
+                            raise ValueError(f"Unsupported entropy optimizer: {entropy_optimizer}")
+
+                        update = (T2_current * (-beta_layer)).view_as(param)
+                        param.grad.add_(update)
+
+                        beta_norm_sq += beta_layer.float().pow(2).sum()
 
                     if dist.is_initialized():
                         # DDP synchronized only the loss gradient inside
@@ -267,11 +345,13 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                                 dist.all_reduce(param.grad, op=dist.ReduceOp.SUM)
                                 param.grad.div_(dist.get_world_size())
 
-                        dist.broadcast(xi, src=0)                        
+                        for xi_layer in xi_list:
+                            dist.broadcast(xi_layer, src=0)
 
                     entropy_steps += 1
+
                     if local_rank == 0:
-                        last_custom_beta_norm = beta_tensor.float().norm().item()
+                        last_custom_beta_norm = torch.sqrt(beta_norm_sq).item()
 
             optimizer.step()
         
@@ -292,72 +372,105 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
             _dist_barrier()
 
             with torch.no_grad():
-                # The code backs up the float weights, then evaluates quantized/sparse variants
-                # in-place.  The original weights are restored after metrics.
-                w_backup = torch.cat([p_.detach().reshape(-1) for p_ in model.parameters()]).clone()
+                # Backup float weights and build per-layer quantized/sparse variants.
+                w_backup_parts = []
+                flat_q_parts = []
+                flat_s_parts = []
+                q_idx_layers = []
+                q_vals_layers = []
 
-                if QuantizationType == "center":
-                    v_centers = (v[:-1] + v[1:]) / 2
-                    v_centers = torch.cat([v_centers, v[-1:]])
-                    flat_q = quantize_weights_centerGPU(w_backup, v, v_centers, device=device)
-                else:
-                    flat_q = w_backup.clone()
+                for p_idx, p_ in enumerate(params_for_quant):
+                    w_layer = p_.detach().reshape(-1).clone()
+                    w_backup_parts.append(w_layer)
 
-                flat_s = flat_q.clone()
-                flat_s[flat_s.abs() <= sparsity_threshold] = 0.0
+                    if QuantizationType == "center":
+                        v_layer = v_list[p_idx]
+                        v_centers_layer = (v_layer[:-1] + v_layer[1:]) / 2
+                        v_centers_layer = torch.cat([v_centers_layer, v_layer[-1:]])
+
+                        q_idx_layer = (torch.bucketize(w_layer, v_layer, right=False) - 1).clamp_(0, C - 1)
+                        q_layer = v_centers_layer[q_idx_layer]
+                    else:
+                        q_idx_layer = torch.zeros_like(w_layer, dtype=torch.long)
+                        q_layer = w_layer.clone()
+
+                    s_layer = q_layer.clone()
+                    s_layer[s_layer.abs() <= sparsity_threshold] = 0.0
+
+                    flat_q_parts.append(q_layer)
+                    flat_s_parts.append(s_layer)
+                    q_idx_layers.append(q_idx_layer)
+                    q_vals_layers.append(q_layer)
+
+                w_backup = torch.cat(w_backup_parts)
+                flat_q = torch.cat(flat_q_parts)
+                flat_s = torch.cat(flat_s_parts)
 
             if local_rank == 0:
                 with torch.no_grad():
-                    # Quantized index stream used for entropy and zstd metrics.
-                    # This is an index-only compression proxy, not by itself a
-                    # deployable Deep-Compression-style model format.
-                    q_idx = (torch.bucketize(w_backup, v, right=False) - 1).clamp_(0, C - 1)
+                    entropy_total = 0.0
+                    q_bytes_chunks = []
+                    nz_idx_bytes_chunks = []
+                    nz_masks = []
 
-                    counts = torch.bincount(q_idx, minlength=C).to(torch.float32)
-                    p = counts / counts.sum()
-                    p = p[p > 0]
-                    quantized_entropy = float((-(p * torch.log2(p)).sum() * counts.sum()).item())
-                    quantized_entropy = round(quantized_entropy) + 1
+                    total_n = 0
+                    total_nz = 0
+
+                    for q_idx_layer, q_vals_layer in zip(q_idx_layers, q_vals_layers):
+                        counts = torch.bincount(q_idx_layer, minlength=C).to(torch.float32)
+                        probs = counts / counts.sum()
+                        probs = probs[probs > 0]
+
+                        entropy_total += float((-(probs * torch.log2(probs)).sum() * counts.sum()).item())
+
+                        q_bytes_chunks.append(_pack_quant_indices(q_idx_layer, C))
+
+                        nz_mask_layer = q_vals_layer.abs() > sparsity_threshold
+                        nz_masks.append(nz_mask_layer)
+
+                        total_n += q_idx_layer.numel()
+                        total_nz += int(nz_mask_layer.sum().item())
+
+                        nz_idx_bytes_chunks.append(
+                            _pack_quant_indices(q_idx_layer[nz_mask_layer], C)
+                        )
+
+                    quantized_entropy = round(entropy_total) + 1
                     entropies.append(quantized_entropy)
 
-                    if C <= 256:
-                        dtype = torch.uint8
-                        index_bits = 8
-                    elif C <= 65536:
-                        dtype = torch.uint16
-                        index_bits = 16
-                    else:
-                        dtype = torch.int32
-                        index_bits = 32
+                    index_bits = _index_bits_for_C(C)
 
-                    # Compress the quantized indices with zstd.  The ratio is
-                    # measured against the FP32 model size.
-                    q_bytes = q_idx.to(dtype).cpu().numpy().tobytes()
+                    # Per-layer metadata:
+                    # for each tensor, store two fp32 values, e.g. w0/r or lo/hi.
+                    metadata_bits = 32 + 32 + num_param_tensors * 2 * 32
+
+                    q_bytes = b"".join(q_bytes_chunks)
                     zstd_compressed = compress_zstd(q_bytes, level=22)
-                    N = q_idx.numel()
-                    original_bits = N * 32
-                    metadata_bits = index_bits + 32 + 32
-                    compressed_bits = (len(zstd_compressed) * 8) + metadata_bits
+
+                    original_bits = total_n * 32
+                    compressed_bits = len(zstd_compressed) * 8 + metadata_bits
                     zstd_ratio = compressed_bits / original_bits
 
-                    v_centers = (v[:-1] + v[1:]) / 2
-                    v_centers = torch.cat([v_centers, v[-1:]])
-                    q_vals = v_centers[q_idx]
-                    # Sparse proxy: keep a bitmask plus compressed non-zero
-                    # quantized indices.
-                    nz_mask = (q_vals.abs() > sparsity_threshold)
-                    mask_np = nz_mask.to(torch.uint8).cpu().numpy()
+                    # Sparse proxy:
+                    # global bitmask + compressed non-zero quantized indices.
+                    global_nz_mask = torch.cat([m.reshape(-1) for m in nz_masks])
+                    mask_np = global_nz_mask.to(torch.uint8).cpu().numpy()
+
                     bitmask_bytes = pack_bitmaskGPU(mask_np)
-                    nz_idx_bytes = q_idx[nz_mask].to(dtype).cpu().numpy().tobytes()
+                    nz_idx_bytes = b"".join(nz_idx_bytes_chunks)
+
                     compressed_mask = compress_zstd(bitmask_bytes, level=22)
                     compressed_values = compress_zstd(nz_idx_bytes, level=22)
+
                     compressed_sparse_bits = (
                         len(compressed_mask) * 8 +
                         len(compressed_values) * 8 +
                         metadata_bits
                     )
+
                     sparse_ratio = compressed_sparse_bits / original_bits
-                    sparsity = 1.0 - float(mask_np.sum()) / float(mask_np.size)
+                    sparsity = 1.0 - float(total_nz) / float(total_n)
+
                     zstd_ratios.append(float(zstd_ratio))
             else:
                 quantized_entropy = zstd_ratio = sparse_ratio = sparsity = None
