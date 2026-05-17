@@ -17,7 +17,7 @@ from torchvision import datasets, transforms, models
 import webdataset as wds
 import socket
 
-from utils.trainer_on_gpus import train_and_evaluate
+from utils.trainer_on_gpus_pretrained import train_and_evaluate
 from utils.networks import LeNet5, LeNet5_Original, LeNet300_100
 
 
