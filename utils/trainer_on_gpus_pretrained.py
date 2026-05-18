@@ -66,7 +66,14 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
     # Per-parameter-tensor quantization state.
     # Each layer/tensor gets its own quantization grid v and its own xi.
     # C is still shared, so C=16 still means 16 levels per tensor, i.e. INT4.
-    params_for_quant = list(model.parameters())
+    # All parameters are still needed to rebuild the full flat model.
+    all_params = list(model.parameters())
+
+    # Only tensors with ndim > 1 are quantized/regularized.
+    # For AlexNet this means convolutional and linear weights.
+    # Bias tensors are kept in floating point.
+    quant_param_indices = [idx for idx, p in enumerate(all_params) if p.ndim > 1]
+    params_for_quant = [all_params[idx] for idx in quant_param_indices]
     num_param_tensors = len(params_for_quant)
 
     min_w, max_w = w0 - r, w0 + r
@@ -372,40 +379,49 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
             _dist_barrier()
 
             with torch.no_grad():
-                # Backup float weights and build per-layer quantized/sparse variants.
+                # Backup the full model.
+                # Quantize only weight tensors; keep bias tensors in FP32.
                 w_backup_parts = []
                 flat_q_parts = []
                 flat_s_parts = []
+
                 q_idx_layers = []
                 q_vals_layers = []
 
-                for p_idx, p_ in enumerate(params_for_quant):
+                quant_state = 0
+
+                for full_idx, p_ in enumerate(all_params):
                     w_layer = p_.detach().reshape(-1).clone()
                     w_backup_parts.append(w_layer)
 
-                    if QuantizationType == "center":
-                        v_layer = v_list[p_idx]
+                    if full_idx in quant_param_indices and QuantizationType == "center":
+                        v_layer = v_list[quant_state]
                         v_centers_layer = (v_layer[:-1] + v_layer[1:]) / 2
                         v_centers_layer = torch.cat([v_centers_layer, v_layer[-1:]])
 
                         q_idx_layer = (torch.bucketize(w_layer, v_layer, right=False) - 1).clamp_(0, C - 1)
                         q_layer = v_centers_layer[q_idx_layer]
-                    else:
-                        q_idx_layer = torch.zeros_like(w_layer, dtype=torch.long)
-                        q_layer = w_layer.clone()
 
-                    s_layer = q_layer.clone()
-                    s_layer[s_layer.abs() <= sparsity_threshold] = 0.0
+                        s_layer = q_layer.clone()
+                        s_layer[s_layer.abs() <= sparsity_threshold] = 0.0
+
+                        q_idx_layers.append(q_idx_layer)
+                        q_vals_layers.append(q_layer)
+
+                        quant_state += 1
+
+                    else:
+                        # Biases and non-quantized tensors remain floating point.
+                        q_layer = w_layer.clone()
+                        s_layer = w_layer.clone()
 
                     flat_q_parts.append(q_layer)
                     flat_s_parts.append(s_layer)
-                    q_idx_layers.append(q_idx_layer)
-                    q_vals_layers.append(q_layer)
 
                 w_backup = torch.cat(w_backup_parts)
                 flat_q = torch.cat(flat_q_parts)
                 flat_s = torch.cat(flat_s_parts)
-
+                
             if local_rank == 0:
                 with torch.no_grad():
                     entropy_total = 0.0
