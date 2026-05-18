@@ -119,6 +119,47 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
             p_.data.copy_(flat[offset:offset + n].view_as(p_))
             offset += n
 
+    def _fake_quantize_weights_for_forward_():
+        """
+        Temporarily replaces quantized weight tensors with their per-layer
+        fake-quantized version for the forward/backward pass.
+
+        Bias tensors are not touched.
+
+        Returns:
+            backups: list of (parameter, original_float_tensor)
+        """
+        backups = []
+
+        if not grid_reset_done:
+            return backups
+
+        with torch.no_grad():
+            for q_state, param in enumerate(params_for_quant):
+                original = param.data.clone()
+                backups.append((param, original))
+
+                v_layer = v_list[q_state]
+                v_centers_layer = (v_layer[:-1] + v_layer[1:]) / 2
+                v_centers_layer = torch.cat([v_centers_layer, v_layer[-1:]])
+
+                w_flat = param.data.reshape(-1)
+                q_idx = (torch.bucketize(w_flat, v_layer, right=False) - 1).clamp_(0, C - 1)
+                q_flat = v_centers_layer[q_idx]
+
+                param.data.copy_(q_flat.view_as(param))
+
+        return backups
+
+    def _restore_fake_quantized_weights_(backups):
+        """
+        Restores floating-point weights after backward.
+        Gradients remain those computed through the quantized forward.
+        """
+        with torch.no_grad():
+            for param, original in backups:
+                param.data.copy_(original)            
+
     # Diagnostic norm of the currently accumulated gradients on this rank.
     def _grad_norm_from_current_grads() -> float:
         with torch.no_grad():
@@ -221,6 +262,11 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
 
             optimizer.zero_grad(set_to_none=True)
 
+            # Fake-quantized forward:
+            # after the per-layer grids have been initialized, the loss sees
+            # the quantized model, while the optimizer still updates FP32 weights.
+            fake_quant_backups = _fake_quantize_weights_for_forward_()
+
             with torch.autocast(
                 device_type="cuda",
                 dtype=torch.bfloat16,
@@ -230,6 +276,8 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                 loss = criterion(outputs, targets)
 
             loss.backward()
+
+            _restore_fake_quantized_weights_(fake_quant_backups)
 
             is_last_configured_step = steps_per_epoch is not None and (i + 1) >= steps_per_epoch
             capture_last_norms = local_rank == 0 and should_eval_epoch and is_last_configured_step
@@ -421,7 +469,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                 w_backup = torch.cat(w_backup_parts)
                 flat_q = torch.cat(flat_q_parts)
                 flat_s = torch.cat(flat_s_parts)
-                
+
             if local_rank == 0:
                 with torch.no_grad():
                     entropy_total = 0.0
