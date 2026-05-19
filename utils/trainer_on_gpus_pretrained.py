@@ -140,8 +140,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                 backups.append((param, original))
 
                 v_layer = v_list[q_state]
-                v_centers_layer = (v_layer[:-1] + v_layer[1:]) / 2
-                v_centers_layer = torch.cat([v_centers_layer, v_layer[-1:]])
+                v_centers_layer = _quant_centers_from_edges(v_layer)
 
                 w_flat = param.data.reshape(-1)
                 q_idx = (torch.bucketize(w_flat, v_layer, right=False) - 1).clamp_(0, C - 1)
@@ -220,7 +219,20 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
         return idx.detach().to(torch.int32).cpu().numpy().tobytes()
 
     def _index_bits_for_C(C_local: int) -> int:
-        return int(math.ceil(math.log2(C_local)))        
+        return int(math.ceil(math.log2(C_local)))      
+
+    def _quant_centers_from_edges(v_layer: torch.Tensor) -> torch.Tensor:
+        """
+        Builds quantization centers from bin edges and forces one center to be
+        exactly zero. This allows INT4 quantization to create real zero weights.
+        """
+        centers = (v_layer[:-1] + v_layer[1:]) / 2
+        centers = torch.cat([centers, v_layer[-1:]])
+
+        zero_idx = torch.argmin(centers.abs())
+        centers[zero_idx] = 0.0
+
+        return centers      
 
     for epoch in range(n_epochs):
         should_eval_epoch = ((epoch + 1) % metrics_interval == 0) or (epoch == n_epochs - 1)
@@ -444,8 +456,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
 
                     if full_idx in quant_param_indices and QuantizationType == "center":
                         v_layer = v_list[quant_state]
-                        v_centers_layer = (v_layer[:-1] + v_layer[1:]) / 2
-                        v_centers_layer = torch.cat([v_centers_layer, v_layer[-1:]])
+                        v_centers_layer = _quant_centers_from_edges(v_layer)
 
                         q_idx_layer = (torch.bucketize(w_layer, v_layer, right=False) - 1).clamp_(0, C - 1)
                         q_layer = v_centers_layer[q_idx_layer]
