@@ -101,6 +101,10 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
     # correct even when `global_step % entropy_every != 0` at batch 0.
     grid_reset_done = False
 
+    # Fraction of each layer range used as explicit zero dead-zone.
+    # If |w| <= deadzone_ratio * r_layer, the weight is quantized to exactly zero.
+    deadzone_ratio = 0.05
+
     # NCCL barriers need the CUDA device id on some multi-node launches.
     def _dist_barrier():
         if dist.is_initialized():
@@ -368,10 +372,6 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                             )
 
                     grid_reset_done = True
-
-                    # Fraction of each layer range used as explicit zero dead-zone.
-                    # If |w| <= deadzone_ratio * r_layer, the weight is quantized to exactly zero.
-                    deadzone_ratio = 0.05
 
                 with torch.no_grad():
                     # FISTA is applied independently to each parameter tensor.
