@@ -103,7 +103,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
 
     # Fraction of each layer range used as explicit zero dead-zone.
     # If |w| <= deadzone_ratio * r_layer, the weight is quantized to exactly zero.
-    deadzone_ratio = 0.10
+    deadzone_ratio = 0.15
 
     # NCCL barriers need the CUDA device id on some multi-node launches.
     def _dist_barrier():
