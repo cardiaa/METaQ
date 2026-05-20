@@ -140,11 +140,9 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                 backups.append((param, original))
 
                 v_layer = v_list[q_state]
-                v_centers_layer = _quant_centers_from_edges(v_layer)
-
                 w_flat = param.data.reshape(-1)
-                q_idx = (torch.bucketize(w_flat, v_layer, right=False) - 1).clamp_(0, C - 1)
-                q_flat = v_centers_layer[q_idx]
+
+                _, q_flat = _quantize_with_deadzone(w_flat, v_layer)
 
                 param.data.copy_(q_flat.view_as(param))
 
@@ -232,7 +230,31 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
         zero_idx = torch.argmin(centers.abs())
         centers[zero_idx] = 0.0
 
-        return centers      
+        return centers
+
+    def _quantize_with_deadzone(w_flat: torch.Tensor, v_layer: torch.Tensor):
+        """
+        Quantizes a flat tensor with per-layer INT4 centers and an explicit
+        zero dead-zone around zero.
+        """
+        centers = _quant_centers_from_edges(v_layer)
+        zero_idx = torch.argmin(centers.abs())
+
+        if v_layer.numel() > 1:
+            step = v_layer[1] - v_layer[0]
+            lo = v_layer[0]
+            hi = v_layer[-1] + step
+            r_layer = 0.5 * (hi - lo).abs()
+        else:
+            r_layer = v_layer[0].abs()
+
+        zero_threshold = deadzone_ratio * r_layer
+
+        q_idx = (torch.bucketize(w_flat, v_layer, right=False) - 1).clamp_(0, C - 1)
+        q_idx = torch.where(w_flat.abs() <= zero_threshold, zero_idx, q_idx)
+
+        q_flat = centers[q_idx]
+        return q_idx, q_flat
 
     for epoch in range(n_epochs):
         should_eval_epoch = ((epoch + 1) % metrics_interval == 0) or (epoch == n_epochs - 1)
@@ -347,6 +369,10 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
 
                     grid_reset_done = True
 
+                    # Fraction of each layer range used as explicit zero dead-zone.
+                    # If |w| <= deadzone_ratio * r_layer, the weight is quantized to exactly zero.
+                    deadzone_ratio = 0.05
+
                 with torch.no_grad():
                     # FISTA is applied independently to each parameter tensor.
                     # Each tensor has its own xi and v, but the same C.
@@ -456,10 +482,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
 
                     if full_idx in quant_param_indices and QuantizationType == "center":
                         v_layer = v_list[quant_state]
-                        v_centers_layer = _quant_centers_from_edges(v_layer)
-
-                        q_idx_layer = (torch.bucketize(w_layer, v_layer, right=False) - 1).clamp_(0, C - 1)
-                        q_layer = v_centers_layer[q_idx_layer]
+                        q_idx_layer, q_layer = _quantize_with_deadzone(w_layer, v_layer)
 
                         s_layer = q_layer.clone()
                         s_layer[s_layer.abs() <= sparsity_threshold] = 0.0
