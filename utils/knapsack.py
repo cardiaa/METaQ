@@ -309,7 +309,7 @@ def knapsack_specialized_pruning(xi, v, w, C, device, delta):
     denominator_zero_mask = denominator == 0
 
     lambda_opt_nonzero = -(xi[idx_right] - xi[idx_left]) / denominator
-    lambda_opt_zero_full = -(xi + delta) / v
+    lambda_opt_zero_full = - xi / v
     lambda_opt_zero = lambda_opt_zero_full[idx_left]
     #print("End part A ...") # Debugging line
     #print("Start part B ...") # Debugging line
@@ -519,7 +519,7 @@ def knapsack_specialized_pruning_sparse(xi, v, w, C, device, delta):
     denominator = v[idx_right] - v[idx_left]
     denominator_zero_mask = denominator == 0
     lambda_opt_nonzero = -(xi[idx_right] - xi[idx_left]) / denominator
-    lambda_opt_zero_full = -(xi + delta) / v
+    lambda_opt_zero_full = - xi / v
     lambda_opt_zero = lambda_opt_zero_full[idx_left]
     lambda_opt = torch.where(denominator_zero_mask, lambda_opt_zero, lambda_opt_nonzero)
 
@@ -691,13 +691,19 @@ def knapsack_specialized_pruning_sparse_leonardo(xi, v, w, C, device, delta):
     denominator_zero_mask = denominator == 0
 
     lambda_opt_nonzero = -(xi[idx_right] - xi[idx_left]) / denominator
-    lambda_opt_zero_full = -(xi + delta) / v
+    lambda_opt_zero_full = - xi / v
     lambda_opt_zero = lambda_opt_zero_full[idx_left]
 
     lambda_opt = torch.where(denominator_zero_mask, lambda_opt_zero, lambda_opt_nonzero)
 
     # === Step 8: Objective (same as dense, but without x @ xi) ===
-    objective_values = delta + theta * xi[idx_left] + (1.0 - theta) * xi[idx_right]
+    objective_values = delta + theta * xi[idx_left]
+
+    mask_diff = idx_right != idx_left
+    if mask_diff.any():
+        objective_values[mask_diff] += (
+            (1.0 - theta[mask_diff]) * xi[idx_right[mask_diff]]
+        )
 
     # === Step 9: Placeholder "x" to keep signature ===
     x_placeholder = torch.stack(
