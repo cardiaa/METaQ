@@ -615,7 +615,31 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                     p01 = qvals[1].item()
                     p50 = qvals[2].item()
                     p99 = qvals[3].item()
-                    p999 = qvals[4].item()                
+                    p999 = qvals[4].item()         
+
+                delta_debug_log = ""
+
+                if hasattr(FISTA_leonardo, "_delta_debug"):
+                    dbg = FISTA_leonardo._delta_debug
+                    calls = max(1, dbg["calls"])
+
+                    delta_debug_log = (
+                        f"delta_debug: "
+                        f"mean_sum_x={dbg['mean_sum_x'] / calls:.6e}, "
+                        f"mean_violation={dbg['mean_violation'] / calls:.6e}, "
+                        f"frac_null_x={dbg['frac_null_x'] / calls:.6%}, "
+                        f"frac_sum_x_lt_0_5={dbg['frac_sum_x_lt_0_5'] / calls:.6%}, "
+                        f"frac_two_bucket={dbg['frac_two_bucket'] / calls:.6%}"
+                    )
+
+                    FISTA_leonardo._delta_debug = {
+                        "calls": 0,
+                        "mean_sum_x": 0.0,
+                        "mean_violation": 0.0,
+                        "frac_null_x": 0.0,
+                        "frac_sum_x_lt_0_5": 0.0,
+                        "frac_two_bucket": 0.0,
+                    }                           
 
                 print(f"============== Epoch {epoch + 1}/{n_epochs} ==============", flush=True)
                 print(f"train_batches = {train_batches}", flush=True)
@@ -649,6 +673,8 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                 print(f"training_time = {training_time_global}s", flush=True)
                 print(f"accuracies = {accuracies}", flush=True)
                 print(f"zstd_ratios = {zstd_ratios}", flush=True)
+                if delta_debug_log:
+                    print(delta_debug_log, flush=True)                
                 print("====================================\n", flush=True)                
 
             if device.type == "cuda":

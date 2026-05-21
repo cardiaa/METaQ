@@ -227,6 +227,33 @@ def FISTA_leonardo(xi, v, w, C, upper_c, lower_c, delta, subgradient_step, devic
             idx_right = x_i_star[:, 1].to(dtype=torch.long, device=device)
             theta = x_i_star[:, 2].to(dtype=torch.float32, device=device)
 
+            with torch.no_grad():
+                sum_x_per_weight = theta.clone()
+                mask_diff_debug = idx_right != idx_left
+
+                if mask_diff_debug.any():
+                    sum_x_per_weight[mask_diff_debug] += 1.0 - theta[mask_diff_debug]
+
+                violation = 1.0 - sum_x_per_weight
+
+                if not hasattr(FISTA_leonardo, "_delta_debug"):
+                    FISTA_leonardo._delta_debug = {
+                        "calls": 0,
+                        "mean_sum_x": 0.0,
+                        "mean_violation": 0.0,
+                        "frac_null_x": 0.0,
+                        "frac_sum_x_lt_0_5": 0.0,
+                        "frac_two_bucket": 0.0,
+                    }
+
+                dbg = FISTA_leonardo._delta_debug
+                dbg["calls"] += 1
+                dbg["mean_sum_x"] += sum_x_per_weight.mean().item()
+                dbg["mean_violation"] += violation.mean().item()
+                dbg["frac_null_x"] += (sum_x_per_weight < 1e-6).float().mean().item()
+                dbg["frac_sum_x_lt_0_5"] += (sum_x_per_weight < 0.5).float().mean().item()
+                dbg["frac_two_bucket"] += mask_diff_debug.float().mean().item()            
+
             sum_x_star = torch.zeros(C, dtype=torch.float32, device=device)
 
             # Add theta contribution on idx_left
