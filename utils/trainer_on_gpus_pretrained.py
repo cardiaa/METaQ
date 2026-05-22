@@ -223,10 +223,10 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
     def _index_bits_for_C(C_local: int) -> int:
         return int(math.ceil(math.log2(C_local)))      
 
-    def _make_quant_levels_with_zero(lo: torch.Tensor, hi: torch.Tensor, C_local: int, device):
+    def _make_quant_levels_without_zero(lo: torch.Tensor, hi: torch.Tensor, C_local: int, device):
         """
-        Costruisce i livelli finali di quantizzazione, non i bordi.
-        Lo zero è un livello esplicito della griglia passata anche a FISTA.
+        Costruisce C livelli di quantizzazione senza includere 0.
+        Lo zero non è un bucket: è la soluzione nulla x=0 del problema di pruning.
         """
         eps = torch.tensor(1e-12, device=device)
 
@@ -234,33 +234,26 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
         hi = torch.maximum(hi.to(device), eps)
 
         n_neg = C_local // 2
-        n_pos = C_local - n_neg - 1
+        n_pos = C_local - n_neg
 
-        neg = torch.linspace(lo.item(), 0.0, steps=n_neg + 1, device=device)[:-1]
-        zero = torch.zeros(1, device=device)
-        pos = torch.linspace(0.0, hi.item(), steps=n_pos + 1, device=device)[1:]
+        neg = torch.linspace(lo.item(), -eps.item(), steps=n_neg, device=device)
+        pos = torch.linspace(eps.item(), hi.item(), steps=n_pos, device=device)
 
-        levels = torch.cat([neg, zero, pos]).to(dtype=torch.float32)
-        return levels
+        levels = torch.cat([neg, pos]).to(dtype=torch.float32)
+        return levels        
 
     def _quantize_with_deadzone(w_flat: torch.Tensor, v_layer: torch.Tensor):
         """
-        Quantizza usando v_layer come livelli finali di quantizzazione.
-        v_layer NON è più un vettore di bordi: è l'alfabeto usato anche da FISTA.
+        Quantizza sui soli livelli non nulli.
+        Lo zero non è un livello di quantizzazione: la sparsità viene valutata
+        separatamente tramite la maschera sparse.
         """
         levels = v_layer
-        zero_idx = torch.argmin(levels.abs())
-
         boundaries = (levels[:-1] + levels[1:]) / 2
 
         q_idx = torch.bucketize(w_flat, boundaries, right=False).clamp_(0, C - 1)
-
-        r_layer = 0.5 * (levels[-1] - levels[0]).abs()
-        zero_threshold = deadzone_ratio * r_layer
-
-        q_idx = torch.where(w_flat.abs() <= zero_threshold, zero_idx, q_idx)
-
         q_flat = levels[q_idx]
+
         return q_idx, q_flat
 
     for epoch in range(n_epochs):
@@ -348,7 +341,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                                 lo = center - 1e-6
                                 hi = center + 1e-6
 
-                            v_layer = _make_quant_levels_with_zero(lo, hi, C, device)
+                            v_layer = _make_quant_levels_without_zero(lo, hi, C, device)
 
                             if dist.is_initialized():
                                 dist.broadcast(v_layer, src=0)
