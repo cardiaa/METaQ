@@ -223,41 +223,44 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
     def _index_bits_for_C(C_local: int) -> int:
         return int(math.ceil(math.log2(C_local)))      
 
-    def _quant_centers_from_edges(v_layer: torch.Tensor) -> torch.Tensor:
+    def _make_quant_levels_with_zero(lo: torch.Tensor, hi: torch.Tensor, C_local: int, device):
         """
-        Builds quantization centers from bin edges and forces one center to be
-        exactly zero. This allows INT4 quantization to create real zero weights.
+        Costruisce i livelli finali di quantizzazione, non i bordi.
+        Lo zero è un livello esplicito della griglia passata anche a FISTA.
         """
-        centers = (v_layer[:-1] + v_layer[1:]) / 2
-        centers = torch.cat([centers, v_layer[-1:]])
+        eps = torch.tensor(1e-12, device=device)
 
-        zero_idx = torch.argmin(centers.abs())
-        centers[zero_idx] = 0.0
+        lo = torch.minimum(lo.to(device), -eps)
+        hi = torch.maximum(hi.to(device), eps)
 
-        return centers
+        n_neg = C_local // 2
+        n_pos = C_local - n_neg - 1
+
+        neg = torch.linspace(lo.item(), 0.0, steps=n_neg + 1, device=device)[:-1]
+        zero = torch.zeros(1, device=device)
+        pos = torch.linspace(0.0, hi.item(), steps=n_pos + 1, device=device)[1:]
+
+        levels = torch.cat([neg, zero, pos]).to(dtype=torch.float32)
+        return levels
 
     def _quantize_with_deadzone(w_flat: torch.Tensor, v_layer: torch.Tensor):
         """
-        Quantizes a flat tensor with per-layer INT4 centers and an explicit
-        zero dead-zone around zero.
+        Quantizza usando v_layer come livelli finali di quantizzazione.
+        v_layer NON è più un vettore di bordi: è l'alfabeto usato anche da FISTA.
         """
-        centers = _quant_centers_from_edges(v_layer)
-        zero_idx = torch.argmin(centers.abs())
+        levels = v_layer
+        zero_idx = torch.argmin(levels.abs())
 
-        if v_layer.numel() > 1:
-            step = v_layer[1] - v_layer[0]
-            lo = v_layer[0]
-            hi = v_layer[-1] + step
-            r_layer = 0.5 * (hi - lo).abs()
-        else:
-            r_layer = v_layer[0].abs()
+        boundaries = (levels[:-1] + levels[1:]) / 2
 
+        q_idx = torch.bucketize(w_flat, boundaries, right=False).clamp_(0, C - 1)
+
+        r_layer = 0.5 * (levels[-1] - levels[0]).abs()
         zero_threshold = deadzone_ratio * r_layer
 
-        q_idx = (torch.bucketize(w_flat, v_layer, right=False) - 1).clamp_(0, C - 1)
         q_idx = torch.where(w_flat.abs() <= zero_threshold, zero_idx, q_idx)
 
-        q_flat = centers[q_idx]
+        q_flat = levels[q_idx]
         return q_idx, q_flat
 
     for epoch in range(n_epochs):
@@ -345,15 +348,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                                 lo = center - 1e-6
                                 hi = center + 1e-6
 
-                            w0_layer = ((lo + hi) / 2).item()
-                            r_layer = ((hi - lo) / 2).item()
-
-                            v_layer = torch.linspace(
-                                w0_layer - r_layer,
-                                w0_layer + r_layer - (2 * r_layer) / C,
-                                steps=C,
-                                device=device
-                            )
+                            v_layer = _make_quant_levels_with_zero(lo, hi, C, device)
 
                             if dist.is_initialized():
                                 dist.broadcast(v_layer, src=0)
