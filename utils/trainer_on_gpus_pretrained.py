@@ -256,12 +256,18 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
         levels = v_layer
         boundaries = (levels[:-1] + levels[1:]) / 2
 
-        zero_mask = w_flat == 0
-
         q_idx = torch.bucketize(w_flat, boundaries, right=False).clamp_(0, C - 1)
         q_flat = levels[q_idx]
 
-        q_flat = torch.where(zero_mask, torch.zeros_like(q_flat), q_flat)
+        if delta < 0:
+            alpha_delta = (-delta) / (1.0 - delta)
+        else:
+            alpha_delta = 0.0
+
+        pruning_threshold = alpha_delta * levels.abs().min()
+
+        prune_mask = w_flat.abs() <= pruning_threshold
+        q_flat = torch.where(prune_mask, torch.zeros_like(q_flat), q_flat)
 
         return q_idx, q_flat
 
