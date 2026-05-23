@@ -19,7 +19,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                        first_best_indices, BestQuantization_target_acc, final_target_acc, target_zstd_ratio, min_xi, max_xi, upper_c, 
                        lower_c, c1, c2, zeta, l, n_epochs, max_iterations, device, train_optimizer, entropy_optimizer, trainloader,
                        testloader, train_sampler, steps_per_epoch, delta, pruning, QuantizationType, sparsity_threshold, accuracy_tollerance,
-                       metrics_interval=1, entropy_warmup_epochs=0, entropy_every=1, check_ddp_sync=False):
+                       gamma=1.0, metrics_interval=1, entropy_warmup_epochs=0, entropy_every=1, check_ddp_sync=False):
     """Train and evaluate a model with optional entropy regularization.
 
     This function is intentionally self-contained because the compression
@@ -146,7 +146,11 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                 v_layer = v_list[q_state]
                 w_flat = param.data.reshape(-1)
 
-                _, q_flat = _quantize_with_deadzone(w_flat, v_layer)
+                _, q_flat = _quantize_with_deadzone(
+                    w_flat,
+                    v_layer,
+                    apply_pruning_deadzone=True,
+                )
 
                 param.data.copy_(q_flat.view_as(param))
 
@@ -249,9 +253,14 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
         levels = torch.cat([neg, pos]).to(dtype=torch.float32)
         return levels      
 
-    def _quantize_with_deadzone(w_flat: torch.Tensor, v_layer: torch.Tensor):
+    def _quantize_with_deadzone(
+        w_flat: torch.Tensor,
+        v_layer: torch.Tensor,
+        apply_pruning_deadzone: bool,
+    ):
         """
-        Quantize weights to the nearest level in v_layer, with an explicit zero dead-zone.
+        Quantizes weights to the nearest non-zero level in v_layer.
+        If apply_pruning_deadzone=True, weights near zero are quantized to exactly zero, creating a dead-zone that induces sparsity.
         """
         levels = v_layer
         boundaries = (levels[:-1] + levels[1:]) / 2
@@ -259,15 +268,16 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
         q_idx = torch.bucketize(w_flat, boundaries, right=False).clamp_(0, C - 1)
         q_flat = levels[q_idx]
 
-        if delta < 0:
-            alpha_delta = (-delta) / (1.0 - delta)
-        else:
-            alpha_delta = 0.0
+        if apply_pruning_deadzone:
+            if delta < 0:
+                alpha_delta = (-delta) / (1.0 - delta)
+            else:
+                alpha_delta = 0.0
 
-        pruning_threshold = alpha_delta * levels.abs().min()
+            pruning_threshold = gamma * alpha_delta * levels.abs().min()
 
-        prune_mask = w_flat.abs() <= pruning_threshold
-        q_flat = torch.where(prune_mask, torch.zeros_like(q_flat), q_flat)
+            prune_mask = w_flat.abs() <= pruning_threshold
+            q_flat = torch.where(prune_mask, torch.zeros_like(q_flat), q_flat)
 
         return q_idx, q_flat
 
@@ -477,6 +487,9 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                 q_idx_layers = []
                 q_vals_layers = []
 
+                s_idx_layers = []
+                s_vals_layers = []
+
                 quant_state = 0
 
                 for full_idx, p_ in enumerate(all_params):
@@ -485,13 +498,28 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
 
                     if full_idx in quant_param_indices and QuantizationType == "center":
                         v_layer = v_list[quant_state]
-                        q_idx_layer, q_layer = _quantize_with_deadzone(w_layer, v_layer)
 
-                        s_layer = q_layer.clone()
+                        # Pure quantization: no pruning deadzone.
+                        q_idx_layer, q_layer = _quantize_with_deadzone(
+                            w_layer,
+                            v_layer,
+                            apply_pruning_deadzone=False,
+                        )
+
+                        # Sparse quantization: delta/gamma-controlled pruning deadzone.
+                        s_idx_layer, s_layer = _quantize_with_deadzone(
+                            w_layer,
+                            v_layer,
+                            apply_pruning_deadzone=True,
+                        )
+
                         s_layer[s_layer.abs() <= sparsity_threshold] = 0.0
 
                         q_idx_layers.append(q_idx_layer)
                         q_vals_layers.append(q_layer)
+
+                        s_idx_layers.append(s_idx_layer)
+                        s_vals_layers.append(s_layer)
 
                         quant_state += 1
 
@@ -517,7 +545,13 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                     total_n = 0
                     total_nz = 0
 
-                    for q_idx_layer, q_vals_layer in zip(q_idx_layers, q_vals_layers):
+                    for q_idx_layer, q_vals_layer, s_idx_layer, s_vals_layer in zip(
+                        q_idx_layers,
+                        q_vals_layers,
+                        s_idx_layers,
+                        s_vals_layers,
+                    ):
+                        # Dense quantized stream: pure quantization, no pruning deadzone.
                         counts = torch.bincount(q_idx_layer, minlength=C).to(torch.float32)
                         probs = counts / counts.sum()
                         probs = probs[probs > 0]
@@ -526,14 +560,15 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
 
                         q_bytes_chunks.append(_pack_quant_indices(q_idx_layer, C))
 
-                        nz_mask_layer = q_vals_layer.abs() > sparsity_threshold
+                        # Sparse stream: pruning deadzone applied.
+                        nz_mask_layer = s_vals_layer.abs() > sparsity_threshold
                         nz_masks.append(nz_mask_layer)
 
-                        total_n += q_idx_layer.numel()
+                        total_n += s_idx_layer.numel()
                         total_nz += int(nz_mask_layer.sum().item())
 
                         nz_idx_bytes_chunks.append(
-                            _pack_quant_indices(q_idx_layer[nz_mask_layer], C)
+                            _pack_quant_indices(s_idx_layer[nz_mask_layer], C)
                         )
 
                     quantized_entropy = round(entropy_total) + 1

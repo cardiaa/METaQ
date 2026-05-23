@@ -1,11 +1,12 @@
 #!/bin/bash
 #SBATCH --partition=boost_usr_prod
+#SBATCH --account=IscrC_ObCTDoNN
 #SBATCH --nodes=4
 #SBATCH --ntasks-per-node=1
 #SBATCH --ntasks=4
 #SBATCH --gres=gpu:4
 #SBATCH --cpus-per-task=32
-#SBATCH --time=00:30:00
+#SBATCH --time=01:00:00
 #SBATCH --output=/dev/null
 #SBATCH --error=/dev/null
 
@@ -17,11 +18,13 @@ BATCH_SIZE=$2
 T1=$3
 T2=$4
 EPOCH_FRACTION=$5
-PRETRAINED=$6
+C=$6
+PRETRAINED=$7
+GAMMA=$8
 
-if [ -z "$DELTA" ] || [ -z "$BATCH_SIZE" ] || [ -z "$T1" ] || [ -z "$T2" ] || [ -z "$EPOCH_FRACTION" ] || [ -z "$PRETRAINED" ]; then
-    echo "Usage: sbatch run_alexnet_test_pretrained.sh <delta> <batch_size> <T1> <T2> <epoch_fraction> <pretrained>"
-    echo "Example: sbatch run_alexnet_test_pretrained.sh 100 64 5e-4 1e-9 1.0 Y"
+if [ -z "$DELTA" ] || [ -z "$BATCH_SIZE" ] || [ -z "$T1" ] || [ -z "$T2" ] || [ -z "$EPOCH_FRACTION" ] || [ -z "$C" ] || [ -z "$PRETRAINED" ] || [ -z "$GAMMA" ]; then
+    echo "Usage: sbatch run_alexnet_test_pretrained.sh <delta> <batch_size> <T1> <T2> <epoch_fraction> <C> <pretrained> <gamma>"
+    echo "Example: sbatch run_alexnet_test_pretrained.sh -10 64 1e-3 1e-8 1.0 16 Y 2"
     exit 1
 fi
 
@@ -61,6 +64,7 @@ srun --ntasks=$SLURM_NTASKS --ntasks-per-node=1 bash -lc '
             train_on_gpus_pretrained.py \
             --model_name AlexNet \
             --delta '"$DELTA"' \
+            --gamma '"$GAMMA"' \
             --data_root /leonardo_work/IscrC_ObCTDoNN/acardia0/datasets \
             --train_workers 4 \
             --val_workers 2 \
@@ -68,13 +72,14 @@ srun --ntasks=$SLURM_NTASKS --ntasks-per-node=1 bash -lc '
             --T1 '"$T1"' \
             --T2 '"$T2"' \
             --epoch_fraction '"$EPOCH_FRACTION"' \
-            --n_epochs 10 \
+            --n_epochs 8 \
             --lr 1e-4 \
             --max_iterations 3 \
             --metrics_interval 1 \
             --entropy_warmup_epochs 1 \
             --entropy_every 4 \
             --check_ddp_sync \
+	    --C '"$C"' \
             --pretrained '"$PRETRAINED"' \
             > '"$LOG_FILE"' 2>&1
     else
@@ -88,6 +93,7 @@ srun --ntasks=$SLURM_NTASKS --ntasks-per-node=1 bash -lc '
             train_on_gpus_pretrained.py \
             --model_name AlexNet \
             --delta '"$DELTA"' \
+            --gamma '"$GAMMA"' \
             --data_root /leonardo_work/IscrC_ObCTDoNN/acardia0/datasets \
             --train_workers 4 \
             --val_workers 2 \
@@ -95,13 +101,14 @@ srun --ntasks=$SLURM_NTASKS --ntasks-per-node=1 bash -lc '
             --T1 '"$T1"' \
             --T2 '"$T2"' \
             --epoch_fraction '"$EPOCH_FRACTION"' \
-            --n_epochs 10 \
+            --n_epochs 8 \
             --lr 1e-4 \
             --max_iterations 3 \
             --metrics_interval 1 \
             --entropy_warmup_epochs 1 \
             --entropy_every 4 \
             --check_ddp_sync \
+	    --C '"$C"' \
             --pretrained '"$PRETRAINED"' \
             > /dev/null 2>&1
     fi

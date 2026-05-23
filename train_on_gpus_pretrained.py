@@ -546,6 +546,7 @@ def print_config(model_name, args, h, local_rank_to_print):
     print(f"criterion={h['criterion_name']}", flush=True)
     print(f"C={h['C']}", flush=True)
     print(f"delta={args.delta}", flush=True)
+    print(f"gamma={args.gamma}", flush=True)    
     print(f"lr={h['lr']}", flush=True)
     world_size = dist.get_world_size() if dist.is_initialized() else 1
     if h["batch_size"] is not None:
@@ -628,6 +629,12 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--delta", type=float, required=True, help="Value of delta")
     parser.add_argument(
+        "--gamma",
+        type=float,
+        default=1.0,
+        help="Multiplier for the delta-controlled pruning deadzone",
+    )    
+    parser.add_argument(
         "--model_name",
         type=str,
         required=True,
@@ -678,6 +685,8 @@ def main():
         help="Path to a local AlexNet pretrained checkpoint"
     )    
     args = parser.parse_args()
+    if args.gamma < 0:
+        raise ValueError("--gamma must be >= 0.")    
 
     # CPU thread control
     torch.set_num_threads(1)
@@ -842,7 +851,8 @@ def main():
         QuantizationType=h["QuantizationType"],
         sparsity_threshold=h["sparsity_threshold"],
         accuracy_tollerance=h["accuracy_tollerance"],
-        metrics_interval=h["metrics_interval"],
+        gamma=args.gamma,
+        metrics_interval=h["metrics_interval"], 
         entropy_warmup_epochs=h["entropy_warmup_epochs"],
         entropy_every=h["entropy_every"],
         check_ddp_sync=h["check_ddp_sync"],
