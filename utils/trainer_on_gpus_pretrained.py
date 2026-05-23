@@ -225,28 +225,33 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
 
     def _make_quant_levels_without_zero(lo: torch.Tensor, hi: torch.Tensor, C_local: int, device):
         """
-        Costruisce C livelli di quantizzazione senza includere 0.
-        Lo zero non è un bucket: è la soluzione nulla x=0 del problema di pruning.
+        Builds a quantization grid with C_local levels between lo and hi, but with an explicit zero dead-zone.  
+        The grid is symmetric around zero, but the positive and negative halves are separate to allow an explicit gap around zero.  
+        The gap size is proportional to the layer range (hi - lo) to avoid degenerate grids for small layers.
         """
-        eps = torch.tensor(1e-12, device=device)
+        gap_ratio = 0.05
 
-        lo = torch.minimum(lo.to(device), -eps)
-        hi = torch.maximum(hi.to(device), eps)
+        lo = lo.to(device)
+        hi = hi.to(device)
+
+        r_layer = 0.5 * (hi - lo).abs()
+        gap = gap_ratio * r_layer
+
+        lo = torch.minimum(lo, -gap)
+        hi = torch.maximum(hi, gap)
 
         n_neg = C_local // 2
         n_pos = C_local - n_neg
 
-        neg = torch.linspace(lo.item(), -eps.item(), steps=n_neg, device=device)
-        pos = torch.linspace(eps.item(), hi.item(), steps=n_pos, device=device)
+        neg = torch.linspace(lo.item(), -gap.item(), steps=n_neg, device=device)
+        pos = torch.linspace(gap.item(), hi.item(), steps=n_pos, device=device)
 
         levels = torch.cat([neg, pos]).to(dtype=torch.float32)
-        return levels        
+        return levels      
 
     def _quantize_with_deadzone(w_flat: torch.Tensor, v_layer: torch.Tensor):
         """
-        Quantizza sui soli livelli non nulli.
-        Lo zero non è un livello di quantizzazione: la sparsità viene valutata
-        separatamente tramite la maschera sparse.
+        Quantize weights to the nearest level in v_layer, with an explicit zero dead-zone.
         """
         levels = v_layer
         boundaries = (levels[:-1] + levels[1:]) / 2
