@@ -545,6 +545,10 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                     total_n = 0
                     total_nz = 0
 
+                    # Distribution of non-zero quantized indices in the sparse representation.
+                    # This is used to estimate H(bucket | nonzero).
+                    nz_index_counts = torch.zeros(C, dtype=torch.float64, device=device)
+
                     for q_idx_layer, q_vals_layer, s_idx_layer, s_vals_layer in zip(
                         q_idx_layers,
                         q_vals_layers,
@@ -567,8 +571,16 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                         total_n += s_idx_layer.numel()
                         total_nz += int(nz_mask_layer.sum().item())
 
+                        nz_idx_layer = s_idx_layer[nz_mask_layer]
+
+                        if nz_idx_layer.numel() > 0:
+                            nz_index_counts += torch.bincount(
+                                nz_idx_layer,
+                                minlength=C,
+                            ).to(dtype=torch.float64)
+
                         nz_idx_bytes_chunks.append(
-                            _pack_quant_indices(s_idx_layer[nz_mask_layer], C)
+                            _pack_quant_indices(nz_idx_layer, C)
                         )
 
                     quantized_entropy = round(entropy_total) + 1
@@ -587,6 +599,12 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                     compressed_bits = len(zstd_compressed) * 8 + metadata_bits
                     zstd_ratio = compressed_bits / original_bits
 
+                    # Dense entropy diagnostics.
+                    dense_entropy_bits = float(entropy_total)
+                    dense_entropy_bits_per_weight = dense_entropy_bits / float(total_n)
+                    dense_entropy_ratio = dense_entropy_bits / float(original_bits)
+                    metadata_ratio = metadata_bits / float(original_bits)                    
+
                     # Sparse proxy:
                     # global bitmask + compressed non-zero quantized indices.
                     global_nz_mask = torch.cat([m.reshape(-1) for m in nz_masks])
@@ -598,14 +616,56 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                     compressed_mask = compress_zstd(bitmask_bytes, level=22)
                     compressed_values = compress_zstd(nz_idx_bytes, level=22)
 
+                    mask_compressed_bits = len(compressed_mask) * 8
+                    values_compressed_bits = len(compressed_values) * 8
+
                     compressed_sparse_bits = (
-                        len(compressed_mask) * 8 +
-                        len(compressed_values) * 8 +
+                        mask_compressed_bits +
+                        values_compressed_bits +
                         metadata_bits
                     )
 
                     sparse_ratio = compressed_sparse_bits / original_bits
                     sparsity = 1.0 - float(total_nz) / float(total_n)
+
+                    # Zstd component ratios.
+                    mask_zstd_ratio = mask_compressed_bits / float(original_bits)
+                    values_zstd_ratio = values_compressed_bits / float(original_bits)
+
+                    # Entropy proxy for the sparse representation:
+                    # H(mask) + P(nonzero) * H(bucket | nonzero) + metadata.
+                    p_nz = float(total_nz) / float(total_n)
+                    p_zero = 1.0 - p_nz
+
+                    mask_entropy_bits_per_weight = 0.0
+                    if p_zero > 0.0:
+                        mask_entropy_bits_per_weight -= p_zero * math.log2(p_zero)
+                    if p_nz > 0.0:
+                        mask_entropy_bits_per_weight -= p_nz * math.log2(p_nz)
+
+                    mask_entropy_bits = mask_entropy_bits_per_weight * float(total_n)
+                    mask_entropy_ratio = mask_entropy_bits / float(original_bits)
+
+                    if total_nz > 0:
+                        nz_probs = nz_index_counts / nz_index_counts.sum().clamp_min(1.0)
+                        nz_probs = nz_probs[nz_probs > 0]
+
+                        nonzero_index_entropy_bits_per_nonzero = float(
+                            (-(nz_probs * torch.log2(nz_probs)).sum()).item()
+                        )
+                        nonzero_index_entropy_bits = nonzero_index_entropy_bits_per_nonzero * float(total_nz)
+                    else:
+                        nonzero_index_entropy_bits_per_nonzero = 0.0
+                        nonzero_index_entropy_bits = 0.0
+
+                    nonzero_index_entropy_ratio = nonzero_index_entropy_bits / float(original_bits)
+
+                    sparse_entropy_proxy_bits = (
+                        mask_entropy_bits +
+                        nonzero_index_entropy_bits +
+                        metadata_bits
+                    )
+                    sparse_entropy_proxy_ratio = sparse_entropy_proxy_bits / float(original_bits)
 
                     zstd_ratios.append(float(zstd_ratio))
             else:
@@ -701,6 +761,28 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                 print(f"sparse_ratio = {sparse_ratio:.2%}", flush=True)
                 print(f"sparsity = {sparsity:.2%}", flush=True)
                 print(f"sparse_accuracy = {sparse_accuracy}", flush=True)
+                print(
+                    f"dense_entropy_debug: "
+                    f"H_Q_bits_per_weight={dense_entropy_bits_per_weight:.6f}, "
+                    f"H_Q_ratio={dense_entropy_ratio:.4%}",
+                    flush=True
+                )
+                print(
+                    f"sparse_zstd_components: "
+                    f"mask_zstd_ratio={mask_zstd_ratio:.4%}, "
+                    f"values_zstd_ratio={values_zstd_ratio:.4%}, "
+                    f"metadata_ratio={metadata_ratio:.6%}",
+                    flush=True
+                )
+                print(
+                    f"sparse_entropy_proxy: "
+                    f"mask_H_bits_per_weight={mask_entropy_bits_per_weight:.6f}, "
+                    f"nonzero_index_H_bits_per_nonzero={nonzero_index_entropy_bits_per_nonzero:.6f}, "
+                    f"mask_H_ratio={mask_entropy_ratio:.4%}, "
+                    f"nonzero_index_H_ratio={nonzero_index_entropy_ratio:.4%}, "
+                    f"sparse_proxy_ratio={sparse_entropy_proxy_ratio:.4%}",
+                    flush=True
+                )
                 print(
                     f"weight_percentiles: "
                     f"p0.1={p001:.6e}, p1={p01:.6e}, "
