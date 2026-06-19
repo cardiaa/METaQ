@@ -548,6 +548,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                     # Distribution of non-zero quantized indices in the sparse representation.
                     # This is used to estimate H(bucket | nonzero).
                     nz_index_counts = torch.zeros(C, dtype=torch.float64, device=device)
+                    sparse_symbol_counts = torch.zeros(C + 1, dtype=torch.float64, device=device)
 
                     for q_idx_layer, q_vals_layer, s_idx_layer, s_vals_layer in zip(
                         q_idx_layers,
@@ -572,6 +573,15 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                         total_nz += int(nz_mask_layer.sum().item())
 
                         nz_idx_layer = s_idx_layer[nz_mask_layer]
+
+                        num_zero_layer = int((~nz_mask_layer).sum().item())
+                        sparse_symbol_counts[0] += num_zero_layer
+
+                        if nz_idx_layer.numel() > 0:
+                            sparse_symbol_counts[1:] += torch.bincount(
+                                nz_idx_layer,
+                                minlength=C,
+                            ).to(dtype=torch.float64)
 
                         if nz_idx_layer.numel() > 0:
                             nz_index_counts += torch.bincount(
@@ -666,6 +676,15 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                         metadata_bits
                     )
                     sparse_entropy_proxy_ratio = sparse_entropy_proxy_bits / float(original_bits)
+
+                    sparse_symbol_probs = sparse_symbol_counts / sparse_symbol_counts.sum().clamp_min(1.0)
+                    sparse_symbol_probs = sparse_symbol_probs[sparse_symbol_probs > 0]
+
+                    sparse_symbol_H_bits_per_weight = float(
+                        (-(sparse_symbol_probs * torch.log2(sparse_symbol_probs)).sum()).item()
+                    )
+
+                    sparse_symbol_H_ratio = sparse_symbol_H_bits_per_weight / 32.0                    
 
                     zstd_ratios.append(float(zstd_ratio))
             else:
@@ -780,7 +799,9 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                     f"nonzero_index_H_bits_per_nonzero={nonzero_index_entropy_bits_per_nonzero:.6f}, "
                     f"mask_H_ratio={mask_entropy_ratio:.4%}, "
                     f"nonzero_index_H_ratio={nonzero_index_entropy_ratio:.4%}, "
-                    f"sparse_proxy_ratio={sparse_entropy_proxy_ratio:.4%}",
+                    f"sparse_proxy_ratio={sparse_entropy_proxy_ratio:.4%}, "
+                    f"sparse_symbol_H_bits_per_weight={sparse_symbol_H_bits_per_weight:.6f}, "
+                    f"sparse_symbol_H_ratio={sparse_symbol_H_ratio:.4%}",
                     flush=True
                 )
                 print(
