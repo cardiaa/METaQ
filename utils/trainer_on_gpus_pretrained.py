@@ -83,8 +83,14 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
 
     xi_list = []
     for _ in params_for_quant:
-        xi_layer = min_xi + (max_xi - min_xi) * torch.rand(C, device=device)
-        xi_layer = torch.sort(xi_layer)[0]
+        # xi_layer[0] is the multiplier for the explicit zero/pruning symbol.
+        # xi_layer[1:] are the multipliers for the C non-zero quantization buckets.
+        xi_zero = min_xi + (max_xi - min_xi) * torch.rand(1, device=device)
+
+        xi_buckets = min_xi + (max_xi - min_xi) * torch.rand(C, device=device)
+        xi_buckets = torch.sort(xi_buckets)[0]
+
+        xi_layer = torch.cat([xi_zero, xi_buckets])
 
         if dist.is_initialized():
             dist.broadcast(xi_layer, src=0)

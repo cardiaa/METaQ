@@ -187,42 +187,73 @@ def FISTA(xi, v, w, C, upper_c, lower_c, delta, subgradient_step, device, max_it
 
 def FISTA_leonardo(xi, v, w, C, upper_c, lower_c, delta, subgradient_step, device, max_iterations, pruning):
     """
-    Implements the Fast Iterative Shrinking-Thresholding Algorithm (FISTA) 
-    for optimizing a constrained objective function.
+    Sparse-aware FISTA for the METaQ entropy dual.
 
-    Args:
-        xi (torch.Tensor): Initial parameter vector.
-        v (torch.Tensor): Constraint-related vector.
-        w (torch.Tensor): Weight vector.
-        C (float): Constraint parameter.
-        subgradient_step (float): Step size for subgradient descent.
-        max_iterations (int): Maximum number of iterations.
+    If pruning == "Y" and xi has length C + 1:
+        xi[0]  = multiplier for the explicit zero/pruning symbol
+        xi[1:] = multipliers for the C non-zero quantization buckets
 
-    Returns:
-        tuple: Updated xi, lambda_plus (Lagrange multiplier), 
-               x_i_star (optimal allocation), and phi (objective function value).
+    The quantization vector v still has length C and contains only non-zero
+    levels.  The zero symbol is represented by the residual mass
+
+        z_i = 1 - sum_b x_{i,b}
+
+    and is included in the entropy dual through its own multiplier xi[0].
     """
 
-    # Initialize previous values for FISTA acceleration
+    xi = xi.to(dtype=torch.float32, device=device)
     xi_prev = xi.clone().to(device)
     t_prev = torch.tensor(1.0, device=device)
 
-    for iteration in range(1, max_iterations + 1):
-        # Solve the simil-knapsack problem for the current xi
-        if(pruning == "Y"):
-            if(device.type == "cuda"):
-                #x_i_star, lambda_plus, phi_plus = knapsack_specialized_pruning_sparse(xi, v, w, C, device, delta)
-                x_i_star, lambda_plus, phi_plus = knapsack_specialized_pruning_sparse_leonardo(xi, v, w, C, device, delta)
-            else:
-                x_i_star, lambda_plus, phi_plus = knapsack_specialized_pruning(xi, v, w, C, device, delta)
-        elif(pruning == "N"):
-            x_i_star, lambda_plus, phi_plus = knapsack_specialized(xi, v, w, C, device)
+    use_zero_symbol = (pruning == "Y" and xi.numel() == C + 1)
 
-        # === Step: sum_x_star ===
-        # Old behavior: x_i_star is dense (M, C) -> sum along rows
-        # New memory-light behavior: x_i_star is (M, 3) = [idx_left, idx_right, theta]
+    for iteration in range(1, max_iterations + 1):
+        # Solve the per-weight sparse knapsack.
+        # In the sparse-aware case, xi has length C+1; the knapsack function
+        # internally converts it to the effective C-dimensional cost vector:
+        #
+        #     xi_b - xi_zero - delta
+        #
+        if pruning == "Y":
+            if device.type == "cuda":
+                x_i_star, lambda_plus, phi_plus = knapsack_specialized_pruning_sparse_leonardo(
+                    xi,
+                    v,
+                    w,
+                    C,
+                    device,
+                    delta,
+                )
+            else:
+                x_i_star, lambda_plus, phi_plus = knapsack_specialized_pruning(
+                    xi,
+                    v,
+                    w,
+                    C,
+                    device,
+                    delta,
+                )
+        elif pruning == "N":
+            x_i_star, lambda_plus, phi_plus = knapsack_specialized(
+                xi,
+                v,
+                w,
+                C,
+                device,
+            )
+        else:
+            raise ValueError(f"Unsupported pruning flag: {pruning}")
+
+        # ------------------------------------------------------------------
+        # Recover bucket occupancies.
+        #
+        # Memory-light Leonardo path:
+        #     x_i_star is (M, 3) = [idx_left, idx_right, theta]
+        #
+        # Dense path:
+        #     x_i_star is (M, C)
+        # ------------------------------------------------------------------
         if x_i_star.dim() == 2 and x_i_star.size(1) == 3:
-            # === Memory-light sum (NO dense x) ===
             idx_left = x_i_star[:, 0].to(dtype=torch.long, device=device)
             idx_right = x_i_star[:, 1].to(dtype=torch.long, device=device)
             theta = x_i_star[:, 2].to(dtype=torch.float32, device=device)
@@ -252,50 +283,87 @@ def FISTA_leonardo(xi, v, w, C, upper_c, lower_c, delta, subgradient_step, devic
                 dbg["mean_violation"] += violation.mean().item()
                 dbg["frac_null_x"] += (sum_x_per_weight < 1e-6).float().mean().item()
                 dbg["frac_sum_x_lt_0_5"] += (sum_x_per_weight < 0.5).float().mean().item()
-                dbg["frac_two_bucket"] += mask_diff_debug.float().mean().item()            
+                dbg["frac_two_bucket"] += mask_diff_debug.float().mean().item()
 
             sum_x_star = torch.zeros(C, dtype=torch.float32, device=device)
 
-            # Add theta contribution on idx_left
+            # Add theta contribution on idx_left.
             sum_x_star.scatter_add_(0, idx_left, theta)
 
-            # Add (1-theta) contribution on idx_right
-            # BUT: if idx_left == idx_right (1-sparse case), we must not double count
+            # Add (1-theta) contribution on idx_right.
+            # If idx_left == idx_right, do not double-count.
             mask_diff = idx_right != idx_left
             if mask_diff.any():
-                sum_x_star.scatter_add_(0, idx_right[mask_diff], (1.0 - theta[mask_diff]))
+                sum_x_star.scatter_add_(
+                    0,
+                    idx_right[mask_diff],
+                    1.0 - theta[mask_diff],
+                )
+
+            # Residual mass assigned to the zero/pruning symbol.
+            sum_z_star = (1.0 - sum_x_per_weight).sum().reshape(1)
 
         else:
-            # === Dense sum ===
             sum_x_star = torch.sum(x_i_star, dim=0)
 
-        # Compute the optimal c values c_star
-        c_star = torch.exp(torch.log(torch.tensor(2.0, device=device)) * xi - 1)
-        c_star = torch.clamp(c_star, min=lower_c, max=upper_c)
+            if use_zero_symbol:
+                sum_z_star = (
+                    torch.as_tensor(w.numel(), dtype=torch.float32, device=device)
+                    - sum_x_star.sum()
+                ).reshape(1)
 
-        # Compute the super-gradient
-        g = -(c_star - sum_x_star)
+        # ------------------------------------------------------------------
+        # Compute optimal c values and the dual supergradient.
+        # ------------------------------------------------------------------
+        log2_t = torch.log(torch.tensor(2.0, device=device))
 
-        # Compute the objective function value phi
-        phi1 = torch.sum(c_star * torch.log(c_star) / torch.log(torch.tensor(2.0, device=device)))
-        phi2 = -torch.sum(xi * c_star)
-        phi3 = torch.sum(xi * sum_x_star)
-        phi = phi1 + phi2 + phi3
+        if use_zero_symbol:
+            # xi has length C+1:
+            #     xi[0]  -> zero symbol
+            #     xi[1:] -> non-zero buckets
+            sum_symbol_star = torch.cat([sum_z_star, sum_x_star])
 
-        # FISTA acceleration step
+            c_star = torch.exp(log2_t * xi - 1)
+            c_star = torch.clamp(c_star, min=lower_c, max=upper_c)
+
+            g = -(c_star - sum_symbol_star)
+
+            phi1 = torch.sum(c_star * torch.log(c_star) / log2_t)
+            phi2 = -torch.sum(xi * c_star)
+            phi3 = torch.sum(xi * sum_symbol_star)
+            phi = phi1 + phi2 + phi3
+
+        else:
+            c_star = torch.exp(log2_t * xi - 1)
+            c_star = torch.clamp(c_star, min=lower_c, max=upper_c)
+
+            g = -(c_star - sum_x_star)
+
+            phi1 = torch.sum(c_star * torch.log(c_star) / log2_t)
+            phi2 = -torch.sum(xi * c_star)
+            phi3 = torch.sum(xi * sum_x_star)
+            phi = phi1 + phi2 + phi3
+
+        # ------------------------------------------------------------------
+        # FISTA acceleration step.
+        # ------------------------------------------------------------------
         t_current = (1 + torch.sqrt(1 + 4 * t_prev**2)) / 2
         y = xi + ((t_prev - 1) / t_current) * (xi - xi_prev)
 
-        # Gradient update step
-        xi_next = y + (1 / subgradient_step) * g 
+        xi_next = y + (1 / subgradient_step) * g
 
-        # Update variables for next iteration
         xi_prev = xi.clone()
         xi = xi_next.clone()
         t_prev = t_current
 
-        # Ensure xi remains sorted
-        xi = torch.sort(xi)[0]
+        # Keep bucket multipliers ordered, but do NOT sort the zero multiplier
+        # together with the non-zero bucket multipliers.
+        if use_zero_symbol:
+            xi_zero = xi[:1]
+            xi_buckets = torch.sort(xi[1:])[0]
+            xi = torch.cat([xi_zero, xi_buckets])
+        else:
+            xi = torch.sort(xi)[0]
 
     return xi, lambda_plus
 

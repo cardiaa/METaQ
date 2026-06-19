@@ -1,6 +1,37 @@
 import torch   
 import gc
 
+def _make_effective_pruning_xi(xi, C, device, delta):
+    """
+    Builds the effective cost vector for the sparse-aware pruning knapsack.
+
+    If xi has length C + 1:
+        xi[0]  = multiplier for the zero/pruning symbol
+        xi[1:] = multipliers for the non-zero buckets
+
+    The per-weight sparse-aware knapsack, after eliminating z_i, has effective
+    non-zero bucket costs:
+
+        xi_b - xi_zero - delta
+
+    If xi has length C, this falls back to the previous behavior:
+
+        xi_b - delta
+    """
+    xi = xi.to(dtype=torch.float32, device=device)
+    delta_t = torch.as_tensor(delta, dtype=torch.float32, device=device)
+
+    if xi.numel() == C + 1:
+        xi_zero = xi[0]
+        xi_buckets = xi[1:]
+        xi_effective = xi_buckets - xi_zero - delta_t
+        objective_constant = xi_zero + delta_t
+    else:
+        xi_effective = xi - delta_t
+        objective_constant = delta_t
+
+    return xi_effective, objective_constant
+
 def knapsack_specialized(xi, v, w, C, device):
     """
     Solves a specialized knapsack problem using a specialized method in a vectorized way
@@ -113,11 +144,16 @@ def knapsack_specialized_pruning(xi, v, w, C, device, delta):
     #print("inside function", flush=True) # Debugging line
     #print("Begin knaspasck_specialized_pruning ...", flush=True) # Debugging line
     #print("debug 1", flush=True) # Debugging line
-    xi = xi.to(dtype=torch.float32, device=device)
     v = v.to(dtype=torch.float32, device=device)
     w = w.to(dtype=torch.float32, device=device)
 
-    xi = xi - delta
+    xi, objective_constant = _make_effective_pruning_xi(
+        xi,
+        C,
+        device,
+        delta,
+    )
+
     M = w.shape[0]
     
     # === Step 1: Compute x_plus ===
@@ -316,7 +352,7 @@ def knapsack_specialized_pruning(xi, v, w, C, device, delta):
     lambda_opt = torch.where(denominator_zero_mask, lambda_opt_zero, lambda_opt_nonzero)
     #print("End part B ...") # Debugging line
     # === Step 9: Objective ===
-    objective_values = delta + x @ xi
+    objective_values = objective_constant + x @ xi
 
     #print("=== Device Report ===")
     #for name, obj in locals().items():
@@ -364,11 +400,16 @@ def knapsack_specialized_pruning_sparse(xi, v, w, C, device, delta):
     Returns:
         tuple: Optimal allocation (x), optimal multipliers (lambda_opt), and objective values.
     """
-    xi = xi.to(dtype=torch.float32, device=device)
     v = v.to(dtype=torch.float32, device=device)
     w = w.to(dtype=torch.float32, device=device)
 
-    xi = xi - delta
+    xi, objective_constant = _make_effective_pruning_xi(
+        xi,
+        C,
+        device,
+        delta,
+    )
+
     M = w.shape[0]
     
     # === Step 1: Compute x_plus ===
@@ -524,7 +565,7 @@ def knapsack_specialized_pruning_sparse(xi, v, w, C, device, delta):
     lambda_opt = torch.where(denominator_zero_mask, lambda_opt_zero, lambda_opt_nonzero)
 
     # === Step 9: Objective ===
-    objective_values = delta + x @ xi
+    objective_values = objective_constant + x @ xi
 
     # === Cleanup (snella, stile funzione sparsa) ===
     del ratio, neg_indices, pos_indices, neg_sorted, pos_sorted, b_vector
@@ -542,13 +583,24 @@ def knapsack_specialized_pruning_sparse_leonardo(xi, v, w, C, device, delta):
         objective_values: (M,)
     """
 
-    # === Step 0: Cast + move (same as dense) ===
-    xi = xi.to(dtype=torch.float32, device=device)
+    # === Step 0: Cast + move ===
     v = v.to(dtype=torch.float32, device=device)
     w = w.to(dtype=torch.float32, device=device)
 
-    # Pruning shift (same as dense)
-    xi = xi - delta
+    # Sparse-aware pruning costs.
+    # If xi has length C + 1, xi[0] is the zero/pruning multiplier and xi[1:]
+    # are the non-zero bucket multipliers.  The effective non-zero costs are:
+    #
+    #     xi_b - xi_zero - delta
+    #
+    # If xi has length C, this falls back to the previous behavior xi_b - delta.
+    xi, objective_constant = _make_effective_pruning_xi(
+        xi,
+        C,
+        device,
+        delta,
+    )
+
     M = w.shape[0]
 
     # === Step 1: Compute x_plus (same as dense) ===
@@ -697,7 +749,7 @@ def knapsack_specialized_pruning_sparse_leonardo(xi, v, w, C, device, delta):
     lambda_opt = torch.where(denominator_zero_mask, lambda_opt_zero, lambda_opt_nonzero)
 
     # === Step 8: Objective (same as dense, but without x @ xi) ===
-    objective_values = delta + theta * xi[idx_left]
+    objective_values = objective_constant + theta * xi[idx_left]
 
     mask_diff = idx_right != idx_left
     if mask_diff.any():
