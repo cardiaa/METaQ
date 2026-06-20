@@ -275,6 +275,19 @@ def FISTA_leonardo(xi, v, w, C, upper_c, lower_c, delta, subgradient_step, devic
                         "frac_null_x": 0.0,
                         "frac_sum_x_lt_0_5": 0.0,
                         "frac_two_bucket": 0.0,
+
+                        # Sparse-aware zero-symbol diagnostics.
+                        "xi_zero": 0.0,
+                        "xi_bucket_mean": 0.0,
+                        "xi_bucket_min": 0.0,
+                        "xi_bucket_max": 0.0,
+                        "effective_xi_mean": 0.0,
+                        "effective_xi_min": 0.0,
+                        "effective_xi_max": 0.0,
+                        "objective_constant": 0.0,
+                        "sum_z_per_weight": 0.0,
+                        "c_zero_per_weight": 0.0,
+                        "g_zero_per_weight": 0.0,
                     }
 
                 dbg = FISTA_leonardo._delta_debug
@@ -332,6 +345,34 @@ def FISTA_leonardo(xi, v, w, C, upper_c, lower_c, delta, subgradient_step, devic
             phi2 = -torch.sum(xi * c_star)
             phi3 = torch.sum(xi * sum_symbol_star)
             phi = phi1 + phi2 + phi3
+
+            with torch.no_grad():
+                if hasattr(FISTA_leonardo, "_delta_debug"):
+                    dbg = FISTA_leonardo._delta_debug
+
+                    xi_zero_dbg = xi[0].detach()
+                    xi_buckets_dbg = xi[1:].detach()
+
+                    delta_t_dbg = torch.as_tensor(delta, dtype=torch.float32, device=device)
+                    effective_xi_dbg = xi_buckets_dbg - xi_zero_dbg - delta_t_dbg
+                    objective_constant_dbg = xi_zero_dbg + delta_t_dbg
+
+                    n_weights_dbg = float(w.numel())
+
+                    dbg["xi_zero"] += xi_zero_dbg.item()
+                    dbg["xi_bucket_mean"] += xi_buckets_dbg.mean().item()
+                    dbg["xi_bucket_min"] += xi_buckets_dbg.min().item()
+                    dbg["xi_bucket_max"] += xi_buckets_dbg.max().item()
+
+                    dbg["effective_xi_mean"] += effective_xi_dbg.mean().item()
+                    dbg["effective_xi_min"] += effective_xi_dbg.min().item()
+                    dbg["effective_xi_max"] += effective_xi_dbg.max().item()
+
+                    dbg["objective_constant"] += objective_constant_dbg.item()
+
+                    dbg["sum_z_per_weight"] += (sum_z_star / n_weights_dbg).item()
+                    dbg["c_zero_per_weight"] += (c_star[0] / n_weights_dbg).item()
+                    dbg["g_zero_per_weight"] += (g[0] / n_weights_dbg).item()            
 
         else:
             c_star = torch.exp(log2_t * xi - 1)

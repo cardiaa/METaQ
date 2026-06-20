@@ -752,7 +752,18 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                         f"mean_violation={dbg['mean_violation'] / calls:.6e}, "
                         f"frac_null_x={dbg['frac_null_x'] / calls:.6%}, "
                         f"frac_sum_x_lt_0_5={dbg['frac_sum_x_lt_0_5'] / calls:.6%}, "
-                        f"frac_two_bucket={dbg['frac_two_bucket'] / calls:.6%}"
+                        f"frac_two_bucket={dbg['frac_two_bucket'] / calls:.6%}, "
+                        f"xi_zero={dbg.get('xi_zero', 0.0) / calls:.6e}, "
+                        f"xi_bucket_mean={dbg.get('xi_bucket_mean', 0.0) / calls:.6e}, "
+                        f"xi_bucket_min={dbg.get('xi_bucket_min', 0.0) / calls:.6e}, "
+                        f"xi_bucket_max={dbg.get('xi_bucket_max', 0.0) / calls:.6e}, "
+                        f"effective_xi_mean={dbg.get('effective_xi_mean', 0.0) / calls:.6e}, "
+                        f"effective_xi_min={dbg.get('effective_xi_min', 0.0) / calls:.6e}, "
+                        f"effective_xi_max={dbg.get('effective_xi_max', 0.0) / calls:.6e}, "
+                        f"objective_constant={dbg.get('objective_constant', 0.0) / calls:.6e}, "
+                        f"sum_z_per_weight={dbg.get('sum_z_per_weight', 0.0) / calls:.6e}, "
+                        f"c_zero_per_weight={dbg.get('c_zero_per_weight', 0.0) / calls:.6e}, "
+                        f"g_zero_per_weight={dbg.get('g_zero_per_weight', 0.0) / calls:.6e}"
                     )
 
                     FISTA_leonardo._delta_debug = {
@@ -762,7 +773,19 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                         "frac_null_x": 0.0,
                         "frac_sum_x_lt_0_5": 0.0,
                         "frac_two_bucket": 0.0,
-                    }                           
+
+                        "xi_zero": 0.0,
+                        "xi_bucket_mean": 0.0,
+                        "xi_bucket_min": 0.0,
+                        "xi_bucket_max": 0.0,
+                        "effective_xi_mean": 0.0,
+                        "effective_xi_min": 0.0,
+                        "effective_xi_max": 0.0,
+                        "objective_constant": 0.0,
+                        "sum_z_per_weight": 0.0,
+                        "c_zero_per_weight": 0.0,
+                        "g_zero_per_weight": 0.0,
+                    }                        
 
                 print(f"============== Epoch {epoch + 1}/{n_epochs} ==============", flush=True)
                 print(f"train_batches = {train_batches}", flush=True)
