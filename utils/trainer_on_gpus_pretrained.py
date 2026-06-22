@@ -11,6 +11,7 @@ import torch.distributed as dist
 import gc
 from utils.quantize_and_compress import compute_entropy, quantize_weights_center, compute_entropyGPU, quantize_weights_centerGPU, compute_entropy_hist
 from utils.optimization import FISTA, FISTA_leonardo, ProximalBM, test_accuracy, test_accuracyGPU
+from utils.knapsack import knapsack_specialized_pruning, knapsack_specialized_pruning_sparse_leonardo
 from utils.weight_utils import initialize_weights
 from utils.quantize_and_compress import compress_zstd, BestQuantization, pack_bitmask, pack_bitmaskGPU
 from datetime import datetime, timedelta
@@ -110,6 +111,11 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
     # Fraction of each layer range used as explicit zero dead-zone.
     # If |w| <= deadzone_ratio * r_layer, the weight is quantized to exactly zero.
     deadzone_ratio = 0.0
+
+    # Diagnostic threshold for dual-zero pruning in evaluation/compression.
+    # A weight is pruned when the relaxed zero mass z_i = 1 - sum_b x_{i,b}
+    # is at least dual_zero_tau.
+    dual_zero_tau = 0.5
 
     # NCCL barriers need the CUDA device id on some multi-node launches.
     def _dist_barrier():
@@ -286,6 +292,96 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
             q_flat = torch.where(prune_mask, torch.zeros_like(q_flat), q_flat)
 
         return q_idx, q_flat
+    
+    def _dual_zero_mask_from_knapsack(
+        w_flat: torch.Tensor,
+        v_layer: torch.Tensor,
+        xi_layer: torch.Tensor,
+        tau_zero: float,
+    ):
+        """
+        Builds a pruning mask from the sparse-aware FISTA/knapsack solution.
+
+        The zero mass is
+
+            z_i = 1 - sum_b x_{i,b}
+
+        and the weight is pruned if z_i >= tau_zero.
+
+        This is used only for evaluation/compression diagnostics.
+        """
+        xi_layer = xi_layer.to(dtype=torch.float32, device=device)
+
+        if xi_layer.numel() != C + 1:
+            raise ValueError(
+                f"dual-zero pruning requires xi_layer with length C+1={C+1}, "
+                f"got {xi_layer.numel()}."
+            )
+
+        if device.type == "cuda":
+            x_star, _, _ = knapsack_specialized_pruning_sparse_leonardo(
+                xi_layer,
+                v_layer,
+                w_flat,
+                C,
+                device,
+                delta,
+            )
+        else:
+            x_star, _, _ = knapsack_specialized_pruning(
+                xi_layer,
+                v_layer,
+                w_flat,
+                C,
+                device,
+                delta,
+            )
+
+        if x_star.dim() == 2 and x_star.size(1) == 3:
+            idx_left = x_star[:, 0].to(dtype=torch.long, device=device)
+            idx_right = x_star[:, 1].to(dtype=torch.long, device=device)
+            theta = x_star[:, 2].to(dtype=torch.float32, device=device)
+
+            sum_x = theta.clone()
+            mask_diff = idx_right != idx_left
+
+            if mask_diff.any():
+                sum_x[mask_diff] += 1.0 - theta[mask_diff]
+        else:
+            sum_x = x_star.sum(dim=1)
+
+        z_mass = (1.0 - sum_x).clamp_(0.0, 1.0)
+        prune_mask = z_mass >= tau_zero
+
+        return prune_mask, z_mass
+
+
+    def _quantize_with_dual_zero_pruning(
+        w_flat: torch.Tensor,
+        v_layer: torch.Tensor,
+        xi_layer: torch.Tensor,
+        tau_zero: float,
+    ):
+        """
+        Quantizes to the nearest non-zero bucket, but decides pruning using
+        the dual-zero mass z_i from the sparse-aware knapsack solution.
+        """
+        q_idx, q_flat = _quantize_with_deadzone(
+            w_flat,
+            v_layer,
+            apply_pruning_deadzone=False,
+        )
+
+        prune_mask, z_mass = _dual_zero_mask_from_knapsack(
+            w_flat,
+            v_layer,
+            xi_layer,
+            tau_zero=tau_zero,
+        )
+
+        q_flat = torch.where(prune_mask, torch.zeros_like(q_flat), q_flat)
+
+        return q_idx, q_flat, z_mass    
 
     for epoch in range(n_epochs):
         should_eval_epoch = ((epoch + 1) % metrics_interval == 0) or (epoch == n_epochs - 1)
@@ -512,11 +608,13 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                             apply_pruning_deadzone=False,
                         )
 
-                        # Sparse quantization: delta/gamma-controlled pruning deadzone.
-                        s_idx_layer, s_layer = _quantize_with_deadzone(
+                        # Sparse quantization: pruning decided by the sparse-aware dual-zero mass.
+                        # The non-zero value is still the nearest non-zero quantization bucket.
+                        s_idx_layer, s_layer, _ = _quantize_with_dual_zero_pruning(
                             w_layer,
                             v_layer,
-                            apply_pruning_deadzone=True,
+                            xi_list[quant_state],
+                            tau_zero=dual_zero_tau,
                         )
 
                         s_layer[s_layer.abs() <= sparsity_threshold] = 0.0
@@ -809,6 +907,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                 print(f"sparse_ratio = {sparse_ratio:.2%}", flush=True)
                 print(f"sparsity = {sparsity:.2%}", flush=True)
                 print(f"sparse_accuracy = {sparse_accuracy}", flush=True)
+                print(f"dual_zero_tau = {dual_zero_tau}", flush=True)
                 print(
                     f"dense_entropy_debug: "
                     f"H_Q_bits_per_weight={dense_entropy_bits_per_weight:.6f}, "
