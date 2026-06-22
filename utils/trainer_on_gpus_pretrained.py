@@ -113,9 +113,9 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
     deadzone_ratio = 0.0
 
     # Diagnostic mode for dual-zero pruning in evaluation/compression.
-    # The relaxed zero masses z_i are rounded into a hard pruning mask by pruning
-    # the top round(sum_i z_i) weights with largest z_i.
-    dual_zero_rounding = "topk_mass"
+    # The pruning budget is taken from the original gamma/deadzone rule, but the
+    # selected weights are those with largest dual zero mass z_i.
+    dual_zero_rounding = "topk_gamma_budget"
 
     # NCCL barriers need the CUDA device id on some multi-node launches.
     def _dist_barrier():
@@ -357,7 +357,18 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
         z_mass = (1.0 - sum_x).clamp_(0.0, 1.0)
 
         num_weights = z_mass.numel()
-        num_pruned = int(round(float(z_mass.sum().item())))
+
+        # Use the old gamma/deadzone rule only to determine HOW MANY weights to prune.
+        # Then use the dual zero mass z_i to decide WHICH weights to prune.
+        if delta < 0:
+            alpha_delta = (-delta) / (1.0 - delta)
+        else:
+            alpha_delta = 0.0
+
+        pruning_threshold = gamma * alpha_delta * v_layer.abs().min()
+        gamma_budget_mask = w_flat.abs() <= pruning_threshold
+
+        num_pruned = int(gamma_budget_mask.sum().item())
         num_pruned = max(0, min(num_weights, num_pruned))
 
         prune_mask = torch.zeros_like(z_mass, dtype=torch.bool)
