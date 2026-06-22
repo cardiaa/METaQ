@@ -113,16 +113,21 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
     deadzone_ratio = 0.0
 
     # Diagnostic mode for dual-zero pruning in evaluation/compression.
-    # The pruning budget is taken from the original gamma/deadzone rule, but the
-    # selected weights are ranked by a score combining dual zero mass and magnitude:
+    # The pruning budget is taken from the original gamma/deadzone rule.
+    #
+    # Candidate weights are restricted to:
+    #
+    #     |w_i| <= dual_zero_candidate_multiplier * tau_gamma
+    #
+    # Among those candidates, weights are ranked by:
     #
     #     score_i = z_i / (|w_i| / tau_gamma + eps)^p
     #
-    # Larger p gives more importance to small-magnitude weights and moves the
-    # ranking closer to the original gamma/deadzone criterion.
-    dual_zero_rounding = "topk_gamma_budget_z_over_abs_power"
+    # This prevents the dual-zero score from pruning large-magnitude weights.
+    dual_zero_rounding = "topk_gamma_budget_capped_z_over_abs_power"
     dual_zero_score_eps = 1e-6
     dual_zero_abs_power = 2.0
+    dual_zero_candidate_multiplier = 2.0
 
     # NCCL barriers need the CUDA device id on some multi-node launches.
     def _dist_barrier():
@@ -385,6 +390,16 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
 
         score = z_mass / (
             (normalized_abs + dual_zero_score_eps) ** dual_zero_abs_power
+        )
+
+        # Do not allow dual-zero ranking to prune weights that are too large.
+        candidate_threshold = dual_zero_candidate_multiplier * threshold_safe
+        candidate_mask = abs_w <= candidate_threshold
+
+        score = torch.where(
+            candidate_mask,
+            score,
+            torch.full_like(score, float("-inf")),
         )
 
         prune_mask = torch.zeros_like(z_mass, dtype=torch.bool)
@@ -954,6 +969,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                 print(f"dual_zero_rounding = {dual_zero_rounding}", flush=True)
                 print(f"dual_zero_score_eps = {dual_zero_score_eps}", flush=True)
                 print(f"dual_zero_abs_power = {dual_zero_abs_power}", flush=True)
+                print(f"dual_zero_candidate_multiplier = {dual_zero_candidate_multiplier}", flush=True)
                 print(
                     f"dense_entropy_debug: "
                     f"H_Q_bits_per_weight={dense_entropy_bits_per_weight:.6f}, "
