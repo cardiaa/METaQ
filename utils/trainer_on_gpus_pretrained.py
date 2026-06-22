@@ -116,11 +116,13 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
     # The pruning budget is taken from the original gamma/deadzone rule, but the
     # selected weights are ranked by a score combining dual zero mass and magnitude:
     #
-    #     score_i = z_i / (|w_i| / tau_gamma + eps)
+    #     score_i = z_i / (|w_i| / tau_gamma + eps)^p
     #
-    # This keeps the sparsity budget fixed while discouraging pruning large weights.
-    dual_zero_rounding = "topk_gamma_budget_z_over_abs"
+    # Larger p gives more importance to small-magnitude weights and moves the
+    # ranking closer to the original gamma/deadzone criterion.
+    dual_zero_rounding = "topk_gamma_budget_z_over_abs_power"
     dual_zero_score_eps = 1e-6
+    dual_zero_abs_power = 2.0
 
     # NCCL barriers need the CUDA device id on some multi-node launches.
     def _dist_barrier():
@@ -379,7 +381,11 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
         abs_w = w_flat.abs()
         threshold_safe = pruning_threshold.clamp_min(1e-12)
 
-        score = z_mass / ((abs_w / threshold_safe) + dual_zero_score_eps)
+        normalized_abs = abs_w / threshold_safe
+
+        score = z_mass / (
+            (normalized_abs + dual_zero_score_eps) ** dual_zero_abs_power
+        )
 
         prune_mask = torch.zeros_like(z_mass, dtype=torch.bool)
 
@@ -947,6 +953,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                 print(f"sparse_accuracy = {sparse_accuracy}", flush=True)
                 print(f"dual_zero_rounding = {dual_zero_rounding}", flush=True)
                 print(f"dual_zero_score_eps = {dual_zero_score_eps}", flush=True)
+                print(f"dual_zero_abs_power = {dual_zero_abs_power}", flush=True)
                 print(
                     f"dense_entropy_debug: "
                     f"H_Q_bits_per_weight={dense_entropy_bits_per_weight:.6f}, "
