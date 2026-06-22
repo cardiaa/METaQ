@@ -112,10 +112,10 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
     # If |w| <= deadzone_ratio * r_layer, the weight is quantized to exactly zero.
     deadzone_ratio = 0.0
 
-    # Diagnostic threshold for dual-zero pruning in evaluation/compression.
-    # A weight is pruned when the relaxed zero mass z_i = 1 - sum_b x_{i,b}
-    # is at least dual_zero_tau.
-    dual_zero_tau = 0.5
+    # Diagnostic mode for dual-zero pruning in evaluation/compression.
+    # The relaxed zero masses z_i are rounded into a hard pruning mask by pruning
+    # the top round(sum_i z_i) weights with largest z_i.
+    dual_zero_rounding = "topk_mass"
 
     # NCCL barriers need the CUDA device id on some multi-node launches.
     def _dist_barrier():
@@ -297,7 +297,6 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
         w_flat: torch.Tensor,
         v_layer: torch.Tensor,
         xi_layer: torch.Tensor,
-        tau_zero: float,
     ):
         """
         Builds a pruning mask from the sparse-aware FISTA/knapsack solution.
@@ -306,7 +305,12 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
 
             z_i = 1 - sum_b x_{i,b}
 
-        and the weight is pruned if z_i >= tau_zero.
+        Since z_i is a relaxed quantity, we convert it to a hard pruning mask by
+        rounding its total mass:
+
+            num_pruned = round(sum_i z_i)
+
+        and pruning the num_pruned weights with largest z_i.
 
         This is used only for evaluation/compression diagnostics.
         """
@@ -351,7 +355,24 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
             sum_x = x_star.sum(dim=1)
 
         z_mass = (1.0 - sum_x).clamp_(0.0, 1.0)
-        prune_mask = z_mass >= tau_zero
+
+        num_weights = z_mass.numel()
+        num_pruned = int(round(float(z_mass.sum().item())))
+        num_pruned = max(0, min(num_weights, num_pruned))
+
+        prune_mask = torch.zeros_like(z_mass, dtype=torch.bool)
+
+        if num_pruned > 0:
+            if num_pruned >= num_weights:
+                prune_mask.fill_(True)
+            else:
+                topk_idx = torch.topk(
+                    z_mass,
+                    k=num_pruned,
+                    largest=True,
+                    sorted=False,
+                ).indices
+                prune_mask[topk_idx] = True
 
         return prune_mask, z_mass
 
@@ -360,7 +381,6 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
         w_flat: torch.Tensor,
         v_layer: torch.Tensor,
         xi_layer: torch.Tensor,
-        tau_zero: float,
     ):
         """
         Quantizes to the nearest non-zero bucket, but decides pruning using
@@ -376,7 +396,6 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
             w_flat,
             v_layer,
             xi_layer,
-            tau_zero=tau_zero,
         )
 
         q_flat = torch.where(prune_mask, torch.zeros_like(q_flat), q_flat)
@@ -614,7 +633,6 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                             w_layer,
                             v_layer,
                             xi_list[quant_state],
-                            tau_zero=dual_zero_tau,
                         )
 
                         s_layer[s_layer.abs() <= sparsity_threshold] = 0.0
@@ -907,7 +925,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                 print(f"sparse_ratio = {sparse_ratio:.2%}", flush=True)
                 print(f"sparsity = {sparsity:.2%}", flush=True)
                 print(f"sparse_accuracy = {sparse_accuracy}", flush=True)
-                print(f"dual_zero_tau = {dual_zero_tau}", flush=True)
+                print(f"dual_zero_rounding = {dual_zero_rounding}", flush=True)
                 print(
                     f"dense_entropy_debug: "
                     f"H_Q_bits_per_weight={dense_entropy_bits_per_weight:.6f}, "
