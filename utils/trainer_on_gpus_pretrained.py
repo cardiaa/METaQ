@@ -114,8 +114,13 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
 
     # Diagnostic mode for dual-zero pruning in evaluation/compression.
     # The pruning budget is taken from the original gamma/deadzone rule, but the
-    # selected weights are those with largest dual zero mass z_i.
-    dual_zero_rounding = "topk_gamma_budget"
+    # selected weights are ranked by a score combining dual zero mass and magnitude:
+    #
+    #     score_i = z_i / (|w_i| / tau_gamma + eps)
+    #
+    # This keeps the sparsity budget fixed while discouraging pruning large weights.
+    dual_zero_rounding = "topk_gamma_budget_z_over_abs"
+    dual_zero_score_eps = 1e-6
 
     # NCCL barriers need the CUDA device id on some multi-node launches.
     def _dist_barrier():
@@ -359,7 +364,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
         num_weights = z_mass.numel()
 
         # Use the old gamma/deadzone rule only to determine HOW MANY weights to prune.
-        # Then use the dual zero mass z_i to decide WHICH weights to prune.
+        # Then rank candidates using both dual zero mass and magnitude.
         if delta < 0:
             alpha_delta = (-delta) / (1.0 - delta)
         else:
@@ -371,6 +376,11 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
         num_pruned = int(gamma_budget_mask.sum().item())
         num_pruned = max(0, min(num_weights, num_pruned))
 
+        abs_w = w_flat.abs()
+        threshold_safe = pruning_threshold.clamp_min(1e-12)
+
+        score = z_mass / ((abs_w / threshold_safe) + dual_zero_score_eps)
+
         prune_mask = torch.zeros_like(z_mass, dtype=torch.bool)
 
         if num_pruned > 0:
@@ -378,7 +388,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                 prune_mask.fill_(True)
             else:
                 topk_idx = torch.topk(
-                    z_mass,
+                    score,
                     k=num_pruned,
                     largest=True,
                     sorted=False,
@@ -386,7 +396,6 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                 prune_mask[topk_idx] = True
 
         return prune_mask, z_mass
-
 
     def _quantize_with_dual_zero_pruning(
         w_flat: torch.Tensor,
@@ -937,6 +946,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                 print(f"sparsity = {sparsity:.2%}", flush=True)
                 print(f"sparse_accuracy = {sparse_accuracy}", flush=True)
                 print(f"dual_zero_rounding = {dual_zero_rounding}", flush=True)
+                print(f"dual_zero_score_eps = {dual_zero_score_eps}", flush=True)
                 print(
                     f"dense_entropy_debug: "
                     f"H_Q_bits_per_weight={dense_entropy_bits_per_weight:.6f}, "
