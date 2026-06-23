@@ -129,6 +129,13 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
     dual_zero_abs_power = 2.0
     dual_zero_candidate_multiplier = 1.25
 
+    # DIAGNOSTIC (test_104): when False, training keeps the FP32 weights in the
+    # forward/backward pass (no fake-quantized + deadzone-pruned STE-QAT).
+    # This follows the thesis recipe: train FP32 with CE + L2 + entropy
+    # subgradient, and quantize/prune only post-hoc for evaluation/compression.
+    # Set back to True only if we deliberately want quantization-aware training.
+    use_fake_quant_forward = False
+
     # NCCL barriers need the CUDA device id on some multi-node launches.
     def _dist_barrier():
         if dist.is_initialized():
@@ -159,7 +166,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
         """
         backups = []
 
-        if not grid_reset_done:
+        if (not grid_reset_done) or (not use_fake_quant_forward):
             return backups
 
         with torch.no_grad():
