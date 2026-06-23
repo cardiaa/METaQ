@@ -7,3 +7,6 @@ data/*.tar.gz
 data/cifar-10-batches-py/
 .DS_Store
 *.log
+
+# Local Leonardo test logs
+LeonardoTests/
