@@ -127,7 +127,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
     dual_zero_rounding = "topk_gamma_budget_capped_z_over_abs_power"
     dual_zero_score_eps = 1e-6
     dual_zero_abs_power = 2.0
-    dual_zero_candidate_multiplier = 2.0
+    dual_zero_candidate_multiplier = 1.5
 
     # NCCL barriers need the CUDA device id on some multi-node launches.
     def _dist_barrier():
