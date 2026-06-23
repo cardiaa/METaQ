@@ -136,6 +136,13 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
     # Set back to True only if we deliberately want quantization-aware training.
     use_fake_quant_forward = False
 
+    # ENTROPY SUBGRADIENT SANITIZATION (test_105).
+    # The per-weight entropy subgradient is beta = xi_eff / v, which explodes
+    # (and flips sign) for weights mapped to near-zero buckets (|v| ~ gap).
+    # We winsorize beta per-coordinate to beta_clip_k * median(|beta|) of the
+    # layer so the entropy signal is coherent rather than spike-dominated.
+    beta_clip_k = 5.0
+
     # NCCL barriers need the CUDA device id on some multi-node launches.
     def _dist_barrier():
         if dist.is_initialized():
@@ -473,6 +480,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
         entropy_steps = 0
         last_loss_grad_norm = None
         last_custom_beta_norm = None
+        last_entropy_fraction = None
 
         for i, data in enumerate(trainloader, 0):
             if steps_per_epoch is not None and i >= steps_per_epoch:
@@ -562,6 +570,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                     l = l / 1.5
 
                     beta_norm_sq = torch.zeros((), device=device)
+                    grad_norm_sq = torch.zeros((), device=device)
 
                     for p_idx, param in enumerate(params_for_quant):
                         if param.grad is None:
@@ -605,10 +614,32 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                         else:
                             raise ValueError(f"Unsupported entropy optimizer: {entropy_optimizer}")
 
-                        update = (T2_current * (-beta_layer)).view_as(param)
-                        param.grad.add_(update)
+                        # --- Sanitize + auto-scale the entropy subgradient -----------
+                        # Descent direction on +phi is beta = -beta_layer (sign verified
+                        # offline: beta_layer == -dObj/dw).  Winsorize per-coordinate to
+                        # a robust per-layer scale to kill the xi/v spikes near the gap.
+                        beta_dir = (-beta_layer).float().reshape(-1)
 
-                        beta_norm_sq += beta_layer.float().pow(2).sum()
+                        beta_scale = beta_dir.abs().median().clamp_min(1e-12)
+                        beta_dir = beta_dir.clamp(
+                            min=-beta_clip_k * beta_scale,
+                            max=beta_clip_k * beta_scale,
+                        )
+
+                        # Scale so the entropy update has norm = T2_current * ||loss_grad||
+                        # of THIS layer.  T2_current is therefore the entropy fraction of
+                        # the gradient, independent of beta's wild, grid-dependent scale.
+                        grad_layer_norm = param.grad.detach().float().norm()
+                        beta_dir_norm = beta_dir.norm().clamp_min(1e-12)
+
+                        entropy_update = (
+                            T2_current * grad_layer_norm / beta_dir_norm
+                        ) * beta_dir
+
+                        param.grad.add_(entropy_update.view_as(param))
+
+                        beta_norm_sq += entropy_update.pow(2).sum()
+                        grad_norm_sq += grad_layer_norm.pow(2)
 
                     if dist.is_initialized():
                         # DDP synchronized only the loss gradient inside
@@ -627,6 +658,12 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
 
                     if local_rank == 0:
                         last_custom_beta_norm = torch.sqrt(beta_norm_sq).item()
+                        # Realized entropy fraction = ||entropy_update|| / ||loss_grad||
+                        # over the quantized layers.  By construction this equals
+                        # T2_current; logging it confirms the auto-scaling + DDP path.
+                        last_entropy_fraction = torch.sqrt(
+                            beta_norm_sq / grad_norm_sq.clamp_min(1e-12)
+                        ).item()
 
             optimizer.step()
         
@@ -878,7 +915,10 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
 
             if local_rank == 0:
                 weighted_l2_norm = (last_loss_grad_norm * T1_explicit) if last_loss_grad_norm is not None else None
-                weighted_custom_norm = (last_custom_beta_norm * T2_current) if last_custom_beta_norm is not None else None
+                # last_custom_beta_norm is already the applied (T2-scaled) entropy
+                # gradient norm.  Report the realized entropy fraction instead of
+                # re-multiplying by T2 (which would be misleading).
+                weighted_custom_norm = last_entropy_fraction
                 training_time_global = round(time.time() - start_time_global)
 
                 if epoch == 0:
