@@ -143,6 +143,14 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
     # layer so the entropy signal is coherent rather than spike-dominated.
     beta_clip_k = 5.0
 
+    # Fixed per-layer reference loss-gradient norm for entropy auto-scaling
+    # (test_107).  The entropy update is scaled to T2_current * ref_grad_norm.
+    # Using a FIXED reference (captured at the first entropy step) instead of the
+    # live loss-grad norm prevents a runaway: otherwise a dropping accuracy
+    # inflates the loss gradient, which inflates the entropy push, which drops
+    # accuracy further (death spiral observed in test_106 at T2=5).
+    entropy_ref_grad_norm = [None] * num_param_tensors
+
     # NCCL barriers need the CUDA device id on some multi-node launches.
     def _dist_barrier():
         if dist.is_initialized():
@@ -626,14 +634,19 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                             max=beta_clip_k * beta_scale,
                         )
 
-                        # Scale so the entropy update has norm = T2_current * ||loss_grad||
-                        # of THIS layer.  T2_current is therefore the entropy fraction of
-                        # the gradient, independent of beta's wild, grid-dependent scale.
+                        # Scale so the entropy update has norm = T2_current * ref_grad_norm
+                        # of THIS layer, where ref_grad_norm is a FIXED reference captured
+                        # at the first entropy step (not the live loss-grad norm).  This
+                        # makes T2 a stable knob and prevents the death-spiral feedback.
                         grad_layer_norm = param.grad.detach().float().norm()
+                        if entropy_ref_grad_norm[p_idx] is None:
+                            entropy_ref_grad_norm[p_idx] = grad_layer_norm.detach().clone()
+                        ref_grad_norm = entropy_ref_grad_norm[p_idx]
+
                         beta_dir_norm = beta_dir.norm().clamp_min(1e-12)
 
                         entropy_update = (
-                            T2_current * grad_layer_norm / beta_dir_norm
+                            T2_current * ref_grad_norm / beta_dir_norm
                         ) * beta_dir
 
                         param.grad.add_(entropy_update.view_as(param))
