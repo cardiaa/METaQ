@@ -133,8 +133,10 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
     # forward/backward pass (no fake-quantized + deadzone-pruned STE-QAT).
     # This follows the thesis recipe: train FP32 with CE + L2 + entropy
     # subgradient, and quantize/prune only post-hoc for evaluation/compression.
-    # Set back to True only if we deliberately want quantization-aware training.
-    use_fake_quant_forward = False
+    # test_108: quantization-aware training re-enabled so the loss SEES the
+    # quantized weights and protects A_Q (which collapsed under FP32-only +
+    # entropy in test_107).  Light QAT: pure quantization, NO deadzone pruning.
+    use_fake_quant_forward = True
 
     # ENTROPY SUBGRADIENT SANITIZATION (test_105).
     # The per-weight entropy subgradient is beta = xi_eff / v, which explodes
@@ -195,7 +197,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                 _, q_flat = _quantize_with_deadzone(
                     w_flat,
                     v_layer,
-                    apply_pruning_deadzone=True,
+                    apply_pruning_deadzone=False,
                 )
 
                 param.data.copy_(q_flat.view_as(param))
@@ -477,6 +479,36 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
         else:
             T2_current = 0.0
 
+        # Compression phase (test_108): from this epoch on, (re)adapt the
+        # per-layer quantization grid to the CURRENT weights, independently of
+        # the entropy term.  Re-adapting every epoch keeps the grid aligned as
+        # the weights move and lets the fake-quant forward / eval use a fresh
+        # grid even when entropy is off (T2=0).
+        if epoch >= entropy_warmup_epochs:
+            with torch.no_grad():
+                new_v_list = []
+                grid_infos = []
+                for p_idx, param in enumerate(params_for_quant):
+                    w_layer = param.detach().reshape(-1).float()
+                    lo, hi = _percentiles_large_tensor(w_layer, [0.001, 0.999])
+                    if (hi - lo).abs() < 1e-12:
+                        center = 0.5 * (lo + hi)
+                        lo = center - 1e-6
+                        hi = center + 1e-6
+                    v_layer = _make_quant_levels_without_zero(lo, hi, C, device)
+                    if dist.is_initialized():
+                        dist.broadcast(v_layer, src=0)
+                    new_v_list.append(v_layer)
+                    grid_infos.append((p_idx, w_layer.numel(), lo.item(), hi.item()))
+                v_list = new_v_list
+                grid_reset_done = True
+                if local_rank == 0:
+                    print(
+                        f"[GRID READAPT] epoch={epoch + 1}, "
+                        f"num_tensors={len(v_list)}, first_tensors={grid_infos[:4]}",
+                        flush=True
+                    )
+
         for param_group in optimizer.param_groups:
             param_group['weight_decay'] = T1_explicit
 
@@ -533,44 +565,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
             # every N global steps keeps the computational cost controlled.
             apply_entropy = T2_current > 0 and (global_step % entropy_every == 0)
             if apply_entropy:
-                if not grid_reset_done:
-                    # Build one adaptive quantization grid per parameter tensor.
-                    # This keeps C fixed but lets each layer/tensor have its own scale.
-                    with torch.no_grad():
-                        new_v_list = []
-                        grid_infos = []
-
-                        for p_idx, param in enumerate(params_for_quant):
-                            w_layer = param.detach().reshape(-1).float()
-
-                            lo, hi = _percentiles_large_tensor(w_layer, [0.001, 0.999])
-
-                            # Avoid degenerate grids for nearly constant tensors.
-                            if (hi - lo).abs() < 1e-12:
-                                center = 0.5 * (lo + hi)
-                                lo = center - 1e-6
-                                hi = center + 1e-6
-
-                            v_layer = _make_quant_levels_without_zero(lo, hi, C, device)
-
-                            if dist.is_initialized():
-                                dist.broadcast(v_layer, src=0)
-
-                            new_v_list.append(v_layer)
-                            grid_infos.append((p_idx, w_layer.numel(), lo.item(), hi.item()))
-
-                        v_list = new_v_list
-
-                        if local_rank == 0:
-                            first = grid_infos[:4]
-                            print(
-                                f"[GRID RESET PER-LAYER] epoch={epoch + 1}, "
-                                f"num_tensors={len(v_list)}, first_tensors={first}",
-                                flush=True
-                            )
-
-                    grid_reset_done = True
-
+                # Grid is (re)adapted at epoch start, independently of entropy.
                 with torch.no_grad():
                     # FISTA is applied independently to each parameter tensor.
                     # Each tensor has its own xi and v, but the same C.
