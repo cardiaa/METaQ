@@ -136,9 +136,8 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
     # test_108: quantization-aware training re-enabled so the loss SEES the
     # quantized weights and protects A_Q (which collapsed under FP32-only +
     # entropy in test_107).
-    # test_110: the fake-quant forward now ALSO applies the magnitude deadzone
-    # (apply_pruning_deadzone=True) so the loss sees the quantized + PRUNED
-    # model, training the network to tolerate the ~47% pruning used at eval
+    # test_110: the fake-quant forward also prunes (see prune_mode below) so the
+    # loss sees the quantized + PRUNED model and learns to tolerate the pruning
     # (sparse_accuracy was stuck at ~3% because the net was not pruning-aware).
     use_fake_quant_forward = True
 
@@ -156,6 +155,18 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
     # inflates the loss gradient, which inflates the entropy push, which drops
     # accuracy further (death spiral observed in test_106 at T2=5).
     entropy_ref_grad_norm = [None] * num_param_tensors
+
+    # test_110: OPTIMIZATION-DRIVEN pruning.  Instead of the hand-coded magnitude
+    # deadzone, we prune the weights for which the relaxed knapsack assigns most
+    # of the mass to the zero/pruning symbol, i.e.
+    #     z_i = 1 - sum_b x_{i,b} > z_prune_threshold.
+    # delta therefore governs BOTH how many and which weights are pruned, through
+    # the optimization itself (not a magnitude rule).  The per-layer masks are
+    # computed in the dual block (from the current xi) and cached for the
+    # fake-quant forward and for evaluation, so train and eval prune the same set.
+    prune_mode = "z"            # "z" = optimization-driven; "deadzone" = old magnitude rule
+    z_prune_threshold = 0.5
+    z_prune_masks = [None] * num_param_tensors
 
     # NCCL barriers need the CUDA device id on some multi-node launches.
     def _dist_barrier():
@@ -201,8 +212,21 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                 _, q_flat = _quantize_with_deadzone(
                     w_flat,
                     v_layer,
-                    apply_pruning_deadzone=True,
+                    apply_pruning_deadzone=(prune_mode == "deadzone"),
                 )
+
+                # Optimization-driven pruning: apply the cached z-based mask so the
+                # loss sees the quantized + pruned model.  One epoch of dual warmup
+                # (epoch >= entropy_warmup_epochs + 1) lets xi converge before we
+                # start pruning the forward.
+                if (prune_mode == "z"
+                        and epoch >= entropy_warmup_epochs + 1
+                        and z_prune_masks[q_state] is not None):
+                    q_flat = torch.where(
+                        z_prune_masks[q_state],
+                        torch.zeros_like(q_flat),
+                        q_flat,
+                    )
 
                 param.data.copy_(q_flat.view_as(param))
 
@@ -446,6 +470,45 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
 
         return prune_mask, z_mass
 
+    def _z_prune_mask(w_flat, v_layer, xi_layer):
+        """
+        Optimization-driven pruning mask.
+
+        Solves the per-weight sparse-aware knapsack for the current xi and prunes
+        the weights whose relaxed solution assigns most of the mass to the zero
+        symbol:
+
+            z_i = 1 - sum_b x_{i,b} > z_prune_threshold
+
+        delta enters the knapsack costs (xi_b - xi_zero - delta), so both HOW MANY
+        and WHICH weights are pruned come from the optimization, not a magnitude
+        threshold.
+        """
+        xi_layer = xi_layer.to(dtype=torch.float32, device=device)
+
+        if device.type == "cuda":
+            x_star, _, _ = knapsack_specialized_pruning_sparse_leonardo(
+                xi_layer, v_layer, w_flat, C, device, delta,
+            )
+        else:
+            x_star, _, _ = knapsack_specialized_pruning(
+                xi_layer, v_layer, w_flat, C, device, delta,
+            )
+
+        if x_star.dim() == 2 and x_star.size(1) == 3:
+            idx_left = x_star[:, 0].to(dtype=torch.long, device=device)
+            idx_right = x_star[:, 1].to(dtype=torch.long, device=device)
+            theta = x_star[:, 2].to(dtype=torch.float32, device=device)
+            sum_x = theta.clone()
+            mask_diff = idx_right != idx_left
+            if mask_diff.any():
+                sum_x[mask_diff] += 1.0 - theta[mask_diff]
+        else:
+            sum_x = x_star.sum(dim=1)
+
+        z_mass = (1.0 - sum_x).clamp_(0.0, 1.0)
+        return z_mass > z_prune_threshold
+
     def _quantize_with_dual_zero_pruning(
         w_flat: torch.Tensor,
         v_layer: torch.Tensor,
@@ -461,11 +524,15 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
             apply_pruning_deadzone=False,
         )
 
-        prune_mask, z_mass = _dual_zero_mask_from_knapsack(
-            w_flat,
-            v_layer,
-            xi_layer,
-        )
+        if prune_mode == "z":
+            prune_mask = _z_prune_mask(w_flat, v_layer, xi_layer)
+            z_mass = None
+        else:
+            prune_mask, z_mass = _dual_zero_mask_from_knapsack(
+                w_flat,
+                v_layer,
+                xi_layer,
+            )
 
         q_flat = torch.where(prune_mask, torch.zeros_like(q_flat), q_flat)
 
@@ -652,6 +719,13 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
 
                         beta_norm_sq += entropy_update.pow(2).sum()
                         grad_norm_sq += grad_layer_norm.pow(2)
+
+                        # Cache the optimization-driven pruning mask (z_i > tau)
+                        # from the just-updated xi, for the fake-quant forward.
+                        if prune_mode == "z":
+                            z_prune_masks[p_idx] = _z_prune_mask(
+                                w_layer, v_list[p_idx], xi_list[p_idx]
+                            )
 
                     if dist.is_initialized():
                         # DDP synchronized only the loss gradient inside
