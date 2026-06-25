@@ -135,7 +135,11 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
     # subgradient, and quantize/prune only post-hoc for evaluation/compression.
     # test_108: quantization-aware training re-enabled so the loss SEES the
     # quantized weights and protects A_Q (which collapsed under FP32-only +
-    # entropy in test_107).  Light QAT: pure quantization, NO deadzone pruning.
+    # entropy in test_107).
+    # test_110: the fake-quant forward now ALSO applies the magnitude deadzone
+    # (apply_pruning_deadzone=True) so the loss sees the quantized + PRUNED
+    # model, training the network to tolerate the ~47% pruning used at eval
+    # (sparse_accuracy was stuck at ~3% because the net was not pruning-aware).
     use_fake_quant_forward = True
 
     # ENTROPY SUBGRADIENT SANITIZATION (test_105).
@@ -197,7 +201,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                 _, q_flat = _quantize_with_deadzone(
                     w_flat,
                     v_layer,
-                    apply_pruning_deadzone=False,
+                    apply_pruning_deadzone=True,
                 )
 
                 param.data.copy_(q_flat.view_as(param))
