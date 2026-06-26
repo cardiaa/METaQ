@@ -550,12 +550,12 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
         else:
             T2_current = 0.0
 
-        # Compression phase (test_108): from this epoch on, (re)adapt the
-        # per-layer quantization grid to the CURRENT weights, independently of
-        # the entropy term.  Re-adapting every epoch keeps the grid aligned as
-        # the weights move and lets the fake-quant forward / eval use a fresh
-        # grid even when entropy is off (T2=0).
-        if epoch >= entropy_warmup_epochs:
+        # Compression phase: adapt the per-layer quantization grid ONCE
+        # (test_111).  A FIXED grid keeps the dual's xi converged and the z
+        # pruning mask stable; re-adapting every epoch (test_108/110) made xi
+        # stale at each epoch start, the forward mask shifted, and the net
+        # collapsed.
+        if epoch >= entropy_warmup_epochs and not grid_reset_done:
             with torch.no_grad():
                 new_v_list = []
                 grid_infos = []
@@ -577,6 +577,28 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                     print(
                         f"[GRID READAPT] epoch={epoch + 1}, "
                         f"num_tensors={len(v_list)}, first_tensors={grid_infos[:4]}",
+                        flush=True
+                    )
+
+        # test_111: freeze the optimization-driven pruning mask ONCE per epoch
+        # (from the converged xi) and hold it for every forward of this epoch.
+        # Stable counterpart of the per-step recompute that destabilised test_110.
+        # Pruning starts after one epoch of dual warmup.
+        if prune_mode == "z" and grid_reset_done and epoch >= entropy_warmup_epochs + 1:
+            with torch.no_grad():
+                total_n_fz = 0
+                total_pruned_fz = 0
+                for p_idx, param in enumerate(params_for_quant):
+                    w_layer = param.detach().reshape(-1)
+                    mask = _z_prune_mask(w_layer, v_list[p_idx], xi_list[p_idx])
+                    z_prune_masks[p_idx] = mask
+                    total_n_fz += mask.numel()
+                    total_pruned_fz += int(mask.sum().item())
+                if local_rank == 0:
+                    frac_fz = 100.0 * total_pruned_fz / max(1, total_n_fz)
+                    print(
+                        f"[FROZEN Z-MASK] epoch={epoch + 1}, "
+                        f"pruned={frac_fz:.2f}%, delta={delta}",
                         flush=True
                     )
 
@@ -634,9 +656,15 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
             beta_tensor = None
             # Entropy/FISTA is the expensive part of the method.  Applying it
             # every N global steps keeps the computational cost controlled.
-            apply_entropy = T2_current > 0 and (global_step % entropy_every == 0)
-            if apply_entropy:
-                # Grid is (re)adapted at epoch start, independently of entropy.
+            run_dual = (
+                grid_reset_done
+                and (global_step % entropy_every == 0)
+                and (T2_current > 0 or prune_mode == "z")
+            )
+            if run_dual:
+                # The dual (FISTA on xi) runs to keep the pruning mass z meaningful
+                # even at T2 == 0 (pure optimization-driven pruning, no entropy
+                # gradient).  The entropy gradient is added only when T2 > 0.
                 with torch.no_grad():
                     # FISTA is applied independently to each parameter tensor.
                     # Each tensor has its own xi and v, but the same C.
@@ -688,65 +716,46 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                         else:
                             raise ValueError(f"Unsupported entropy optimizer: {entropy_optimizer}")
 
-                        # --- Sanitize + auto-scale the entropy subgradient -----------
-                        # Descent direction on +phi is beta = -beta_layer (sign verified
-                        # offline: beta_layer == -dObj/dw).  Winsorize per-coordinate to
-                        # a robust per-layer scale to kill the xi/v spikes near the gap.
-                        beta_dir = (-beta_layer).float().reshape(-1)
-
-                        beta_scale = beta_dir.abs().median().clamp_min(1e-12)
-                        beta_dir = beta_dir.clamp(
-                            min=-beta_clip_k * beta_scale,
-                            max=beta_clip_k * beta_scale,
-                        )
-
-                        # Scale so the entropy update has norm = T2_current * ref_grad_norm
-                        # of THIS layer, where ref_grad_norm is a FIXED reference captured
-                        # at the first entropy step (not the live loss-grad norm).  This
-                        # makes T2 a stable knob and prevents the death-spiral feedback.
-                        grad_layer_norm = param.grad.detach().float().norm()
-                        if entropy_ref_grad_norm[p_idx] is None:
-                            entropy_ref_grad_norm[p_idx] = grad_layer_norm.detach().clone()
-                        ref_grad_norm = entropy_ref_grad_norm[p_idx]
-
-                        beta_dir_norm = beta_dir.norm().clamp_min(1e-12)
-
-                        entropy_update = (
-                            T2_current * ref_grad_norm / beta_dir_norm
-                        ) * beta_dir
-
-                        param.grad.add_(entropy_update.view_as(param))
-
-                        beta_norm_sq += entropy_update.pow(2).sum()
-                        grad_norm_sq += grad_layer_norm.pow(2)
-
-                        # Cache the optimization-driven pruning mask (z_i > tau)
-                        # from the just-updated xi, for the fake-quant forward.
-                        if prune_mode == "z":
-                            z_prune_masks[p_idx] = _z_prune_mask(
-                                w_layer, v_list[p_idx], xi_list[p_idx]
+                        # The entropy GRADIENT is applied only when T2 > 0.  When
+                        # T2 == 0 the dual still ran above (xi updated) so z stays
+                        # meaningful, but nothing is added to the weights: the
+                        # pruning is then purely optimization-driven.
+                        if T2_current > 0:
+                            # Sanitize (winsorize) + auto-scale the entropy subgradient.
+                            beta_dir = (-beta_layer).float().reshape(-1)
+                            beta_scale = beta_dir.abs().median().clamp_min(1e-12)
+                            beta_dir = beta_dir.clamp(
+                                min=-beta_clip_k * beta_scale,
+                                max=beta_clip_k * beta_scale,
                             )
+                            grad_layer_norm = param.grad.detach().float().norm()
+                            if entropy_ref_grad_norm[p_idx] is None:
+                                entropy_ref_grad_norm[p_idx] = grad_layer_norm.detach().clone()
+                            ref_grad_norm = entropy_ref_grad_norm[p_idx]
+                            beta_dir_norm = beta_dir.norm().clamp_min(1e-12)
+                            entropy_update = (
+                                T2_current * ref_grad_norm / beta_dir_norm
+                            ) * beta_dir
+                            param.grad.add_(entropy_update.view_as(param))
+                            beta_norm_sq += entropy_update.pow(2).sum()
+                            grad_norm_sq += grad_layer_norm.pow(2)
 
                     if dist.is_initialized():
-                        # DDP synchronized only the loss gradient inside
-                        # loss.backward().  Since the entropy term is added
-                        # afterwards, we must synchronize the final gradients
-                        # manually before optimizer.step().
-                        for param in model.parameters():
-                            if param.grad is not None:
-                                dist.all_reduce(param.grad, op=dist.ReduceOp.SUM)
-                                param.grad.div_(dist.get_world_size())
+                        # The entropy term is added after loss.backward()'s DDP sync,
+                        # so re-sync the grads only when we actually added entropy.
+                        if T2_current > 0:
+                            for param in model.parameters():
+                                if param.grad is not None:
+                                    dist.all_reduce(param.grad, op=dist.ReduceOp.SUM)
+                                    param.grad.div_(dist.get_world_size())
 
                         for xi_layer in xi_list:
                             dist.broadcast(xi_layer, src=0)
 
                     entropy_steps += 1
 
-                    if local_rank == 0:
+                    if local_rank == 0 and T2_current > 0:
                         last_custom_beta_norm = torch.sqrt(beta_norm_sq).item()
-                        # Realized entropy fraction = ||entropy_update|| / ||loss_grad||
-                        # over the quantized layers.  By construction this equals
-                        # T2_current; logging it confirms the auto-scaling + DDP path.
                         last_entropy_fraction = torch.sqrt(
                             beta_norm_sq / grad_norm_sq.clamp_min(1e-12)
                         ).item()
