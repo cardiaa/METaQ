@@ -614,6 +614,11 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
         last_loss_grad_norm = None
         last_custom_beta_norm = None
         last_entropy_fraction = None
+        # test_112 diagnostic: recompute the z>0.5 fraction via _z_prune_mask
+        # (the SAME path used at eval) right after each dual step, to compare it
+        # against FISTA's internal frac_sum_x_lt_0_5 and pin the 68%-vs-4% gap.
+        z_recompute_sum = torch.zeros((), device=device)
+        z_recompute_count = 0
 
         for i, data in enumerate(trainloader, 0):
             if steps_per_epoch is not None and i >= steps_per_epoch:
@@ -739,6 +744,14 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                             param.grad.add_(entropy_update.view_as(param))
                             beta_norm_sq += entropy_update.pow(2).sum()
                             grad_norm_sq += grad_layer_norm.pow(2)
+
+                        # test_112 diagnostic: same path as eval, same xi, same
+                        # moment as FISTA's internal z debug.
+                        if prune_mode == "z":
+                            z_recompute_sum = z_recompute_sum + _z_prune_mask(
+                                w_layer, v_list[p_idx], xi_list[p_idx]
+                            ).float().mean()
+                            z_recompute_count += 1
 
                     if dist.is_initialized():
                         # The entropy term is added after loss.backward()'s DDP sync,
@@ -1146,9 +1159,15 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                 print(f"training_time = {training_time_global}s", flush=True)
                 print(f"accuracies = {accuracies}", flush=True)
                 print(f"zstd_ratios = {zstd_ratios}", flush=True)
+                if z_recompute_count > 0:
+                    recompute_frac = (z_recompute_sum / z_recompute_count).item() * 100.0
+                    print(
+                        f"z_recompute_frac (z>0.5 via _z_prune_mask right after dual) = {recompute_frac:.2f}%",
+                        flush=True
+                    )
                 if delta_debug_log:
-                    print(delta_debug_log, flush=True)                
-                print("====================================\n", flush=True)                
+                    print(delta_debug_log, flush=True)
+                print("====================================\n", flush=True)
 
             if device.type == "cuda":
                 torch.cuda.synchronize(device)
