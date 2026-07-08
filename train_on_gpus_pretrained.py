@@ -157,6 +157,8 @@ def build_model_and_hparams(model_name: str, device: torch.device, args, local_r
         target_sparsity=0.0,      # if >0: per-layer prune the smallest this fraction of |w|
         sparsity_warmup_epochs=0, # if >0: ramp effective sparsity 0->target over this many epochs
         sparsity_ramp_power=1.0,  # ramp profile: 1.0 linear, <1 concave (gentle near target)
+        conv_sparsity=None,       # if set (with fc_sparsity): per-layer target for conv (4D) weights
+        fc_sparsity=None,         # if set (with conv_sparsity): per-layer target for FC (2D) weights
     )
 
     if model_name.startswith("LeNet-5"):
@@ -567,6 +569,8 @@ def print_config(model_name, args, h, local_rank_to_print):
     print(f"target_sparsity={h['target_sparsity']}", flush=True)
     print(f"sparsity_warmup_epochs={h['sparsity_warmup_epochs']}", flush=True)
     print(f"sparsity_ramp_power={h['sparsity_ramp_power']}", flush=True)
+    print(f"conv_sparsity={h['conv_sparsity']}", flush=True)
+    print(f"fc_sparsity={h['fc_sparsity']}", flush=True)
     print(f"metrics_interval={h['metrics_interval']}", flush=True)
     print(f"entropy_warmup_epochs={h['entropy_warmup_epochs']}", flush=True)
     print(f"entropy_every={h['entropy_every']}", flush=True)
@@ -673,6 +677,8 @@ def main():
     parser.add_argument("--target_sparsity", type=float, default=None, help="If >0: per-layer prune the smallest this fraction of |w| (overrides mag_prune_ratio)")
     parser.add_argument("--sparsity_warmup_epochs", type=int, default=None, help="If >0: ramp effective sparsity 0->target linearly over this many epochs")
     parser.add_argument("--sparsity_ramp_power", type=float, default=None, help="Ramp profile exponent: 1.0 linear, <1 concave (gentle increments near target)")
+    parser.add_argument("--conv_sparsity", type=float, default=None, help="Per-layer target sparsity for conv (4D) weights; use with --fc_sparsity")
+    parser.add_argument("--fc_sparsity", type=float, default=None, help="Per-layer target sparsity for FC (2D) weights; use with --conv_sparsity")
     parser.add_argument("--max_iterations", type=int, default=None, help="Override FISTA/PBM iterations (if set)")
     parser.add_argument("--metrics_interval", type=int, default=1, help="Evaluate/compress every N epochs")
     parser.add_argument("--entropy_warmup_epochs", type=int, default=0, help="Epochs with entropy term disabled")
@@ -750,6 +756,10 @@ def main():
         h["sparsity_warmup_epochs"] = args.sparsity_warmup_epochs
     if args.sparsity_ramp_power is not None:
         h["sparsity_ramp_power"] = args.sparsity_ramp_power
+    if args.conv_sparsity is not None:
+        h["conv_sparsity"] = args.conv_sparsity
+    if args.fc_sparsity is not None:
+        h["fc_sparsity"] = args.fc_sparsity
     h["use_perspective"] = (args.perspective == "Y")
     if args.max_iterations is not None:
         h["max_iterations"] = args.max_iterations
@@ -892,6 +902,8 @@ def main():
         target_sparsity=h["target_sparsity"],
         sparsity_warmup_epochs=h["sparsity_warmup_epochs"],
         sparsity_ramp_power=h["sparsity_ramp_power"],
+        conv_sparsity=h["conv_sparsity"],
+        fc_sparsity=h["fc_sparsity"],
     )
 
     if ddp_needed(model_name):

@@ -22,7 +22,8 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                        testloader, train_sampler, steps_per_epoch, delta, pruning, QuantizationType, sparsity_threshold, accuracy_tollerance,
                        gamma=1.0, metrics_interval=1, entropy_warmup_epochs=0, entropy_every=1, check_ddp_sync=False,
                        T3_explicit=0.0, mag_prune_ratio=0.5, use_perspective=False, target_sparsity=0.0,
-                       sparsity_warmup_epochs=0, sparsity_ramp_power=1.0):
+                       sparsity_warmup_epochs=0, sparsity_ramp_power=1.0,
+                       conv_sparsity=None, fc_sparsity=None):
     """Train and evaluate a model with optional entropy regularization.
 
     This function is intentionally self-contained because the compression
@@ -724,7 +725,15 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
         # sparsity), the effective target grows linearly from 0 to target_sparsity
         # over sparsity_warmup_epochs, then holds.  Deep-Compression-style gradual
         # pruning.  sparsity_warmup_epochs <= 0 reproduces the one-shot behavior.
-        if (use_perspective and target_sparsity and target_sparsity > 0.0
+        #
+        # test_122: non-uniform per-layer sparsity.  When conv_sparsity and
+        # fc_sparsity are both set, conv weights (4D) and FC weights (2D) get
+        # different per-layer targets: conv layers (few params, accuracy-sensitive)
+        # are pruned gently, FC layers (~96% of AlexNet params, redundant) hard.
+        # The global sparsity stays high (FC-dominated) while conv is protected.
+        per_layer_sparsity = (conv_sparsity is not None and fc_sparsity is not None)
+        sparsity_active = (target_sparsity and target_sparsity > 0.0) or per_layer_sparsity
+        if (use_perspective and sparsity_active
                 and grid_reset_done and epoch >= entropy_warmup_epochs + 1):
             first_prune_epoch = entropy_warmup_epochs + 1
             if sparsity_warmup_epochs and sparsity_warmup_epochs > 0:
@@ -733,20 +742,28 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                 # test_121: ramp profile.  power = 1.0 -> linear; power < 1 (e.g.
                 # 0.5) -> concave, i.e. small sparsity increments near the target,
                 # giving the net more adaptation time in the hard 60->85% region.
-                effective_ts = target_sparsity * (frac ** sparsity_ramp_power)
+                ramp_frac = frac ** sparsity_ramp_power
             else:
-                effective_ts = target_sparsity
+                ramp_frac = 1.0
             with torch.no_grad():
                 for p_idx, param in enumerate(params_for_quant):
+                    if per_layer_sparsity:
+                        layer_ts = conv_sparsity if param.dim() == 4 else fc_sparsity
+                    else:
+                        layer_ts = target_sparsity
+                    effective_ts = layer_ts * ramp_frac
                     w_layer = param.detach().reshape(-1)
                     target_prune_thresholds[p_idx] = _perspective_mag_threshold(
                         w_layer, v_list[p_idx], effective_ts
                     )
             if local_rank == 0:
+                if per_layer_sparsity:
+                    tgt_str = f"conv={conv_sparsity}*{ramp_frac:.3f}, fc={fc_sparsity}*{ramp_frac:.3f}"
+                else:
+                    tgt_str = f"effective_target_sparsity={target_sparsity * ramp_frac:.4f}"
                 print(
-                    f"[SPARSITY RAMP] epoch={epoch + 1}, "
-                    f"effective_target_sparsity={effective_ts:.4f}, "
-                    f"final_target={target_sparsity}, ramp_power={sparsity_ramp_power}",
+                    f"[SPARSITY RAMP] epoch={epoch + 1}, {tgt_str}, "
+                    f"ramp_frac={ramp_frac:.4f}, ramp_power={sparsity_ramp_power}",
                     flush=True
                 )
 
