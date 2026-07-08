@@ -154,6 +154,7 @@ def build_model_and_hparams(model_name: str, device: torch.device, args, local_r
         T3_explicit=0.0,          # sparsity weight; L1 push near 0 ~ 2*sqrt(T1*T3)
         mag_prune_ratio=0.5,      # magnitude prune threshold = ratio * min_b|v_b|
         use_perspective=False,
+        target_sparsity=0.0,      # if >0: per-layer prune the smallest this fraction of |w|
     )
 
     if model_name.startswith("LeNet-5"):
@@ -561,6 +562,7 @@ def print_config(model_name, args, h, local_rank_to_print):
     print(f"T3={h['T3_explicit']}", flush=True)
     print(f"use_perspective={h['use_perspective']}", flush=True)
     print(f"mag_prune_ratio={h['mag_prune_ratio']}", flush=True)
+    print(f"target_sparsity={h['target_sparsity']}", flush=True)
     print(f"metrics_interval={h['metrics_interval']}", flush=True)
     print(f"entropy_warmup_epochs={h['entropy_warmup_epochs']}", flush=True)
     print(f"entropy_every={h['entropy_every']}", flush=True)
@@ -664,6 +666,7 @@ def main():
     parser.add_argument("--T3", type=float, default=None, help="Perspective sparsity weight; L1 push near 0 ~ 2*sqrt(T1*T3)")
     parser.add_argument("--mag_prune_ratio", type=float, default=None, help="Magnitude prune threshold = ratio * min_b|v_b|")
     parser.add_argument("--perspective", type=str, default="N", choices=["Y", "N"], help="Enable the perspective reformulation (test_113)")
+    parser.add_argument("--target_sparsity", type=float, default=None, help="If >0: per-layer prune the smallest this fraction of |w| (overrides mag_prune_ratio)")
     parser.add_argument("--max_iterations", type=int, default=None, help="Override FISTA/PBM iterations (if set)")
     parser.add_argument("--metrics_interval", type=int, default=1, help="Evaluate/compress every N epochs")
     parser.add_argument("--entropy_warmup_epochs", type=int, default=0, help="Epochs with entropy term disabled")
@@ -735,6 +738,8 @@ def main():
         h["T3_explicit"] = args.T3
     if args.mag_prune_ratio is not None:
         h["mag_prune_ratio"] = args.mag_prune_ratio
+    if args.target_sparsity is not None:
+        h["target_sparsity"] = args.target_sparsity
     h["use_perspective"] = (args.perspective == "Y")
     if args.max_iterations is not None:
         h["max_iterations"] = args.max_iterations
@@ -874,6 +879,7 @@ def main():
         T3_explicit=h["T3_explicit"],
         mag_prune_ratio=h["mag_prune_ratio"],
         use_perspective=h["use_perspective"],
+        target_sparsity=h["target_sparsity"],
     )
 
     if ddp_needed(model_name):

@@ -21,7 +21,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                        lower_c, c1, c2, zeta, l, n_epochs, max_iterations, device, train_optimizer, entropy_optimizer, trainloader,
                        testloader, train_sampler, steps_per_epoch, delta, pruning, QuantizationType, sparsity_threshold, accuracy_tollerance,
                        gamma=1.0, metrics_interval=1, entropy_warmup_epochs=0, entropy_every=1, check_ddp_sync=False,
-                       T3_explicit=0.0, mag_prune_ratio=0.5, use_perspective=False):
+                       T3_explicit=0.0, mag_prune_ratio=0.5, use_perspective=False, target_sparsity=0.0):
     """Train and evaluate a model with optional entropy regularization.
 
     This function is intentionally self-contained because the compression
@@ -178,6 +178,9 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
     prune_mode = "magnitude" if use_perspective else "z"   # "z"=optimization-driven; "deadzone"=old rule
     z_prune_threshold = 0.5
     z_prune_masks = [None] * num_param_tensors
+    # Per-layer magnitude thresholds for target_sparsity mode, frozen once per
+    # epoch (stable + cheap) and reused by both the forward and evaluation.
+    target_prune_thresholds = [None] * num_param_tensors
 
     # NCCL barriers need the CUDA device id on some multi-node launches.
     def _dist_barrier():
@@ -244,7 +247,9 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                 # grid-reset warmup so the L1 push has begun shrinking weights.
                 if (prune_mode == "magnitude"
                         and epoch >= entropy_warmup_epochs + 1):
-                    prune_mask = _perspective_prune_mask(w_flat, v_layer)
+                    prune_mask = _perspective_prune_mask(
+                        w_flat, v_layer, target_prune_thresholds[q_state]
+                    )
                     q_flat = torch.where(
                         prune_mask,
                         torch.zeros_like(q_flat),
@@ -601,17 +606,35 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
         g[nz] = 2.0 * T1_explicit * w_flat[nz] / y_star[nz]
         return g
 
-    def _perspective_prune_mask(w_flat, v_layer):
-        # Magnitude pruning (Frangioni): weights closer to 0 than a fraction of
-        # the smallest non-zero bucket are pruned.
-        thr = mag_prune_ratio * v_layer.abs().min()
-        return w_flat.abs() < thr
+    def _perspective_mag_threshold(w_flat, v_layer):
+        # The magnitude threshold below which a weight is pruned.
+        #  - target_sparsity > 0: per-layer, prune the smallest target_sparsity
+        #    fraction of |w| (kthvalue gives that exact quantile).  This gives
+        #    DIRECT, per-layer control of sparsity (conv and FC alike), instead
+        #    of the uniform ratio*min|v| threshold that over-prunes conv and
+        #    under-prunes the FC layers.
+        #  - otherwise: the fixed threshold mag_prune_ratio * min_b|v_b|.
+        if target_sparsity and target_sparsity > 0.0:
+            aw = w_flat.abs()
+            n = aw.numel()
+            k = int(target_sparsity * n)
+            k = max(1, min(n - 1, k))
+            return torch.kthvalue(aw, k).values
+        return mag_prune_ratio * v_layer.abs().min()
 
-    def _quantize_with_magnitude_pruning(w_flat, v_layer):
+    def _perspective_prune_mask(w_flat, v_layer, thr=None):
+        # Magnitude pruning (Frangioni): prune weights whose |w| is below the
+        # threshold.  thr may be a frozen per-epoch value (cheaper); if None it
+        # is computed on the spot.
+        if thr is None:
+            thr = _perspective_mag_threshold(w_flat, v_layer)
+        return w_flat.abs() <= thr
+
+    def _quantize_with_magnitude_pruning(w_flat, v_layer, thr=None):
         q_idx, q_flat = _quantize_with_deadzone(
             w_flat, v_layer, apply_pruning_deadzone=False,
         )
-        prune_mask = _perspective_prune_mask(w_flat, v_layer)
+        prune_mask = _perspective_prune_mask(w_flat, v_layer, thr)
         q_flat = torch.where(prune_mask, torch.zeros_like(q_flat), q_flat)
         return q_idx, q_flat
 
@@ -677,6 +700,18 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                         f"[FROZEN Z-MASK] epoch={epoch + 1}, "
                         f"pruned={frac_fz:.2f}%, delta={delta}",
                         flush=True
+                    )
+
+        # test_116: freeze the per-layer magnitude threshold for target_sparsity
+        # mode once per epoch (kthvalue is expensive to recompute every step).
+        # The frozen threshold is used by both the fake-quant forward and eval.
+        if (use_perspective and target_sparsity and target_sparsity > 0.0
+                and grid_reset_done and epoch >= entropy_warmup_epochs + 1):
+            with torch.no_grad():
+                for p_idx, param in enumerate(params_for_quant):
+                    w_layer = param.detach().reshape(-1)
+                    target_prune_thresholds[p_idx] = _perspective_mag_threshold(
+                        w_layer, v_list[p_idx]
                     )
 
         for param_group in optimizer.param_groups:
@@ -917,10 +952,12 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                         # Sparse quantization: pruning decided by the sparse-aware dual-zero mass.
                         # The non-zero value is still the nearest non-zero quantization bucket.
                         if use_perspective:
-                            # Magnitude pruning, same rule used in the forward.
+                            # Magnitude pruning, same rule (and frozen threshold)
+                            # used in the forward.
                             s_idx_layer, s_layer = _quantize_with_magnitude_pruning(
                                 w_layer,
                                 v_layer,
+                                target_prune_thresholds[quant_state],
                             )
                         else:
                             s_idx_layer, s_layer, _ = _quantize_with_dual_zero_pruning(
@@ -1275,10 +1312,12 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                         for p_idx, param in enumerate(params_for_quant):
                             wl = param.detach().reshape(-1)
                             vl = v_list[p_idx]
+                            thr = target_prune_thresholds[p_idx]
                             y_means.append(_perspective_y_star(wl, vl).mean().item())
-                            pm = _perspective_prune_mask(wl, vl)
+                            pm = _perspective_prune_mask(wl, vl, thr)
                             prune_fracs.append(pm.float().mean().item())
-                            thr_list.append((mag_prune_ratio * vl.abs().min()).item())
+                            eff_thr = thr if thr is not None else (mag_prune_ratio * vl.abs().min())
+                            thr_list.append(float(eff_thr))
                             n_tot += wl.numel()
                             n_pruned += int(pm.sum().item())
                         mean_y = sum(y_means) / max(1, len(y_means))
@@ -1286,7 +1325,8 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                         l1_push = 2.0 * math.sqrt(T1_explicit * T3_explicit) if T3_explicit > 0 else 0.0
                         print(
                             f"perspective_debug: T1={T1_explicit:.3e}, T3={T3_explicit:.3e}, "
-                            f"mag_prune_ratio={mag_prune_ratio:.3f}, l1_push_near_zero={l1_push:.3e}, "
+                            f"target_sparsity={target_sparsity}, mag_prune_ratio={mag_prune_ratio:.3f}, "
+                            f"l1_push_near_zero={l1_push:.3e}, "
                             f"mean_y_star={mean_y:.4f}, overall_prune_frac={overall_prune:.4%}, "
                             f"mag_thr_first_layers={[round(t, 5) for t in thr_list[:4]]}, "
                             f"prune_frac_first_layers={[round(f, 4) for f in prune_fracs[:4]]}",
