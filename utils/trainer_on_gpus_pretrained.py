@@ -21,7 +21,8 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                        lower_c, c1, c2, zeta, l, n_epochs, max_iterations, device, train_optimizer, entropy_optimizer, trainloader,
                        testloader, train_sampler, steps_per_epoch, delta, pruning, QuantizationType, sparsity_threshold, accuracy_tollerance,
                        gamma=1.0, metrics_interval=1, entropy_warmup_epochs=0, entropy_every=1, check_ddp_sync=False,
-                       T3_explicit=0.0, mag_prune_ratio=0.5, use_perspective=False, target_sparsity=0.0):
+                       T3_explicit=0.0, mag_prune_ratio=0.5, use_perspective=False, target_sparsity=0.0,
+                       sparsity_warmup_epochs=0):
     """Train and evaluate a model with optional entropy regularization.
 
     This function is intentionally self-contained because the compression
@@ -65,22 +66,11 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
     else:
         raise ValueError(f"Unsupported optimizer: {train_optimizer}")
 
-    # test_117: under the perspective reformulation the network must recover a lot
-    # of accuracy at high sparsity, so a StepLR that drops the LR by 10x at epoch 10
-    # kills the recovery mid-way.  A cosine schedule keeps a useful LR for almost
-    # the whole run (smooth decay lr -> lr*0.01 over n_epochs).
-    if use_perspective:
-        scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
-            optimizer,
-            T_max=n_epochs,
-            eta_min=lr * 0.01,
-        )
-    else:
-        scheduler = torch.optim.lr_scheduler.StepLR(
-            optimizer,
-            step_size=10,
-            gamma=0.1
-        )
+    scheduler = torch.optim.lr_scheduler.StepLR(
+        optimizer,
+        step_size=10,
+        gamma=0.1
+    )
 
     # Per-parameter-tensor quantization state.
     # Each layer/tensor gets its own quantization grid v and its own xi.
@@ -617,18 +607,20 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
         g[nz] = 2.0 * T1_explicit * w_flat[nz] / y_star[nz]
         return g
 
-    def _perspective_mag_threshold(w_flat, v_layer):
+    def _perspective_mag_threshold(w_flat, v_layer, ts=None):
         # The magnitude threshold below which a weight is pruned.
-        #  - target_sparsity > 0: per-layer, prune the smallest target_sparsity
-        #    fraction of |w| (kthvalue gives that exact quantile).  This gives
-        #    DIRECT, per-layer control of sparsity (conv and FC alike), instead
-        #    of the uniform ratio*min|v| threshold that over-prunes conv and
-        #    under-prunes the FC layers.
+        #  - target_sparsity > 0: per-layer, prune the smallest ts fraction of
+        #    |w| (kthvalue gives that exact quantile).  ts defaults to
+        #    target_sparsity but can be a smaller ramped value (test_118).  This
+        #    gives DIRECT, per-layer control of sparsity (conv and FC alike),
+        #    instead of the uniform ratio*min|v| threshold.
         #  - otherwise: the fixed threshold mag_prune_ratio * min_b|v_b|.
-        if target_sparsity and target_sparsity > 0.0:
+        if ts is None:
+            ts = target_sparsity
+        if ts and ts > 0.0:
             aw = w_flat.abs()
             n = aw.numel()
-            k = int(target_sparsity * n)
+            k = int(ts * n)
             k = max(1, min(n - 1, k))
             return torch.kthvalue(aw, k).values
         return mag_prune_ratio * v_layer.abs().min()
@@ -716,14 +708,34 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
         # test_116: freeze the per-layer magnitude threshold for target_sparsity
         # mode once per epoch (kthvalue is expensive to recompute every step).
         # The frozen threshold is used by both the fake-quant forward and eval.
+        #
+        # test_118: linear sparsity ramp.  Instead of pruning the full
+        # target_sparsity in one shot (which the net cannot recover from at high
+        # sparsity), the effective target grows linearly from 0 to target_sparsity
+        # over sparsity_warmup_epochs, then holds.  Deep-Compression-style gradual
+        # pruning.  sparsity_warmup_epochs <= 0 reproduces the one-shot behavior.
         if (use_perspective and target_sparsity and target_sparsity > 0.0
                 and grid_reset_done and epoch >= entropy_warmup_epochs + 1):
+            first_prune_epoch = entropy_warmup_epochs + 1
+            if sparsity_warmup_epochs and sparsity_warmup_epochs > 0:
+                steps_into = epoch - first_prune_epoch + 1
+                frac = steps_into / float(sparsity_warmup_epochs)
+                effective_ts = target_sparsity * min(1.0, max(0.0, frac))
+            else:
+                effective_ts = target_sparsity
             with torch.no_grad():
                 for p_idx, param in enumerate(params_for_quant):
                     w_layer = param.detach().reshape(-1)
                     target_prune_thresholds[p_idx] = _perspective_mag_threshold(
-                        w_layer, v_list[p_idx]
+                        w_layer, v_list[p_idx], effective_ts
                     )
+            if local_rank == 0:
+                print(
+                    f"[SPARSITY RAMP] epoch={epoch + 1}, "
+                    f"effective_target_sparsity={effective_ts:.4f}, "
+                    f"final_target={target_sparsity}",
+                    flush=True
+                )
 
         for param_group in optimizer.param_groups:
             param_group['weight_decay'] = 0.0 if use_perspective else T1_explicit
