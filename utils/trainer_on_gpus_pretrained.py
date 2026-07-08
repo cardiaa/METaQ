@@ -22,7 +22,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                        testloader, train_sampler, steps_per_epoch, delta, pruning, QuantizationType, sparsity_threshold, accuracy_tollerance,
                        gamma=1.0, metrics_interval=1, entropy_warmup_epochs=0, entropy_every=1, check_ddp_sync=False,
                        T3_explicit=0.0, mag_prune_ratio=0.5, use_perspective=False, target_sparsity=0.0,
-                       sparsity_warmup_epochs=0):
+                       sparsity_warmup_epochs=0, sparsity_ramp_power=1.0):
     """Train and evaluate a model with optional entropy regularization.
 
     This function is intentionally self-contained because the compression
@@ -729,8 +729,11 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
             first_prune_epoch = entropy_warmup_epochs + 1
             if sparsity_warmup_epochs and sparsity_warmup_epochs > 0:
                 steps_into = epoch - first_prune_epoch + 1
-                frac = steps_into / float(sparsity_warmup_epochs)
-                effective_ts = target_sparsity * min(1.0, max(0.0, frac))
+                frac = min(1.0, max(0.0, steps_into / float(sparsity_warmup_epochs)))
+                # test_121: ramp profile.  power = 1.0 -> linear; power < 1 (e.g.
+                # 0.5) -> concave, i.e. small sparsity increments near the target,
+                # giving the net more adaptation time in the hard 60->85% region.
+                effective_ts = target_sparsity * (frac ** sparsity_ramp_power)
             else:
                 effective_ts = target_sparsity
             with torch.no_grad():
@@ -743,7 +746,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                 print(
                     f"[SPARSITY RAMP] epoch={epoch + 1}, "
                     f"effective_target_sparsity={effective_ts:.4f}, "
-                    f"final_target={target_sparsity}",
+                    f"final_target={target_sparsity}, ramp_power={sparsity_ramp_power}",
                     flush=True
                 )
 
