@@ -66,11 +66,21 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
     else:
         raise ValueError(f"Unsupported optimizer: {train_optimizer}")
 
-    scheduler = torch.optim.lr_scheduler.StepLR(
-        optimizer,
-        step_size=10,
-        gamma=0.1
-    )
+    # test_119: under the perspective reformulation the network must keep adapting
+    # through the steep end of the sparsity ramp (68->85%), so the LR must NOT
+    # decay there.  test_118 showed that StepLR's drop at epoch 10 collapsed the
+    # accuracy exactly when the ramp got hardest.  Keep the LR constant.
+    if use_perspective:
+        scheduler = torch.optim.lr_scheduler.LambdaLR(
+            optimizer,
+            lr_lambda=lambda e: 1.0,
+        )
+    else:
+        scheduler = torch.optim.lr_scheduler.StepLR(
+            optimizer,
+            step_size=10,
+            gamma=0.1
+        )
 
     # Per-parameter-tensor quantization state.
     # Each layer/tensor gets its own quantization grid v and its own xi.
