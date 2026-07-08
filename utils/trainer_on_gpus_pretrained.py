@@ -20,7 +20,8 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                        first_best_indices, BestQuantization_target_acc, final_target_acc, target_zstd_ratio, min_xi, max_xi, upper_c, 
                        lower_c, c1, c2, zeta, l, n_epochs, max_iterations, device, train_optimizer, entropy_optimizer, trainloader,
                        testloader, train_sampler, steps_per_epoch, delta, pruning, QuantizationType, sparsity_threshold, accuracy_tollerance,
-                       gamma=1.0, metrics_interval=1, entropy_warmup_epochs=0, entropy_every=1, check_ddp_sync=False):
+                       gamma=1.0, metrics_interval=1, entropy_warmup_epochs=0, entropy_every=1, check_ddp_sync=False,
+                       T3_explicit=0.0, mag_prune_ratio=0.5, use_perspective=False):
     """Train and evaluate a model with optional entropy regularization.
 
     This function is intentionally self-contained because the compression
@@ -51,10 +52,16 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
     if device.type == "cuda":
         torch.cuda.set_device(device.index if device.index is not None else local_rank)
 
+    # Under the perspective reformulation the ridge is T1 * w^2 / y* (perspective
+    # form), whose gradient 2*T1*w/y* is applied EXPLICITLY per step.  The plain
+    # SGD weight_decay (which would add a second, standard T1*w ridge) is disabled
+    # to avoid double-counting.
+    wd_init = 0.0 if use_perspective else T1_explicit
+
     if train_optimizer == 'ADAM':
-        optimizer = optim.Adam(model.parameters(), lr=lr, betas=(0.9, 0.999), eps=1e-08, weight_decay=T1_explicit)
+        optimizer = optim.Adam(model.parameters(), lr=lr, betas=(0.9, 0.999), eps=1e-08, weight_decay=wd_init)
     elif train_optimizer == 'SGD':
-        optimizer = optim.SGD(model.parameters(), lr=lr, momentum=0.9, weight_decay=T1_explicit)
+        optimizer = optim.SGD(model.parameters(), lr=lr, momentum=0.9, weight_decay=wd_init)
     else:
         raise ValueError(f"Unsupported optimizer: {train_optimizer}")
 
@@ -164,7 +171,11 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
     # the optimization itself (not a magnitude rule).  The per-layer masks are
     # computed in the dual block (from the current xi) and cached for the
     # fake-quant forward and for evaluation, so train and eval prune the same set.
-    prune_mode = "z"            # "z" = optimization-driven; "deadzone" = old magnitude rule
+    # test_113: perspective reformulation.  Under use_perspective the pruning is
+    # magnitude-based (Frangioni's advice), driven by the perspective ridge L1
+    # push; the entropy dual (FISTA/knapsack, the z-symbol, delta) is NOT used.
+    # "magnitude" therefore disables the z-branch and the dual altogether.
+    prune_mode = "magnitude" if use_perspective else "z"   # "z"=optimization-driven; "deadzone"=old rule
     z_prune_threshold = 0.5
     z_prune_masks = [None] * num_param_tensors
 
@@ -224,6 +235,18 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                         and z_prune_masks[q_state] is not None):
                     q_flat = torch.where(
                         z_prune_masks[q_state],
+                        torch.zeros_like(q_flat),
+                        q_flat,
+                    )
+
+                # Perspective (test_113): magnitude pruning, coherent between the
+                # fake-quant forward and evaluation.  Starts after one epoch of
+                # grid-reset warmup so the L1 push has begun shrinking weights.
+                if (prune_mode == "magnitude"
+                        and epoch >= entropy_warmup_epochs + 1):
+                    prune_mask = _perspective_prune_mask(w_flat, v_layer)
+                    q_flat = torch.where(
+                        prune_mask,
                         torch.zeros_like(q_flat),
                         q_flat,
                     )
@@ -536,7 +559,61 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
 
         q_flat = torch.where(prune_mask, torch.zeros_like(q_flat), q_flat)
 
-        return q_idx, q_flat, z_mass    
+        return q_idx, q_flat, z_mass
+
+    # ------------------------------------------------------------------
+    # Perspective reformulation (test_113), T2 == 0 closed form.
+    #
+    # Per-weight subproblem   min_x sum_b xi_b x_b + T1 w^2/y + T3 y  reduces,
+    # when the entropy costs vanish (T2 = 0 => xi = 0), to the closed form
+    # verified in CheckCorrectnessPerspectiveAlgorithm.ipynb (TEST E):
+    #
+    #     y*(w) = clamp( |w| * sqrt(T1/T3), [ymin, 1] )
+    #     ymin  = |w| / (max positive bucket if w>=0 else |min negative bucket|)
+    #     dphi/dw = 2 * T1 * w / y*      (perspective ridge + L1 sparsity push)
+    #
+    # Near w = 0 the push tends to 2*sqrt(T1*T3)*sign(w): an L1 term that drives
+    # small weights to 0, so the magnitude pruning below removes them cleanly.
+    # ------------------------------------------------------------------
+    def _perspective_y_star(w_flat, v_layer):
+        aw = w_flat.abs()
+        # Feasibility floor: w/y must be representable, i.e. w/y in [min v, max v].
+        # For w>0 that means y >= w / max_positive_bucket; for w<0, y >= |w| / |min
+        # bucket|.  Using max_b|v_b| for both signs would allow an infeasible target
+        # on the side whose extreme bucket is smaller in magnitude.
+        pos_max = v_layer.max().clamp_min(1e-12)      # most positive bucket (>0)
+        neg_absmax = v_layer.min().abs().clamp_min(1e-12)  # |most negative bucket| (>0)
+        side_max = torch.where(w_flat >= 0, pos_max, neg_absmax)
+        ymin_c = (aw / side_max).clamp_(max=1.0)
+        if T3_explicit > 0.0:
+            scale = math.sqrt(T1_explicit / T3_explicit)
+            y_int = (aw * scale).clamp_(max=1.0)
+        else:
+            # No sparsity term: keep full mass (plain ridge, y* = 1).
+            y_int = torch.ones_like(aw)
+        # y* = max(interior stationary point, feasibility floor), capped at 1.
+        return torch.maximum(y_int, ymin_c)
+
+    def _perspective_ridge_grad(w_flat, v_layer):
+        y_star = _perspective_y_star(w_flat, v_layer)
+        g = torch.zeros_like(w_flat)
+        nz = y_star > 0.0
+        g[nz] = 2.0 * T1_explicit * w_flat[nz] / y_star[nz]
+        return g
+
+    def _perspective_prune_mask(w_flat, v_layer):
+        # Magnitude pruning (Frangioni): weights closer to 0 than a fraction of
+        # the smallest non-zero bucket are pruned.
+        thr = mag_prune_ratio * v_layer.abs().min()
+        return w_flat.abs() < thr
+
+    def _quantize_with_magnitude_pruning(w_flat, v_layer):
+        q_idx, q_flat = _quantize_with_deadzone(
+            w_flat, v_layer, apply_pruning_deadzone=False,
+        )
+        prune_mask = _perspective_prune_mask(w_flat, v_layer)
+        q_flat = torch.where(prune_mask, torch.zeros_like(q_flat), q_flat)
+        return q_idx, q_flat
 
     for epoch in range(n_epochs):
         should_eval_epoch = ((epoch + 1) % metrics_interval == 0) or (epoch == n_epochs - 1)
@@ -603,7 +680,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                     )
 
         for param_group in optimizer.param_groups:
-            param_group['weight_decay'] = T1_explicit
+            param_group['weight_decay'] = 0.0 if use_perspective else T1_explicit
 
         if train_sampler is not None and hasattr(train_sampler, "set_epoch"):
             train_sampler.set_epoch(epoch)
@@ -658,6 +735,19 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
             if capture_last_norms:
                 last_loss_grad_norm = _grad_norm_from_current_grads()
 
+            # Perspective ridge/sparsity gradient (test_113): add 2*T1*w/y* to the
+            # gradient of every quantized tensor, every step.  It is a deterministic
+            # function of the (DDP-synced) weights, so it is identical across ranks
+            # and needs no all-reduce.  Replaces the plain weight_decay ridge.
+            if use_perspective and grid_reset_done and epoch >= entropy_warmup_epochs:
+                with torch.no_grad():
+                    for p_idx, param in enumerate(params_for_quant):
+                        if param.grad is None:
+                            continue
+                        w_layer = param.detach().reshape(-1)
+                        ridge_g = _perspective_ridge_grad(w_layer, v_list[p_idx])
+                        param.grad.add_(ridge_g.view_as(param))
+
             beta_tensor = None
             # Entropy/FISTA is the expensive part of the method.  Applying it
             # every N global steps keeps the computational cost controlled.
@@ -665,6 +755,10 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                 grid_reset_done
                 and (global_step % entropy_every == 0)
                 and (T2_current > 0 or prune_mode == "z")
+                # The entropy dual (old FISTA/knapsack with xi_zero/delta) is not
+                # part of the perspective path; the general T2>0 perspective solver
+                # is a later step.  Never run the old dual under use_perspective.
+                and not use_perspective
             )
             if run_dual:
                 # The dual (FISTA on xi) runs to keep the pruning mass z meaningful
@@ -822,11 +916,18 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
 
                         # Sparse quantization: pruning decided by the sparse-aware dual-zero mass.
                         # The non-zero value is still the nearest non-zero quantization bucket.
-                        s_idx_layer, s_layer, _ = _quantize_with_dual_zero_pruning(
-                            w_layer,
-                            v_layer,
-                            xi_list[quant_state],
-                        )
+                        if use_perspective:
+                            # Magnitude pruning, same rule used in the forward.
+                            s_idx_layer, s_layer = _quantize_with_magnitude_pruning(
+                                w_layer,
+                                v_layer,
+                            )
+                        else:
+                            s_idx_layer, s_layer, _ = _quantize_with_dual_zero_pruning(
+                                w_layer,
+                                v_layer,
+                                xi_list[quant_state],
+                            )
 
                         s_layer[s_layer.abs() <= sparsity_threshold] = 0.0
 
@@ -1167,6 +1268,30 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                     )
                 if delta_debug_log:
                     print(delta_debug_log, flush=True)
+                if use_perspective:
+                    with torch.no_grad():
+                        y_means, prune_fracs, thr_list = [], [], []
+                        n_tot, n_pruned = 0, 0
+                        for p_idx, param in enumerate(params_for_quant):
+                            wl = param.detach().reshape(-1)
+                            vl = v_list[p_idx]
+                            y_means.append(_perspective_y_star(wl, vl).mean().item())
+                            pm = _perspective_prune_mask(wl, vl)
+                            prune_fracs.append(pm.float().mean().item())
+                            thr_list.append((mag_prune_ratio * vl.abs().min()).item())
+                            n_tot += wl.numel()
+                            n_pruned += int(pm.sum().item())
+                        mean_y = sum(y_means) / max(1, len(y_means))
+                        overall_prune = n_pruned / max(1, n_tot)
+                        l1_push = 2.0 * math.sqrt(T1_explicit * T3_explicit) if T3_explicit > 0 else 0.0
+                        print(
+                            f"perspective_debug: T1={T1_explicit:.3e}, T3={T3_explicit:.3e}, "
+                            f"mag_prune_ratio={mag_prune_ratio:.3f}, l1_push_near_zero={l1_push:.3e}, "
+                            f"mean_y_star={mean_y:.4f}, overall_prune_frac={overall_prune:.4%}, "
+                            f"mag_thr_first_layers={[round(t, 5) for t in thr_list[:4]]}, "
+                            f"prune_frac_first_layers={[round(f, 4) for f in prune_fracs[:4]]}",
+                            flush=True
+                        )
                 print("====================================\n", flush=True)
 
             if device.type == "cuda":

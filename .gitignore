@@ -10,3 +10,6 @@ data/cifar-10-batches-py/
 
 # Local Leonardo test logs
 LeonardoTests/
+
+# Claude Code local project config
+.claude/

@@ -150,6 +150,10 @@ def build_model_and_hparams(model_name: str, device: torch.device, args, local_r
         pruning="Y",
         QuantizationType="center",
         sparsity_threshold=1e-3,
+        # test_113: perspective reformulation (Frangioni).
+        T3_explicit=0.0,          # sparsity weight; L1 push near 0 ~ 2*sqrt(T1*T3)
+        mag_prune_ratio=0.5,      # magnitude prune threshold = ratio * min_b|v_b|
+        use_perspective=False,
     )
 
     if model_name.startswith("LeNet-5"):
@@ -554,6 +558,9 @@ def print_config(model_name, args, h, local_rank_to_print):
         print(f"global_batch_size={h['batch_size'] * world_size}", flush=True)
     print(f"T1={h['T1_explicit']}", flush=True)
     print(f"T2={h['T2_explicit']}", flush=True)
+    print(f"T3={h['T3_explicit']}", flush=True)
+    print(f"use_perspective={h['use_perspective']}", flush=True)
+    print(f"mag_prune_ratio={h['mag_prune_ratio']}", flush=True)
     print(f"metrics_interval={h['metrics_interval']}", flush=True)
     print(f"entropy_warmup_epochs={h['entropy_warmup_epochs']}", flush=True)
     print(f"entropy_every={h['entropy_every']}", flush=True)
@@ -654,6 +661,9 @@ def main():
     parser.add_argument("--lr", type=float, default=None, help="Override learning rate (if set)")
     parser.add_argument("--T1", type=float, default=None, help="Override L2 weight decay term; 0 disables it")
     parser.add_argument("--T2", type=float, default=None, help="Override entropy term; 0 disables it")
+    parser.add_argument("--T3", type=float, default=None, help="Perspective sparsity weight; L1 push near 0 ~ 2*sqrt(T1*T3)")
+    parser.add_argument("--mag_prune_ratio", type=float, default=None, help="Magnitude prune threshold = ratio * min_b|v_b|")
+    parser.add_argument("--perspective", type=str, default="N", choices=["Y", "N"], help="Enable the perspective reformulation (test_113)")
     parser.add_argument("--max_iterations", type=int, default=None, help="Override FISTA/PBM iterations (if set)")
     parser.add_argument("--metrics_interval", type=int, default=1, help="Evaluate/compress every N epochs")
     parser.add_argument("--entropy_warmup_epochs", type=int, default=0, help="Epochs with entropy term disabled")
@@ -721,6 +731,11 @@ def main():
         h["T1_explicit"] = args.T1
     if args.T2 is not None:
         h["T2_explicit"] = args.T2
+    if args.T3 is not None:
+        h["T3_explicit"] = args.T3
+    if args.mag_prune_ratio is not None:
+        h["mag_prune_ratio"] = args.mag_prune_ratio
+    h["use_perspective"] = (args.perspective == "Y")
     if args.max_iterations is not None:
         h["max_iterations"] = args.max_iterations
     if args.C is not None:
@@ -852,10 +867,13 @@ def main():
         sparsity_threshold=h["sparsity_threshold"],
         accuracy_tollerance=h["accuracy_tollerance"],
         gamma=args.gamma,
-        metrics_interval=h["metrics_interval"], 
+        metrics_interval=h["metrics_interval"],
         entropy_warmup_epochs=h["entropy_warmup_epochs"],
         entropy_every=h["entropy_every"],
         check_ddp_sync=h["check_ddp_sync"],
+        T3_explicit=h["T3_explicit"],
+        mag_prune_ratio=h["mag_prune_ratio"],
+        use_perspective=h["use_perspective"],
     )
 
     if ddp_needed(model_name):
