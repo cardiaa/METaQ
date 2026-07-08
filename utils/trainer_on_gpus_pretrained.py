@@ -65,11 +65,22 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
     else:
         raise ValueError(f"Unsupported optimizer: {train_optimizer}")
 
-    scheduler = torch.optim.lr_scheduler.StepLR(
-        optimizer,
-        step_size=10,
-        gamma=0.1
-    )
+    # test_117: under the perspective reformulation the network must recover a lot
+    # of accuracy at high sparsity, so a StepLR that drops the LR by 10x at epoch 10
+    # kills the recovery mid-way.  A cosine schedule keeps a useful LR for almost
+    # the whole run (smooth decay lr -> lr*0.01 over n_epochs).
+    if use_perspective:
+        scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
+            optimizer,
+            T_max=n_epochs,
+            eta_min=lr * 0.01,
+        )
+    else:
+        scheduler = torch.optim.lr_scheduler.StepLR(
+            optimizer,
+            step_size=10,
+            gamma=0.1
+        )
 
     # Per-parameter-tensor quantization state.
     # Each layer/tensor gets its own quantization grid v and its own xi.
