@@ -908,6 +908,16 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                         param.grad.add_(bstar.view_as(param))
                     entropy_steps += 1
                     if dist.is_initialized():
+                        # Re-sync grads: beta* is computed from each rank's local xi,
+                        # which was updated via non-deterministic scatter_add BEFORE the
+                        # xi broadcast below, so beta* differs slightly across ranks.
+                        # Without this all_reduce the ranks' params drift apart
+                        # (ddp_param_checksum_range grew 0 -> 1.4 over epochs 2-5).
+                        # Mirrors the old dual path.
+                        for param in model.parameters():
+                            if param.grad is not None:
+                                dist.all_reduce(param.grad, op=dist.ReduceOp.SUM)
+                                param.grad.div_(dist.get_world_size())
                         for xi_layer in xi_list:
                             dist.broadcast(xi_layer, src=0)
 
