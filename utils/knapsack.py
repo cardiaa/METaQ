@@ -1,5 +1,6 @@
-import torch   
+import torch
 import gc
+import math
 
 def _make_effective_pruning_xi(xi, C, device, delta):
     """
@@ -571,6 +572,120 @@ def knapsack_specialized_pruning_sparse(xi, v, w, C, device, delta):
     del ratio, neg_indices, pos_indices, neg_sorted, pos_sorted, b_vector
 
     return x, lambda_opt, objective_values
+
+def knapsack_perspective_leonardo(xi_buckets, v, w, C, device, T1, T2, T3):
+    """
+    General (T2 != 0) per-weight perspective subproblem solver.
+
+    Solves, for each weight w:
+        min_x  sum_b (T2*xi_b) x_b  +  T1 w^2/y  +  T3 y,
+        s.t.  sum_b v_b x_b = w,  y = sum_b x_b,  y <= 1,  x >= 0.
+
+    via the reduction K(y) = y*K(1)[w/y] and the 1-D convex minimisation of
+    G(y) = K(y) + T1 w^2/y + T3 y over y in [ymin, 1], done as a segment-scan on
+    the lower convex envelope of the (v_b, T2*xi_b) points.  Candidates on each
+    envelope segment j (slope s_j, offset beta_j): the stationary point
+    y_j = |w| sqrt(T1/(s_j+T3)), the two breakpoints (kinks) w/V[j], w/V[j+1],
+    and the global endpoints ymin, 1.  G convex => the min over accepted
+    candidates is global.  The offline verification against cvxpy is in
+    CheckCorrectnessPerspectiveAlgorithm.ipynb / scratchpad/verify_persp_general.py.
+
+    Returns:
+        x_placeholder: (M, 4) = [idx_left, idx_right, x_left, x_right]
+                       (bucket masses; x_left+x_right = y*, and z = 1 - y*)
+        beta_star:     (M,)  full gradient dphi/dw = beta_old(w/y*) + 2 T1 w/y*
+        y_star:        (M,)
+    """
+    v = v.to(dtype=torch.float32, device=device)
+    w = w.to(dtype=torch.float32, device=device)
+    # The x-subproblem cost is the RAW dual xi_b (verified offline).  T2 does NOT
+    # multiply the bucket costs here; it enters only the entropy-dual relation
+    # c_b* = exp(log2*xi_b/T2 - 1) in the FISTA update.  (T2 is accepted for API
+    # symmetry but unused in this solver.)
+    xi_eff = xi_buckets.to(dtype=torch.float32, device=device)
+    M = w.shape[0]
+
+    # --- lower convex envelope (same breakpoint logic as the other knapsacks) ---
+    b_list = []
+    b = 0
+    while True:
+        delta_xi = xi_eff[b + 1:] - xi_eff[b]
+        delta_v = v[b + 1:] - v[b]
+        b = torch.argmin(delta_xi / delta_v) + 1 + b_list[-1] if b_list else 0
+        if b != C - 1:
+            b_list.append(int(b))
+        if b + 1 > C - 1:
+            break
+    b_list.append(C - 1)
+    x_plus = torch.zeros(C, dtype=torch.int32, device=device)
+    x_plus[0] = 1
+    x_plus[torch.tensor(b_list, device=device, dtype=torch.long)] = 1
+    one = torch.nonzero(x_plus, as_tuple=True)[0]          # envelope vertex indices, sorted by v
+    V = v[one]
+    Xi = xi_eff[one]
+    P = V.numel()
+    dV = V[1:] - V[:-1]
+    beta_seg = (Xi[1:] - Xi[:-1]) / dV                     # (P-1,) slope of K(1) on segment j
+    s_seg = (Xi[:-1] * V[1:] - Xi[1:] * V[:-1]) / dV        # (P-1,) intercept s_j
+
+    aw = w.abs()
+    pos_max = V[-1].clamp_min(1e-12)
+    neg_absmax = V[0].abs().clamp_min(1e-12)
+    side = torch.where(w >= 0, pos_max, neg_absmax)
+    ymin = (aw / side).clamp_(max=1.0)
+    ones = torch.ones_like(w)
+    eps = 1e-6
+
+    best_G = torch.full((M,), float('inf'), device=device, dtype=torch.float32)
+    best_y = ones.clone()
+
+    def _consider(cand, sj, bj, Vl, Vr, allow):
+        cand = torch.minimum(torch.maximum(cand, ymin), ones)
+        what = w / cand.clamp_min(1e-30)
+        in_seg = allow & (what >= Vl - eps) & (what <= Vr + eps) & (aw > 0)
+        G = bj * w + sj * cand + T1 * w * w / cand.clamp_min(1e-30) + T3 * cand
+        G = torch.where(in_seg, G, best_G.new_full((M,), float('inf')))
+        upd = G < best_G
+        best_G[upd] = G[upd]
+        best_y[upd] = cand[upd]
+
+    all_true = torch.ones_like(w, dtype=torch.bool)
+    for j in range(P - 1):
+        Vl = V[j]; Vr = V[j + 1]; sj = s_seg[j]; bj = beta_seg[j]
+        d = float(s_seg[j]) + T3                            # s_j + T3 (scalar)
+        if d > 0:
+            ycand = aw * math.sqrt(T1 / d)                  # stationary point on segment j
+            _consider(ycand, sj, bj, Vl, Vr, all_true)
+        _consider(ymin.clone(), sj, bj, Vl, Vr, all_true)
+        _consider(ones.clone(), sj, bj, Vl, Vr, all_true)
+        _consider(w / Vl, sj, bj, Vl, Vr, all_true)         # breakpoint (kink) at wh=Vl
+        _consider(w / Vr, sj, bj, Vl, Vr, all_true)         # breakpoint (kink) at wh=Vr
+
+    y_star = best_y.clamp_min(1e-12)
+    what = w / y_star
+    seg = torch.searchsorted(V, what).clamp_(1, P - 1) - 1  # bracketing segment of w/y*
+    beta_old = beta_seg[seg]
+    # bucket masses: at wh in [V[seg],V[seg+1]], K(1) uses buckets one[seg], one[seg+1]
+    Vl = V[seg]; Vr = V[seg + 1]
+    theta_u = ((Vr - what) / (Vr - Vl)).clamp_(0.0, 1.0)    # mass fraction on the left bucket
+    idx_left = one[seg]
+    idx_right = one[seg + 1]
+    x_left = y_star * theta_u
+    x_right = y_star * (1.0 - theta_u)
+    beta_star = beta_old + 2.0 * T1 * w / y_star
+
+    # weights that are exactly zero -> fully pruned, no gradient
+    zero_w = aw <= 0
+    x_left = torch.where(zero_w, torch.zeros_like(x_left), x_left)
+    x_right = torch.where(zero_w, torch.zeros_like(x_right), x_right)
+    beta_star = torch.where(zero_w, torch.zeros_like(beta_star), beta_star)
+
+    x_placeholder = torch.stack(
+        [idx_left.to(torch.int32), idx_right.to(torch.int32), x_left, x_right],
+        dim=1,
+    )  # (M, 4)
+    return x_placeholder, beta_star, y_star
+
 
 def knapsack_specialized_pruning_sparse_leonardo(xi, v, w, C, device, delta):
     """

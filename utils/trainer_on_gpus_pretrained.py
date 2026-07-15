@@ -10,7 +10,7 @@ import torch.optim as optim
 import torch.distributed as dist
 import gc
 from utils.quantize_and_compress import compute_entropy, quantize_weights_center, compute_entropyGPU, quantize_weights_centerGPU, compute_entropy_hist
-from utils.optimization import FISTA, FISTA_leonardo, ProximalBM, test_accuracy, test_accuracyGPU
+from utils.optimization import FISTA, FISTA_leonardo, FISTA_perspective_leonardo, ProximalBM, test_accuracy, test_accuracyGPU
 from utils.knapsack import knapsack_specialized_pruning, knapsack_specialized_pruning_sparse_leonardo
 from utils.weight_utils import initialize_weights
 from utils.quantize_and_compress import compress_zstd, BestQuantization, pack_bitmask, pack_bitmaskGPU
@@ -857,10 +857,11 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                 last_loss_grad_norm = _grad_norm_from_current_grads()
 
             # Perspective ridge/sparsity gradient (test_113): add 2*T1*w/y* to the
-            # gradient of every quantized tensor, every step.  It is a deterministic
-            # function of the (DDP-synced) weights, so it is identical across ranks
-            # and needs no all-reduce.  Replaces the plain weight_decay ridge.
-            if use_perspective and grid_reset_done and epoch >= entropy_warmup_epochs:
+            # gradient of every quantized tensor, every step.  Closed form (xi=0),
+            # valid ONLY when the entropy is off (T2 == 0).  When T2 > 0 the full
+            # gradient (ridge + entropy) comes from the perspective FISTA below.
+            if (use_perspective and T2_current == 0
+                    and grid_reset_done and epoch >= entropy_warmup_epochs):
                 with torch.no_grad():
                     for p_idx, param in enumerate(params_for_quant):
                         if param.grad is None:
@@ -868,6 +869,34 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                         w_layer = param.detach().reshape(-1)
                         ridge_g = _perspective_ridge_grad(w_layer, v_list[p_idx])
                         param.grad.add_(ridge_g.view_as(param))
+
+            # test_125: perspective entropy (T2 > 0).  Run the general perspective
+            # FISTA every entropy_every steps: it updates the bucket duals xi and
+            # returns beta* = dphi/dw (ridge + entropy) per weight, which we apply
+            # directly.  NOT YET GPU-VALIDATED (the inner solver is offline-verified;
+            # the xi-dynamics are new) -- treat the first run as a smoke test.
+            if (use_perspective and T2_current > 0
+                    and grid_reset_done and epoch >= entropy_warmup_epochs
+                    and (global_step % entropy_every == 0)):
+                with torch.no_grad():
+                    for p_idx, param in enumerate(params_for_quant):
+                        if param.grad is None:
+                            continue
+                        w_layer = param.detach().reshape(-1).to(device)
+                        xi_list[p_idx], beta_star = FISTA_perspective_leonardo(
+                            xi_list[p_idx], v_list[p_idx], w_layer, C,
+                            float(w_layer.numel()), lower_c,
+                            T1_explicit, T2_current, T3_explicit,
+                            subgradient_step, device, max_iterations,
+                        )
+                        # winsorize beta* to keep a stray coordinate from exploding
+                        bstar = beta_star.float().reshape(-1)
+                        bscale = bstar.abs().median().clamp_min(1e-12)
+                        bstar = bstar.clamp(min=-beta_clip_k * bscale, max=beta_clip_k * bscale)
+                        param.grad.add_(bstar.view_as(param))
+                    if dist.is_initialized():
+                        for xi_layer in xi_list:
+                            dist.broadcast(xi_layer, src=0)
 
             beta_tensor = None
             # Entropy/FISTA is the expensive part of the method.  Applying it

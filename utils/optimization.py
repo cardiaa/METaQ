@@ -1,6 +1,6 @@
 import torch  
 from torch.linalg import norm  
-from .knapsack import knapsack_specialized, knapsack_specialized_pruning, knapsack_specialized_pruning_sparse, knapsack_specialized_pruning_sparse_leonardo
+from .knapsack import knapsack_specialized, knapsack_specialized_pruning, knapsack_specialized_pruning_sparse, knapsack_specialized_pruning_sparse_leonardo, knapsack_perspective_leonardo
 
 def test_accuracy(model, dataloader, device):
     """
@@ -407,6 +407,68 @@ def FISTA_leonardo(xi, v, w, C, upper_c, lower_c, delta, subgradient_step, devic
             xi = torch.sort(xi)[0]
 
     return xi, lambda_plus
+
+def FISTA_perspective_leonardo(xi, v, w, C, upper_c, lower_c, T1, T2, T3,
+                               subgradient_step, device, max_iterations):
+    """
+    FISTA for the entropy dual under the perspective reformulation (T2 > 0).
+
+    Per iteration:
+      - solve the per-weight perspective subproblem (knapsack_perspective_leonardo),
+        which returns the bucket masses, the per-weight gradient beta* = dphi/dw,
+        and y*;
+      - accumulate the bucket counts c_b = sum_i (mass of weight i in bucket b);
+      - the c-subproblem gives c_b* = exp(log2 * xi_b / T2 - 1);
+      - supergradient of the dual g_b = c_b - c_b*, ascend xi (FISTA-accelerated).
+
+    xi may be length C (bucket duals) or C+1 (legacy: xi[0] is an unused zero
+    symbol, kept only so the caller's state stays the same shape).  T2 does NOT
+    scale the bucket costs of the x-subproblem; it appears only in c_b* above.
+
+    Returns (xi_updated, beta_star) with beta_star the per-weight gradient of phi.
+
+    NOTE: verified offline for the inner solver (cost/y*/beta vs cvxpy); the FISTA
+    xi-dynamics with the exp(.../T2) relation are NOT GPU-tested yet.
+    """
+    xi = xi.to(dtype=torch.float32, device=device)
+    has_zero_slot = (xi.numel() == C + 1)
+    xi_b = (xi[1:] if has_zero_slot else xi).clone()
+
+    xi_prev = xi_b.clone()
+    t_prev = torch.tensor(1.0, device=device)
+    log2 = torch.log(torch.tensor(2.0, device=device))
+    T2_t = max(float(T2), 1e-12)
+
+    beta_star = None
+    for _ in range(max_iterations):
+        x_ph, beta_star, y_star = knapsack_perspective_leonardo(
+            xi_b, v, w, C, device, T1, T2, T3
+        )
+        idx_left = x_ph[:, 0].to(torch.long)
+        idx_right = x_ph[:, 1].to(torch.long)
+        x_left = x_ph[:, 2]
+        x_right = x_ph[:, 3]
+
+        counts = torch.zeros(C, dtype=torch.float32, device=device)
+        counts.scatter_add_(0, idx_left, x_left)
+        counts.scatter_add_(0, idx_right, x_right)
+
+        c_star = torch.exp(log2 * xi_b / T2_t - 1.0)
+        c_star = torch.clamp(c_star, min=lower_c, max=upper_c)
+
+        g = counts - c_star                       # dual supergradient (ascent)
+
+        t_cur = (1 + torch.sqrt(1 + 4 * t_prev ** 2)) / 2
+        y = xi_b + ((t_prev - 1) / t_cur) * (xi_b - xi_prev)
+        xi_next = y + (1.0 / subgradient_step) * g
+
+        xi_prev = xi_b.clone()
+        xi_b = torch.sort(xi_next)[0]
+        t_prev = t_cur
+
+    xi_out = torch.cat([xi[:1], xi_b]) if has_zero_slot else xi_b
+    return xi_out, beta_star
+
 
 def ProximalBM(xi, v, w, C, upper_c, lower_c, delta, zeta, subgradient_step, device, max_iterations, pruning):
     """
