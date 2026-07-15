@@ -23,7 +23,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                        gamma=1.0, metrics_interval=1, entropy_warmup_epochs=0, entropy_every=1, check_ddp_sync=False,
                        T3_explicit=0.0, mag_prune_ratio=0.5, use_perspective=False, target_sparsity=0.0,
                        sparsity_warmup_epochs=0, sparsity_ramp_power=1.0,
-                       conv_sparsity=None, fc_sparsity=None):
+                       conv_sparsity=None, fc_sparsity=None, layer_sparsity=None):
     """Train and evaluate a model with optional entropy regularization.
 
     This function is intentionally self-contained because the compression
@@ -67,15 +67,24 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
     else:
         raise ValueError(f"Unsupported optimizer: {train_optimizer}")
 
-    # test_119: under the perspective reformulation the network must keep adapting
-    # through the steep end of the sparsity ramp (68->85%), so the LR must NOT
-    # decay there.  test_118 showed that StepLR's drop at epoch 10 collapsed the
-    # accuracy exactly when the ramp got hardest.  Keep the LR constant.
+    # test_124: LR schedule tailored to the sparsity ramp.  During the ramp the
+    # network must keep adapting, so the LR stays CONSTANT (test_118/119 showed a
+    # decay there collapses the accuracy).  But once the ramp reaches full
+    # sparsity, a constant LR is too hot at extreme sparsity (~89%): the few
+    # surviving weights oscillate and the accuracy sbanda (test_123).  So we add a
+    # cosine decay in the TAIL only, after the ramp completes.
     if use_perspective:
-        scheduler = torch.optim.lr_scheduler.LambdaLR(
-            optimizer,
-            lr_lambda=lambda e: 1.0,
-        )
+        _ramp_end = entropy_warmup_epochs + max(0, sparsity_warmup_epochs)   # epoch (0-based) at full sparsity
+        _decay_len = max(1, n_epochs - _ramp_end)
+        _lr_floor = 0.01
+
+        def _persp_lr(e):
+            if e <= _ramp_end:
+                return 1.0
+            p = min(1.0, (e - _ramp_end) / _decay_len)
+            return _lr_floor + (1.0 - _lr_floor) * 0.5 * (1.0 + math.cos(math.pi * p))
+
+        scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda=_persp_lr)
     else:
         scheduler = torch.optim.lr_scheduler.StepLR(
             optimizer,
@@ -193,6 +202,19 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
     # Per-layer magnitude thresholds for target_sparsity mode, frozen once per
     # epoch (stable + cheap) and reused by both the forward and evaluation.
     target_prune_thresholds = [None] * num_param_tensors
+
+    # test_124: full Deep-Compression-style per-layer sparsity.  layer_sparsity is
+    # a list with one target per quantized tensor (in the order of params_for_quant:
+    # conv1, conv2, ..., fc6, fc7, fc8 for AlexNet).  It overrides conv/fc groups
+    # and target_sparsity.
+    if layer_sparsity is not None:
+        if len(layer_sparsity) != num_param_tensors:
+            raise ValueError(
+                f"--layer_sparsity has {len(layer_sparsity)} values but the model "
+                f"has {num_param_tensors} quantized tensors."
+            )
+        if local_rank == 0:
+            print(f"layer_sparsity (per quantized tensor, in order) = {list(layer_sparsity)}", flush=True)
 
     # NCCL barriers need the CUDA device id on some multi-node launches.
     def _dist_barrier():
@@ -731,8 +753,15 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
         # different per-layer targets: conv layers (few params, accuracy-sensitive)
         # are pruned gently, FC layers (~96% of AlexNet params, redundant) hard.
         # The global sparsity stays high (FC-dominated) while conv is protected.
+        # test_124: full per-layer sparsity list (Deep-Compression style) takes
+        # priority over the conv/fc grouping, which takes priority over the uniform
+        # target_sparsity.
         per_layer_sparsity = (conv_sparsity is not None and fc_sparsity is not None)
-        sparsity_active = (target_sparsity and target_sparsity > 0.0) or per_layer_sparsity
+        sparsity_active = (
+            (target_sparsity and target_sparsity > 0.0)
+            or per_layer_sparsity
+            or (layer_sparsity is not None)
+        )
         if (use_perspective and sparsity_active
                 and grid_reset_done and epoch >= entropy_warmup_epochs + 1):
             first_prune_epoch = entropy_warmup_epochs + 1
@@ -747,7 +776,9 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                 ramp_frac = 1.0
             with torch.no_grad():
                 for p_idx, param in enumerate(params_for_quant):
-                    if per_layer_sparsity:
+                    if layer_sparsity is not None:
+                        layer_ts = layer_sparsity[p_idx]
+                    elif per_layer_sparsity:
                         layer_ts = conv_sparsity if param.dim() == 4 else fc_sparsity
                     else:
                         layer_ts = target_sparsity
@@ -757,7 +788,9 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                         w_layer, v_list[p_idx], effective_ts
                     )
             if local_rank == 0:
-                if per_layer_sparsity:
+                if layer_sparsity is not None:
+                    tgt_str = f"per_layer={list(layer_sparsity)}*{ramp_frac:.3f}"
+                elif per_layer_sparsity:
                     tgt_str = f"conv={conv_sparsity}*{ramp_frac:.3f}, fc={fc_sparsity}*{ramp_frac:.3f}"
                 else:
                     tgt_str = f"effective_target_sparsity={target_sparsity * ramp_frac:.4f}"
