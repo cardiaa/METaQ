@@ -889,11 +889,24 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                             T1_explicit, T2_current, T3_explicit,
                             subgradient_step, device, max_iterations,
                         )
-                        # winsorize beta* to keep a stray coordinate from exploding
+                        # winsorize beta* to clip stray coordinates, THEN auto-scale
+                        # to the gradient norm exactly as the (proven-stable) old dual
+                        # path does.  Winsorizing to the median only caps outliers; it
+                        # cannot stop a near-uniform bulk shift of beta*, which blew the
+                        # weights up in the first test_125 (p50 -> -808 the moment T2
+                        # turned on).  Rescaling ties the perspective update to
+                        # T2_current * ref_grad_norm, bounding its magnitude.
                         bstar = beta_star.float().reshape(-1)
                         bscale = bstar.abs().median().clamp_min(1e-12)
                         bstar = bstar.clamp(min=-beta_clip_k * bscale, max=beta_clip_k * bscale)
+                        grad_layer_norm = param.grad.detach().float().norm()
+                        if entropy_ref_grad_norm[p_idx] is None:
+                            entropy_ref_grad_norm[p_idx] = grad_layer_norm.detach().clone()
+                        ref_grad_norm = entropy_ref_grad_norm[p_idx]
+                        bstar_norm = bstar.norm().clamp_min(1e-12)
+                        bstar = (T2_current * ref_grad_norm / bstar_norm) * bstar
                         param.grad.add_(bstar.view_as(param))
+                    entropy_steps += 1
                     if dist.is_initialized():
                         for xi_layer in xi_list:
                             dist.broadcast(xi_layer, src=0)
