@@ -129,6 +129,9 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
     log = ""
     accuracy = None
     accuracies, entropies, zstd_ratios = [], [], []
+    # test_126: track the SPARSE metrics we actually optimize (quantized+pruned
+    # accuracy and the sparse compression ratio), not just the dense A_NQ / zstd.
+    sparse_accuracies, sparse_ratios = [], []
     global_step = 0
 
     # The adaptive grid must be reset only once for the whole run, not once per
@@ -812,6 +815,19 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
         last_loss_grad_norm = None
         last_custom_beta_norm = None
         last_entropy_fraction = None
+        # test_126 diagnostics for the perspective entropy path (Causa B).  We
+        # accumulate, per epoch, the norm of the APPLIED entropy update vs the
+        # loss-gradient norm (is the entropy signal strong or weak?), and the
+        # common-mode fraction of beta* = |mean(beta)|*sqrt(N)/||beta|| in [0,1]
+        # (1 => a pure uniform shift that erodes accuracy without reshaping the
+        # weight histogram, hence flat H_Q).  Also track the xi dual range.
+        persp_entropy_norm_sum = 0.0
+        persp_grad_norm_sum = 0.0
+        persp_commonmode_sum = 0.0
+        persp_diag_count = 0
+        persp_xi_min = None
+        persp_xi_max = None
+        persp_xi_mean_sum = 0.0
         # test_112 diagnostic: recompute the z>0.5 fraction via _z_prune_mask
         # (the SAME path used at eval) right after each dual step, to compare it
         # against FISTA's internal frac_sum_x_lt_0_5 and pin the 68%-vs-4% gap.
@@ -904,8 +920,24 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                             entropy_ref_grad_norm[p_idx] = grad_layer_norm.detach().clone()
                         ref_grad_norm = entropy_ref_grad_norm[p_idx]
                         bstar_norm = bstar.norm().clamp_min(1e-12)
+                        # test_126: common-mode fraction of the (winsorized) entropy
+                        # direction, scale-invariant so measured pre-rescale.
+                        n_b = bstar.numel()
+                        cm_ratio = (bstar.mean().abs() * math.sqrt(n_b) / bstar_norm).item()
                         bstar = (T2_current * ref_grad_norm / bstar_norm) * bstar
                         param.grad.add_(bstar.view_as(param))
+                        if local_rank == 0:
+                            persp_entropy_norm_sum += bstar.norm().item()
+                            persp_grad_norm_sum += grad_layer_norm.item()
+                            persp_commonmode_sum += cm_ratio
+                            persp_diag_count += 1
+                            xi_b_now = (xi_list[p_idx][1:]
+                                        if xi_list[p_idx].numel() == C + 1
+                                        else xi_list[p_idx])
+                            lo, hi = xi_b_now.min().item(), xi_b_now.max().item()
+                            persp_xi_min = lo if persp_xi_min is None else min(persp_xi_min, lo)
+                            persp_xi_max = hi if persp_xi_max is None else max(persp_xi_max, hi)
+                            persp_xi_mean_sum += xi_b_now.mean().item()
                     entropy_steps += 1
                     if dist.is_initialized():
                         # Re-sync grads: beta* is computed from each rank's local xi,
@@ -1316,6 +1348,9 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                     f"training_time = {training_time_global}s\n"
                 )
 
+                sparse_accuracies.append(sparse_accuracy)
+                sparse_ratios.append(float(sparse_ratio) if sparse_ratio is not None else None)
+
                 with torch.no_grad():
                     # Log weight percentiles to understand whether the active
                     # quantization grid covers the useful weight range.
@@ -1382,6 +1417,21 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                 print(f"T2_current = {T2_current}", flush=True)
                 print(f"entropy_every = {entropy_every}", flush=True)
                 print(f"entropy_steps = {entropy_steps}", flush=True)
+                if persp_diag_count > 0:
+                    n_d = persp_diag_count
+                    persp_entropy_fraction = (
+                        persp_entropy_norm_sum / max(persp_grad_norm_sum, 1e-12)
+                    )
+                    print(
+                        f"perspective_entropy_diag: "
+                        f"applied_entropy_norm_mean={persp_entropy_norm_sum / n_d:.6e}, "
+                        f"grad_norm_mean={persp_grad_norm_sum / n_d:.6e}, "
+                        f"entropy_fraction={persp_entropy_fraction:.6f}, "
+                        f"beta_commonmode_mean={persp_commonmode_sum / n_d:.6f}, "
+                        f"xi_min={persp_xi_min:.6e}, xi_max={persp_xi_max:.6e}, "
+                        f"xi_mean={persp_xi_mean_sum / n_d:.6e}",
+                        flush=True
+                    )
                 if last_loss_grad_norm is not None:
                     print(f"loss_grad_norm_last_batch = {last_loss_grad_norm:.6e}", flush=True)
                     print(f"weighted_l2_norm_last_batch = {weighted_l2_norm:.6e}", flush=True)
@@ -1497,4 +1547,6 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
         print(log, flush=True)
         print(f"accuracies = {accuracies}", flush=True)
         print(f"zstd_ratios = {zstd_ratios}", flush=True)
+        print(f"sparse_accuracies = {sparse_accuracies}", flush=True)
+        print(f"sparse_ratios = {sparse_ratios}", flush=True)
     return
