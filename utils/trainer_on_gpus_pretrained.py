@@ -913,6 +913,19 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                         # turned on).  Rescaling ties the perspective update to
                         # T2_current * ref_grad_norm, bounding its magnitude.
                         bstar = beta_star.float().reshape(-1)
+                        # test_126 diagnostic: common-mode fraction of the RAW beta*
+                        # (intrinsic ~0.70), scale-invariant.  Logged to document why
+                        # we center below.
+                        n_b = bstar.numel()
+                        raw_norm = bstar.norm().clamp_min(1e-12)
+                        cm_ratio = (bstar.mean().abs() * math.sqrt(n_b) / raw_norm).item()
+                        # test_127: center beta* (remove the all-ones component).  Its
+                        # intrinsic common-mode is a rigid translation of the weight
+                        # cloud: it wrecks accuracy without reshaping the bucket
+                        # histogram (H_Q flat), and on GPU it feeds back (uniform shift
+                        # -> skewed counts -> xi ran away to +-450, test_126).  Keeping
+                        # only the differential part preserves the clustering signal.
+                        bstar = bstar - bstar.mean()
                         bscale = bstar.abs().median().clamp_min(1e-12)
                         bstar = bstar.clamp(min=-beta_clip_k * bscale, max=beta_clip_k * bscale)
                         grad_layer_norm = param.grad.detach().float().norm()
@@ -920,10 +933,6 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                             entropy_ref_grad_norm[p_idx] = grad_layer_norm.detach().clone()
                         ref_grad_norm = entropy_ref_grad_norm[p_idx]
                         bstar_norm = bstar.norm().clamp_min(1e-12)
-                        # test_126: common-mode fraction of the (winsorized) entropy
-                        # direction, scale-invariant so measured pre-rescale.
-                        n_b = bstar.numel()
-                        cm_ratio = (bstar.mean().abs() * math.sqrt(n_b) / bstar_norm).item()
                         bstar = (T2_current * ref_grad_norm / bstar_norm) * bstar
                         param.grad.add_(bstar.view_as(param))
                         if local_rank == 0:
