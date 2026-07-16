@@ -1,5 +1,6 @@
-import torch  
-from torch.linalg import norm  
+import math
+import torch
+from torch.linalg import norm
 from .knapsack import knapsack_specialized, knapsack_specialized_pruning, knapsack_specialized_pruning_sparse, knapsack_specialized_pruning_sparse_leonardo, knapsack_perspective_leonardo
 
 def test_accuracy(model, dataloader, device):
@@ -439,6 +440,17 @@ def FISTA_perspective_leonardo(xi, v, w, C, upper_c, lower_c, T1, T2, T3,
     log2 = torch.log(torch.tensor(2.0, device=device))
     T2_t = max(float(T2), 1e-12)
 
+    # test_128: clamp xi to the range where c* = exp(log2*xi/T2 - 1) actually
+    # spans [lower_c, upper_c].  Beyond it c* is already clamped, so pushing xi
+    # further changes nothing in the primal yet lets the dual run away: when c*
+    # saturates, g = counts - c* ~ -upper_c = -(layer size), and the step
+    # (1/subgradient_step)*g ~ 1e-5 * 37M ~ 377 kicks xi to +-450 on the big FC
+    # layers (test_127; harmless at the 300k sizes used in the offline check,
+    # which is why it stayed bounded there).  A diverged xi makes beta* dirty.
+    ln2 = math.log(2.0)
+    xi_lo = T2_t * (math.log(max(lower_c, 1e-12)) + 1.0) / ln2
+    xi_hi = T2_t * (math.log(max(upper_c, 1e-12)) + 1.0) / ln2
+
     beta_star = None
     for _ in range(max_iterations):
         x_ph, beta_star, y_star = knapsack_perspective_leonardo(
@@ -463,7 +475,7 @@ def FISTA_perspective_leonardo(xi, v, w, C, upper_c, lower_c, T1, T2, T3,
         xi_next = y + (1.0 / subgradient_step) * g
 
         xi_prev = xi_b.clone()
-        xi_b = torch.sort(xi_next)[0]
+        xi_b = torch.sort(xi_next.clamp(min=xi_lo, max=xi_hi))[0]
         t_prev = t_cur
 
     xi_out = torch.cat([xi[:1], xi_b]) if has_zero_slot else xi_b
