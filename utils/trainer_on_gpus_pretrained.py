@@ -23,7 +23,8 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                        gamma=1.0, metrics_interval=1, entropy_warmup_epochs=0, entropy_every=1, check_ddp_sync=False,
                        T3_explicit=0.0, mag_prune_ratio=0.5, use_perspective=False, target_sparsity=0.0,
                        sparsity_warmup_epochs=0, sparsity_ramp_power=1.0,
-                       conv_sparsity=None, fc_sparsity=None, layer_sparsity=None):
+                       conv_sparsity=None, fc_sparsity=None, layer_sparsity=None,
+                       flat_schedule=False):
     """Train and evaluate a model with optional entropy regularization.
 
     This function is intentionally self-contained because the compression
@@ -45,6 +46,14 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
             epochs.
         check_ddp_sync: if true, log a checksum range across ranks to detect DDP
             divergence.
+        flat_schedule: test_133.  Hold BOTH the learning rate and T2 constant for
+            the whole run (no cosine tail, no exponential T2 ramp).  Tests 128/129/
+            130 all shared one schedule SHAPE, scaled by T2, so the cumulative
+            "exposure" sum(T2*lr) and its per-epoch RATE moved together and the
+            collapse threshold could not be attributed to either one.  A flat
+            schedule decouples them: the exposure accumulates slowly to a total
+            well past the observed 1.6 wall while the per-epoch rate stays far
+            below the rate of the run that survived (test_128, peak 0.40).
     """
 
     torch.set_num_threads(1)
@@ -79,6 +88,11 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
         _lr_floor = 0.01
 
         def _persp_lr(e):
+            # test_133: flat_schedule holds the LR constant for the whole run, so
+            # that the entropy displacement per epoch (proportional to T2*lr) stays
+            # flat and the cumulative exposure can be decoupled from its rate.
+            if flat_schedule:
+                return 1.0
             if e <= _ramp_end:
                 return 1.0
             p = min(1.0, (e - _ramp_end) / _decay_len)
@@ -677,6 +691,13 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
         q_flat = torch.where(prune_mask, torch.zeros_like(q_flat), q_flat)
         return q_idx, q_flat
 
+    # test_133: cumulative entropy "exposure" = sum over epochs of T2_current*lr
+    # (lr in units of 1e-4).  This is the accumulated displacement the entropy term
+    # imposes on the weights, and across tests 128/129/130 the accuracy collapse
+    # lined up with it at ~1.6.  Logging it per epoch makes the wall directly
+    # readable instead of reconstructed by hand from the T2/lr traces.
+    exposure_cum = 0.0
+
     for epoch in range(n_epochs):
         should_eval_epoch = ((epoch + 1) % metrics_interval == 0) or (epoch == n_epochs - 1)
 
@@ -684,10 +705,22 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
         # from T2/8 to T2.  This avoids abruptly injecting a large custom
         # gradient after many epochs of standard training.
         if T2_explicit > 0 and epoch >= entropy_warmup_epochs:
-            t = epoch - entropy_warmup_epochs
-            T2_current = T2_explicit * (1.0 - np.exp(-t)) + (T2_explicit / 8.0) * np.exp(-t)
+            if flat_schedule:
+                # test_133: no ramp.  T2 is on at full value from the first
+                # post-warmup epoch, so every active epoch spends exactly the same
+                # amount of exposure (T2*lr) and the rate is flat by construction.
+                T2_current = T2_explicit
+            else:
+                t = epoch - entropy_warmup_epochs
+                T2_current = T2_explicit * (1.0 - np.exp(-t)) + (T2_explicit / 8.0) * np.exp(-t)
         else:
             T2_current = 0.0
+
+        # Exposure spent during THIS epoch, using the LR the epoch actually runs
+        # with (the scheduler steps at the end of the epoch, so read it here).
+        epoch_lr = optimizer.param_groups[0]['lr']
+        exposure_epoch = T2_current * (epoch_lr / 1e-4)
+        exposure_cum += exposure_epoch
 
         # Compression phase: adapt the per-layer quantization grid ONCE
         # (test_111).  A FIXED grid keeps the dual's xi converged and the z
@@ -1424,6 +1457,8 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                 print(f"training_time_without_metrics = {training_time_without_metrics}s", flush=True)
                 print(f"T1 = {T1_explicit}", flush=True)
                 print(f"T2_current = {T2_current}", flush=True)
+                print(f"flat_schedule = {flat_schedule}", flush=True)
+                print(f"exposure_epoch = {exposure_epoch:.6f}, exposure_cum = {exposure_cum:.6f}", flush=True)
                 print(f"entropy_every = {entropy_every}", flush=True)
                 print(f"entropy_steps = {entropy_steps}", flush=True)
                 if persp_diag_count > 0:
