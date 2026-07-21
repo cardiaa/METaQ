@@ -10,7 +10,8 @@ import torch.optim as optim
 import torch.distributed as dist
 import gc
 from utils.quantize_and_compress import compute_entropy, quantize_weights_center, compute_entropyGPU, quantize_weights_centerGPU, compute_entropy_hist
-from utils.optimization import FISTA, FISTA_leonardo, FISTA_perspective_leonardo, ProximalBM, test_accuracy, test_accuracyGPU
+from utils.optimization import FISTA, FISTA_leonardo, FISTA_perspective_leonardo, FISTA_prox_leonardo, ProximalBM, test_accuracy, test_accuracyGPU
+from utils.knapsack import prox_perspective_leonardo
 from utils.knapsack import knapsack_specialized_pruning, knapsack_specialized_pruning_sparse_leonardo
 from utils.weight_utils import initialize_weights
 from utils.quantize_and_compress import compress_zstd, BestQuantization, pack_bitmask, pack_bitmaskGPU
@@ -24,7 +25,8 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                        T3_explicit=0.0, mag_prune_ratio=0.5, use_perspective=False, target_sparsity=0.0,
                        sparsity_warmup_epochs=0, sparsity_ramp_power=1.0,
                        conv_sparsity=None, fc_sparsity=None, layer_sparsity=None,
-                       flat_schedule=False, dual_step=0.5):
+                       flat_schedule=False, dual_step=0.5,
+                       use_prox=False, prox_gamma=1e-7):
     """Train and evaluate a model with optional entropy regularization.
 
     This function is intentionally self-contained because the compression
@@ -58,6 +60,19 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
             supergradient normalized by the layer size.  Replaces the old fixed
             1/subgradient_step = 1e-5 on a raw O(N) supergradient, which never
             converged (see FISTA_perspective_leonardo).
+        use_prox: test_135.  Deliver phi as a PROXIMAL operator applied to the
+            weights after the loss-only gradient step, instead of summing its
+            subgradient into param.grad.  Same objective L + phi, different
+            algorithm (proximal gradient).  Mutually exclusive with the beta*
+            branch: when true, that branch is skipped entirely.
+        prox_gamma: step of the proximal operator.  It is the knob that sets how
+            far phi moves the weights, INDEPENDENTLY of the learning rate -- which
+            is the whole point of the variant.  Calibrated offline on the real
+            grid: at gamma=1e-5 one application already zeroes 3.4% of the
+            weights and repeated application annihilates the layer within ~100
+            calls, while 1e-7 gives ~11% zeroed over a full epoch of calls
+            (worst case, with no loss pulling back).  Treat the first run as a
+            calibration probe and read prox_diag from the log.
     """
 
     torch.set_num_threads(1)
@@ -866,6 +881,14 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
         persp_xi_max = None
         persp_xi_mean_sum = 0.0
         persp_xi_pinned_sum = 0.0
+        # test_135: proximal-step diagnostics.  prox_displacement is the mean
+        # |z* - u| per application, i.e. how far the operator actually moves the
+        # weights; prox_zero_frac is the fraction it sends exactly to zero (the
+        # prox prunes natively, via the shifted soft-threshold).  Both are needed
+        # to calibrate gamma, which is a brand-new knob with no prior.
+        prox_disp_sum = 0.0
+        prox_zero_sum = 0.0
+        prox_diag_count = 0
         # test_112 diagnostic: recompute the z>0.5 fraction via _z_prune_mask
         # (the SAME path used at eval) right after each dual step, to compare it
         # against FISTA's internal frac_sum_x_lt_0_5 and pin the 68%-vs-4% gap.
@@ -929,7 +952,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
             # returns beta* = dphi/dw (ridge + entropy) per weight, which we apply
             # directly.  NOT YET GPU-VALIDATED (the inner solver is offline-verified;
             # the xi-dynamics are new) -- treat the first run as a smoke test.
-            if (use_perspective and T2_current > 0
+            if (use_perspective and not use_prox and T2_current > 0
                     and grid_reset_done and epoch >= entropy_warmup_epochs
                     and (global_step % entropy_every == 0)):
                 with torch.no_grad():
@@ -1135,7 +1158,55 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                         ).item()
 
             optimizer.step()
-        
+
+            # test_135: PROXIMAL step.  The optimizer above has just taken a plain
+            # gradient step on the LOSS ALONE (in prox mode the beta*-into-grad
+            # branch is skipped); phi is now applied as its own operator directly
+            # on the weights:
+            #     w <- prox_{gamma*phi}(w - lr*grad L)
+            # This is proximal gradient descent on the SAME objective L + phi --
+            # the model does not change, only the algorithm.  It removes the two
+            # properties that test_134 pinned as the bottleneck: the entropy
+            # displacement no longer competes with the loss gradient inside one
+            # summed direction, and it is no longer throttled by the learning rate
+            # (its size is set by gamma).  All the beta* hygiene of tests 125-127
+            # (centering, winsorizing, rescaling to T2*ref_grad_norm) is
+            # unnecessary here: a prox is a well-defined operator, not a term to
+            # be dosed against the loss.
+            if (use_prox and T2_current > 0
+                    and grid_reset_done and epoch >= entropy_warmup_epochs
+                    and (global_step % entropy_every == 0)):
+                with torch.no_grad():
+                    for p_idx, param in enumerate(params_for_quant):
+                        u_layer = param.detach().reshape(-1).to(device)
+                        xi_list[p_idx], _, _ = FISTA_prox_leonardo(
+                            xi_list[p_idx], v_list[p_idx], u_layer, C,
+                            float(u_layer.numel()), lower_c,
+                            T1_explicit, T2_current, T3_explicit,
+                            prox_gamma, device, max_iterations, dual_step,
+                        )
+                        # xi is updated through a non-deterministic scatter_add, so
+                        # it can differ across ranks.  param.data is identical on
+                        # every rank (DDP synced the grads and every rank ran the
+                        # same optimizer step), so broadcasting xi and only THEN
+                        # computing the applied z* keeps the weights bit-identical
+                        # across ranks -- the same drift that had to be fixed in
+                        # test_125, arriving here by a different route.
+                        if dist.is_initialized():
+                            dist.broadcast(xi_list[p_idx], src=0)
+                        xi_b = (xi_list[p_idx][1:]
+                                if xi_list[p_idx].numel() == C + 1
+                                else xi_list[p_idx])
+                        _, z_star, y_star = prox_perspective_leonardo(
+                            xi_b, v_list[p_idx], u_layer, C, device,
+                            T1_explicit, T3_explicit, prox_gamma,
+                        )
+                        if local_rank == 0:
+                            prox_disp_sum += (z_star - u_layer).abs().mean().item()
+                            prox_zero_sum += (z_star.abs() <= 1e-12).float().mean().item()
+                            prox_diag_count += 1
+                        param.copy_(z_star.view_as(param))
+
         scheduler.step()
 
         training_time_without_metrics = round(time.time() - start_time_global)
@@ -1479,6 +1550,13 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                 print(f"T2_current = {T2_current}", flush=True)
                 print(f"flat_schedule = {flat_schedule}", flush=True)
                 print(f"exposure_epoch = {exposure_epoch:.6f}, exposure_cum = {exposure_cum:.6f}", flush=True)
+                if prox_diag_count > 0:
+                    print(
+                        f"prox_diag: gamma={prox_gamma}, applications={prox_diag_count}, "
+                        f"displacement_mean={prox_disp_sum / prox_diag_count:.6e}, "
+                        f"zero_frac_mean={prox_zero_sum / prox_diag_count:.6f}",
+                        flush=True
+                    )
                 print(f"entropy_every = {entropy_every}", flush=True)
                 print(f"entropy_steps = {entropy_steps}", flush=True)
                 if persp_diag_count > 0:

@@ -687,6 +687,152 @@ def knapsack_perspective_leonardo(xi_buckets, v, w, C, device, T1, T2, T3):
     return x_placeholder, beta_star, y_star
 
 
+def prox_perspective_leonardo(xi_buckets, v, u, C, device, T1, T3, gamma):
+    """
+    test_135: PROXIMAL per-weight subproblem.  Same model, different algorithm.
+
+    Instead of returning a subgradient to be summed into the loss gradient, this
+    solves the proximal operator of phi directly, per weight:
+
+        prox_{gamma*phi}(u) = argmin_z { phi(z) + (1/(2 gamma)) (z-u)^2 }
+
+    i.e., per weight,
+
+        min_{z,x,y}  sum_b xi_b x_b + T1 z^2/y + T3 y + (1/(2 gamma)) (z-u)^2
+        s.t.  sum_b v_b x_b = z,  sum_b x_b = y,  y <= 1,  x >= 0.
+
+    The weight itself is now a VARIABLE (z) rather than a fixed target, so the
+    solver returns the new weight z* directly.  The training loop then takes a
+    plain gradient step on the loss alone and applies this operator to the
+    weights: the entropy displacement no longer competes with the loss gradient
+    and is no longer throttled by the learning rate -- which test_134 identified
+    as the actual bottleneck (fixing the dual bought only +11%).
+
+    Derivation (see the LaTeX "Fase 9").  On envelope segment j, where
+    K(1)[zh] = beta_j*zh + s_j, the objective is
+        G(z,y) = beta_j z + s_j y + T1 z^2/y + T3 y + (1/(2 gamma))(z-u)^2,
+    and the two stationarity conditions give
+        dG/dy = 0  =>  y = |z| sqrt(T1/(s_j+T3))          (same as the non-prox case)
+        dG/dz = 0  =>  z = u - gamma*beta_j - 2 gamma sign(z) sqrt(T1 (s_j+T3)),
+    the latter being a shifted soft-threshold, so z = 0 is a genuine outcome:
+    pruning falls out of the operator instead of needing the separate magnitude
+    rule.  Candidates per segment are that interior point, the top edge y = 1
+    (closed form z = (u - gamma beta_j)/(1 + 2 gamma T1)), and the two cone edges
+    z/y = V_j, V_{j+1}; plus the global "prune" candidate z = y = 0.  G is convex,
+    so the min over accepted candidates is global.
+
+    Verified offline against cvxpy (scratchpad/verify_prox.py, verify_prox_edge.py):
+    over ~750 random instances spanning gamma in [1e-4, 1e2], u from ~0 to the
+    distribution tail and T3 up to 1e-1, the closed form was never worse than the
+    exact optimum; max |z* - z*_cvxpy| ~ 1e-7.
+
+    Returns:
+        x_placeholder: (M, 4) = [idx_left, idx_right, x_left, x_right]
+        z_star:        (M,)  the new weights
+        y_star:        (M,)
+    """
+    v = v.to(dtype=torch.float32, device=device)
+    u = u.to(dtype=torch.float32, device=device)
+    xi_eff = xi_buckets.to(dtype=torch.float32, device=device)
+    M = u.shape[0]
+
+    # --- lower convex envelope (identical to knapsack_perspective_leonardo) ---
+    b_list = []
+    b = 0
+    while True:
+        delta_xi = xi_eff[b + 1:] - xi_eff[b]
+        delta_v = v[b + 1:] - v[b]
+        b = torch.argmin(delta_xi / delta_v) + 1 + b_list[-1] if b_list else 0
+        if b != C - 1:
+            b_list.append(int(b))
+        if b + 1 > C - 1:
+            break
+    b_list.append(C - 1)
+    x_plus = torch.zeros(C, dtype=torch.int32, device=device)
+    x_plus[0] = 1
+    x_plus[torch.tensor(b_list, device=device, dtype=torch.long)] = 1
+    one = torch.nonzero(x_plus, as_tuple=True)[0]
+    V = v[one]
+    Xi = xi_eff[one]
+    P = V.numel()
+    dV = V[1:] - V[:-1]
+    beta_seg = (Xi[1:] - Xi[:-1]) / dV
+    s_seg = (Xi[:-1] * V[1:] - Xi[1:] * V[:-1]) / dV
+
+    eps = 1e-6
+    zeros = torch.zeros_like(u)
+    # candidate 0: fully pruned (z = y = 0), cost (1/(2 gamma)) u^2
+    best_G = (0.5 / gamma) * u * u
+    best_z = zeros.clone()
+    best_y = zeros.clone()
+
+    def _consider(zc, yc, bj, sj, Vl, Vr, allow):
+        """Accept (zc,yc) if it lies in this segment's cone and improves G."""
+        yc = yc.clamp(min=0.0, max=1.0)
+        pos = yc > 1e-12
+        zh = torch.where(pos, zc / yc.clamp_min(1e-30), torch.zeros_like(zc))
+        in_seg = allow & pos & (zh >= Vl - eps) & (zh <= Vr + eps)
+        G = (bj * zc + sj * yc + T1 * zc * zc / yc.clamp_min(1e-30)
+             + T3 * yc + (0.5 / gamma) * (zc - u) ** 2)
+        G = torch.where(in_seg, G, torch.full_like(G, float('inf')))
+        upd = G < best_G
+        best_G[upd] = G[upd]
+        best_z[upd] = zc[upd]
+        best_y[upd] = yc[upd]
+
+    all_true = torch.ones_like(u, dtype=torch.bool)
+    for j in range(P - 1):
+        Vl = V[j]; Vr = V[j + 1]; bj = beta_seg[j]; sj = s_seg[j]
+        d = float(s_seg[j]) + T3
+
+        # (1) interior in y: shifted soft-threshold, with sign consistency
+        if d > 0.0:
+            A = gamma * bj
+            B = 2.0 * gamma * math.sqrt(T1 * d)
+            root = math.sqrt(T1 / d)
+            z_pos = u - A - B
+            _consider(z_pos, z_pos.abs() * root, bj, sj, Vl, Vr, z_pos > 0)
+            z_neg = u - A + B
+            _consider(z_neg, z_neg.abs() * root, bj, sj, Vl, Vr, z_neg < 0)
+
+        # (2) top edge y = 1
+        z_top = (u - gamma * bj) / (1.0 + 2.0 * gamma * T1)
+        _consider(z_top, torch.ones_like(u), bj, sj, Vl, Vr, all_true)
+
+        # (3)/(4) cone edges z/y = Vl and z/y = Vr
+        for Vx in (Vl, Vr):
+            Vx_f = float(Vx)
+            if abs(Vx_f) < 1e-14:
+                continue
+            Xix = bj * Vx + sj                      # K(1)[Vx] at that vertex
+            y_edge = (u - gamma * (Xix + T3 + T1 * Vx * Vx) / Vx) / Vx
+            y_edge = y_edge.clamp(min=0.0, max=1.0)
+            _consider(Vx * y_edge, y_edge, bj, sj, Vl, Vr, all_true)
+
+    z_star = best_z
+    y_star = best_y
+
+    # bucket masses of the accepted solution, for the dual's count accumulation
+    safe_y = y_star.clamp_min(1e-30)
+    what = torch.where(y_star > 1e-12, z_star / safe_y, torch.zeros_like(z_star))
+    seg = torch.searchsorted(V, what).clamp_(1, P - 1) - 1
+    Vl_s = V[seg]; Vr_s = V[seg + 1]
+    theta_u = ((Vr_s - what) / (Vr_s - Vl_s)).clamp_(0.0, 1.0)
+    idx_left = one[seg]
+    idx_right = one[seg + 1]
+    x_left = y_star * theta_u
+    x_right = y_star * (1.0 - theta_u)
+    pruned = y_star <= 1e-12
+    x_left = torch.where(pruned, torch.zeros_like(x_left), x_left)
+    x_right = torch.where(pruned, torch.zeros_like(x_right), x_right)
+
+    x_placeholder = torch.stack(
+        [idx_left.to(torch.int32), idx_right.to(torch.int32), x_left, x_right],
+        dim=1,
+    )
+    return x_placeholder, z_star, y_star
+
+
 def knapsack_specialized_pruning_sparse_leonardo(xi, v, w, C, device, delta):
     """
     Memory-light version of knapsack_specialized_pruning with same logic as the dense version,

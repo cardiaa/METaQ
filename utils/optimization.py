@@ -1,7 +1,7 @@
 import math
 import torch
 from torch.linalg import norm
-from .knapsack import knapsack_specialized, knapsack_specialized_pruning, knapsack_specialized_pruning_sparse, knapsack_specialized_pruning_sparse_leonardo, knapsack_perspective_leonardo
+from .knapsack import knapsack_specialized, knapsack_specialized_pruning, knapsack_specialized_pruning_sparse, knapsack_specialized_pruning_sparse_leonardo, knapsack_perspective_leonardo, prox_perspective_leonardo
 
 def test_accuracy(model, dataloader, device):
     """
@@ -496,6 +496,61 @@ def FISTA_perspective_leonardo(xi, v, w, C, upper_c, lower_c, T1, T2, T3,
 
     xi_out = torch.cat([xi[:1], xi_b]) if has_zero_slot else xi_b
     return xi_out, beta_star
+
+
+def FISTA_prox_leonardo(xi, v, u, C, upper_c, lower_c, T1, T2, T3,
+                        gamma, device, max_iterations, dual_step=0.5):
+    """
+    test_135: dual loop for the PROXIMAL variant.
+
+    Identical in structure to FISTA_perspective_leonardo -- same c* relation, same
+    normalized supergradient (the test_134 fix), same clamp -- except that the
+    inner solver is the proximal one, so what comes back is the NEW WEIGHT z*
+    rather than a subgradient to be injected into param.grad.
+
+    Returns (xi_updated, z_star, y_star).
+    """
+    xi = xi.to(dtype=torch.float32, device=device)
+    has_zero_slot = (xi.numel() == C + 1)
+    xi_b = (xi[1:] if has_zero_slot else xi).clone()
+
+    xi_prev = xi_b.clone()
+    t_prev = torch.tensor(1.0, device=device)
+    log2 = torch.log(torch.tensor(2.0, device=device))
+    T2_t = max(float(T2), 1e-12)
+
+    ln2 = math.log(2.0)
+    xi_lo = T2_t * (math.log(max(lower_c, 1e-12)) + 1.0) / ln2
+    xi_hi = T2_t * (math.log(max(upper_c, 1e-12)) + 1.0) / ln2
+
+    z_star = None
+    y_star = None
+    for _ in range(max_iterations):
+        x_ph, z_star, y_star = prox_perspective_leonardo(
+            xi_b, v, u, C, device, T1, T3, gamma
+        )
+        idx_left = x_ph[:, 0].to(torch.long)
+        idx_right = x_ph[:, 1].to(torch.long)
+
+        counts = torch.zeros(C, dtype=torch.float32, device=device)
+        counts.scatter_add_(0, idx_left, x_ph[:, 2])
+        counts.scatter_add_(0, idx_right, x_ph[:, 3])
+
+        c_star = torch.exp(log2 * xi_b / T2_t - 1.0)
+        c_star = torch.clamp(c_star, min=lower_c, max=upper_c)
+
+        g = (counts - c_star) / max(float(upper_c), 1.0)
+
+        t_cur = (1 + torch.sqrt(1 + 4 * t_prev ** 2)) / 2
+        y = xi_b + ((t_prev - 1) / t_cur) * (xi_b - xi_prev)
+        xi_next = y + dual_step * g
+
+        xi_prev = xi_b.clone()
+        xi_b = torch.sort(xi_next.clamp(min=xi_lo, max=xi_hi))[0]
+        t_prev = t_cur
+
+    xi_out = torch.cat([xi[:1], xi_b]) if has_zero_slot else xi_b
+    return xi_out, z_star, y_star
 
 
 def ProximalBM(xi, v, w, C, upper_c, lower_c, delta, zeta, subgradient_step, device, max_iterations, pruning):
