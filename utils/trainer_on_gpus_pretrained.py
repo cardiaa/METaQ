@@ -24,7 +24,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                        T3_explicit=0.0, mag_prune_ratio=0.5, use_perspective=False, target_sparsity=0.0,
                        sparsity_warmup_epochs=0, sparsity_ramp_power=1.0,
                        conv_sparsity=None, fc_sparsity=None, layer_sparsity=None,
-                       flat_schedule=False):
+                       flat_schedule=False, dual_step=0.5):
     """Train and evaluate a model with optional entropy regularization.
 
     This function is intentionally self-contained because the compression
@@ -54,6 +54,10 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
             schedule decouples them: the exposure accumulates slowly to a total
             well past the observed 1.6 wall while the per-epoch rate stays far
             below the rate of the run that survived (test_128, peak 0.40).
+        dual_step: test_134.  Ascent step for the entropy dual, applied to the
+            supergradient normalized by the layer size.  Replaces the old fixed
+            1/subgradient_step = 1e-5 on a raw O(N) supergradient, which never
+            converged (see FISTA_perspective_leonardo).
     """
 
     torch.set_num_threads(1)
@@ -861,6 +865,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
         persp_xi_min = None
         persp_xi_max = None
         persp_xi_mean_sum = 0.0
+        persp_xi_pinned_sum = 0.0
         # test_112 diagnostic: recompute the z>0.5 fraction via _z_prune_mask
         # (the SAME path used at eval) right after each dual step, to compare it
         # against FISTA's internal frac_sum_x_lt_0_5 and pin the 68%-vs-4% gap.
@@ -937,6 +942,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                             float(w_layer.numel()), lower_c,
                             T1_explicit, T2_current, T3_explicit,
                             subgradient_step, device, max_iterations,
+                            dual_step,
                         )
                         # winsorize beta* to clip stray coordinates, THEN auto-scale
                         # to the gradient norm exactly as the (proven-stable) old dual
@@ -980,6 +986,20 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                             persp_xi_min = lo if persp_xi_min is None else min(persp_xi_min, lo)
                             persp_xi_max = hi if persp_xi_max is None else max(persp_xi_max, hi)
                             persp_xi_mean_sum += xi_b_now.mean().item()
+                            # test_134: fraction of buckets sitting exactly on a
+                            # clamp bound.  This is the direct convergence check:
+                            # in test_133 it was ~15/16 every step (bang-bang
+                            # chattering, dual never converged).  Near 0 means the
+                            # dual found an interior solution.
+                            _ln2 = math.log(2.0)
+                            _T2t = max(float(T2_current), 1e-12)
+                            _xlo = _T2t * (math.log(max(lower_c, 1e-12)) + 1.0) / _ln2
+                            _xhi = _T2t * (math.log(max(float(w_layer.numel()), 1e-12)) + 1.0) / _ln2
+                            _tol = 1e-6 * max(1.0, abs(_xhi - _xlo))
+                            persp_xi_pinned_sum += (
+                                ((xi_b_now - _xlo).abs() < _tol)
+                                | ((xi_b_now - _xhi).abs() < _tol)
+                            ).float().mean().item()
                     entropy_steps += 1
                     if dist.is_initialized():
                         # Re-sync grads: beta* is computed from each rank's local xi,
@@ -1473,7 +1493,9 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                         f"entropy_fraction={persp_entropy_fraction:.6f}, "
                         f"beta_commonmode_mean={persp_commonmode_sum / n_d:.6f}, "
                         f"xi_min={persp_xi_min:.6e}, xi_max={persp_xi_max:.6e}, "
-                        f"xi_mean={persp_xi_mean_sum / n_d:.6e}",
+                        f"xi_mean={persp_xi_mean_sum / n_d:.6e}, "
+                        f"xi_pinned_frac={persp_xi_pinned_sum / n_d:.6f}, "
+                        f"dual_step={dual_step}",
                         flush=True
                     )
                 if last_loss_grad_norm is not None:

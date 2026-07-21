@@ -677,6 +677,7 @@ def main():
     parser.add_argument("--mag_prune_ratio", type=float, default=None, help="Magnitude prune threshold = ratio * min_b|v_b|")
     parser.add_argument("--perspective", type=str, default="N", choices=["Y", "N"], help="Enable the perspective reformulation (test_113)")
     parser.add_argument("--flat_schedule", type=str, default="N", choices=["Y", "N"], help="Hold BOTH lr and T2 constant for the whole run: no cosine tail, no T2 ramp (test_133)")
+    parser.add_argument("--dual_step", type=float, default=None, help="Ascent step for the entropy dual on the layer-size-normalized supergradient (test_134)")
     parser.add_argument("--target_sparsity", type=float, default=None, help="If >0: per-layer prune the smallest this fraction of |w| (overrides mag_prune_ratio)")
     parser.add_argument("--sparsity_warmup_epochs", type=int, default=None, help="If >0: ramp effective sparsity 0->target linearly over this many epochs")
     parser.add_argument("--sparsity_ramp_power", type=float, default=None, help="Ramp profile exponent: 1.0 linear, <1 concave (gentle increments near target)")
@@ -768,6 +769,7 @@ def main():
         h["layer_sparsity"] = [float(s) for s in args.layer_sparsity.split(",") if s.strip() != ""]
     h["use_perspective"] = (args.perspective == "Y")
     h["flat_schedule"] = (args.flat_schedule == "Y")
+    h["dual_step"] = 0.5 if args.dual_step is None else args.dual_step
     if args.max_iterations is not None:
         h["max_iterations"] = args.max_iterations
     if args.C is not None:
@@ -913,6 +915,7 @@ def main():
         fc_sparsity=h["fc_sparsity"],
         layer_sparsity=h["layer_sparsity"],
         flat_schedule=h["flat_schedule"],
+        dual_step=h["dual_step"],
     )
 
     if ddp_needed(model_name):

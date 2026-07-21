@@ -410,7 +410,8 @@ def FISTA_leonardo(xi, v, w, C, upper_c, lower_c, delta, subgradient_step, devic
     return xi, lambda_plus
 
 def FISTA_perspective_leonardo(xi, v, w, C, upper_c, lower_c, T1, T2, T3,
-                               subgradient_step, device, max_iterations):
+                               subgradient_step, device, max_iterations,
+                               dual_step=0.5):
     """
     FISTA for the entropy dual under the perspective reformulation (T2 > 0).
 
@@ -420,7 +421,11 @@ def FISTA_perspective_leonardo(xi, v, w, C, upper_c, lower_c, T1, T2, T3,
         and y*;
       - accumulate the bucket counts c_b = sum_i (mass of weight i in bucket b);
       - the c-subproblem gives c_b* = exp(log2 * xi_b / T2 - 1);
-      - supergradient of the dual g_b = c_b - c_b*, ascend xi (FISTA-accelerated).
+      - supergradient of the dual g_b = (c_b - c_b*)/upper_c, ascend xi with step
+        `dual_step` (FISTA-accelerated).  The 1/upper_c normalization is the
+        test_134 fix; see the comment at the update itself.  `subgradient_step` is
+        kept in the signature for API symmetry with the other solvers but is no
+        longer used here.
 
     xi may be length C (bucket duals) or C+1 (legacy: xi[0] is an unused zero
     symbol, kept only so the caller's state stays the same shape).  T2 does NOT
@@ -468,11 +473,22 @@ def FISTA_perspective_leonardo(xi, v, w, C, upper_c, lower_c, T1, T2, T3,
         c_star = torch.exp(log2 * xi_b / T2_t - 1.0)
         c_star = torch.clamp(c_star, min=lower_c, max=upper_c)
 
-        g = counts - c_star                       # dual supergradient (ascent)
+        # test_134: NORMALIZE the supergradient by the layer size.  Both counts and
+        # c_star live on the scale of the layer (up to upper_c = N), so the raw g is
+        # O(N) ~ 1e7 while the old step 1/subgradient_step = 1e-5 was a FIXED
+        # constant, unscaled to the problem: each iteration kicked xi by ~350 and the
+        # test_128 clamp bounced it straight back to the opposite bound.  The clamp
+        # stopped the numerical blow-up but turned it into bang-bang chattering: in
+        # test_133 xi_min/xi_max sat pinned at the exact clamp bounds for all 24
+        # epochs, i.e. the dual NEVER converged and the bucket costs feeding the
+        # per-weight knapsack (hence the direction of beta*) were largely arbitrary.
+        # With g/upper_c in [-1,1] a step of order 1e-1 gives a well-scaled ascent
+        # (offline: 15/16 buckets pinned -> 0/16, interior solution).
+        g = (counts - c_star) / max(float(upper_c), 1.0)
 
         t_cur = (1 + torch.sqrt(1 + 4 * t_prev ** 2)) / 2
         y = xi_b + ((t_prev - 1) / t_cur) * (xi_b - xi_prev)
-        xi_next = y + (1.0 / subgradient_step) * g
+        xi_next = y + dual_step * g
 
         xi_prev = xi_b.clone()
         xi_b = torch.sort(xi_next.clamp(min=xi_lo, max=xi_hi))[0]
