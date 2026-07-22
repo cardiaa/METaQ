@@ -238,6 +238,11 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
     # Per-layer magnitude thresholds for target_sparsity mode, frozen once per
     # epoch (stable + cheap) and reused by both the forward and evaluation.
     target_prune_thresholds = [None] * num_param_tensors
+    # test_136: the effective per-layer sparsity target the frozen threshold was
+    # computed for.  In prox mode the operator keeps creating exact zeros DURING
+    # the epoch, so a threshold frozen at epoch start is stale by evaluation time;
+    # keeping the target lets us recompute it on the spot (see _refresh_prune_thresholds).
+    effective_ts_by_layer = [None] * num_param_tensors
 
     # test_124: full Deep-Compression-style per-layer sparsity.  layer_sparsity is
     # a list with one target per quantized tensor (in the order of params_for_quant:
@@ -689,9 +694,27 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
         if ts and ts > 0.0:
             aw = w_flat.abs()
             n = aw.numel()
-            k = int(ts * n)
-            k = max(1, min(n - 1, k))
-            return torch.kthvalue(aw, k).values
+            k_total = int(ts * n)
+            k_total = max(1, min(n - 1, k_total))
+            # test_136: the quantile must be taken over the NON-ZERO weights.
+            # test_135 introduced the proximal operator, which sends weights to
+            # EXACTLY zero; the plain kthvalue over all |w| then breaks down as
+            # soon as the zero mass exceeds ts, because the ts-quantile IS zero,
+            # the threshold collapses to 0, and (the threshold being frozen for
+            # the epoch) the loss steps afterwards nudge those weights off exact
+            # zero so that "|w| <= 0" prunes almost nothing.  That is how test_135
+            # reported a deployed sparsity of 2.86% against a 20% target while the
+            # per-layer conv fractions sat at 0.20.
+            # Correct semantics: the zeros already count towards the target, and
+            # any remainder is taken from the smallest non-zero weights.
+            n_zero = int((aw <= 0).sum().item())
+            if k_total <= n_zero:
+                # the zero mass alone already meets (or exceeds) the target:
+                # threshold 0 prunes exactly those weights
+                return torch.zeros((), dtype=aw.dtype, device=aw.device)
+            aw_nz = aw[aw > 0]
+            k = max(1, min(aw_nz.numel(), k_total - n_zero))
+            return torch.kthvalue(aw_nz, k).values
         return mag_prune_ratio * v_layer.abs().min()
 
     def _perspective_prune_mask(w_flat, v_layer, thr=None):
@@ -701,6 +724,26 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
         if thr is None:
             thr = _perspective_mag_threshold(w_flat, v_layer)
         return w_flat.abs() <= thr
+
+    def _refresh_prune_thresholds():
+        """test_136: recompute the frozen thresholds from the CURRENT weights.
+
+        Only needed in prox mode.  The proximal operator keeps sending weights to
+        exactly zero throughout the epoch, so the zero mass at evaluation time is
+        much larger than it was when the threshold was frozen at epoch start; the
+        stale threshold then implies a deployed sparsity that has nothing to do
+        with the target (test_135 swung between 2.86% and 43.24% against a 20%
+        target).  Recomputing right before the metrics costs one kthvalue per
+        layer, once per epoch.
+        """
+        with torch.no_grad():
+            for p_idx, param in enumerate(params_for_quant):
+                ts_layer = effective_ts_by_layer[p_idx]
+                if ts_layer is None:
+                    continue
+                target_prune_thresholds[p_idx] = _perspective_mag_threshold(
+                    param.detach().reshape(-1), v_list[p_idx], ts_layer
+                )
 
     def _quantize_with_magnitude_pruning(w_flat, v_layer, thr=None):
         q_idx, q_flat = _quantize_with_deadzone(
@@ -842,6 +885,9 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                     target_prune_thresholds[p_idx] = _perspective_mag_threshold(
                         w_layer, v_list[p_idx], effective_ts
                     )
+                    # test_136: remember the target this threshold was built for,
+                    # so it can be refreshed at evaluation time in prox mode.
+                    effective_ts_by_layer[p_idx] = effective_ts
             if local_rank == 0:
                 if layer_sparsity is not None:
                     tgt_str = f"per_layer={list(layer_sparsity)}*{ramp_frac:.3f}"
@@ -1212,6 +1258,10 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
         training_time_without_metrics = round(time.time() - start_time_global)
 
         if should_eval_epoch:
+            # test_136: in prox mode refresh the pruning thresholds against the
+            # weights as they are NOW, before any metric is computed from them.
+            if use_prox:
+                _refresh_prune_thresholds()
             if device.type == "cuda":
                 torch.cuda.synchronize(device)
             _dist_barrier()
