@@ -33,7 +33,14 @@ from torchvision import transforms
 
 
 def build_val_loader(data_root, batch_size, workers):
-    """Validation loader only.  Mirrors the transforms used in training."""
+    """Validation loader only.  Mirrors the transforms used in training.
+
+    The paths and the synset->index mapping are taken from the trainer itself
+    (`imagenet_paths`, `build_synset_to_idx_from_shards`) rather than rebuilt
+    here: the layout is data_root/imagenet/shards/val-*.tar, and duplicating
+    that knowledge is exactly how the first version of this script ended up
+    globbing the wrong directory and silently falling through to ImageFolder.
+    """
     t_val = transforms.Compose([
         transforms.Resize(256),
         transforms.CenterCrop(224),
@@ -41,22 +48,25 @@ def build_val_loader(data_root, batch_size, workers):
         transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
     ])
 
-    shards_dir = os.path.join(data_root, "shards")
-    shards_val = os.path.join(shards_dir, "val-*.tar")
-    val_urls = sorted(glob.glob(shards_val))
+    from train_on_gpus_pretrained import (
+        imagenet_paths, build_synset_to_idx_from_shards,
+    )
+
+    p = imagenet_paths(data_root)
+    val_urls = sorted(glob.glob(p["shards_val"]))
 
     if val_urls:
         import webdataset as wds
 
-        # Same synset->index mapping as training, from the cached json.
-        cache_path = os.path.join(data_root, "shards", "synsets.json")
-        with open(cache_path) as f:
-            cached = json.load(f)
-        synsets = cached["synsets"] if isinstance(cached, dict) else cached
-        syn2idx = {s: i for i, s in enumerate(sorted(synsets))}
+        cache_path = os.path.join(p["base"], "shards", "synsets.json")
+        syn2idx, _ = build_synset_to_idx_from_shards(
+            p["shards_train"], cache_path=cache_path,
+        )
 
         def key_to_label(key):
             head = key.split("/")[0]
+            # Leonardo shards use numeric keys ("490"); synset keys ("n01440764")
+            # go through the mapping.
             if head.isdigit():
                 return int(head)
             return syn2idx[head]
@@ -69,17 +79,24 @@ def build_val_loader(data_root, batch_size, workers):
             .map(lambda ki: (ki[1], key_to_label(ki[0])))
             .batched(batch_size, partial=True)
         )
-        loader = wds.WebLoader(val_ds, batch_size=None, num_workers=workers,
-                               pin_memory=True)
-        return loader
+        print(f"[loader] shards val: {len(val_urls)} file da {p['shards_val']}",
+              flush=True)
+        return wds.WebLoader(val_ds, batch_size=None, num_workers=workers,
+                             pin_memory=True)
 
-    # Fallback: plain ImageFolder layout.
-    from torch.utils.data import DataLoader
-    from torchvision import datasets
-    val_dir = os.path.join(data_root, "val")
-    ds = datasets.ImageFolder(val_dir, transform=t_val)
-    return DataLoader(ds, batch_size=batch_size, shuffle=False,
-                      num_workers=workers, pin_memory=True)
+    if p["has_folders"]:
+        from torch.utils.data import DataLoader
+        from torchvision import datasets
+        print(f"[loader] ImageFolder da {p['folder_val']}", flush=True)
+        ds = datasets.ImageFolder(p["folder_val"], transform=t_val)
+        return DataLoader(ds, batch_size=batch_size, shuffle=False,
+                          num_workers=workers, pin_memory=True)
+
+    raise FileNotFoundError(
+        f"Nessun dato di validazione trovato: ne shard in {p['shards_val']}, "
+        f"ne cartelle in {p['folder_val']}. Controlla --data_root "
+        f"(atteso: la directory che CONTIENE imagenet/)."
+    )
 
 
 @torch.inference_mode()
