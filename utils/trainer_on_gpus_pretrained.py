@@ -26,7 +26,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                        sparsity_warmup_epochs=0, sparsity_ramp_power=1.0,
                        conv_sparsity=None, fc_sparsity=None, layer_sparsity=None,
                        flat_schedule=False, dual_step=0.5,
-                       use_prox=False, prox_gamma=1e-7):
+                       use_prox=False, prox_gamma=1e-7, prox_start_epoch=0):
     """Train and evaluate a model with optional entropy regularization.
 
     This function is intentionally self-contained because the compression
@@ -73,6 +73,14 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
             calls, while 1e-7 gives ~11% zeroed over a full epoch of calls
             (worst case, with no loss pulling back).  Treat the first run as a
             calibration probe and read prox_diag from the log.
+        prox_start_epoch: test_139.  First epoch (0-based) at which the proximal
+            step runs.  It must be decoupled from entropy_warmup_epochs, which
+            also gates the grid reset AND the start of the sparsity ramp: delaying
+            that would delay pruning too.  Setting this late lets the sparsity
+            ramp and the stabilisation run exactly as in the T2=0 baseline, and
+            only then turns the prox on to compress the values.  It also cuts the
+            cost sharply, since a prox epoch costs ~5.6x a plain one (884s vs
+            157s measured).  Default 0 = prox active as soon as entropy is.
     """
 
     torch.set_num_threads(1)
@@ -1221,6 +1229,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
             # be dosed against the loss.
             if (use_prox and T2_current > 0
                     and grid_reset_done and epoch >= entropy_warmup_epochs
+                    and epoch >= prox_start_epoch
                     and (global_step % entropy_every == 0)):
                 with torch.no_grad():
                     for p_idx, param in enumerate(params_for_quant):

@@ -680,6 +680,7 @@ def main():
     parser.add_argument("--dual_step", type=float, default=None, help="Ascent step for the entropy dual on the layer-size-normalized supergradient (test_134)")
     parser.add_argument("--prox", type=str, default="N", choices=["Y", "N"], help="Apply phi as a proximal operator on the weights instead of summing beta* into the loss gradient (test_135)")
     parser.add_argument("--prox_gamma", type=float, default=None, help="Step of the proximal operator; sets the entropy displacement independently of the learning rate (test_135)")
+    parser.add_argument("--prox_start_epoch", type=int, default=0, help="First epoch (0-based) at which the proximal step runs; decoupled from entropy_warmup_epochs so the sparsity ramp is unaffected (test_139)")
     parser.add_argument("--target_sparsity", type=float, default=None, help="If >0: per-layer prune the smallest this fraction of |w| (overrides mag_prune_ratio)")
     parser.add_argument("--sparsity_warmup_epochs", type=int, default=None, help="If >0: ramp effective sparsity 0->target linearly over this many epochs")
     parser.add_argument("--sparsity_ramp_power", type=float, default=None, help="Ramp profile exponent: 1.0 linear, <1 concave (gentle increments near target)")
@@ -774,6 +775,7 @@ def main():
     h["dual_step"] = 0.5 if args.dual_step is None else args.dual_step
     h["use_prox"] = (args.prox == "Y")
     h["prox_gamma"] = 1e-7 if args.prox_gamma is None else args.prox_gamma
+    h["prox_start_epoch"] = args.prox_start_epoch
     if args.max_iterations is not None:
         h["max_iterations"] = args.max_iterations
     if args.C is not None:
@@ -922,6 +924,7 @@ def main():
         dual_step=h["dual_step"],
         use_prox=h["use_prox"],
         prox_gamma=h["prox_gamma"],
+        prox_start_epoch=h["prox_start_epoch"],
     )
 
     if ddp_needed(model_name):
