@@ -26,7 +26,8 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                        sparsity_warmup_epochs=0, sparsity_ramp_power=1.0,
                        conv_sparsity=None, fc_sparsity=None, layer_sparsity=None,
                        flat_schedule=False, dual_step=0.5,
-                       use_prox=False, prox_gamma=1e-7, prox_start_epoch=0):
+                       use_prox=False, prox_gamma=1e-7, prox_start_epoch=0,
+                       sparsity_schedule=None):
     """Train and evaluate a model with optional entropy regularization.
 
     This function is intentionally self-contained because the compression
@@ -81,6 +82,23 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
             only then turns the prox on to compress the values.  It also cuts the
             cost sharply, since a prox epoch costs ~5.6x a plain one (884s vs
             157s measured).  Default 0 = prox active as soon as entropy is.
+        sparsity_schedule: test_143.  Iterative prune-and-heal schedule that
+            REPLACES the smooth ramp (sparsity_warmup_epochs / ramp_power).  It
+            is the cure for the instability found in test_141: pushing the big FC
+            layers to extreme sparsity in one continuous ramp never lets them
+            settle (accuracy oscillated 28-45), because the network chases a
+            target that moves every epoch.  Here the per-layer target rises in
+            STAGES, each held FLAT for several epochs so the net can actually
+            converge at that level before the next increase -- Deep-Compression's
+            prune-then-retrain, in miniature.
+            Format: stages separated by ';', each "reach:hold:s1,...,s8" with
+            1-based epochs -- `reach` is the epoch by which this stage's targets
+            are fully reached (linearly, from the previous stage's vector or from
+            0 for the first), and `hold` the epoch through which they are held.
+            The first stage is reached with a gentle sub-ramp (a one-shot jump to
+            85% collapsed the net in test_116); later stages are small steps and
+            can jump in a single epoch.  When set, it takes priority over
+            layer_sparsity / conv+fc / target_sparsity.
     """
 
     torch.set_num_threads(1)
@@ -761,6 +779,44 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
         q_flat = torch.where(prune_mask, torch.zeros_like(q_flat), q_flat)
         return q_idx, q_flat
 
+    # test_143: parse the iterative prune-and-heal schedule, if given.
+    # stages: list of (reach_epoch, hold_until_epoch, target_vec), 1-based epochs.
+    parsed_stages = None
+    if sparsity_schedule:
+        parsed_stages = []
+        for chunk in sparsity_schedule.split(";"):
+            reach_s, hold_s, vec_s = chunk.strip().split(":")
+            vec = [float(x) for x in vec_s.split(",")]
+            parsed_stages.append((int(reach_s), int(hold_s), vec))
+        if local_rank == 0:
+            print(f"[SPARSITY SCHEDULE] {len(parsed_stages)} stage: "
+                  + " | ".join(f"reach{r}->hold{h} fc6={v[5]:.2f}"
+                               for r, h, v in parsed_stages), flush=True)
+
+    def _staged_targets(epoch_1based):
+        """Per-layer effective sparsity at this epoch, from the staged schedule.
+
+        Within each stage the target ramps from the previous stage's vector (or 0
+        for the first) up to `reach`, then holds flat through `hold`.  The ramp
+        uses the SAME concave shape (frac ** sparsity_ramp_power) as the smooth
+        ramp of the stable runs (test_121/124): this is what makes test_143 a
+        clean control -- it reproduces the stable ramp to each level and only
+        ADDS the plateaus.  For the small inter-stage jumps (span 1) the shape is
+        irrelevant.
+        """
+        n_layers = len(parsed_stages[0][2])
+        prev_vec = [0.0] * n_layers
+        stage_start = entropy_warmup_epochs + 1        # 1-based first prune epoch
+        for reach, hold, vec in parsed_stages:
+            if epoch_1based <= hold:
+                span = max(1, reach - (stage_start - 1))
+                frac = min(1.0, max(0.0, (epoch_1based - (stage_start - 1)) / span))
+                frac = frac ** sparsity_ramp_power
+                return [pv + frac * (tv - pv) for pv, tv in zip(prev_vec, vec)]
+            prev_vec = vec
+            stage_start = hold + 1
+        return list(parsed_stages[-1][2])              # past the last stage: hold
+
     # test_133: cumulative entropy "exposure" = sum over epochs of T2_current*lr
     # (lr in units of 1e-4).  This is the accumulated displacement the entropy term
     # imposes on the weights, and across tests 128/129/130 the accuracy collapse
@@ -867,6 +923,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
             (target_sparsity and target_sparsity > 0.0)
             or per_layer_sparsity
             or (layer_sparsity is not None)
+            or (parsed_stages is not None)
         )
         if (use_perspective and sparsity_active
                 and grid_reset_done and epoch >= entropy_warmup_epochs + 1):
@@ -880,15 +937,20 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                 ramp_frac = frac ** sparsity_ramp_power
             else:
                 ramp_frac = 1.0
+            # test_143: staged schedule overrides the smooth ramp entirely.
+            staged_vec = _staged_targets(epoch + 1) if parsed_stages is not None else None
             with torch.no_grad():
                 for p_idx, param in enumerate(params_for_quant):
-                    if layer_sparsity is not None:
-                        layer_ts = layer_sparsity[p_idx]
-                    elif per_layer_sparsity:
-                        layer_ts = conv_sparsity if param.dim() == 4 else fc_sparsity
+                    if staged_vec is not None:
+                        effective_ts = staged_vec[p_idx]
                     else:
-                        layer_ts = target_sparsity
-                    effective_ts = layer_ts * ramp_frac
+                        if layer_sparsity is not None:
+                            layer_ts = layer_sparsity[p_idx]
+                        elif per_layer_sparsity:
+                            layer_ts = conv_sparsity if param.dim() == 4 else fc_sparsity
+                        else:
+                            layer_ts = target_sparsity
+                        effective_ts = layer_ts * ramp_frac
                     w_layer = param.detach().reshape(-1)
                     target_prune_thresholds[p_idx] = _perspective_mag_threshold(
                         w_layer, v_list[p_idx], effective_ts
@@ -897,7 +959,9 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                     # so it can be refreshed at evaluation time in prox mode.
                     effective_ts_by_layer[p_idx] = effective_ts
             if local_rank == 0:
-                if layer_sparsity is not None:
+                if staged_vec is not None:
+                    tgt_str = "staged=[" + ",".join(f"{v:.2f}" for v in staged_vec) + "]"
+                elif layer_sparsity is not None:
                     tgt_str = f"per_layer={list(layer_sparsity)}*{ramp_frac:.3f}"
                 elif per_layer_sparsity:
                     tgt_str = f"conv={conv_sparsity}*{ramp_frac:.3f}, fc={fc_sparsity}*{ramp_frac:.3f}"

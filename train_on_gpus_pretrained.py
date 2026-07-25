@@ -681,6 +681,7 @@ def main():
     parser.add_argument("--prox", type=str, default="N", choices=["Y", "N"], help="Apply phi as a proximal operator on the weights instead of summing beta* into the loss gradient (test_135)")
     parser.add_argument("--prox_gamma", type=float, default=None, help="Step of the proximal operator; sets the entropy displacement independently of the learning rate (test_135)")
     parser.add_argument("--prox_start_epoch", type=int, default=0, help="First epoch (0-based) at which the proximal step runs; decoupled from entropy_warmup_epochs so the sparsity ramp is unaffected (test_139)")
+    parser.add_argument("--sparsity_schedule", type=str, default=None, help="Iterative prune-and-heal schedule, replacing the smooth ramp. Stages ';'-separated, each 'reach:hold:s1,...,s8' with 1-based epochs (test_143)")
     parser.add_argument("--target_sparsity", type=float, default=None, help="If >0: per-layer prune the smallest this fraction of |w| (overrides mag_prune_ratio)")
     parser.add_argument("--sparsity_warmup_epochs", type=int, default=None, help="If >0: ramp effective sparsity 0->target linearly over this many epochs")
     parser.add_argument("--sparsity_ramp_power", type=float, default=None, help="Ramp profile exponent: 1.0 linear, <1 concave (gentle increments near target)")
@@ -776,6 +777,7 @@ def main():
     h["use_prox"] = (args.prox == "Y")
     h["prox_gamma"] = 1e-7 if args.prox_gamma is None else args.prox_gamma
     h["prox_start_epoch"] = args.prox_start_epoch
+    h["sparsity_schedule"] = args.sparsity_schedule if args.sparsity_schedule else None
     if args.max_iterations is not None:
         h["max_iterations"] = args.max_iterations
     if args.C is not None:
@@ -925,6 +927,7 @@ def main():
         use_prox=h["use_prox"],
         prox_gamma=h["prox_gamma"],
         prox_start_epoch=h["prox_start_epoch"],
+        sparsity_schedule=h["sparsity_schedule"],
     )
 
     if ddp_needed(model_name):
