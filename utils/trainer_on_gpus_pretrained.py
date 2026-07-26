@@ -27,7 +27,8 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                        conv_sparsity=None, fc_sparsity=None, layer_sparsity=None,
                        flat_schedule=False, dual_step=0.5,
                        use_prox=False, prox_gamma=1e-7, prox_start_epoch=0,
-                       sparsity_schedule=None, freeze_mask=False):
+                       sparsity_schedule=None, freeze_mask=False,
+                       train_sparse=False):
     """Train and evaluate a model with optional entropy regularization.
 
     This function is intentionally self-contained because the compression
@@ -112,6 +113,17 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
             heals INTO a fixed sparse structure, and only refreezes when the
             target changes (a sub-ramp step or a stage jump).  Default False keeps
             the recompute-every-epoch behaviour of every earlier test.
+        train_sparse: test_146.  Optimize the sparse SUBNETWORK directly instead
+            of the dense net.  Every earlier run fake-quantized+pruned in the
+            forward but restored the dense weights before optimizer.step(), so the
+            pruned weights kept a non-zero gradient and drifted -- we minimized the
+            loss over the DENSE net and deployed a masked copy, a mismatch.  With
+            this flag the pruned positions are held at exactly zero and their
+            gradient is zeroed, so only the surviving weights are updated: the
+            objective becomes the sparse network we actually deploy.  This is the
+            main untested methodological difference from Deep Compression (which
+            trains the fixed sparse subnet).  Default False keeps the old
+            behaviour.
     """
 
     torch.set_num_threads(1)
@@ -1313,7 +1325,34 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                             beta_norm_sq / grad_norm_sq.clamp_min(1e-12)
                         ).item()
 
+            # test_146: train the sparse SUBNETWORK directly (Deep-Compression
+            # style).  Until now every run has fake-quantized+pruned in the
+            # FORWARD but restored the dense weights before the step, so the
+            # pruned weights kept a non-zero gradient and drifted back -- we were
+            # optimizing the DENSE net and deploying a masked version of it.  Here
+            # we instead hold the pruned positions at exactly zero and give them NO
+            # gradient, so the optimizer moves ONLY the survivors: the loss is
+            # minimized over the sparse subnetwork we actually deploy.  Done right
+            # before the step, and the pruned weights are re-zeroed right after, so
+            # they never drift.  The mask is the same one used in the forward.
+            if train_sparse and grid_reset_done and epoch >= entropy_warmup_epochs + 1:
+                with torch.no_grad():
+                    for p_idx, param in enumerate(params_for_quant):
+                        if param.grad is None:
+                            continue
+                        w_flat = param.detach().reshape(-1)
+                        mask = _mask_to_apply(p_idx, w_flat, v_list[p_idx])
+                        param.grad.reshape(-1)[mask] = 0.0
+
             optimizer.step()
+
+            if train_sparse and grid_reset_done and epoch >= entropy_warmup_epochs + 1:
+                with torch.no_grad():
+                    for p_idx, param in enumerate(params_for_quant):
+                        w_flat = param.detach().reshape(-1)
+                        mask = _mask_to_apply(p_idx, w_flat, v_list[p_idx])
+                        pf = param.data.reshape(-1)
+                        pf[mask] = 0.0
 
             # test_135: PROXIMAL step.  The optimizer above has just taken a plain
             # gradient step on the LOSS ALONE (in prox mode the beta*-into-grad

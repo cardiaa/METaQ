@@ -683,6 +683,7 @@ def main():
     parser.add_argument("--prox_start_epoch", type=int, default=0, help="First epoch (0-based) at which the proximal step runs; decoupled from entropy_warmup_epochs so the sparsity ramp is unaffected (test_139)")
     parser.add_argument("--sparsity_schedule", type=str, default=None, help="Iterative prune-and-heal schedule, replacing the smooth ramp. Stages ';'-separated, each 'reach:hold:s1,...,s8' with 1-based epochs (test_143)")
     parser.add_argument("--freeze_mask", type=str, default="N", choices=["Y", "N"], help="Freeze the pruned index set per plateau (Deep-Compression style) instead of recomputing |w|<=thr every epoch (test_144)")
+    parser.add_argument("--train_sparse", type=str, default="N", choices=["Y", "N"], help="Optimize the sparse subnetwork directly: hold pruned weights at zero with zero gradient, update only survivors (test_146)")
     parser.add_argument("--target_sparsity", type=float, default=None, help="If >0: per-layer prune the smallest this fraction of |w| (overrides mag_prune_ratio)")
     parser.add_argument("--sparsity_warmup_epochs", type=int, default=None, help="If >0: ramp effective sparsity 0->target linearly over this many epochs")
     parser.add_argument("--sparsity_ramp_power", type=float, default=None, help="Ramp profile exponent: 1.0 linear, <1 concave (gentle increments near target)")
@@ -780,6 +781,7 @@ def main():
     h["prox_start_epoch"] = args.prox_start_epoch
     h["sparsity_schedule"] = args.sparsity_schedule if args.sparsity_schedule else None
     h["freeze_mask"] = (args.freeze_mask == "Y")
+    h["train_sparse"] = (args.train_sparse == "Y")
     if args.max_iterations is not None:
         h["max_iterations"] = args.max_iterations
     if args.C is not None:
@@ -931,6 +933,7 @@ def main():
         prox_start_epoch=h["prox_start_epoch"],
         sparsity_schedule=h["sparsity_schedule"],
         freeze_mask=h["freeze_mask"],
+        train_sparse=h["train_sparse"],
     )
 
     if ddp_needed(model_name):
