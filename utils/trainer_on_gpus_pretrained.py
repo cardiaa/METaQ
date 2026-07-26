@@ -17,6 +17,42 @@ from utils.weight_utils import initialize_weights
 from utils.quantize_and_compress import compress_zstd, BestQuantization, pack_bitmask, pack_bitmaskGPU
 from datetime import datetime, timedelta
 
+
+def _update_adiabatic_progress(
+    progress,
+    good_epochs,
+    sparse_accuracy,
+    target_accuracy,
+    tolerance,
+    step,
+    backoff,
+    patience,
+):
+    """Return the sparsity progress to use in the next epoch.
+
+    Accuracy at or above ``target_accuracy`` accumulates patience and eventually
+    advances compression. Accuracy below ``target_accuracy - tolerance`` rolls
+    sparsity back. Values in the hysteresis band hold the current point so that
+    validation noise does not make the controller chatter.
+    """
+    floor = target_accuracy - tolerance
+
+    if sparse_accuracy >= target_accuracy:
+        good_epochs += 1
+        if progress >= 1.0:
+            return 1.0, good_epochs, "complete"
+        if good_epochs >= patience:
+            return min(1.0, progress + step), 0, "advance"
+        return progress, good_epochs, "patience"
+
+    if sparse_accuracy < floor:
+        next_progress = max(0.0, progress - backoff)
+        action = "backoff" if next_progress < progress else "floor"
+        return next_progress, 0, action
+
+    return progress, 0, "hold"
+
+
 def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T1_explicit, T2_explicit, subgradient_step, w0, r, 
                        first_best_indices, BestQuantization_target_acc, final_target_acc, target_zstd_ratio, min_xi, max_xi, upper_c, 
                        lower_c, c1, c2, zeta, l, n_epochs, max_iterations, device, train_optimizer, entropy_optimizer, trainloader,
@@ -28,7 +64,10 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                        flat_schedule=False, dual_step=0.5,
                        use_prox=False, prox_gamma=1e-7, prox_start_epoch=0,
                        sparsity_schedule=None, freeze_mask=False,
-                       train_sparse=False):
+                       train_sparse=False, layer_C=None,
+                       adiabatic_accuracy_target=None, adiabatic_accuracy_tolerance=0.2,
+                       adiabatic_step=0.02, adiabatic_backoff=0.04,
+                       adiabatic_patience=2):
     """Train and evaluate a model with optional entropy regularization.
 
     This function is intentionally self-contained because the compression
@@ -124,6 +163,15 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
             main untested methodological difference from Deep Compression (which
             trains the fixed sparse subnet).  Default False keeps the old
             behaviour.
+        layer_C: optional number of non-zero quantization levels for every weight
+            tensor. This supports the Deep-Compression control (256 levels / 8
+            bits for convolutional tensors and 32 levels / 5 bits for fully
+            connected tensors) instead of forcing one global C.
+        adiabatic_accuracy_target: when set, replace the time-driven sparsity ramp
+            with closed-loop control. A scalar progress multiplies the requested
+            per-layer final targets. It advances only after
+            ``adiabatic_patience`` evaluations at the target accuracy, holds
+            inside the tolerance band, and backs off below the band.
     """
 
     torch.set_num_threads(1)
@@ -177,8 +225,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
         )
 
     # Per-parameter-tensor quantization state.
-    # Each layer/tensor gets its own quantization grid v and its own xi.
-    # C is still shared, so C=16 still means 16 levels per tensor, i.e. INT4.
+    # Each layer/tensor gets its own quantization grid v, xi, and optionally C.
     # All parameters are still needed to rebuild the full flat model.
     all_params = list(model.parameters())
 
@@ -189,18 +236,37 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
     params_for_quant = [all_params[idx] for idx in quant_param_indices]
     num_param_tensors = len(params_for_quant)
 
-    min_w, max_w = w0 - r, w0 + r
-    v_init = torch.linspace(min_w, max_w - (max_w - min_w) / C, steps=C, device=device)
+    if layer_C is None:
+        C_by_layer = [int(C)] * num_param_tensors
+    else:
+        C_by_layer = [int(c) for c in layer_C]
+        if len(C_by_layer) != num_param_tensors:
+            raise ValueError(
+                f"--layer_C has {len(C_by_layer)} values but the model has "
+                f"{num_param_tensors} quantized tensors."
+            )
+    if any(c < 2 for c in C_by_layer):
+        raise ValueError("Every quantization level count in C/layer_C must be >= 2.")
+    max_C = max(C_by_layer)
 
-    v_list = [v_init.clone() for _ in params_for_quant]
+    min_w, max_w = w0 - r, w0 + r
+    v_list = [
+        torch.linspace(
+            min_w,
+            max_w - (max_w - min_w) / C_layer,
+            steps=C_layer,
+            device=device,
+        )
+        for C_layer in C_by_layer
+    ]
 
     xi_list = []
-    for _ in params_for_quant:
+    for C_layer in C_by_layer:
         # xi_layer[0] is the multiplier for the explicit zero/pruning symbol.
-        # xi_layer[1:] are the multipliers for the C non-zero quantization buckets.
+        # xi_layer[1:] are the multipliers for this layer's non-zero buckets.
         xi_zero = min_xi + (max_xi - min_xi) * torch.rand(1, device=device)
 
-        xi_buckets = min_xi + (max_xi - min_xi) * torch.rand(C, device=device)
+        xi_buckets = min_xi + (max_xi - min_xi) * torch.rand(C_layer, device=device)
         xi_buckets = torch.sort(xi_buckets)[0]
 
         xi_layer = torch.cat([xi_zero, xi_buckets])
@@ -312,6 +378,65 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
             )
         if local_rank == 0:
             print(f"layer_sparsity (per quantized tensor, in order) = {list(layer_sparsity)}", flush=True)
+
+    if local_rank == 0 and layer_C is not None:
+        print(f"layer_C (per quantized tensor, in order) = {C_by_layer}", flush=True)
+
+    adiabatic_enabled = adiabatic_accuracy_target is not None
+    if adiabatic_enabled:
+        if not use_perspective:
+            raise ValueError("Adiabatic sparsity control requires --perspective Y.")
+        if train_sparse:
+            raise ValueError(
+                "Adiabatic rollback is incompatible with --train_sparse Y because "
+                "hard-zeroed weights cannot be restored when sparsity backs off."
+            )
+        if sparsity_schedule:
+            raise ValueError(
+                "--adiabatic_accuracy_target and --sparsity_schedule are mutually exclusive."
+            )
+        if adiabatic_accuracy_tolerance < 0:
+            raise ValueError("--adiabatic_accuracy_tolerance must be >= 0.")
+        if not 0 < adiabatic_step <= 1:
+            raise ValueError("--adiabatic_step must be in (0, 1].")
+        if not 0 < adiabatic_backoff <= 1:
+            raise ValueError("--adiabatic_backoff must be in (0, 1].")
+        if adiabatic_patience < 1:
+            raise ValueError("--adiabatic_patience must be >= 1.")
+
+        if layer_sparsity is not None:
+            adiabatic_base_targets = list(layer_sparsity)
+        elif conv_sparsity is not None and fc_sparsity is not None:
+            adiabatic_base_targets = [
+                conv_sparsity if param.dim() == 4 else fc_sparsity
+                for param in params_for_quant
+            ]
+        elif target_sparsity and target_sparsity > 0:
+            adiabatic_base_targets = [target_sparsity] * num_param_tensors
+        else:
+            raise ValueError(
+                "Adiabatic control needs final sparsity targets via --layer_sparsity, "
+                "--conv_sparsity/--fc_sparsity, or --target_sparsity."
+            )
+        if any(not 0.0 <= target < 1.0 for target in adiabatic_base_targets):
+            raise ValueError("Every adiabatic sparsity target must be in [0, 1).")
+
+        adiabatic_progress = 0.0
+        adiabatic_good_epochs = 0
+        if local_rank == 0:
+            print(
+                f"[ADIABATIC CONFIG] target_accuracy={adiabatic_accuracy_target:.4f}, "
+                f"floor={adiabatic_accuracy_target - adiabatic_accuracy_tolerance:.4f}, "
+                f"step={adiabatic_step:.4f}, backoff={adiabatic_backoff:.4f}, "
+                f"patience={adiabatic_patience}, base_targets={adiabatic_base_targets}",
+                flush=True,
+            )
+    else:
+        adiabatic_base_targets = None
+        adiabatic_progress = 0.0
+        adiabatic_good_epochs = 0
+    adiabatic_best_target = None
+    adiabatic_best_floor = None
 
     # NCCL barriers need the CUDA device id on some multi-node launches.
     def _dist_barrier():
@@ -496,9 +621,10 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
         If apply_pruning_deadzone=True, weights near zero are quantized to exactly zero, creating a dead-zone that induces sparsity.
         """
         levels = v_layer
+        C_local = levels.numel()
         boundaries = (levels[:-1] + levels[1:]) / 2
 
-        q_idx = torch.bucketize(w_flat, boundaries, right=False).clamp_(0, C - 1)
+        q_idx = torch.bucketize(w_flat, boundaries, right=False).clamp_(0, C_local - 1)
         q_flat = levels[q_idx]
 
         if apply_pruning_deadzone:
@@ -536,10 +662,11 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
         This is used only for evaluation/compression diagnostics.
         """
         xi_layer = xi_layer.to(dtype=torch.float32, device=device)
+        C_local = v_layer.numel()
 
-        if xi_layer.numel() != C + 1:
+        if xi_layer.numel() != C_local + 1:
             raise ValueError(
-                f"dual-zero pruning requires xi_layer with length C+1={C+1}, "
+                f"dual-zero pruning requires xi_layer with length C+1={C_local+1}, "
                 f"got {xi_layer.numel()}."
             )
 
@@ -548,7 +675,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                 xi_layer,
                 v_layer,
                 w_flat,
-                C,
+                C_local,
                 device,
                 delta,
             )
@@ -557,7 +684,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                 xi_layer,
                 v_layer,
                 w_flat,
-                C,
+                C_local,
                 device,
                 delta,
             )
@@ -642,14 +769,15 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
         threshold.
         """
         xi_layer = xi_layer.to(dtype=torch.float32, device=device)
+        C_local = v_layer.numel()
 
         if device.type == "cuda":
             x_star, _, _ = knapsack_specialized_pruning_sparse_leonardo(
-                xi_layer, v_layer, w_flat, C, device, delta,
+                xi_layer, v_layer, w_flat, C_local, device, delta,
             )
         else:
             x_star, _, _ = knapsack_specialized_pruning(
-                xi_layer, v_layer, w_flat, C, device, delta,
+                xi_layer, v_layer, w_flat, C_local, device, delta,
             )
 
         if x_star.dim() == 2 and x_star.size(1) == 3:
@@ -743,8 +871,14 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
         #    gives DIRECT, per-layer control of sparsity (conv and FC alike),
         #    instead of the uniform ratio*min|v| threshold.
         #  - otherwise: the fixed threshold mag_prune_ratio * min_b|v_b|.
+        explicit_target = ts is not None
         if ts is None:
             ts = target_sparsity
+        if explicit_target and ts <= 0.0:
+            # An explicit zero comes from a schedule/controller and means no
+            # magnitude pruning. Keep exact zeros pruned if another operator
+            # created them, but do not fall back to mag_prune_ratio.
+            return torch.zeros((), dtype=w_flat.dtype, device=w_flat.device)
         if ts and ts > 0.0:
             aw = w_flat.abs()
             n = aw.numel()
@@ -902,7 +1036,9 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                         center = 0.5 * (lo + hi)
                         lo = center - 1e-6
                         hi = center + 1e-6
-                    v_layer = _make_quant_levels_without_zero(lo, hi, C, device)
+                    v_layer = _make_quant_levels_without_zero(
+                        lo, hi, C_by_layer[p_idx], device
+                    )
                     if dist.is_initialized():
                         dist.broadcast(v_layer, src=0)
                     new_v_list.append(v_layer)
@@ -975,11 +1111,18 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                 ramp_frac = frac ** sparsity_ramp_power
             else:
                 ramp_frac = 1.0
-            # test_143: staged schedule overrides the smooth ramp entirely.
+            # Staged and adiabatic schedules override the smooth ramp.
             staged_vec = _staged_targets(epoch + 1) if parsed_stages is not None else None
+            adiabatic_vec = (
+                [target * adiabatic_progress for target in adiabatic_base_targets]
+                if adiabatic_enabled
+                else None
+            )
             with torch.no_grad():
                 for p_idx, param in enumerate(params_for_quant):
-                    if staged_vec is not None:
+                    if adiabatic_vec is not None:
+                        effective_ts = adiabatic_vec[p_idx]
+                    elif staged_vec is not None:
                         effective_ts = staged_vec[p_idx]
                     else:
                         if layer_sparsity is not None:
@@ -1009,7 +1152,13 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                             ).clone()
                             frozen_mask_ts[p_idx] = effective_ts
             if local_rank == 0:
-                if staged_vec is not None:
+                if adiabatic_vec is not None:
+                    tgt_str = (
+                        f"adiabatic_progress={adiabatic_progress:.4f}, effective=["
+                        + ",".join(f"{v:.4f}" for v in adiabatic_vec)
+                        + "]"
+                    )
+                elif staged_vec is not None:
                     tgt_str = "staged=[" + ",".join(f"{v:.2f}" for v in staged_vec) + "]"
                 elif layer_sparsity is not None:
                     tgt_str = f"per_layer={list(layer_sparsity)}*{ramp_frac:.3f}"
@@ -1128,8 +1277,9 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                         if param.grad is None:
                             continue
                         w_layer = param.detach().reshape(-1).to(device)
+                        C_layer = C_by_layer[p_idx]
                         xi_list[p_idx], beta_star = FISTA_perspective_leonardo(
-                            xi_list[p_idx], v_list[p_idx], w_layer, C,
+                            xi_list[p_idx], v_list[p_idx], w_layer, C_layer,
                             float(w_layer.numel()), lower_c,
                             T1_explicit, T2_current, T3_explicit,
                             subgradient_step, device, max_iterations,
@@ -1171,7 +1321,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                             persp_commonmode_sum += cm_ratio
                             persp_diag_count += 1
                             xi_b_now = (xi_list[p_idx][1:]
-                                        if xi_list[p_idx].numel() == C + 1
+                                        if xi_list[p_idx].numel() == C_layer + 1
                                         else xi_list[p_idx])
                             lo, hi = xi_b_now.min().item(), xi_b_now.max().item()
                             persp_xi_min = lo if persp_xi_min is None else min(persp_xi_min, lo)
@@ -1224,7 +1374,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                 # gradient).  The entropy gradient is added only when T2 > 0.
                 with torch.no_grad():
                     # FISTA is applied independently to each parameter tensor.
-                    # Each tensor has its own xi and v, but the same C.
+                    # Each tensor has its own xi, v, and possibly C.
                     zeta *= 1 + l
                     l = l / 1.5
 
@@ -1236,6 +1386,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                             continue
 
                         w_layer = param.detach().reshape(-1).to(device)
+                        C_layer = C_by_layer[p_idx]
 
                         # upper_c should be local because c_star represents
                         # bucket occupancies for this tensor, not for the whole network.
@@ -1246,7 +1397,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                                 xi_list[p_idx],
                                 v_list[p_idx],
                                 w_layer,
-                                C,
+                                C_layer,
                                 upper_c_layer,
                                 lower_c,
                                 delta,
@@ -1260,7 +1411,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                                 xi_list[p_idx],
                                 v_list[p_idx],
                                 w_layer,
-                                C,
+                                C_layer,
                                 upper_c_layer,
                                 lower_c,
                                 delta,
@@ -1375,8 +1526,9 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                 with torch.no_grad():
                     for p_idx, param in enumerate(params_for_quant):
                         u_layer = param.detach().reshape(-1).to(device)
+                        C_layer = C_by_layer[p_idx]
                         xi_list[p_idx], _, _ = FISTA_prox_leonardo(
-                            xi_list[p_idx], v_list[p_idx], u_layer, C,
+                            xi_list[p_idx], v_list[p_idx], u_layer, C_layer,
                             float(u_layer.numel()), lower_c,
                             T1_explicit, T2_current, T3_explicit,
                             prox_gamma, device, max_iterations, dual_step,
@@ -1391,10 +1543,10 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                         if dist.is_initialized():
                             dist.broadcast(xi_list[p_idx], src=0)
                         xi_b = (xi_list[p_idx][1:]
-                                if xi_list[p_idx].numel() == C + 1
+                                if xi_list[p_idx].numel() == C_layer + 1
                                 else xi_list[p_idx])
                         _, z_star, y_star = prox_perspective_leonardo(
-                            xi_b, v_list[p_idx], u_layer, C, device,
+                            xi_b, v_list[p_idx], u_layer, C_layer, device,
                             T1_explicit, T3_explicit, prox_gamma,
                         )
                         if local_rank == 0:
@@ -1505,23 +1657,26 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
 
                     # Distribution of non-zero quantized indices in the sparse representation.
                     # This is used to estimate H(bucket | nonzero).
-                    nz_index_counts = torch.zeros(C, dtype=torch.float64, device=device)
-                    sparse_symbol_counts = torch.zeros(C + 1, dtype=torch.float64, device=device)
+                    nz_index_counts = torch.zeros(max_C, dtype=torch.float64, device=device)
+                    sparse_symbol_counts = torch.zeros(max_C + 1, dtype=torch.float64, device=device)
 
-                    for q_idx_layer, q_vals_layer, s_idx_layer, s_vals_layer in zip(
+                    for q_idx_layer, q_vals_layer, s_idx_layer, s_vals_layer, C_layer in zip(
                         q_idx_layers,
                         q_vals_layers,
                         s_idx_layers,
                         s_vals_layers,
+                        C_by_layer,
                     ):
                         # Dense quantized stream: pure quantization, no pruning deadzone.
-                        counts = torch.bincount(q_idx_layer, minlength=C).to(torch.float32)
+                        counts = torch.bincount(
+                            q_idx_layer, minlength=C_layer
+                        ).to(torch.float32)
                         probs = counts / counts.sum()
                         probs = probs[probs > 0]
 
                         entropy_total += float((-(probs * torch.log2(probs)).sum() * counts.sum()).item())
 
-                        q_bytes_chunks.append(_pack_quant_indices(q_idx_layer, C))
+                        q_bytes_chunks.append(_pack_quant_indices(q_idx_layer, C_layer))
 
                         # Sparse stream: pruning deadzone applied.
                         nz_mask_layer = s_vals_layer.abs() > sparsity_threshold
@@ -1536,25 +1691,23 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                         sparse_symbol_counts[0] += num_zero_layer
 
                         if nz_idx_layer.numel() > 0:
-                            sparse_symbol_counts[1:] += torch.bincount(
+                            sparse_symbol_counts[1:1 + C_layer] += torch.bincount(
                                 nz_idx_layer,
-                                minlength=C,
+                                minlength=C_layer,
                             ).to(dtype=torch.float64)
 
                         if nz_idx_layer.numel() > 0:
-                            nz_index_counts += torch.bincount(
+                            nz_index_counts[:C_layer] += torch.bincount(
                                 nz_idx_layer,
-                                minlength=C,
+                                minlength=C_layer,
                             ).to(dtype=torch.float64)
 
                         nz_idx_bytes_chunks.append(
-                            _pack_quant_indices(nz_idx_layer, C)
+                            _pack_quant_indices(nz_idx_layer, C_layer)
                         )
 
                     quantized_entropy = round(entropy_total) + 1
                     entropies.append(quantized_entropy)
-
-                    index_bits = _index_bits_for_C(C)
 
                     # Per-layer metadata:
                     # for each tensor, store two fp32 values, e.g. w0/r or lo/hi.
@@ -1872,6 +2025,58 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                 torch.cuda.synchronize(device)
             _dist_barrier()
 
+            if adiabatic_enabled:
+                previous_progress = adiabatic_progress
+                if local_rank == 0:
+                    adiabatic_point = {
+                        "epoch": epoch + 1,
+                        "progress": previous_progress,
+                        "sparse_accuracy": float(sparse_accuracy),
+                        "sparsity": float(sparsity),
+                        "sparse_ratio": float(sparse_ratio),
+                    }
+                    if (
+                        float(sparse_accuracy) >= adiabatic_accuracy_target
+                        and (
+                            adiabatic_best_target is None
+                            or previous_progress > adiabatic_best_target["progress"]
+                        )
+                    ):
+                        adiabatic_best_target = adiabatic_point
+                    if (
+                        float(sparse_accuracy)
+                        >= adiabatic_accuracy_target - adiabatic_accuracy_tolerance
+                        and (
+                            adiabatic_best_floor is None
+                            or previous_progress > adiabatic_best_floor["progress"]
+                        )
+                    ):
+                        adiabatic_best_floor = adiabatic_point
+                (
+                    adiabatic_progress,
+                    adiabatic_good_epochs,
+                    adiabatic_action,
+                ) = _update_adiabatic_progress(
+                    progress=adiabatic_progress,
+                    good_epochs=adiabatic_good_epochs,
+                    sparse_accuracy=float(sparse_accuracy),
+                    target_accuracy=float(adiabatic_accuracy_target),
+                    tolerance=float(adiabatic_accuracy_tolerance),
+                    step=float(adiabatic_step),
+                    backoff=float(adiabatic_backoff),
+                    patience=int(adiabatic_patience),
+                )
+                if local_rank == 0:
+                    print(
+                        f"[ADIABATIC CONTROL] epoch={epoch + 1}, "
+                        f"sparse_accuracy={float(sparse_accuracy):.4f}, "
+                        f"target={adiabatic_accuracy_target:.4f}, "
+                        f"floor={adiabatic_accuracy_target - adiabatic_accuracy_tolerance:.4f}, "
+                        f"action={adiabatic_action}, progress={previous_progress:.4f}"
+                        f"->{adiabatic_progress:.4f}, good_epochs={adiabatic_good_epochs}",
+                        flush=True,
+                    )
+
             if (model_name == "AlexNet" or model_name == "VGG16") and accuracy < 0.12 and epoch >= 3:
                 if local_rank == 0:
                     log += f"Accuracy is too low! (A1.0), delta: {delta}\n"
@@ -1895,4 +2100,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
         print(f"zstd_ratios = {zstd_ratios}", flush=True)
         print(f"sparse_accuracies = {sparse_accuracies}", flush=True)
         print(f"sparse_ratios = {sparse_ratios}", flush=True)
+        if adiabatic_enabled:
+            print(f"adiabatic_best_target = {adiabatic_best_target}", flush=True)
+            print(f"adiabatic_best_floor = {adiabatic_best_floor}", flush=True)
     return

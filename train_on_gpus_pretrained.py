@@ -555,6 +555,7 @@ def print_config(model_name, args, h, local_rank_to_print):
     print(f"model={model_name}", flush=True)
     print(f"criterion={h['criterion_name']}", flush=True)
     print(f"C={h['C']}", flush=True)
+    print(f"layer_C={h['layer_C']}", flush=True)
     print(f"delta={args.delta}", flush=True)
     print(f"gamma={args.gamma}", flush=True)    
     print(f"lr={h['lr']}", flush=True)
@@ -576,6 +577,11 @@ def print_config(model_name, args, h, local_rank_to_print):
     print(f"sparsity_schedule={h['sparsity_schedule']}", flush=True)
     print(f"freeze_mask={h['freeze_mask']}", flush=True)
     print(f"train_sparse={h['train_sparse']}", flush=True)
+    print(f"adiabatic_accuracy_target={h['adiabatic_accuracy_target']}", flush=True)
+    print(f"adiabatic_accuracy_tolerance={h['adiabatic_accuracy_tolerance']}", flush=True)
+    print(f"adiabatic_step={h['adiabatic_step']}", flush=True)
+    print(f"adiabatic_backoff={h['adiabatic_backoff']}", flush=True)
+    print(f"adiabatic_patience={h['adiabatic_patience']}", flush=True)
     print(f"metrics_interval={h['metrics_interval']}", flush=True)
     print(f"entropy_warmup_epochs={h['entropy_warmup_epochs']}", flush=True)
     print(f"entropy_every={h['entropy_every']}", flush=True)
@@ -687,6 +693,12 @@ def main():
     parser.add_argument("--sparsity_schedule", type=str, default=None, help="Iterative prune-and-heal schedule, replacing the smooth ramp. Stages ';'-separated, each 'reach:hold:s1,...,s8' with 1-based epochs (test_143)")
     parser.add_argument("--freeze_mask", type=str, default="N", choices=["Y", "N"], help="Freeze the pruned index set per plateau (Deep-Compression style) instead of recomputing |w|<=thr every epoch (test_144)")
     parser.add_argument("--train_sparse", type=str, default="N", choices=["Y", "N"], help="Optimize the sparse subnetwork directly: hold pruned weights at zero with zero gradient, update only survivors (test_146)")
+    parser.add_argument("--layer_C", type=str, default=None, help="Comma-separated quantization levels per weight tensor. Deep-Compression control for AlexNet: 256,256,256,256,256,32,32,32")
+    parser.add_argument("--adiabatic_accuracy_target", type=float, default=None, help="Enable accuracy-controlled sparsity and advance only at/above this sparse accuracy")
+    parser.add_argument("--adiabatic_accuracy_tolerance", type=float, default=0.2, help="Hysteresis below the adiabatic accuracy target before sparsity is rolled back")
+    parser.add_argument("--adiabatic_step", type=float, default=0.02, help="Fraction of the final per-layer sparsity vector added after each accepted plateau")
+    parser.add_argument("--adiabatic_backoff", type=float, default=0.04, help="Fraction of final sparsity removed when accuracy falls below the hysteresis band")
+    parser.add_argument("--adiabatic_patience", type=int, default=2, help="Consecutive evaluations at target accuracy required before increasing sparsity")
     parser.add_argument("--target_sparsity", type=float, default=None, help="If >0: per-layer prune the smallest this fraction of |w| (overrides mag_prune_ratio)")
     parser.add_argument("--sparsity_warmup_epochs", type=int, default=None, help="If >0: ramp effective sparsity 0->target linearly over this many epochs")
     parser.add_argument("--sparsity_ramp_power", type=float, default=None, help="Ramp profile exponent: 1.0 linear, <1 concave (gentle increments near target)")
@@ -785,6 +797,16 @@ def main():
     h["sparsity_schedule"] = args.sparsity_schedule if args.sparsity_schedule else None
     h["freeze_mask"] = (args.freeze_mask == "Y")
     h["train_sparse"] = (args.train_sparse == "Y")
+    h["layer_C"] = (
+        [int(s) for s in args.layer_C.split(",") if s.strip() != ""]
+        if args.layer_C is not None
+        else None
+    )
+    h["adiabatic_accuracy_target"] = args.adiabatic_accuracy_target
+    h["adiabatic_accuracy_tolerance"] = args.adiabatic_accuracy_tolerance
+    h["adiabatic_step"] = args.adiabatic_step
+    h["adiabatic_backoff"] = args.adiabatic_backoff
+    h["adiabatic_patience"] = args.adiabatic_patience
     if args.max_iterations is not None:
         h["max_iterations"] = args.max_iterations
     if args.C is not None:
@@ -937,6 +959,12 @@ def main():
         sparsity_schedule=h["sparsity_schedule"],
         freeze_mask=h["freeze_mask"],
         train_sparse=h["train_sparse"],
+        layer_C=h["layer_C"],
+        adiabatic_accuracy_target=h["adiabatic_accuracy_target"],
+        adiabatic_accuracy_tolerance=h["adiabatic_accuracy_tolerance"],
+        adiabatic_step=h["adiabatic_step"],
+        adiabatic_backoff=h["adiabatic_backoff"],
+        adiabatic_patience=h["adiabatic_patience"],
     )
 
     if ddp_needed(model_name):
