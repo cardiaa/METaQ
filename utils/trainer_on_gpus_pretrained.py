@@ -27,7 +27,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                        conv_sparsity=None, fc_sparsity=None, layer_sparsity=None,
                        flat_schedule=False, dual_step=0.5,
                        use_prox=False, prox_gamma=1e-7, prox_start_epoch=0,
-                       sparsity_schedule=None):
+                       sparsity_schedule=None, freeze_mask=False):
     """Train and evaluate a model with optional entropy regularization.
 
     This function is intentionally self-contained because the compression
@@ -99,6 +99,19 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
             85% collapsed the net in test_116); later stages are small steps and
             can jump in a single epoch.  When set, it takes priority over
             layer_sparsity / conv+fc / target_sparsity.
+        freeze_mask: test_144.  Freeze the actual pruned INDEX SET (not just the
+            threshold) for the duration of each plateau, Deep-Compression style.
+            Today the mask is `|w| <= thr` recomputed every forward: as the net
+            heals (weights move) a pruned weight can climb back above thr and a
+            surviving one drop below it, so WHICH weights are pruned flip-flops
+            epoch to epoch.  test_143 showed the dense net healing smoothly at the
+            first plateau (A_NQ 30.9->34.8) while the DEPLOYED accuracy oscillated
+            33-47 -- the instability was in the moving mask, not the training.
+            With this flag the boolean mask is computed once when a new sparsity
+            target is reached and held fixed while that target holds; the net then
+            heals INTO a fixed sparse structure, and only refreezes when the
+            target changes (a sub-ramp step or a stage jump).  Default False keeps
+            the recompute-every-epoch behaviour of every earlier test.
     """
 
     torch.set_num_threads(1)
@@ -269,6 +282,11 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
     # the epoch, so a threshold frozen at epoch start is stale by evaluation time;
     # keeping the target lets us recompute it on the spot (see _refresh_prune_thresholds).
     effective_ts_by_layer = [None] * num_param_tensors
+    # test_144: the frozen pruned index set (boolean, flattened) per layer, and
+    # the effective target it was built for -- so it can be refrozen only when the
+    # target actually changes.  Used only when freeze_mask is on.
+    frozen_prune_masks = [None] * num_param_tensors
+    frozen_mask_ts = [None] * num_param_tensors
 
     # test_124: full Deep-Compression-style per-layer sparsity.  layer_sparsity is
     # a list with one target per quantized tensor (in the order of params_for_quant:
@@ -348,9 +366,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                 # grid-reset warmup so the L1 push has begun shrinking weights.
                 if (prune_mode == "magnitude"
                         and epoch >= entropy_warmup_epochs + 1):
-                    prune_mask = _perspective_prune_mask(
-                        w_flat, v_layer, target_prune_thresholds[q_state]
-                    )
+                    prune_mask = _mask_to_apply(q_state, w_flat, v_layer)
                     q_flat = torch.where(
                         prune_mask,
                         torch.zeros_like(q_flat),
@@ -771,11 +787,21 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                     param.detach().reshape(-1), v_list[p_idx], ts_layer
                 )
 
-    def _quantize_with_magnitude_pruning(w_flat, v_layer, thr=None):
+    def _mask_to_apply(p_idx, w_flat, v_layer):
+        # test_144: use the frozen index set if we have one; otherwise the usual
+        # |w| <= threshold recomputed from current weights.
+        if freeze_mask and frozen_prune_masks[p_idx] is not None:
+            return frozen_prune_masks[p_idx]
+        return _perspective_prune_mask(
+            w_flat, v_layer, target_prune_thresholds[p_idx]
+        )
+
+    def _quantize_with_magnitude_pruning(w_flat, v_layer, thr=None, frozen_mask=None):
         q_idx, q_flat = _quantize_with_deadzone(
             w_flat, v_layer, apply_pruning_deadzone=False,
         )
-        prune_mask = _perspective_prune_mask(w_flat, v_layer, thr)
+        prune_mask = (frozen_mask if frozen_mask is not None
+                      else _perspective_prune_mask(w_flat, v_layer, thr))
         q_flat = torch.where(prune_mask, torch.zeros_like(q_flat), q_flat)
         return q_idx, q_flat
 
@@ -958,6 +984,18 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                     # test_136: remember the target this threshold was built for,
                     # so it can be refreshed at evaluation time in prox mode.
                     effective_ts_by_layer[p_idx] = effective_ts
+                    # test_144: (re)freeze the boolean mask only when the target
+                    # changed -- i.e. during the sub-ramp and at each stage jump.
+                    # While a plateau holds, the target is constant and the mask
+                    # is left fixed, so the net heals into a stable sparse set.
+                    if freeze_mask:
+                        prev_ts = frozen_mask_ts[p_idx]
+                        if prev_ts is None or abs(effective_ts - prev_ts) > 1e-6:
+                            frozen_prune_masks[p_idx] = _perspective_prune_mask(
+                                w_layer, v_list[p_idx],
+                                target_prune_thresholds[p_idx],
+                            ).clone()
+                            frozen_mask_ts[p_idx] = effective_ts
             if local_rank == 0:
                 if staged_vec is not None:
                     tgt_str = "staged=[" + ",".join(f"{v:.2f}" for v in staged_vec) + "]"
@@ -1384,6 +1422,8 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                                 w_layer,
                                 v_layer,
                                 target_prune_thresholds[quant_state],
+                                frozen_mask=(frozen_prune_masks[quant_state]
+                                             if freeze_mask else None),
                             )
                         else:
                             s_idx_layer, s_layer, _ = _quantize_with_dual_zero_pruning(
@@ -1769,7 +1809,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                             vl = v_list[p_idx]
                             thr = target_prune_thresholds[p_idx]
                             y_means.append(_perspective_y_star(wl, vl).mean().item())
-                            pm = _perspective_prune_mask(wl, vl, thr)
+                            pm = _mask_to_apply(p_idx, wl, vl)   # test_144: frozen if on
                             prune_fracs.append(pm.float().mean().item())
                             eff_thr = thr if thr is not None else (mag_prune_ratio * vl.abs().min())
                             thr_list.append(float(eff_thr))
