@@ -53,6 +53,64 @@ def _update_adiabatic_progress(
     return progress, 0, "hold"
 
 
+def _aggregate_codebook_gradient(
+    grad_flat: torch.Tensor,
+    assignment: torch.Tensor,
+    num_centroids: int,
+) -> torch.Tensor:
+    """Sum per-weight gradients into their fixed codebook buckets."""
+    if grad_flat.ndim != 1 or assignment.ndim != 1:
+        raise ValueError("Codebook gradients and assignments must be flat tensors.")
+    if grad_flat.numel() != assignment.numel():
+        raise ValueError("Codebook gradient and assignment sizes do not match.")
+
+    centroid_grad = torch.zeros(
+        num_centroids,
+        dtype=grad_flat.dtype,
+        device=grad_flat.device,
+    )
+    centroid_grad.scatter_add_(0, assignment, grad_flat)
+    return centroid_grad
+
+
+def _rebuild_sorted_codebook(
+    values_flat: torch.Tensor,
+    assignment: torch.Tensor,
+    old_centroids: torch.Tensor,
+) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
+    """Retie weights while preserving fixed cluster membership.
+
+    Sorting keeps the codebook valid for bucketize-based evaluation. If two
+    centroids cross, assignments are relabelled so each weight remains in the
+    same cluster and retains the same centroid value.
+    """
+    num_centroids = old_centroids.numel()
+    counts = torch.bincount(assignment, minlength=num_centroids)
+    sums = torch.zeros_like(old_centroids)
+    sums.scatter_add_(0, assignment, values_flat.to(dtype=old_centroids.dtype))
+    updated = torch.where(
+        counts > 0,
+        sums / counts.clamp_min(1).to(dtype=sums.dtype),
+        old_centroids,
+    )
+
+    sorted_centroids, old_index_at_new = torch.sort(updated)
+    new_index_for_old = torch.empty_like(old_index_at_new)
+    new_index_for_old[old_index_at_new] = torch.arange(
+        num_centroids,
+        dtype=assignment.dtype,
+        device=assignment.device,
+    )
+    relabelled_assignment = new_index_for_old[assignment]
+    projected_values = sorted_centroids[relabelled_assignment]
+    return (
+        sorted_centroids,
+        relabelled_assignment,
+        projected_values,
+        new_index_for_old,
+    )
+
+
 def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T1_explicit, T2_explicit, subgradient_step, w0, r, 
                        first_best_indices, BestQuantization_target_acc, final_target_acc, target_zstd_ratio, min_xi, max_xi, upper_c, 
                        lower_c, c1, c2, zeta, l, n_epochs, max_iterations, device, train_optimizer, entropy_optimizer, trainloader,
@@ -64,7 +122,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                        flat_schedule=False, dual_step=0.5,
                        use_prox=False, prox_gamma=1e-7, prox_start_epoch=0,
                        sparsity_schedule=None, freeze_mask=False,
-                       train_sparse=False, layer_C=None,
+                       train_sparse=False, layer_C=None, train_centroids=False,
                        adiabatic_accuracy_target=None, adiabatic_accuracy_tolerance=0.2,
                        adiabatic_step=0.02, adiabatic_backoff=0.04,
                        adiabatic_patience=2):
@@ -167,6 +225,11 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
             tensor. This supports the Deep-Compression control (256 levels / 8
             bits for convolutional tensors and 32 levels / 5 bits for fully
             connected tensors) instead of forcing one global C.
+        train_centroids: Deep-Compression-style codebook fine-tuning. After the
+            adaptive grid is built, assignments are frozen, per-weight gradients
+            are summed by bucket, and the shared centroid values are re-tied
+            after every optimizer step. The initial implementation is restricted
+            to the no-pruning, no-regularization control.
         adiabatic_accuracy_target: when set, replace the time-driven sparsity ramp
             with closed-loop control. A scalar progress multiplies the requested
             per-layer final targets. It advances only after
@@ -249,6 +312,42 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
         raise ValueError("Every quantization level count in C/layer_C must be >= 2.")
     max_C = max(C_by_layer)
 
+    if train_centroids:
+        compression_terms_active = any(
+            value is not None and float(value) != 0.0
+            for value in (
+                T1_explicit,
+                T2_explicit,
+                T3_explicit,
+                mag_prune_ratio,
+                target_sparsity,
+                conv_sparsity,
+                fc_sparsity,
+            )
+        )
+        layer_pruning_active = (
+            layer_sparsity is not None
+            and any(float(value) != 0.0 for value in layer_sparsity)
+        )
+        if compression_terms_active or layer_pruning_active:
+            raise ValueError(
+                "--train_centroids Y currently requires T1=T2=T3=0 and no "
+                "magnitude/per-layer sparsity."
+            )
+        if any(
+            (
+                use_prox,
+                train_sparse,
+                freeze_mask,
+                sparsity_schedule is not None,
+                adiabatic_accuracy_target is not None,
+            )
+        ):
+            raise ValueError(
+                "--train_centroids Y is currently a pure quantization control "
+                "and cannot be combined with pruning, proximal, or adiabatic modes."
+            )
+
     min_w, max_w = w0 - r, w0 + r
     v_list = [
         torch.linspace(
@@ -288,6 +387,8 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
     # epoch.  It is triggered at the first real entropy step, so it remains
     # correct even when `global_step % entropy_every != 0` at batch 0.
     grid_reset_done = False
+    fixed_codebook_assignments = [None] * num_param_tensors
+    codebook_active = False
 
     # Fraction of each layer range used as explicit zero dead-zone.
     # If |w| <= deadzone_ratio * r_layer, the weight is quantized to exactly zero.
@@ -479,11 +580,15 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                 v_layer = v_list[q_state]
                 w_flat = param.data.reshape(-1)
 
-                _, q_flat = _quantize_with_deadzone(
-                    w_flat,
-                    v_layer,
-                    apply_pruning_deadzone=(prune_mode == "deadzone"),
-                )
+                fixed_assignment = fixed_codebook_assignments[q_state]
+                if train_centroids and fixed_assignment is not None:
+                    q_flat = v_layer[fixed_assignment]
+                else:
+                    _, q_flat = _quantize_with_deadzone(
+                        w_flat,
+                        v_layer,
+                        apply_pruning_deadzone=(prune_mode == "deadzone"),
+                    )
 
                 # Optimization-driven pruning: apply the cached z-based mask so the
                 # loss sees the quantized + pruned model.  One epoch of dual warmup
@@ -1045,12 +1150,49 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                     grid_infos.append((p_idx, w_layer.numel(), lo.item(), hi.item()))
                 v_list = new_v_list
                 grid_reset_done = True
+                if train_centroids:
+                    codebook_infos = []
+                    for p_idx, param in enumerate(params_for_quant):
+                        assignment, projected = _quantize_with_deadzone(
+                            param.detach().reshape(-1),
+                            v_list[p_idx],
+                            apply_pruning_deadzone=False,
+                        )
+                        fixed_codebook_assignments[p_idx] = assignment.detach().clone()
+                        param.data.copy_(projected.view_as(param))
+
+                        # Epochs before grid adaptation may have populated an SGD
+                        # momentum buffer independently for every weight. Keeping
+                        # it would immediately untie weights in the same cluster.
+                        optimizer.state.pop(param, None)
+
+                        counts = torch.bincount(
+                            assignment,
+                            minlength=C_by_layer[p_idx],
+                        )
+                        nonempty = counts[counts > 0]
+                        codebook_infos.append(
+                            (
+                                p_idx,
+                                int(nonempty.numel()),
+                                int(nonempty.min().item()) if nonempty.numel() else 0,
+                                int(nonempty.max().item()) if nonempty.numel() else 0,
+                            )
+                        )
+                    codebook_active = True
                 if local_rank == 0:
                     print(
                         f"[GRID READAPT] epoch={epoch + 1}, "
                         f"num_tensors={len(v_list)}, first_tensors={grid_infos[:4]}",
                         flush=True
                     )
+                    if train_centroids:
+                        print(
+                            "[TRAINABLE CENTROIDS INIT] "
+                            "entries=(layer,nonempty,min_count,max_count), "
+                            f"values={codebook_infos}",
+                            flush=True,
+                        )
 
         # test_111: freeze the optimization-driven pruning mask ONCE per epoch
         # (from the converged xi) and hold it for every forward of this epoch.
@@ -1184,6 +1326,8 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
         last_loss_grad_norm = None
         last_custom_beta_norm = None
         last_entropy_fraction = None
+        last_centroid_grad_norm = None
+        last_centroid_grad_abs_max = None
         # test_126 diagnostics for the perspective entropy path (Causa B).  We
         # accumulate, per epoch, the norm of the APPLIED entropy update vs the
         # loss-gradient norm (is the entropy signal strong or weak?), and the
@@ -1495,7 +1639,63 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                         mask = _mask_to_apply(p_idx, w_flat, v_list[p_idx])
                         param.grad.reshape(-1)[mask] = 0.0
 
+            # Deep Compression trained quantization: cluster membership is fixed,
+            # and the derivative of a shared centroid is the SUM of the
+            # derivatives of all weights assigned to it. DDP has already averaged
+            # every per-weight loss gradient across ranks; the bucket reduction
+            # therefore preserves the correct global gradient. GPU scatter_add is
+            # nondeterministic, so rank 0 broadcasts the tiny centroid-gradient
+            # vectors before they are expanded back to the tied weights.
+            if train_centroids and codebook_active:
+                with torch.no_grad():
+                    centroid_grad_sq = torch.zeros((), device=device)
+                    centroid_grad_abs_max = torch.zeros((), device=device)
+                    for p_idx, param in enumerate(params_for_quant):
+                        if param.grad is None:
+                            continue
+                        assignment = fixed_codebook_assignments[p_idx]
+                        centroid_grad = _aggregate_codebook_gradient(
+                            param.grad.detach().reshape(-1),
+                            assignment,
+                            C_by_layer[p_idx],
+                        )
+                        if dist.is_initialized():
+                            dist.broadcast(centroid_grad, src=0)
+                        if capture_last_norms:
+                            centroid_grad_sq += centroid_grad.float().pow(2).sum()
+                            centroid_grad_abs_max = torch.maximum(
+                                centroid_grad_abs_max,
+                                centroid_grad.abs().max(),
+                            )
+                        param.grad.copy_(
+                            centroid_grad[assignment].view_as(param)
+                        )
+                    if capture_last_norms:
+                        last_centroid_grad_norm = torch.sqrt(centroid_grad_sq).item()
+                        last_centroid_grad_abs_max = centroid_grad_abs_max.item()
+
             optimizer.step()
+
+            if train_centroids and codebook_active:
+                with torch.no_grad():
+                    for p_idx, param in enumerate(params_for_quant):
+                        old_assignment = fixed_codebook_assignments[p_idx]
+                        centroids, assignment, projected, relabel = _rebuild_sorted_codebook(
+                            param.detach().reshape(-1),
+                            old_assignment,
+                            v_list[p_idx],
+                        )
+                        if dist.is_initialized():
+                            # The mean reduction above uses GPU atomics. Broadcast
+                            # both the compact codebook and its old->new relabelling
+                            # from rank 0 so all ranks remain bit-identical.
+                            dist.broadcast(centroids, src=0)
+                            dist.broadcast(relabel, src=0)
+                            assignment = relabel[old_assignment]
+                            projected = centroids[assignment]
+                        v_list[p_idx] = centroids
+                        fixed_codebook_assignments[p_idx] = assignment
+                        param.copy_(projected.view_as(param))
 
             if train_sparse and grid_reset_done and epoch >= entropy_warmup_epochs + 1:
                 with torch.no_grad():
@@ -1598,15 +1798,26 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                         v_layer = v_list[quant_state]
 
                         # Pure quantization: no pruning deadzone.
-                        q_idx_layer, q_layer = _quantize_with_deadzone(
-                            w_layer,
-                            v_layer,
-                            apply_pruning_deadzone=False,
-                        )
+                        fixed_assignment = fixed_codebook_assignments[quant_state]
+                        if train_centroids and fixed_assignment is not None:
+                            q_idx_layer = fixed_assignment
+                            q_layer = v_layer[q_idx_layer]
+                        else:
+                            q_idx_layer, q_layer = _quantize_with_deadzone(
+                                w_layer,
+                                v_layer,
+                                apply_pruning_deadzone=False,
+                            )
 
                         # Sparse quantization: pruning decided by the sparse-aware dual-zero mass.
                         # The non-zero value is still the nearest non-zero quantization bucket.
-                        if use_perspective:
+                        if train_centroids and fixed_assignment is not None:
+                            # The first centroid-training control forbids pruning,
+                            # so dense and deployed streams share the exact fixed
+                            # codebook indices.
+                            s_idx_layer = q_idx_layer
+                            s_layer = q_layer.clone()
+                        elif use_perspective:
                             # Magnitude pruning, same rule (and frozen threshold)
                             # used in the forward.
                             s_idx_layer, s_layer = _quantize_with_magnitude_pruning(
@@ -1709,9 +1920,13 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                     quantized_entropy = round(entropy_total) + 1
                     entropies.append(quantized_entropy)
 
-                    # Per-layer metadata:
-                    # for each tensor, store two fp32 values, e.g. w0/r or lo/hi.
-                    metadata_bits = 32 + 32 + num_param_tensors * 2 * 32
+                    # Metadata for fixed linear grids is two fp32 endpoints per
+                    # layer. A trained codebook must instead store every learned
+                    # fp32 centroid; include that cost in all reported ratios.
+                    if train_centroids:
+                        metadata_bits = 32 + 32 + sum(C_by_layer) * 32
+                    else:
+                        metadata_bits = 32 + 32 + num_param_tensors * 2 * 32
 
                     q_bytes = b"".join(q_bytes_chunks)
                     zstd_compressed = compress_zstd(q_bytes, level=22)
@@ -1824,6 +2039,25 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                 # re-multiplying by T2 (which would be misleading).
                 weighted_custom_norm = last_entropy_fraction
                 training_time_global = round(time.time() - start_time_global)
+                codebook_tie_error = None
+                codebook_min_gap = None
+                if train_centroids and codebook_active:
+                    with torch.no_grad():
+                        tie_errors = []
+                        gaps = []
+                        for p_idx, param in enumerate(params_for_quant):
+                            assignment = fixed_codebook_assignments[p_idx]
+                            centroids = v_list[p_idx]
+                            tie_errors.append(
+                                (
+                                    param.detach().reshape(-1)
+                                    - centroids[assignment]
+                                ).abs().max()
+                            )
+                            if centroids.numel() > 1:
+                                gaps.append((centroids[1:] - centroids[:-1]).min())
+                        codebook_tie_error = torch.stack(tie_errors).max().item()
+                        codebook_min_gap = torch.stack(gaps).min().item()
 
                 if epoch == 0:
                     log += f"delta = {delta}\n"
@@ -1939,6 +2173,22 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                     print(f"weighted_custom_norm_last_applied = {weighted_custom_norm:.6e}", flush=True)
                 if checksum_range is not None:
                     print(f"ddp_param_checksum_range = {checksum_range:.6e}", flush=True)
+                if codebook_tie_error is not None:
+                    centroid_grad_diag = ""
+                    if last_centroid_grad_norm is not None:
+                        centroid_grad_diag = (
+                            f", centroid_grad_norm_last_batch="
+                            f"{last_centroid_grad_norm:.6e}, "
+                            f"centroid_grad_abs_max_last_batch="
+                            f"{last_centroid_grad_abs_max:.6e}"
+                        )
+                    print(
+                        f"trainable_centroids_diag: "
+                        f"max_tie_error={codebook_tie_error:.6e}, "
+                        f"min_sorted_gap={codebook_min_gap:.6e}"
+                        f"{centroid_grad_diag}",
+                        flush=True,
+                    )
                 print(f"A_NQ = {accuracy}", flush=True)
                 print(f"A_Q = {quantized_accuracy}", flush=True)
                 print(f"H_Q = {quantized_entropy}", flush=True)
