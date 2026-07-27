@@ -73,6 +73,71 @@ def _aggregate_codebook_gradient(
     return centroid_grad
 
 
+def _lloyd_codebook_1d(
+    values_flat: torch.Tensor,
+    initial_centroids: torch.Tensor,
+    max_iterations: int,
+    tolerance: float = 1e-7,
+) -> tuple[torch.Tensor, torch.Tensor, int, float, float, float]:
+    """Run scalar Lloyd clustering from a sorted linear initialization."""
+    if values_flat.ndim != 1 or initial_centroids.ndim != 1:
+        raise ValueError("Lloyd values and centroids must be flat tensors.")
+    if initial_centroids.numel() < 2:
+        raise ValueError("Lloyd clustering requires at least two centroids.")
+    if max_iterations < 0:
+        raise ValueError("Lloyd max_iterations must be >= 0.")
+
+    centroids = torch.sort(initial_centroids.float()).values
+
+    def assign(current_centroids):
+        boundaries = (current_centroids[:-1] + current_centroids[1:]) / 2
+        return torch.bucketize(
+            values_flat,
+            boundaries,
+            right=False,
+        ).clamp_(0, current_centroids.numel() - 1)
+
+    assignment = assign(centroids)
+    initial_error = values_flat.float() - centroids[assignment]
+    initial_mse = initial_error.square().mean().item()
+    iterations_run = 0
+    final_shift = 0.0
+
+    for iteration in range(max_iterations):
+        counts = torch.bincount(
+            assignment,
+            minlength=centroids.numel(),
+        )
+        sums = torch.zeros_like(centroids)
+        sums.scatter_add_(0, assignment, values_flat.float())
+
+        updated = centroids.clone()
+        nonempty = counts > 0
+        updated[nonempty] = (
+            sums[nonempty]
+            / counts[nonempty].to(dtype=sums.dtype)
+        )
+        updated = torch.sort(updated).values
+
+        final_shift = (updated - centroids).abs().max().item()
+        centroids = updated
+        assignment = assign(centroids)
+        iterations_run = iteration + 1
+        if final_shift <= tolerance:
+            break
+
+    final_error = values_flat.float() - centroids[assignment]
+    final_mse = final_error.square().mean().item()
+    return (
+        centroids,
+        assignment,
+        iterations_run,
+        initial_mse,
+        final_mse,
+        final_shift,
+    )
+
+
 def _rebuild_sorted_codebook(
     values_flat: torch.Tensor,
     assignment: torch.Tensor,
@@ -123,7 +188,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                        use_prox=False, prox_gamma=1e-7, prox_start_epoch=0,
                        sparsity_schedule=None, freeze_mask=False,
                        train_sparse=False, layer_C=None, train_centroids=False,
-                       centroid_lr_scale=1.0,
+                       centroid_lr_scale=1.0, centroid_kmeans_iterations=0,
                        adiabatic_accuracy_target=None, adiabatic_accuracy_tolerance=0.2,
                        adiabatic_step=0.02, adiabatic_backoff=0.04,
                        adiabatic_patience=2):
@@ -234,6 +299,9 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
         centroid_lr_scale: multiplier applied to the summed centroid gradients
             before SGD. It is an explicit centroid learning-rate ratio relative
             to the base model learning rate.
+        centroid_kmeans_iterations: number of scalar Lloyd iterations run from
+            the linear grid before assignments are frozen. Zero reproduces the
+            direct linear assignment used by tests 150-152.
         adiabatic_accuracy_target: when set, replace the time-driven sparsity ramp
             with closed-loop control. A scalar progress multiplies the requested
             per-layer final targets. It advances only after
@@ -321,6 +389,8 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
             raise ValueError("--train_centroids Y currently requires SGD.")
         if not 0.0 < centroid_lr_scale <= 1.0:
             raise ValueError("--centroid_lr_scale must be in (0, 1].")
+        if centroid_kmeans_iterations < 0:
+            raise ValueError("--centroid_kmeans_iterations must be >= 0.")
         compression_terms_active = any(
             value is not None and float(value) != 0.0
             for value in (
@@ -1161,9 +1231,45 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                 grid_reset_done = True
                 if train_centroids:
                     codebook_infos = []
+                    kmeans_infos = []
                     for p_idx, param in enumerate(params_for_quant):
+                        w_flat = param.detach().reshape(-1)
+                        if centroid_kmeans_iterations > 0:
+                            if (not dist.is_initialized()) or local_rank == 0:
+                                (
+                                    learned_centroids,
+                                    _,
+                                    iterations_run,
+                                    initial_mse,
+                                    final_mse,
+                                    final_shift,
+                                ) = _lloyd_codebook_1d(
+                                    w_flat,
+                                    v_list[p_idx],
+                                    centroid_kmeans_iterations,
+                                )
+                            else:
+                                learned_centroids = torch.empty_like(v_list[p_idx])
+                                iterations_run = 0
+                                initial_mse = 0.0
+                                final_mse = 0.0
+                                final_shift = 0.0
+                            if dist.is_initialized():
+                                dist.broadcast(learned_centroids, src=0)
+                            v_list[p_idx] = learned_centroids
+                            if local_rank == 0:
+                                kmeans_infos.append(
+                                    (
+                                        p_idx,
+                                        iterations_run,
+                                        initial_mse,
+                                        final_mse,
+                                        final_shift,
+                                    )
+                                )
+
                         assignment, projected = _quantize_with_deadzone(
-                            param.detach().reshape(-1),
+                            w_flat,
                             v_list[p_idx],
                             apply_pruning_deadzone=False,
                         )
@@ -1197,6 +1303,13 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                         flush=True
                     )
                     if train_centroids:
+                        if centroid_kmeans_iterations > 0:
+                            print(
+                                "[CENTROID KMEANS] "
+                                "entries=(layer,iterations,initial_mse,final_mse,"
+                                f"final_max_shift), values={kmeans_infos}",
+                                flush=True,
+                            )
                         print(
                             "[TRAINABLE CENTROIDS INIT] "
                             "entries=(layer,nonempty,min_count,max_count), "
