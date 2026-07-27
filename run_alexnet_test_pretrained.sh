@@ -72,8 +72,17 @@ srun --ntasks=$SLURM_NTASKS --ntasks-per-node=1 bash -lc '
             --T1 '"$T1"' \
             --T2 '"$T2"' \
             --epoch_fraction '"$EPOCH_FRACTION"' \
-            --n_epochs 8 \
+            --n_epochs 16 \
             --lr 1e-4 \
+            --T3 0 \
+            --perspective Y \
+            --flat_schedule Y \
+            --layer_sparsity 0.08,0.31,0.325,0.315,0.315,0.455,0.455,0.375 \
+            --sparsity_warmup_epochs 6 \
+            --sparsity_ramp_power 1.0 \
+            --freeze_mask Y \
+            --train_sparse Y \
+            --quantization N \
             --max_iterations 3 \
             --metrics_interval 1 \
             --entropy_warmup_epochs 1 \
@@ -101,8 +110,17 @@ srun --ntasks=$SLURM_NTASKS --ntasks-per-node=1 bash -lc '
             --T1 '"$T1"' \
             --T2 '"$T2"' \
             --epoch_fraction '"$EPOCH_FRACTION"' \
-            --n_epochs 8 \
+            --n_epochs 16 \
             --lr 1e-4 \
+            --T3 0 \
+            --perspective Y \
+            --flat_schedule Y \
+            --layer_sparsity 0.08,0.31,0.325,0.315,0.315,0.455,0.455,0.375 \
+            --sparsity_warmup_epochs 6 \
+            --sparsity_ramp_power 1.0 \
+            --freeze_mask Y \
+            --train_sparse Y \
+            --quantization N \
             --max_iterations 3 \
             --metrics_interval 1 \
             --entropy_warmup_epochs 1 \

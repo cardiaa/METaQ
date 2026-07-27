@@ -187,7 +187,8 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                        flat_schedule=False, dual_step=0.5,
                        use_prox=False, prox_gamma=1e-7, prox_start_epoch=0,
                        sparsity_schedule=None, freeze_mask=False,
-                       train_sparse=False, layer_C=None, train_centroids=False,
+                       train_sparse=False, use_quantization=True, layer_C=None,
+                       train_centroids=False,
                        centroid_lr_scale=1.0, centroid_kmeans_iterations=0,
                        centroid_freeze_epoch=0,
                        adiabatic_accuracy_target=None, adiabatic_accuracy_tolerance=0.2,
@@ -288,6 +289,10 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
             main untested methodological difference from Deep Compression (which
             trains the fixed sparse subnet).  Default False keeps the old
             behaviour.
+        use_quantization: when false, train and evaluate the magnitude-pruned
+            network in FP32. Compression metrics then count the nonzero values as
+            raw FP32 rather than incorrectly counting quantization indices. This
+            provides the pruning-first control used by test_155.
         layer_C: optional number of non-zero quantization levels for every weight
             tensor. This supports the Deep-Compression control (256 levels / 8
             bits for convolutional tensors and 32 levels / 5 bits for fully
@@ -393,6 +398,22 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
     if any(c < 2 for c in C_by_layer):
         raise ValueError("Every quantization level count in C/layer_C must be >= 2.")
     max_C = max(C_by_layer)
+
+    if not use_quantization:
+        if not use_perspective:
+            raise ValueError(
+                "--quantization N currently supports magnitude pruning only; "
+                "use it with --perspective Y."
+            )
+        if T2_explicit != 0.0:
+            raise ValueError(
+                "--quantization N requires --T2 0 because the entropy term is "
+                "defined on quantization buckets."
+            )
+        if train_centroids:
+            raise ValueError(
+                "--train_centroids Y requires --quantization Y."
+            )
 
     if train_centroids:
         if train_optimizer != "SGD":
@@ -520,7 +541,9 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
     # test_110: the fake-quant forward also prunes (see prune_mode below) so the
     # loss sees the quantized + PRUNED model and learns to tolerate the pruning
     # (sparse_accuracy was stuck at ~3% because the net was not pruning-aware).
-    use_fake_quant_forward = True
+    # test_155: the public quantization switch makes this a genuine pruning-only
+    # run. Magnitude masks are still applied below, but surviving values remain
+    # FP32 in both the forward pass and deployment metrics.
 
     # ENTROPY SUBGRADIENT SANITIZATION (test_105).
     # The per-weight entropy subgradient is beta = xi_eff / v, which explodes
@@ -668,7 +691,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
         """
         backups = []
 
-        if (not grid_reset_done) or (not use_fake_quant_forward):
+        if not grid_reset_done:
             return backups
 
         with torch.no_grad():
@@ -680,7 +703,9 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                 w_flat = param.data.reshape(-1)
 
                 fixed_assignment = fixed_codebook_assignments[q_state]
-                if train_centroids and fixed_assignment is not None:
+                if not use_quantization:
+                    q_flat = w_flat.clone()
+                elif train_centroids and fixed_assignment is not None:
                     q_flat = v_layer[fixed_assignment]
                 else:
                     _, q_flat = _quantize_with_deadzone(
@@ -2019,44 +2044,63 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                     if full_idx in quant_param_indices and QuantizationType == "center":
                         v_layer = v_list[quant_state]
 
-                        # Pure quantization: no pruning deadzone.
-                        fixed_assignment = fixed_codebook_assignments[quant_state]
-                        if train_centroids and fixed_assignment is not None:
-                            q_idx_layer = fixed_assignment
-                            q_layer = v_layer[q_idx_layer]
+                        if not use_quantization:
+                            # Pruning-only control: the dense and surviving
+                            # values stay FP32. The sparse stream differs only by
+                            # the same magnitude mask used during training.
+                            q_idx_layer = None
+                            s_idx_layer = None
+                            q_layer = w_layer.clone()
+                            if (
+                                use_perspective
+                                and effective_ts_by_layer[quant_state] is not None
+                            ):
+                                prune_mask = _mask_to_apply(
+                                    quant_state,
+                                    w_layer,
+                                    v_layer,
+                                )
+                                s_layer = torch.where(
+                                    prune_mask,
+                                    torch.zeros_like(w_layer),
+                                    w_layer,
+                                )
+                            else:
+                                s_layer = w_layer.clone()
                         else:
-                            q_idx_layer, q_layer = _quantize_with_deadzone(
-                                w_layer,
-                                v_layer,
-                                apply_pruning_deadzone=False,
-                            )
+                            # Pure quantization: no pruning deadzone.
+                            fixed_assignment = fixed_codebook_assignments[quant_state]
+                            if train_centroids and fixed_assignment is not None:
+                                q_idx_layer = fixed_assignment
+                                q_layer = v_layer[q_idx_layer]
+                            else:
+                                q_idx_layer, q_layer = _quantize_with_deadzone(
+                                    w_layer,
+                                    v_layer,
+                                    apply_pruning_deadzone=False,
+                                )
 
-                        # Sparse quantization: pruning decided by the sparse-aware dual-zero mass.
-                        # The non-zero value is still the nearest non-zero quantization bucket.
-                        if train_centroids and fixed_assignment is not None:
-                            # The first centroid-training control forbids pruning,
-                            # so dense and deployed streams share the exact fixed
-                            # codebook indices.
-                            s_idx_layer = q_idx_layer
-                            s_layer = q_layer.clone()
-                        elif use_perspective:
-                            # Magnitude pruning, same rule (and frozen threshold)
-                            # used in the forward.
-                            s_idx_layer, s_layer = _quantize_with_magnitude_pruning(
-                                w_layer,
-                                v_layer,
-                                target_prune_thresholds[quant_state],
-                                frozen_mask=(frozen_prune_masks[quant_state]
-                                             if freeze_mask else None),
-                            )
-                        else:
-                            s_idx_layer, s_layer, _ = _quantize_with_dual_zero_pruning(
-                                w_layer,
-                                v_layer,
-                                xi_list[quant_state],
-                            )
+                            # Sparse quantization: pruning decided by the
+                            # configured sparse-aware rule.
+                            if train_centroids and fixed_assignment is not None:
+                                s_idx_layer = q_idx_layer
+                                s_layer = q_layer.clone()
+                            elif use_perspective:
+                                s_idx_layer, s_layer = _quantize_with_magnitude_pruning(
+                                    w_layer,
+                                    v_layer,
+                                    target_prune_thresholds[quant_state],
+                                    frozen_mask=(frozen_prune_masks[quant_state]
+                                                 if freeze_mask else None),
+                                )
+                            else:
+                                s_idx_layer, s_layer, _ = _quantize_with_dual_zero_pruning(
+                                    w_layer,
+                                    v_layer,
+                                    xi_list[quant_state],
+                                )
 
-                        s_layer[s_layer.abs() <= sparsity_threshold] = 0.0
+                            s_layer[s_layer.abs() <= sparsity_threshold] = 0.0
 
                         q_idx_layers.append(q_idx_layer)
                         q_vals_layers.append(q_layer)
@@ -2100,65 +2144,82 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                         s_vals_layers,
                         C_by_layer,
                     ):
-                        # Dense quantized stream: pure quantization, no pruning deadzone.
-                        counts = torch.bincount(
-                            q_idx_layer, minlength=C_layer
-                        ).to(torch.float32)
-                        probs = counts / counts.sum()
-                        probs = probs[probs > 0]
-
-                        entropy_total += float((-(probs * torch.log2(probs)).sum() * counts.sum()).item())
-
-                        q_bytes_chunks.append(_pack_quant_indices(q_idx_layer, C_layer))
-
-                        # Sparse stream: pruning deadzone applied.
-                        nz_mask_layer = s_vals_layer.abs() > sparsity_threshold
+                        if use_quantization:
+                            # Dense quantized stream: bucket indices.
+                            counts = torch.bincount(
+                                q_idx_layer, minlength=C_layer
+                            ).to(torch.float32)
+                            probs = counts / counts.sum()
+                            probs = probs[probs > 0]
+                            entropy_total += float(
+                                (-(probs * torch.log2(probs)).sum() * counts.sum()).item()
+                            )
+                            q_bytes_chunks.append(
+                                _pack_quant_indices(q_idx_layer, C_layer)
+                            )
+                            nz_mask_layer = s_vals_layer.abs() > sparsity_threshold
+                        else:
+                            # FP32 pruning-only stream. Values are accounted for
+                            # at 32 bits each below; do not materialize hundreds
+                            # of MB of bytes merely to describe the baseline.
+                            nz_mask_layer = s_vals_layer != 0.0
                         nz_masks.append(nz_mask_layer)
 
-                        total_n += s_idx_layer.numel()
+                        total_n += s_vals_layer.numel()
                         total_nz += int(nz_mask_layer.sum().item())
 
-                        nz_idx_layer = s_idx_layer[nz_mask_layer]
+                        if use_quantization:
+                            nz_idx_layer = s_idx_layer[nz_mask_layer]
+                            num_zero_layer = int((~nz_mask_layer).sum().item())
+                            sparse_symbol_counts[0] += num_zero_layer
 
-                        num_zero_layer = int((~nz_mask_layer).sum().item())
-                        sparse_symbol_counts[0] += num_zero_layer
+                            if nz_idx_layer.numel() > 0:
+                                counts_nz = torch.bincount(
+                                    nz_idx_layer,
+                                    minlength=C_layer,
+                                ).to(dtype=torch.float64)
+                                sparse_symbol_counts[1:1 + C_layer] += counts_nz
+                                nz_index_counts[:C_layer] += counts_nz
 
-                        if nz_idx_layer.numel() > 0:
-                            sparse_symbol_counts[1:1 + C_layer] += torch.bincount(
-                                nz_idx_layer,
-                                minlength=C_layer,
-                            ).to(dtype=torch.float64)
+                            nz_idx_bytes_chunks.append(
+                                _pack_quant_indices(nz_idx_layer, C_layer)
+                            )
+                        else:
+                            # Raw nonzero FP32 storage is counted from total_nz.
+                            pass
 
-                        if nz_idx_layer.numel() > 0:
-                            nz_index_counts[:C_layer] += torch.bincount(
-                                nz_idx_layer,
-                                minlength=C_layer,
-                            ).to(dtype=torch.float64)
-
-                        nz_idx_bytes_chunks.append(
-                            _pack_quant_indices(nz_idx_layer, C_layer)
-                        )
-
-                    quantized_entropy = round(entropy_total) + 1
+                    quantized_entropy = (
+                        round(entropy_total) + 1
+                        if use_quantization
+                        else total_n * 32
+                    )
                     entropies.append(quantized_entropy)
 
                     # Metadata for fixed linear grids is two fp32 endpoints per
                     # layer. A trained codebook must instead store every learned
                     # fp32 centroid; include that cost in all reported ratios.
-                    if train_centroids and codebook_active:
+                    if not use_quantization:
+                        metadata_bits = 0
+                    elif train_centroids and codebook_active:
                         metadata_bits = 32 + 32 + sum(C_by_layer) * 32
                     else:
                         metadata_bits = 32 + 32 + num_param_tensors * 2 * 32
 
-                    q_bytes = b"".join(q_bytes_chunks)
-                    zstd_compressed = compress_zstd(q_bytes, level=22)
-
                     original_bits = total_n * 32
-                    compressed_bits = len(zstd_compressed) * 8 + metadata_bits
+                    if use_quantization:
+                        q_bytes = b"".join(q_bytes_chunks)
+                        zstd_compressed = compress_zstd(q_bytes, level=22)
+                        compressed_bits = len(zstd_compressed) * 8 + metadata_bits
+                    else:
+                        compressed_bits = original_bits
                     zstd_ratio = compressed_bits / original_bits
 
                     # Dense entropy diagnostics.
-                    dense_entropy_bits = float(entropy_total)
+                    dense_entropy_bits = (
+                        float(entropy_total)
+                        if use_quantization
+                        else float(original_bits)
+                    )
                     dense_entropy_bits_per_weight = dense_entropy_bits / float(total_n)
                     dense_entropy_ratio = dense_entropy_bits / float(original_bits)
                     metadata_ratio = metadata_bits / float(original_bits)                    
@@ -2169,13 +2230,15 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                     mask_np = global_nz_mask.to(torch.uint8).cpu().numpy()
 
                     bitmask_bytes = pack_bitmaskGPU(mask_np)
-                    nz_idx_bytes = b"".join(nz_idx_bytes_chunks)
-
                     compressed_mask = compress_zstd(bitmask_bytes, level=22)
-                    compressed_values = compress_zstd(nz_idx_bytes, level=22)
 
                     mask_compressed_bits = len(compressed_mask) * 8
-                    values_compressed_bits = len(compressed_values) * 8
+                    if use_quantization:
+                        nz_idx_bytes = b"".join(nz_idx_bytes_chunks)
+                        compressed_values = compress_zstd(nz_idx_bytes, level=22)
+                        values_compressed_bits = len(compressed_values) * 8
+                    else:
+                        values_compressed_bits = total_nz * 32
 
                     compressed_sparse_bits = (
                         mask_compressed_bits +
@@ -2204,7 +2267,12 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                     mask_entropy_bits = mask_entropy_bits_per_weight * float(total_n)
                     mask_entropy_ratio = mask_entropy_bits / float(original_bits)
 
-                    if total_nz > 0:
+                    if not use_quantization:
+                        # Raw FP32 has no codebook-index entropy. Count 32 bits
+                        # per surviving value in this conservative proxy.
+                        nonzero_index_entropy_bits_per_nonzero = 32.0
+                        nonzero_index_entropy_bits = 32.0 * float(total_nz)
+                    elif total_nz > 0:
                         nz_probs = nz_index_counts / nz_index_counts.sum().clamp_min(1.0)
                         nz_probs = nz_probs[nz_probs > 0]
 
@@ -2225,12 +2293,21 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                     )
                     sparse_entropy_proxy_ratio = sparse_entropy_proxy_bits / float(original_bits)
 
-                    sparse_symbol_probs = sparse_symbol_counts / sparse_symbol_counts.sum().clamp_min(1.0)
-                    sparse_symbol_probs = sparse_symbol_probs[sparse_symbol_probs > 0]
-
-                    sparse_symbol_H_bits_per_weight = float(
-                        (-(sparse_symbol_probs * torch.log2(sparse_symbol_probs)).sum()).item()
-                    )
+                    if use_quantization:
+                        sparse_symbol_probs = (
+                            sparse_symbol_counts
+                            / sparse_symbol_counts.sum().clamp_min(1.0)
+                        )
+                        sparse_symbol_probs = sparse_symbol_probs[sparse_symbol_probs > 0]
+                        sparse_symbol_H_bits_per_weight = float(
+                            (
+                                -(sparse_symbol_probs * torch.log2(sparse_symbol_probs)).sum()
+                            ).item()
+                        )
+                    else:
+                        sparse_symbol_H_bits_per_weight = (
+                            mask_entropy_bits_per_weight + 32.0 * p_nz
+                        )
 
                     sparse_symbol_H_ratio = sparse_symbol_H_bits_per_weight / 32.0                    
 
@@ -2420,6 +2497,11 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                     )
                 print(f"A_NQ = {accuracy}", flush=True)
                 print(f"A_Q = {quantized_accuracy}", flush=True)
+                print(
+                    "representation_mode = "
+                    + ("quantized_indices" if use_quantization else "fp32_pruning_only"),
+                    flush=True,
+                )
                 print(f"H_Q = {quantized_entropy}", flush=True)
                 print(f"zstd_ratio = {zstd_ratio:.2%}", flush=True)
                 print(f"sparse_ratio = {sparse_ratio:.2%}", flush=True)

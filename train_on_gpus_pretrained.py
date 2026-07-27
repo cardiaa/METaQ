@@ -149,6 +149,7 @@ def build_model_and_hparams(model_name: str, device: torch.device, args, local_r
         entropy_optimizer="FISTA",
         pruning="Y",
         QuantizationType="center",
+        use_quantization=True,
         sparsity_threshold=1e-3,
         # test_113: perspective reformulation (Frangioni).
         T3_explicit=0.0,          # sparsity weight; L1 push near 0 ~ 2*sqrt(T1*T3)
@@ -612,6 +613,7 @@ def print_config(model_name, args, h, local_rank_to_print):
     print(f"entropy_optimizer={h['entropy_optimizer']}", flush=True)
     print(f"pruning={h['pruning']}", flush=True)
     print(f"QuantizationType={h['QuantizationType']}", flush=True)
+    print(f"use_quantization={h['use_quantization']}", flush=True)
     print(f"sparsity_threshold={h['sparsity_threshold']}", flush=True)
     print("-" * 60, flush=True)
     print("", flush=True)
@@ -697,6 +699,7 @@ def main():
     parser.add_argument("--sparsity_schedule", type=str, default=None, help="Iterative prune-and-heal schedule, replacing the smooth ramp. Stages ';'-separated, each 'reach:hold:s1,...,s8' with 1-based epochs (test_143)")
     parser.add_argument("--freeze_mask", type=str, default="N", choices=["Y", "N"], help="Freeze the pruned index set per plateau (Deep-Compression style) instead of recomputing |w|<=thr every epoch (test_144)")
     parser.add_argument("--train_sparse", type=str, default="N", choices=["Y", "N"], help="Optimize the sparse subnetwork directly: hold pruned weights at zero with zero gradient, update only survivors (test_146)")
+    parser.add_argument("--quantization", type=str, default="Y", choices=["Y", "N"], help="Enable quantization in training, evaluation, and compression metrics. Set N for an FP32 pruning-only control (test_155)")
     parser.add_argument("--layer_C", type=str, default=None, help="Comma-separated quantization levels per weight tensor. Deep-Compression control for AlexNet: 256,256,256,256,256,32,32,32")
     parser.add_argument("--train_centroids", type=str, default="N", choices=["Y", "N"], help="Freeze cluster assignments and train shared per-layer centroids by summing gradients within each bucket (test_150)")
     parser.add_argument("--centroid_lr_scale", type=float, default=1.0, help="Learning-rate multiplier applied to summed centroid gradients (test_151)")
@@ -805,6 +808,7 @@ def main():
     h["sparsity_schedule"] = args.sparsity_schedule if args.sparsity_schedule else None
     h["freeze_mask"] = (args.freeze_mask == "Y")
     h["train_sparse"] = (args.train_sparse == "Y")
+    h["use_quantization"] = (args.quantization == "Y")
     h["train_centroids"] = (args.train_centroids == "Y")
     h["centroid_lr_scale"] = args.centroid_lr_scale
     h["centroid_kmeans_iterations"] = args.centroid_kmeans_iterations
@@ -971,6 +975,7 @@ def main():
         sparsity_schedule=h["sparsity_schedule"],
         freeze_mask=h["freeze_mask"],
         train_sparse=h["train_sparse"],
+        use_quantization=h["use_quantization"],
         layer_C=h["layer_C"],
         train_centroids=h["train_centroids"],
         centroid_lr_scale=h["centroid_lr_scale"],
