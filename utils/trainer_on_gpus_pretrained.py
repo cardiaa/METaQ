@@ -123,6 +123,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                        use_prox=False, prox_gamma=1e-7, prox_start_epoch=0,
                        sparsity_schedule=None, freeze_mask=False,
                        train_sparse=False, layer_C=None, train_centroids=False,
+                       centroid_lr_scale=1.0,
                        adiabatic_accuracy_target=None, adiabatic_accuracy_tolerance=0.2,
                        adiabatic_step=0.02, adiabatic_backoff=0.04,
                        adiabatic_patience=2):
@@ -230,6 +231,9 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
             are summed by bucket, and the shared centroid values are re-tied
             after every optimizer step. The initial implementation is restricted
             to the no-pruning, no-regularization control.
+        centroid_lr_scale: multiplier applied to the summed centroid gradients
+            before SGD. It is an explicit centroid learning-rate ratio relative
+            to the base model learning rate.
         adiabatic_accuracy_target: when set, replace the time-driven sparsity ramp
             with closed-loop control. A scalar progress multiplies the requested
             per-layer final targets. It advances only after
@@ -313,6 +317,10 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
     max_C = max(C_by_layer)
 
     if train_centroids:
+        if train_optimizer != "SGD":
+            raise ValueError("--train_centroids Y currently requires SGD.")
+        if not 0.0 < centroid_lr_scale <= 1.0:
+            raise ValueError("--centroid_lr_scale must be in (0, 1].")
         compression_terms_active = any(
             value is not None and float(value) != 0.0
             for value in (
@@ -1130,6 +1138,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
         # pruning mask stable; re-adapting every epoch (test_108/110) made xi
         # stale at each epoch start, the forward mask shifted, and the net
         # collapsed.
+        codebook_initialized_now = False
         if epoch >= entropy_warmup_epochs and not grid_reset_done:
             with torch.no_grad():
                 new_v_list = []
@@ -1180,6 +1189,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                             )
                         )
                     codebook_active = True
+                    codebook_initialized_now = True
                 if local_rank == 0:
                     print(
                         f"[GRID READAPT] epoch={epoch + 1}, "
@@ -1193,6 +1203,22 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                             f"values={codebook_infos}",
                             flush=True,
                         )
+
+        if codebook_initialized_now:
+            _dist_barrier()
+            with torch.no_grad():
+                codebook_initial_accuracy = test_accuracyGPU(
+                    model,
+                    testloader,
+                    device,
+                )
+            _dist_barrier()
+            if local_rank == 0:
+                print(
+                    "[TRAINABLE CENTROIDS BASELINE] "
+                    f"accuracy_before_updates={codebook_initial_accuracy}",
+                    flush=True,
+                )
 
         # test_111: freeze the optimization-driven pruning mask ONCE per epoch
         # (from the converged xi) and hold it for every forward of this epoch.
@@ -1328,6 +1354,9 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
         last_entropy_fraction = None
         last_centroid_grad_norm = None
         last_centroid_grad_abs_max = None
+        centroid_displacement_max = 0.0
+        centroid_displacement_mean_sum = 0.0
+        centroid_displacement_count = 0
         # test_126 diagnostics for the perspective entropy path (Causa B).  We
         # accumulate, per epoch, the norm of the APPLIED entropy update vs the
         # loss-gradient norm (is the entropy signal strong or weak?), and the
@@ -1667,6 +1696,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                                 centroid_grad_abs_max,
                                 centroid_grad.abs().max(),
                             )
+                        centroid_grad.mul_(centroid_lr_scale)
                         param.grad.copy_(
                             centroid_grad[assignment].view_as(param)
                         )
@@ -1680,10 +1710,11 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                 with torch.no_grad():
                     for p_idx, param in enumerate(params_for_quant):
                         old_assignment = fixed_codebook_assignments[p_idx]
+                        old_centroids = v_list[p_idx]
                         centroids, assignment, projected, relabel = _rebuild_sorted_codebook(
                             param.detach().reshape(-1),
                             old_assignment,
-                            v_list[p_idx],
+                            old_centroids,
                         )
                         if dist.is_initialized():
                             # The mean reduction above uses GPU atomics. Broadcast
@@ -1693,6 +1724,17 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                             dist.broadcast(relabel, src=0)
                             assignment = relabel[old_assignment]
                             projected = centroids[assignment]
+                        centroid_displacement = (
+                            centroids[relabel] - old_centroids
+                        ).abs()
+                        centroid_displacement_max = max(
+                            centroid_displacement_max,
+                            centroid_displacement.max().item(),
+                        )
+                        centroid_displacement_mean_sum += (
+                            centroid_displacement.mean().item()
+                        )
+                        centroid_displacement_count += 1
                         v_list[p_idx] = centroids
                         fixed_codebook_assignments[p_idx] = assignment
                         param.copy_(projected.view_as(param))
@@ -2182,10 +2224,17 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                             f"centroid_grad_abs_max_last_batch="
                             f"{last_centroid_grad_abs_max:.6e}"
                         )
+                    displacement_mean = (
+                        centroid_displacement_mean_sum
+                        / max(1, centroid_displacement_count)
+                    )
                     print(
                         f"trainable_centroids_diag: "
+                        f"lr_scale={centroid_lr_scale:.6e}, "
                         f"max_tie_error={codebook_tie_error:.6e}, "
-                        f"min_sorted_gap={codebook_min_gap:.6e}"
+                        f"min_sorted_gap={codebook_min_gap:.6e}, "
+                        f"displacement_max_epoch={centroid_displacement_max:.6e}, "
+                        f"displacement_mean_per_layer_step={displacement_mean:.6e}"
                         f"{centroid_grad_diag}",
                         flush=True,
                     )
