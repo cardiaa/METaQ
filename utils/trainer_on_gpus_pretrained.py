@@ -189,6 +189,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                        sparsity_schedule=None, freeze_mask=False,
                        train_sparse=False, layer_C=None, train_centroids=False,
                        centroid_lr_scale=1.0, centroid_kmeans_iterations=0,
+                       centroid_freeze_epoch=0,
                        adiabatic_accuracy_target=None, adiabatic_accuracy_tolerance=0.2,
                        adiabatic_step=0.02, adiabatic_backoff=0.04,
                        adiabatic_patience=2):
@@ -302,6 +303,9 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
         centroid_kmeans_iterations: number of scalar Lloyd iterations run from
             the linear grid before assignments are frozen. Zero reproduces the
             direct linear assignment used by tests 150-152.
+        centroid_freeze_epoch: optional 1-based epoch at which dynamic QAT is
+            converted into a fixed shared codebook. Zero freezes immediately
+            when the adaptive grid is built, reproducing tests 150-153.
         adiabatic_accuracy_target: when set, replace the time-driven sparsity ramp
             with closed-loop control. A scalar progress multiplies the requested
             per-layer final targets. It advances only after
@@ -337,7 +341,12 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
     # cosine decay in the TAIL only, after the ramp completes.
     if use_perspective:
         _ramp_end = entropy_warmup_epochs + max(0, sparsity_warmup_epochs)   # epoch (0-based) at full sparsity
-        _decay_len = max(1, n_epochs - _ramp_end)
+        _schedule_end = (
+            centroid_freeze_epoch - 1
+            if train_centroids and centroid_freeze_epoch > 0
+            else n_epochs
+        )
+        _decay_len = max(1, _schedule_end - _ramp_end)
         _lr_floor = 0.01
 
         def _persp_lr(e):
@@ -369,6 +378,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
     # Bias tensors are kept in floating point.
     quant_param_indices = [idx for idx, p in enumerate(all_params) if p.ndim > 1]
     params_for_quant = [all_params[idx] for idx in quant_param_indices]
+    quant_param_ids = {id(param) for param in params_for_quant}
     num_param_tensors = len(params_for_quant)
 
     if layer_C is None:
@@ -391,6 +401,17 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
             raise ValueError("--centroid_lr_scale must be in (0, 1].")
         if centroid_kmeans_iterations < 0:
             raise ValueError("--centroid_kmeans_iterations must be >= 0.")
+        if centroid_freeze_epoch < 0 or centroid_freeze_epoch > n_epochs:
+            raise ValueError(
+                "--centroid_freeze_epoch must be 0 or a 1-based epoch within the run."
+            )
+        if (
+            centroid_freeze_epoch > 0
+            and centroid_freeze_epoch <= entropy_warmup_epochs
+        ):
+            raise ValueError(
+                "--centroid_freeze_epoch must be after grid adaptation."
+            )
         compression_terms_active = any(
             value is not None and float(value) != 0.0
             for value in (
@@ -1172,6 +1193,96 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
             stage_start = hold + 1
         return list(parsed_stages[-1][2])              # past the last stage: hold
 
+    def _activate_trainable_codebook_():
+        """Freeze current assignments, project weights, and reset their momentum."""
+        nonlocal codebook_active, v_list
+
+        codebook_infos = []
+        kmeans_infos = []
+        with torch.no_grad():
+            for p_idx, param in enumerate(params_for_quant):
+                w_flat = param.detach().reshape(-1)
+                if centroid_kmeans_iterations > 0:
+                    if (not dist.is_initialized()) or local_rank == 0:
+                        (
+                            learned_centroids,
+                            _,
+                            iterations_run,
+                            initial_mse,
+                            final_mse,
+                            final_shift,
+                        ) = _lloyd_codebook_1d(
+                            w_flat,
+                            v_list[p_idx],
+                            centroid_kmeans_iterations,
+                        )
+                    else:
+                        learned_centroids = torch.empty_like(v_list[p_idx])
+                        iterations_run = 0
+                        initial_mse = 0.0
+                        final_mse = 0.0
+                        final_shift = 0.0
+                    if dist.is_initialized():
+                        dist.broadcast(learned_centroids, src=0)
+                    v_list[p_idx] = learned_centroids
+                    if local_rank == 0:
+                        kmeans_infos.append(
+                            (
+                                p_idx,
+                                iterations_run,
+                                initial_mse,
+                                final_mse,
+                                final_shift,
+                            )
+                        )
+
+                assignment, projected = _quantize_with_deadzone(
+                    w_flat,
+                    v_list[p_idx],
+                    apply_pruning_deadzone=False,
+                )
+                fixed_codebook_assignments[p_idx] = assignment.detach().clone()
+                param.data.copy_(projected.view_as(param))
+
+                # Dynamic QAT has populated a distinct momentum buffer for every
+                # shadow weight. Keeping it would immediately untie the codebook.
+                optimizer.state.pop(param, None)
+
+                counts = torch.bincount(
+                    assignment,
+                    minlength=C_by_layer[p_idx],
+                )
+                nonempty = counts[counts > 0]
+                codebook_infos.append(
+                    (
+                        p_idx,
+                        int(nonempty.numel()),
+                        int(nonempty.min().item()) if nonempty.numel() else 0,
+                        int(nonempty.max().item()) if nonempty.numel() else 0,
+                    )
+                )
+
+        codebook_active = True
+        if local_rank == 0:
+            print(
+                f"[TRAINABLE CENTROIDS FREEZE] epoch={epoch + 1}, "
+                f"dynamic_qat_epochs={max(0, epoch - entropy_warmup_epochs)}",
+                flush=True,
+            )
+            if centroid_kmeans_iterations > 0:
+                print(
+                    "[CENTROID KMEANS] "
+                    "entries=(layer,iterations,initial_mse,final_mse,"
+                    f"final_max_shift), values={kmeans_infos}",
+                    flush=True,
+                )
+            print(
+                "[TRAINABLE CENTROIDS INIT] "
+                "entries=(layer,nonempty,min_count,max_count), "
+                f"values={codebook_infos}",
+                flush=True,
+            )
+
     # test_133: cumulative entropy "exposure" = sum over epochs of T2_current*lr
     # (lr in units of 1e-4).  This is the accumulated displacement the entropy term
     # imposes on the weights, and across tests 128/129/130 the accuracy collapse
@@ -1196,6 +1307,19 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                 T2_current = T2_explicit * (1.0 - np.exp(-t)) + (T2_explicit / 8.0) * np.exp(-t)
         else:
             T2_current = 0.0
+
+        if (
+            train_centroids
+            and centroid_freeze_epoch > 0
+            and epoch + 1 >= centroid_freeze_epoch
+        ):
+            for param_group in optimizer.param_groups:
+                param_group["lr"] = lr
+            if local_rank == 0 and epoch + 1 == centroid_freeze_epoch:
+                print(
+                    f"[CENTROID PHASE LR RESET] epoch={epoch + 1}, base_lr={lr}",
+                    flush=True,
+                )
 
         # Exposure spent during THIS epoch, using the LR the epoch actually runs
         # with (the scheduler steps at the end of the epoch, so read it here).
@@ -1229,93 +1353,25 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                     grid_infos.append((p_idx, w_layer.numel(), lo.item(), hi.item()))
                 v_list = new_v_list
                 grid_reset_done = True
-                if train_centroids:
-                    codebook_infos = []
-                    kmeans_infos = []
-                    for p_idx, param in enumerate(params_for_quant):
-                        w_flat = param.detach().reshape(-1)
-                        if centroid_kmeans_iterations > 0:
-                            if (not dist.is_initialized()) or local_rank == 0:
-                                (
-                                    learned_centroids,
-                                    _,
-                                    iterations_run,
-                                    initial_mse,
-                                    final_mse,
-                                    final_shift,
-                                ) = _lloyd_codebook_1d(
-                                    w_flat,
-                                    v_list[p_idx],
-                                    centroid_kmeans_iterations,
-                                )
-                            else:
-                                learned_centroids = torch.empty_like(v_list[p_idx])
-                                iterations_run = 0
-                                initial_mse = 0.0
-                                final_mse = 0.0
-                                final_shift = 0.0
-                            if dist.is_initialized():
-                                dist.broadcast(learned_centroids, src=0)
-                            v_list[p_idx] = learned_centroids
-                            if local_rank == 0:
-                                kmeans_infos.append(
-                                    (
-                                        p_idx,
-                                        iterations_run,
-                                        initial_mse,
-                                        final_mse,
-                                        final_shift,
-                                    )
-                                )
-
-                        assignment, projected = _quantize_with_deadzone(
-                            w_flat,
-                            v_list[p_idx],
-                            apply_pruning_deadzone=False,
-                        )
-                        fixed_codebook_assignments[p_idx] = assignment.detach().clone()
-                        param.data.copy_(projected.view_as(param))
-
-                        # Epochs before grid adaptation may have populated an SGD
-                        # momentum buffer independently for every weight. Keeping
-                        # it would immediately untie weights in the same cluster.
-                        optimizer.state.pop(param, None)
-
-                        counts = torch.bincount(
-                            assignment,
-                            minlength=C_by_layer[p_idx],
-                        )
-                        nonempty = counts[counts > 0]
-                        codebook_infos.append(
-                            (
-                                p_idx,
-                                int(nonempty.numel()),
-                                int(nonempty.min().item()) if nonempty.numel() else 0,
-                                int(nonempty.max().item()) if nonempty.numel() else 0,
-                            )
-                        )
-                    codebook_active = True
-                    codebook_initialized_now = True
                 if local_rank == 0:
                     print(
                         f"[GRID READAPT] epoch={epoch + 1}, "
                         f"num_tensors={len(v_list)}, first_tensors={grid_infos[:4]}",
                         flush=True
                     )
-                    if train_centroids:
-                        if centroid_kmeans_iterations > 0:
-                            print(
-                                "[CENTROID KMEANS] "
-                                "entries=(layer,iterations,initial_mse,final_mse,"
-                                f"final_max_shift), values={kmeans_infos}",
-                                flush=True,
-                            )
-                        print(
-                            "[TRAINABLE CENTROIDS INIT] "
-                            "entries=(layer,nonempty,min_count,max_count), "
-                            f"values={codebook_infos}",
-                            flush=True,
-                        )
+
+        should_activate_codebook = (
+            train_centroids
+            and grid_reset_done
+            and not codebook_active
+            and (
+                centroid_freeze_epoch == 0
+                or epoch + 1 >= centroid_freeze_epoch
+            )
+        )
+        if should_activate_codebook:
+            _activate_trainable_codebook_()
+            codebook_initialized_now = True
 
         if codebook_initialized_now:
             _dist_barrier()
@@ -1790,6 +1846,12 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
             # vectors before they are expanded back to the tied weights.
             if train_centroids and codebook_active:
                 with torch.no_grad():
+                    # The fixed-codebook phase optimizes only shared centroids.
+                    # Biases and other unquantized parameters are skipped entirely
+                    # (grad=None also prevents stale momentum from moving them).
+                    for param in all_params:
+                        if id(param) not in quant_param_ids:
+                            param.grad = None
                     centroid_grad_sq = torch.zeros((), device=device)
                     centroid_grad_abs_max = torch.zeros((), device=device)
                     for p_idx, param in enumerate(params_for_quant):
@@ -1910,7 +1972,12 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                             prox_diag_count += 1
                         param.copy_(z_star.view_as(param))
 
-        scheduler.step()
+        if not (
+            train_centroids
+            and centroid_freeze_epoch > 0
+            and codebook_active
+        ):
+            scheduler.step()
 
         training_time_without_metrics = round(time.time() - start_time_global)
 
@@ -2078,7 +2145,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                     # Metadata for fixed linear grids is two fp32 endpoints per
                     # layer. A trained codebook must instead store every learned
                     # fp32 centroid; include that cost in all reported ratios.
-                    if train_centroids:
+                    if train_centroids and codebook_active:
                         metadata_bits = 32 + 32 + sum(C_by_layer) * 32
                     else:
                         metadata_bits = 32 + 32 + num_param_tensors * 2 * 32
