@@ -1171,6 +1171,43 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
             w_flat, v_layer, target_prune_thresholds[p_idx]
         )
 
+    def _mask_in_parameter_shape(mask, param):
+        """Return a logical-shape mask without relying on parameter contiguity.
+
+        AlexNet convolution weights use channels-last storage. Flattening such a
+        tensor with ``reshape(-1)`` can allocate a copy, so writing through the
+        flattened result does not necessarily modify the original parameter.
+        Reshaping the contiguous boolean mask to the parameter's logical shape
+        and applying it directly is correct for either memory format.
+        """
+        if mask.numel() != param.numel():
+            raise ValueError(
+                f"Pruning mask has {mask.numel()} entries for a parameter with "
+                f"{param.numel()} entries."
+            )
+        return mask.reshape(param.shape)
+
+    def _train_sparse_mask_diagnostics():
+        """Return (masked entries, nonzero violations, maximum absolute value)."""
+        total_masked = 0
+        nonzero_violations = 0
+        max_abs = 0.0
+        with torch.no_grad():
+            for p_idx, param in enumerate(params_for_quant):
+                if effective_ts_by_layer[p_idx] is None:
+                    continue
+                w_flat = param.detach().reshape(-1)
+                mask = _mask_to_apply(p_idx, w_flat, v_list[p_idx])
+                shaped_mask = _mask_in_parameter_shape(mask, param)
+                masked_values = param.detach()[shaped_mask]
+                total_masked += masked_values.numel()
+                if masked_values.numel() > 0:
+                    nonzero_violations += int(
+                        torch.count_nonzero(masked_values).item()
+                    )
+                    max_abs = max(max_abs, masked_values.abs().max().item())
+        return total_masked, nonzero_violations, max_abs
+
     def _quantize_with_magnitude_pruning(w_flat, v_layer, thr=None, frozen_mask=None):
         q_idx, q_flat = _quantize_with_deadzone(
             w_flat, v_layer, apply_pruning_deadzone=False,
@@ -1860,7 +1897,10 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                             continue
                         w_flat = param.detach().reshape(-1)
                         mask = _mask_to_apply(p_idx, w_flat, v_list[p_idx])
-                        param.grad.reshape(-1)[mask] = 0.0
+                        param.grad.masked_fill_(
+                            _mask_in_parameter_shape(mask, param.grad),
+                            0.0,
+                        )
 
             # Deep Compression trained quantization: cluster membership is fixed,
             # and the derivative of a shared centroid is the SUM of the
@@ -1944,8 +1984,10 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                     for p_idx, param in enumerate(params_for_quant):
                         w_flat = param.detach().reshape(-1)
                         mask = _mask_to_apply(p_idx, w_flat, v_list[p_idx])
-                        pf = param.data.reshape(-1)
-                        pf[mask] = 0.0
+                        param.data.masked_fill_(
+                            _mask_in_parameter_shape(mask, param),
+                            0.0,
+                        )
 
             # test_135: PROXIMAL step.  The optimizer above has just taken a plain
             # gradient step on the LOSS ALONE (in prox mode the beta*-into-grad
@@ -2330,6 +2372,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                 _load_flat_params_(w_backup)
 
             checksum_range = _param_checksum_range() if check_ddp_sync else None
+            model_matches_sparse_deploy = torch.equal(w_backup, flat_s)
 
             if local_rank == 0:
                 weighted_l2_norm = (last_loss_grad_norm * T1_explicit) if last_loss_grad_norm is not None else None
@@ -2338,6 +2381,11 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                 # re-multiplying by T2 (which would be misleading).
                 weighted_custom_norm = last_entropy_fraction
                 training_time_global = round(time.time() - start_time_global)
+                sparse_mask_diag = (
+                    _train_sparse_mask_diagnostics()
+                    if train_sparse
+                    else None
+                )
                 codebook_tie_error = None
                 codebook_min_gap = None
                 if train_centroids and codebook_active:
@@ -2472,6 +2520,16 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                     print(f"weighted_custom_norm_last_applied = {weighted_custom_norm:.6e}", flush=True)
                 if checksum_range is not None:
                     print(f"ddp_param_checksum_range = {checksum_range:.6e}", flush=True)
+                if sparse_mask_diag is not None:
+                    masked_count, violation_count, violation_max_abs = sparse_mask_diag
+                    print(
+                        "train_sparse_mask_diag: "
+                        f"masked_count={masked_count}, "
+                        f"nonzero_violation_count={violation_count}, "
+                        f"max_abs={violation_max_abs:.6e}, "
+                        f"model_matches_sparse_deploy={model_matches_sparse_deploy}",
+                        flush=True,
+                    )
                 if codebook_tie_error is not None:
                     centroid_grad_diag = ""
                     if last_centroid_grad_norm is not None:
