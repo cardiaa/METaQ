@@ -23,8 +23,8 @@ PRETRAINED=$7
 GAMMA=$8
 
 if [ -z "$DELTA" ] || [ -z "$BATCH_SIZE" ] || [ -z "$T1" ] || [ -z "$T2" ] || [ -z "$EPOCH_FRACTION" ] || [ -z "$C" ] || [ -z "$PRETRAINED" ] || [ -z "$GAMMA" ]; then
-    echo "Usage: sbatch run_alexnet_test_pretrained.sh <delta> <batch_size> <T1> <T2> <epoch_fraction> <C> <pretrained> <gamma>"
-    echo "Example: sbatch run_alexnet_test_pretrained.sh -10 64 1e-3 1e-8 1.0 16 Y 2"
+    echo "Usage: sbatch run_alexnet_pruning_only_fp32.sh <delta> <batch_size> <T1> <T2> <epoch_fraction> <C> <pretrained> <gamma>"
+    echo "Example: sbatch run_alexnet_pruning_only_fp32.sh -10 64 0 0 1.0 16 Y 2"
     exit 1
 fi
 
