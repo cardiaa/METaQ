@@ -11,5 +11,8 @@ data/cifar-10-batches-py/
 # Local Leonardo test logs
 LeonardoTests/
 
+# Local LaTeX summary for the experiments
+TabellaDegliEsperimenti/
+
 # Claude Code local project config
 .claude/
