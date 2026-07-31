@@ -181,6 +181,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                        lower_c, c1, c2, zeta, l, n_epochs, max_iterations, device, train_optimizer, entropy_optimizer, trainloader,
                        testloader, train_sampler, steps_per_epoch, delta, pruning, QuantizationType, sparsity_threshold, accuracy_tollerance,
                        gamma=1.0, metrics_interval=1, entropy_warmup_epochs=0, entropy_every=1, check_ddp_sync=False,
+                       optimizer_weight_decay=None,
                        T3_explicit=0.0, mag_prune_ratio=0.5, use_perspective=False, target_sparsity=0.0,
                        sparsity_warmup_epochs=0, sparsity_ramp_power=1.0,
                        conv_sparsity=None, fc_sparsity=None, layer_sparsity=None,
@@ -193,7 +194,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                        centroid_freeze_epoch=0,
                        adiabatic_accuracy_target=None, adiabatic_accuracy_tolerance=0.2,
                        adiabatic_step=0.02, adiabatic_backoff=0.04,
-                       adiabatic_patience=2):
+                       adiabatic_patience=2, evaluate_initial_model=False):
     """Train and evaluate a model with optional entropy regularization.
 
     This function is intentionally self-contained because the compression
@@ -329,7 +330,11 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
     # form), whose gradient 2*T1*w/y* is applied EXPLICITLY per step.  The plain
     # SGD weight_decay (which would add a second, standard T1*w ridge) is disabled
     # to avoid double-counting.
-    wd_init = 0.0 if use_perspective else T1_explicit
+    wd_init = (
+        float(optimizer_weight_decay)
+        if optimizer_weight_decay is not None
+        else (0.0 if use_perspective else T1_explicit)
+    )
 
     if train_optimizer == 'ADAM':
         optimizer = optim.Adam(model.parameters(), lr=lr, betas=(0.9, 0.999), eps=1e-08, weight_decay=wd_init)
@@ -376,15 +381,24 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
     # Per-parameter-tensor quantization state.
     # Each layer/tensor gets its own quantization grid v, xi, and optionally C.
     # All parameters are still needed to rebuild the full flat model.
-    all_params = list(model.parameters())
+    all_named_params = list(model.named_parameters())
+    all_params = [param for _, param in all_named_params]
 
-    # Only tensors with ndim > 1 are quantized/regularized.
-    # For AlexNet this means convolutional and linear weights.
-    # Bias tensors are kept in floating point.
-    quant_param_indices = [idx for idx, p in enumerate(all_params) if p.ndim > 1]
+    # Quantize actual convolutional/linear weight tensors, not every tensor with
+    # more than one dimension. The distinction is essential for transformers:
+    # DeiT's positional embedding and class token are learned tensors but are not
+    # matrix weights and must remain in floating point.
+    quant_param_indices = [
+        idx
+        for idx, (name, param) in enumerate(all_named_params)
+        if name.endswith(".weight") and param.ndim in (2, 4)
+    ]
     params_for_quant = [all_params[idx] for idx in quant_param_indices]
+    quant_param_names = [all_named_params[idx][0] for idx in quant_param_indices]
     quant_param_ids = {id(param) for param in params_for_quant}
     num_param_tensors = len(params_for_quant)
+    if num_param_tensors == 0:
+        raise ValueError(f"{model_name} has no convolutional or linear weights to quantize.")
 
     if layer_C is None:
         C_by_layer = [int(C)] * num_param_tensors
@@ -398,6 +412,24 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
     if any(c < 2 for c in C_by_layer):
         raise ValueError("Every quantization level count in C/layer_C must be >= 2.")
     max_C = max(C_by_layer)
+
+    if local_rank == 0:
+        total_model_params = sum(param.numel() for param in all_params)
+        total_quant_params = sum(param.numel() for param in params_for_quant)
+        print(
+            "[QUANTIZED TENSORS] "
+            f"count={num_param_tensors}, parameters={total_quant_params}, "
+            f"fraction_of_model={total_quant_params / max(1, total_model_params):.6%}",
+            flush=True,
+        )
+        for idx, (name, param, levels) in enumerate(
+            zip(quant_param_names, params_for_quant, C_by_layer)
+        ):
+            print(
+                f"[QUANTIZED TENSOR {idx}] name={name}, shape={tuple(param.shape)}, "
+                f"parameters={param.numel()}, C={levels}",
+                flush=True,
+            )
 
     if not use_quantization:
         if not use_perspective:
@@ -1352,6 +1384,18 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
     # readable instead of reconstructed by hand from the T2/lr traces.
     exposure_cum = 0.0
 
+    if evaluate_initial_model:
+        if device.type == "cuda":
+            torch.cuda.synchronize(device)
+        _dist_barrier()
+        pretrained_accuracy = test_accuracyGPU(model, testloader, device)
+        if local_rank == 0:
+            print(
+                f"[PRETRAINED BASELINE] fp_accuracy={pretrained_accuracy:.4f}",
+                flush=True,
+            )
+        _dist_barrier()
+
     for epoch in range(n_epochs):
         should_eval_epoch = ((epoch + 1) % metrics_interval == 0) or (epoch == n_epochs - 1)
 
@@ -1572,7 +1616,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                 )
 
         for param_group in optimizer.param_groups:
-            param_group['weight_decay'] = 0.0 if use_perspective else T1_explicit
+            param_group["weight_decay"] = wd_init
 
         if train_sampler is not None and hasattr(train_sampler, "set_epoch"):
             train_sampler.set_epoch(epoch)
@@ -2696,7 +2740,13 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                         flush=True,
                     )
 
-            if (model_name == "AlexNet" or model_name == "VGG16") and accuracy < 0.12 and epoch >= 3:
+            if model_name in (
+                "AlexNet",
+                "VGG16",
+                "ResNet-18",
+                "ResNet-50",
+                "DeiT-Small",
+            ) and accuracy < 0.12 and epoch >= 3:
                 if local_rank == 0:
                     log += f"Accuracy is too low! (A1.0), delta: {delta}\n"
                     log += "-" * 60

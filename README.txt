@@ -46,4 +46,19 @@ Use the file for loading and compressing the model, ensure you are in the correc
 
 Have fun!
 ================================================================================================================================================================================================================================================================================================
-  
+
+IMAGENET EXPERIMENTS
+The distributed pretrained entry point is train_on_gpus_pretrained.py. It supports
+AlexNet, VGG16, ResNet-18, ResNet-50, and DeiT-Small without changing the existing
+MNIST paths. ImageNet may be provided either as WebDataset shards or as train/val
+folders under data_root/imagenet.
+
+The default Leonardo checkpoints are:
+- AlexNet:      $WORK/acardia0/alexnet_checkpoints/alexnet-owt-7be5be79.pth
+- ResNet-18:    $WORK/acardia0/imagenet_checkpoints/resnet18-f37072fd.pth
+- ResNet-50:    $WORK/acardia0/imagenet_checkpoints/resnet50-0676ba61.pth
+- DeiT-Small:   $WORK/acardia0/imagenet_checkpoints/deit_small_patch16_224-cd65a155.pth
+
+Pass --pretrained_checkpoint to override the model-specific path. DeiT-Small
+requires timm. The tracked run_resnet18_4bit_qat.sh launcher is the initial
+weight-only C=16 (4-bit) ResNet-18 control.

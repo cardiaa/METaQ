@@ -21,11 +21,48 @@ from utils.trainer_on_gpus_pretrained import train_and_evaluate
 from utils.networks import LeNet5, LeNet5_Original, LeNet300_100
 
 
+IMAGENET_MODELS = ("AlexNet", "VGG16", "ResNet-18", "ResNet-50", "DeiT-Small")
+
+DEFAULT_PRETRAINED_CHECKPOINTS = {
+    "AlexNet": (
+        "/leonardo_work/IscrC_ObCTDoNN/acardia0/alexnet_checkpoints/"
+        "alexnet-owt-7be5be79.pth"
+    ),
+    "ResNet-18": (
+        "/leonardo_work/IscrC_ObCTDoNN/acardia0/imagenet_checkpoints/"
+        "resnet18-f37072fd.pth"
+    ),
+    "ResNet-50": (
+        "/leonardo_work/IscrC_ObCTDoNN/acardia0/imagenet_checkpoints/"
+        "resnet50-0676ba61.pth"
+    ),
+    "DeiT-Small": (
+        "/leonardo_work/IscrC_ObCTDoNN/acardia0/imagenet_checkpoints/"
+        "deit_small_patch16_224-cd65a155.pth"
+    ),
+}
+
+PRETRAINED_CHECKPOINT_URLS = {
+    "AlexNet": "https://download.pytorch.org/models/alexnet-owt-7be5be79.pth",
+    "ResNet-18": "https://download.pytorch.org/models/resnet18-f37072fd.pth",
+    "ResNet-50": "https://download.pytorch.org/models/resnet50-0676ba61.pth",
+    "DeiT-Small": (
+        "https://dl.fbaipublicfiles.com/deit/"
+        "deit_small_patch16_224-cd65a155.pth"
+    ),
+}
+
+
 # -------------------------
 # DDP utilities
 # -------------------------
 def ddp_needed(model_name: str) -> bool:
-    return model_name in ("AlexNet", "VGG16", "LeNet-5", "LeNet-5 (rotated)", "LeNet300_100")
+    return model_name in (
+        *IMAGENET_MODELS,
+        "LeNet-5",
+        "LeNet-5 (rotated)",
+        "LeNet300_100",
+    )
 
 
 def setup_ddp():
@@ -111,6 +148,49 @@ def build_synset_to_idx_from_shards(shards_pattern: str, cache_path: str | None 
 # -------------------------
 # Model + hyperparameters
 # -------------------------
+def _checkpoint_path(model_name: str, requested_path: str | None) -> str:
+    if requested_path:
+        return requested_path
+    try:
+        return DEFAULT_PRETRAINED_CHECKPOINTS[model_name]
+    except KeyError as exc:
+        raise ValueError(
+            f"No default pretrained checkpoint is registered for {model_name}."
+        ) from exc
+
+
+def _load_pretrained_checkpoint(model, model_name: str, requested_path: str | None):
+    checkpoint_path = _checkpoint_path(model_name, requested_path)
+    if not os.path.isfile(checkpoint_path):
+        source_url = PRETRAINED_CHECKPOINT_URLS.get(model_name, "the model provider")
+        raise FileNotFoundError(
+            f"Pretrained checkpoint for {model_name} not found at "
+            f"{checkpoint_path}. Download it from {source_url} or pass "
+            "--pretrained_checkpoint."
+        )
+
+    checkpoint = torch.load(checkpoint_path, map_location="cpu")
+    if isinstance(checkpoint, dict) and "model" in checkpoint:
+        state_dict = checkpoint["model"]
+    elif isinstance(checkpoint, dict) and "state_dict" in checkpoint:
+        state_dict = checkpoint["state_dict"]
+    else:
+        state_dict = checkpoint
+
+    if not isinstance(state_dict, dict):
+        raise TypeError(
+            f"Checkpoint {checkpoint_path} does not contain a state dictionary."
+        )
+
+    # Accept checkpoints saved from DDP without making DDP part of the file format.
+    state_dict = {
+        key.removeprefix("module."): value
+        for key, value in state_dict.items()
+    }
+    model.load_state_dict(state_dict, strict=True)
+    return checkpoint_path
+
+
 def build_model_and_hparams(model_name: str, device: torch.device, args, local_rank=None):
     # The dictionary stores model-specific defaults so that configuration logging remains uniform across models.
     h = dict(
@@ -146,6 +226,7 @@ def build_model_and_hparams(model_name: str, device: torch.device, args, local_r
         entropy_every=1,
         check_ddp_sync=False,
         train_optimizer="SGD",
+        optimizer_weight_decay=None,
         entropy_optimizer="FISTA",
         pruning="Y",
         QuantizationType="center",
@@ -161,6 +242,8 @@ def build_model_and_hparams(model_name: str, device: torch.device, args, local_r
         conv_sparsity=None,       # if set (with fc_sparsity): per-layer target for conv (4D) weights
         fc_sparsity=None,         # if set (with conv_sparsity): per-layer target for FC (2D) weights
         layer_sparsity=None,      # if set: list, one sparsity target per quantized tensor (overrides conv/fc)
+        val_resize=256,
+        pretrained_checkpoint=None,
     )
 
     if model_name.startswith("LeNet-5"):
@@ -230,11 +313,13 @@ def build_model_and_hparams(model_name: str, device: torch.device, args, local_r
         # experimental setup used for training AlexNet from scratch.
         if args.pretrained == "Y":
             model = models.alexnet(weights=None)
-            checkpoint = torch.load(args.pretrained_checkpoint, map_location="cpu")
-            model.load_state_dict(checkpoint)
+            checkpoint_path = _load_pretrained_checkpoint(
+                model, model_name, args.pretrained_checkpoint
+            )
         else:
             model = models.alexnet(weights=None)
             model.classifier[6] = nn.Linear(4096, 1000)
+            checkpoint_path = None
 
         model = model.to(device, memory_format=torch.channels_last)
         model = DDP(model, device_ids=[local_rank])
@@ -254,6 +339,82 @@ def build_model_and_hparams(model_name: str, device: torch.device, args, local_r
             w0=0.013,
             n_epochs=20,
             train_optimizer="SGD",
+            pretrained_checkpoint=checkpoint_path,
+        )
+        h["upper_c"] = sum(p.numel() for p in model.parameters())
+
+    elif model_name in ("ResNet-18", "ResNet-50"):
+        if local_rank is None:
+            raise RuntimeError(f"{model_name} requires DDP setup (local_rank is None).")
+
+        constructor = (
+            models.resnet18 if model_name == "ResNet-18" else models.resnet50
+        )
+        model = constructor(weights=None)
+        checkpoint_path = None
+        if args.pretrained == "Y":
+            checkpoint_path = _load_pretrained_checkpoint(
+                model, model_name, args.pretrained_checkpoint
+            )
+
+        model = model.to(device, memory_format=torch.channels_last)
+        model = DDP(model, device_ids=[local_rank])
+
+        h.update(
+            C=16,
+            lr=1e-3 if model_name == "ResNet-18" else 1e-5,
+            batch_size=64 if model_name == "ResNet-18" else 32,
+            T1_explicit=0.0,
+            T2_explicit=0.0,
+            r=1.0,
+            w0=0.0,
+            n_epochs=20,
+            train_optimizer="SGD",
+            pretrained_checkpoint=checkpoint_path,
+        )
+        h["upper_c"] = sum(p.numel() for p in model.parameters())
+
+    elif model_name == "DeiT-Small":
+        if local_rank is None:
+            raise RuntimeError("DeiT-Small requires DDP setup (local_rank is None).")
+        try:
+            import timm
+        except ImportError as exc:
+            raise RuntimeError(
+                "DeiT-Small requires timm. Install the dependencies from "
+                "requirements.txt in the Leonardo environment."
+            ) from exc
+
+        model = timm.create_model(
+            "deit_small_patch16_224",
+            pretrained=False,
+            num_classes=1000,
+        )
+        checkpoint_path = None
+        if args.pretrained == "Y":
+            checkpoint_path = _load_pretrained_checkpoint(
+                model, model_name, args.pretrained_checkpoint
+            )
+
+        # Do not convert transformer parameters to channels-last: only the
+        # patch-embedding convolution benefits from it and the remaining tensors
+        # are sequence/matrix weights.
+        model = model.to(device)
+        model = DDP(model, device_ids=[local_rank])
+
+        h.update(
+            C=16,
+            lr=1e-4,
+            batch_size=32,
+            T1_explicit=0.0,
+            T2_explicit=0.0,
+            r=1.0,
+            w0=0.0,
+            n_epochs=20,
+            train_optimizer="ADAM",
+            # timm's DeiT-S evaluation recipe uses crop_pct=0.9.
+            val_resize=248,
+            pretrained_checkpoint=checkpoint_path,
         )
         h["upper_c"] = sum(p.numel() for p in model.parameters())
 
@@ -379,7 +540,15 @@ def split_by_rank_and_worker(urls):
 # -------------------------
 # Data loading: ImageNet (shards or folders)
 # -------------------------
-def load_imagenet_dataloaders(batch_size, data_root, local_rank, world_size, train_workers, val_workers):
+def load_imagenet_dataloaders(
+    batch_size,
+    data_root,
+    local_rank,
+    world_size,
+    train_workers,
+    val_workers,
+    val_resize=256,
+):
     t_train = transforms.Compose([
         transforms.RandomResizedCrop(224),
         transforms.RandomHorizontalFlip(),
@@ -387,7 +556,7 @@ def load_imagenet_dataloaders(batch_size, data_root, local_rank, world_size, tra
         transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
     ])
     t_val = transforms.Compose([
-        transforms.Resize(256),
+        transforms.Resize(val_resize),
         transforms.CenterCrop(224),
         transforms.ToTensor(),
         transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
@@ -554,6 +723,8 @@ def print_config(model_name, args, h, local_rank_to_print):
     print("==================== PARAMETER CONFIGURATION ====================", flush=True)
     print("=================================================================", flush=True)
     print(f"model={model_name}", flush=True)
+    print(f"pretrained={args.pretrained}", flush=True)
+    print(f"pretrained_checkpoint={h['pretrained_checkpoint']}", flush=True)
     print(f"criterion={h['criterion_name']}", flush=True)
     print(f"C={h['C']}", flush=True)
     print(f"layer_C={h['layer_C']}", flush=True)
@@ -610,6 +781,7 @@ def print_config(model_name, args, h, local_rank_to_print):
     print(f"n_epochs={h['n_epochs']}", flush=True)
     print(f"max_iterations={h['max_iterations']}", flush=True)
     print(f"train_optimizer={h['train_optimizer']}", flush=True)
+    print(f"optimizer_weight_decay={h['optimizer_weight_decay']}", flush=True)
     print(f"entropy_optimizer={h['entropy_optimizer']}", flush=True)
     print(f"pruning={h['pruning']}", flush=True)
     print(f"QuantizationType={h['QuantizationType']}", flush=True)
@@ -672,7 +844,12 @@ def main():
         "--model_name",
         type=str,
         required=True,
-        choices=["LeNet-5", "LeNet-5 (rotated)", "LeNet300_100", "AlexNet", "VGG16"],
+        choices=[
+            "LeNet-5",
+            "LeNet-5 (rotated)",
+            "LeNet300_100",
+            *IMAGENET_MODELS,
+        ],
         help="Name of the model to train",
     )
     parser.add_argument(
@@ -686,6 +863,15 @@ def main():
     parser.add_argument("--n_epochs", type=int, default=None, help="Override number of epochs (if set)")
     parser.add_argument("--batch_size", type=int, default=None, help="Override per-GPU batch size (if set)")
     parser.add_argument("--lr", type=float, default=None, help="Override learning rate (if set)")
+    parser.add_argument(
+        "--optimizer_weight_decay",
+        type=float,
+        default=None,
+        help=(
+            "Optimizer weight decay, independent of the METaQ T1 term. "
+            "If omitted, preserve the legacy T1-dependent behavior."
+        ),
+    )
     parser.add_argument("--T1", type=float, default=None, help="Override L2 weight decay term; 0 disables it")
     parser.add_argument("--T2", type=float, default=None, help="Override entropy term; 0 disables it")
     parser.add_argument("--T3", type=float, default=None, help="Perspective sparsity weight; L1 push near 0 ~ 2*sqrt(T1*T3)")
@@ -738,13 +924,13 @@ def main():
         type=str,
         default="N",
         choices=["Y", "N"],
-        help="Use torchvision ImageNet-1K pretrained weights for AlexNet when set to Y."
+        help="Load the registered ImageNet-1K checkpoint for the selected model."
     )
     parser.add_argument(
         "--pretrained_checkpoint",
         type=str,
-        default="/leonardo_work/IscrC_ObCTDoNN/acardia0/alexnet_checkpoints/alexnet-owt-7be5be79.pth",
-        help="Path to a local AlexNet pretrained checkpoint"
+        default=None,
+        help="Optional local checkpoint override; otherwise use the model-specific Leonardo path."
     )    
     args = parser.parse_args()
     if args.gamma < 0:
@@ -779,6 +965,10 @@ def main():
         h["batch_size"] = args.batch_size
     if args.lr is not None:
         h["lr"] = args.lr
+    if args.optimizer_weight_decay is not None:
+        if args.optimizer_weight_decay < 0:
+            raise ValueError("--optimizer_weight_decay must be >= 0.")
+        h["optimizer_weight_decay"] = args.optimizer_weight_decay
     if args.T1 is not None:
         h["T1_explicit"] = args.T1
     if args.T2 is not None:
@@ -893,6 +1083,7 @@ def main():
             world_size=world_size,
             train_workers=args.train_workers,
             val_workers=args.val_workers,
+            val_resize=h["val_resize"],
         )
         if steps_per_epoch is not None:
             if not (0 < args.epoch_fraction <= 1):
@@ -943,6 +1134,7 @@ def main():
         max_iterations=h["max_iterations"],
         device=device,
         train_optimizer=h["train_optimizer"],
+        optimizer_weight_decay=h["optimizer_weight_decay"],
         entropy_optimizer=h["entropy_optimizer"],
         trainloader=trainloader,
         testloader=testloader,
@@ -986,6 +1178,9 @@ def main():
         adiabatic_step=h["adiabatic_step"],
         adiabatic_backoff=h["adiabatic_backoff"],
         adiabatic_patience=h["adiabatic_patience"],
+        evaluate_initial_model=(
+            args.pretrained == "Y" and h["pretrained_checkpoint"] is not None
+        ),
     )
 
     if ddp_needed(model_name):

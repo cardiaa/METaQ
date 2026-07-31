@@ -8,7 +8,7 @@ WORKDIR /workspace
 COPY . .
 
 # Installa le dipendenze
-RUN pip install torch torchvision numpy zstandard
+RUN pip install torch torchvision timm webdataset numpy zstandard
 
 # Comando di default (puoi cambiarlo quando lanci il container)
 CMD ["python", "train.py"]
