@@ -11,9 +11,16 @@ import torch.distributed as dist
 import gc
 from utils.quantize_and_compress import compute_entropy, quantize_weights_center, compute_entropyGPU, quantize_weights_centerGPU, compute_entropy_hist
 from utils.optimization import FISTA, FISTA_leonardo, FISTA_perspective_leonardo, FISTA_prox_leonardo, ProximalBM, test_accuracy, test_accuracyGPU
-from utils.knapsack import prox_perspective_leonardo
+from utils.knapsack import knapsack_perspective_leonardo, prox_perspective_leonardo
 from utils.knapsack import knapsack_specialized_pruning, knapsack_specialized_pruning_sparse_leonardo
 from utils.weight_utils import initialize_weights
+from utils.lsq import (
+    initial_weight_step_size,
+    metaq_scale_gradient,
+    quantize_weight,
+    signed_integer_codebook,
+    task_scale_gradient,
+)
 from utils.quantize_and_compress import compress_zstd, BestQuantization, pack_bitmask, pack_bitmaskGPU
 from datetime import datetime, timedelta
 
@@ -188,7 +195,9 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                        flat_schedule=False, dual_step=0.5,
                        use_prox=False, prox_gamma=1e-7, prox_start_epoch=0,
                        sparsity_schedule=None, freeze_mask=False,
-                       train_sparse=False, use_quantization=True, layer_C=None,
+                       train_sparse=False, use_quantization=True,
+                       quantizer="fixed", lsq_scale_lr=1e-5,
+                       joint_lsq_metaq=False, layer_C=None,
                        train_centroids=False,
                        centroid_lr_scale=1.0, centroid_kmeans_iterations=0,
                        centroid_freeze_epoch=0,
@@ -412,6 +421,69 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
     if any(c < 2 for c in C_by_layer):
         raise ValueError("Every quantization level count in C/layer_C must be >= 2.")
     max_C = max(C_by_layer)
+    lsq_enabled = quantizer == "lsq"
+    if quantizer not in ("fixed", "lsq"):
+        raise ValueError(f"Unsupported quantizer: {quantizer}")
+    if lsq_enabled and not use_quantization:
+        raise ValueError("--quantizer lsq requires --quantization Y.")
+    if lsq_enabled and train_centroids:
+        raise ValueError("LSQ and --train_centroids Y are mutually exclusive.")
+    if lsq_enabled and not use_perspective:
+        raise ValueError(
+            "The LSQ implementation currently requires --perspective Y so zero "
+            "is represented consistently as METaQ missing mass."
+        )
+    if lsq_enabled and use_prox:
+        raise ValueError(
+            "The LSQ implementation currently supports only the gradient path, "
+            "not the proximal path."
+        )
+    if joint_lsq_metaq and not lsq_enabled:
+        raise ValueError("Joint LSQ-METaQ requires the LSQ quantizer.")
+    if joint_lsq_metaq and not use_perspective:
+        raise ValueError("Joint LSQ-METaQ requires --perspective Y.")
+    if joint_lsq_metaq and use_prox:
+        raise ValueError(
+            "Joint LSQ-METaQ scale gradients are defined for the gradient path, "
+            "not the proximal path."
+        )
+
+    lsq_integer_codebooks = None
+    lsq_nonzero_integer_codebooks = None
+    lsq_scales = None
+    scale_optimizer = None
+    if lsq_enabled:
+        lsq_integer_codebooks = [
+            signed_integer_codebook(C_layer, device)
+            for C_layer in C_by_layer
+        ]
+        lsq_nonzero_integer_codebooks = [
+            q[q != 0] for q in lsq_integer_codebooks
+        ]
+        lsq_scales = [
+            torch.nn.Parameter(
+                torch.tensor(
+                    initial_weight_step_size(param, float(q[-1].item())),
+                    dtype=torch.float32,
+                    device=device,
+                )
+            )
+            for param, q in zip(params_for_quant, lsq_integer_codebooks)
+        ]
+        scale_optimizer = optim.Adam(
+            lsq_scales,
+            lr=lsq_scale_lr,
+            betas=(0.9, 0.999),
+            eps=1e-8,
+            weight_decay=0.0,
+        )
+
+    # C_by_layer is the deployment alphabet size (including zero under LSQ).
+    # METaQ treats zero as missing mass z=1-y, so its bucket problem receives
+    # only the C-1 non-zero integer levels.
+    metaq_C_by_layer = (
+        [c - 1 for c in C_by_layer] if lsq_enabled else list(C_by_layer)
+    )
 
     if local_rank == 0:
         total_model_params = sum(param.numel() for param in all_params)
@@ -501,18 +573,26 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
             )
 
     min_w, max_w = w0 - r, w0 + r
-    v_list = [
-        torch.linspace(
-            min_w,
-            max_w - (max_w - min_w) / C_layer,
-            steps=C_layer,
-            device=device,
-        )
-        for C_layer in C_by_layer
-    ]
+    if lsq_enabled:
+        v_list = [
+            scale.detach() * q_nonzero
+            for scale, q_nonzero in zip(
+                lsq_scales, lsq_nonzero_integer_codebooks
+            )
+        ]
+    else:
+        v_list = [
+            torch.linspace(
+                min_w,
+                max_w - (max_w - min_w) / C_layer,
+                steps=C_layer,
+                device=device,
+            )
+            for C_layer in C_by_layer
+        ]
 
     xi_list = []
-    for C_layer in C_by_layer:
+    for C_layer in metaq_C_by_layer:
         # xi_layer[0] is the multiplier for the explicit zero/pruning symbol.
         # xi_layer[1:] are the multipliers for this layer's non-zero buckets.
         xi_zero = min_xi + (max_xi - min_xi) * torch.rand(1, device=device)
@@ -711,6 +791,24 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
             p_.data.copy_(flat[offset:offset + n].view_as(p_))
             offset += n
 
+    def _current_quant_levels(q_state):
+        if lsq_enabled:
+            return (
+                lsq_scales[q_state].detach().clamp_min(1e-12)
+                * lsq_integer_codebooks[q_state]
+            )
+        return v_list[q_state]
+
+    def _refresh_lsq_metaq_grids_():
+        if not lsq_enabled:
+            return
+        with torch.no_grad():
+            for q_state in range(num_param_tensors):
+                v_list[q_state] = (
+                    lsq_scales[q_state].detach().clamp_min(1e-12)
+                    * lsq_nonzero_integer_codebooks[q_state]
+                )
+
     def _fake_quantize_weights_for_forward_():
         """
         Temporarily replaces quantized weight tensors with their per-layer
@@ -731,7 +829,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                 original = param.data.clone()
                 backups.append((param, original))
 
-                v_layer = v_list[q_state]
+                v_layer = _current_quant_levels(q_state)
                 w_flat = param.data.reshape(-1)
 
                 fixed_assignment = fixed_codebook_assignments[q_state]
@@ -739,6 +837,12 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                     q_flat = w_flat.clone()
                 elif train_centroids and fixed_assignment is not None:
                     q_flat = v_layer[fixed_assignment]
+                elif lsq_enabled:
+                    q_flat, _ = quantize_weight(
+                        w_flat,
+                        lsq_scales[q_state].detach(),
+                        lsq_integer_codebooks[q_state],
+                    )
                 else:
                     _, q_flat = _quantize_with_deadzone(
                         w_flat,
@@ -764,7 +868,9 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                 # grid-reset warmup so the L1 push has begun shrinking weights.
                 if (prune_mode == "magnitude"
                         and epoch >= entropy_warmup_epochs + 1):
-                    prune_mask = _mask_to_apply(q_state, w_flat, v_layer)
+                    prune_mask = _mask_to_apply(
+                        q_state, w_flat, v_list[q_state]
+                    )
                     q_flat = torch.where(
                         prune_mask,
                         torch.zeros_like(q_flat),
@@ -783,6 +889,29 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
         with torch.no_grad():
             for param, original in backups:
                 param.data.copy_(original)            
+
+    def _accumulate_lsq_task_scale_grad_(backups):
+        """Build LSQ scale gradients and apply the LSQ weight STE clipping."""
+        if not lsq_enabled:
+            return
+        with torch.no_grad():
+            for q_state, (param, original) in enumerate(backups):
+                if param.grad is None:
+                    continue
+                scale_gradient, in_range = task_scale_gradient(
+                    original.reshape(-1),
+                    param.grad.detach().reshape(-1),
+                    lsq_scales[q_state],
+                    lsq_integer_codebooks[q_state],
+                )
+                if lsq_scales[q_state].grad is None:
+                    lsq_scales[q_state].grad = scale_gradient.reshape_as(
+                        lsq_scales[q_state]
+                    )
+                else:
+                    lsq_scales[q_state].grad.add_(scale_gradient)
+                lsq_task_scale_grad_last[q_state] = float(scale_gradient.item())
+                param.grad.mul_(in_range.reshape_as(param.grad))
 
     # Diagnostic norm of the currently accumulated gradients on this rank.
     def _grad_norm_from_current_grads() -> float:
@@ -1441,30 +1570,45 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
         codebook_initialized_now = False
         if epoch >= entropy_warmup_epochs and not grid_reset_done:
             with torch.no_grad():
-                new_v_list = []
-                grid_infos = []
-                for p_idx, param in enumerate(params_for_quant):
-                    w_layer = param.detach().reshape(-1).float()
-                    lo, hi = _percentiles_large_tensor(w_layer, [0.001, 0.999])
-                    if (hi - lo).abs() < 1e-12:
-                        center = 0.5 * (lo + hi)
-                        lo = center - 1e-6
-                        hi = center + 1e-6
-                    v_layer = _make_quant_levels_without_zero(
-                        lo, hi, C_by_layer[p_idx], device
-                    )
-                    if dist.is_initialized():
-                        dist.broadcast(v_layer, src=0)
-                    new_v_list.append(v_layer)
-                    grid_infos.append((p_idx, w_layer.numel(), lo.item(), hi.item()))
-                v_list = new_v_list
-                grid_reset_done = True
-                if local_rank == 0:
-                    print(
-                        f"[GRID READAPT] epoch={epoch + 1}, "
-                        f"num_tensors={len(v_list)}, first_tensors={grid_infos[:4]}",
-                        flush=True
-                    )
+                if lsq_enabled:
+                    for scale in lsq_scales:
+                        if dist.is_initialized():
+                            dist.broadcast(scale, src=0)
+                    _refresh_lsq_metaq_grids_()
+                    grid_reset_done = True
+                    if local_rank == 0:
+                        print(
+                            f"[LSQ GRID INIT] epoch={epoch + 1}, "
+                            f"scales={[float(s.item()) for s in lsq_scales]}, "
+                            f"deployment_levels={C_by_layer}, "
+                            f"metaq_nonzero_buckets={metaq_C_by_layer}",
+                            flush=True,
+                        )
+                else:
+                    new_v_list = []
+                    grid_infos = []
+                    for p_idx, param in enumerate(params_for_quant):
+                        w_layer = param.detach().reshape(-1).float()
+                        lo, hi = _percentiles_large_tensor(w_layer, [0.001, 0.999])
+                        if (hi - lo).abs() < 1e-12:
+                            center = 0.5 * (lo + hi)
+                            lo = center - 1e-6
+                            hi = center + 1e-6
+                        v_layer = _make_quant_levels_without_zero(
+                            lo, hi, C_by_layer[p_idx], device
+                        )
+                        if dist.is_initialized():
+                            dist.broadcast(v_layer, src=0)
+                        new_v_list.append(v_layer)
+                        grid_infos.append((p_idx, w_layer.numel(), lo.item(), hi.item()))
+                    v_list = new_v_list
+                    grid_reset_done = True
+                    if local_rank == 0:
+                        print(
+                            f"[GRID READAPT] epoch={epoch + 1}, "
+                            f"num_tensors={len(v_list)}, first_tensors={grid_infos[:4]}",
+                            flush=True
+                        )
 
         should_activate_codebook = (
             train_centroids
@@ -1629,6 +1773,8 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
         last_entropy_fraction = None
         last_centroid_grad_norm = None
         last_centroid_grad_abs_max = None
+        lsq_task_scale_grad_last = [0.0] * num_param_tensors
+        lsq_metaq_scale_grad_last = [0.0] * num_param_tensors
         centroid_displacement_max = 0.0
         centroid_displacement_mean_sum = 0.0
         centroid_displacement_count = 0
@@ -1675,6 +1821,8 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                 inputs = inputs.contiguous(memory_format=torch.channels_last)
 
             optimizer.zero_grad(set_to_none=True)
+            if scale_optimizer is not None:
+                scale_optimizer.zero_grad(set_to_none=True)
 
             # Fake-quantized forward:
             # after the per-layer grids have been initialized, the loss sees
@@ -1692,16 +1840,18 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
             loss.backward()
 
             _restore_fake_quantized_weights_(fake_quant_backups)
+            _accumulate_lsq_task_scale_grad_(fake_quant_backups)
 
             is_last_configured_step = steps_per_epoch is not None and (i + 1) >= steps_per_epoch
             capture_last_norms = local_rank == 0 and should_eval_epoch and is_last_configured_step
             if capture_last_norms:
                 last_loss_grad_norm = _grad_norm_from_current_grads()
 
-            # Perspective ridge/sparsity gradient (test_113): add 2*T1*w/y* to the
-            # gradient of every quantized tensor, every step.  Closed form (xi=0),
-            # valid ONLY when the entropy is off (T2 == 0).  When T2 > 0 the full
-            # gradient (ridge + entropy) comes from the perspective FISTA below.
+            # Perspective ridge/sparsity gradient (test_113). For legacy fixed-grid
+            # runs retain the closed-form weight gradient. In joint LSQ-METaQ runs
+            # solve the xi=0 inner problem explicitly: its constraint multiplier is
+            # also needed for the exact envelope gradient with respect to the LSQ
+            # scale, including the representability boundary.
             if (use_perspective and T2_current == 0
                     and grid_reset_done and epoch >= entropy_warmup_epochs):
                 with torch.no_grad():
@@ -1709,8 +1859,66 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                         if param.grad is None:
                             continue
                         w_layer = param.detach().reshape(-1)
-                        ridge_g = _perspective_ridge_grad(w_layer, v_list[p_idx])
-                        param.grad.add_(ridge_g.view_as(param))
+                        if joint_lsq_metaq:
+                            scale = lsq_scales[p_idx].detach().clamp_min(1e-12)
+                            q_full = lsq_integer_codebooks[p_idx]
+                            normalized = w_layer / scale
+                            qn = q_full[0]
+                            qp = q_full[-1]
+                            metaq_weight = w_layer.clamp(qn * scale, qp * scale)
+                            in_range = (normalized >= qn) & (normalized <= qp)
+                            clipping_scale_direction = torch.where(
+                                normalized < qn,
+                                qn,
+                                torch.where(
+                                    normalized > qp,
+                                    qp,
+                                    torch.zeros_like(normalized),
+                                ),
+                            )
+                            zero_xi = torch.zeros(
+                                metaq_C_by_layer[p_idx],
+                                dtype=torch.float32,
+                                device=device,
+                            )
+                            _, beta_star, _, beta_constraint = (
+                                knapsack_perspective_leonardo(
+                                    zero_xi,
+                                    v_list[p_idx],
+                                    metaq_weight,
+                                    metaq_C_by_layer[p_idx],
+                                    device,
+                                    T1_explicit,
+                                    0.0,
+                                    T3_explicit,
+                                )
+                            )
+                            param.grad.add_((beta_star * in_range).view_as(param))
+                            scale_phi_grad = metaq_scale_gradient(
+                                beta_constraint,
+                                metaq_weight,
+                                scale,
+                            )
+                            scale_phi_grad.add_(
+                                (
+                                    beta_star.float()
+                                    * clipping_scale_direction.float()
+                                ).sum()
+                            )
+                            if lsq_scales[p_idx].grad is None:
+                                lsq_scales[p_idx].grad = scale_phi_grad.reshape_as(
+                                    lsq_scales[p_idx]
+                                )
+                            else:
+                                lsq_scales[p_idx].grad.add_(scale_phi_grad)
+                            lsq_metaq_scale_grad_last[p_idx] = float(
+                                scale_phi_grad.item()
+                            )
+                        else:
+                            ridge_g = _perspective_ridge_grad(
+                                w_layer, v_list[p_idx]
+                            )
+                            param.grad.add_(ridge_g.view_as(param))
 
             # test_125: perspective entropy (T2 > 0).  Run the general perspective
             # FISTA every entropy_every steps: it updates the bucket duals xi and
@@ -1725,14 +1933,70 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                         if param.grad is None:
                             continue
                         w_layer = param.detach().reshape(-1).to(device)
-                        C_layer = C_by_layer[p_idx]
-                        xi_list[p_idx], beta_star = FISTA_perspective_leonardo(
-                            xi_list[p_idx], v_list[p_idx], w_layer, C_layer,
-                            float(w_layer.numel()), lower_c,
+                        C_layer = metaq_C_by_layer[p_idx]
+                        if lsq_enabled:
+                            scale = lsq_scales[p_idx].detach().clamp_min(1e-12)
+                            q_full = lsq_integer_codebooks[p_idx]
+                            normalized = w_layer / scale
+                            qn = q_full[0]
+                            qp = q_full[-1]
+                            metaq_weight = w_layer.clamp(qn * scale, qp * scale)
+                            metaq_weight_in_range = (
+                                (normalized >= qn) & (normalized <= qp)
+                            )
+                            clipping_scale_direction = torch.where(
+                                normalized < qn,
+                                qn,
+                                torch.where(
+                                    normalized > qp,
+                                    qp,
+                                    torch.zeros_like(normalized),
+                                ),
+                            )
+                        else:
+                            metaq_weight = w_layer
+                            metaq_weight_in_range = torch.ones_like(
+                                w_layer, dtype=torch.bool
+                            )
+                            clipping_scale_direction = None
+
+                        (
+                            xi_list[p_idx],
+                            beta_star,
+                            beta_constraint,
+                        ) = FISTA_perspective_leonardo(
+                            xi_list[p_idx], v_list[p_idx], metaq_weight, C_layer,
+                            float(metaq_weight.numel()), lower_c,
                             T1_explicit, T2_current, T3_explicit,
                             subgradient_step, device, max_iterations,
                             dual_step,
                         )
+                        if joint_lsq_metaq:
+                            # Exact envelope contribution for
+                            # F=L_QAT+phi(clip_LSQ(w,s),s). Outside the LSQ
+                            # range, dclip/dw=0 and dclip/ds=q_edge.
+                            beta_for_weight = beta_star * metaq_weight_in_range
+                            param.grad.add_(beta_for_weight.view_as(param))
+                            scale_phi_grad = metaq_scale_gradient(
+                                beta_constraint,
+                                metaq_weight,
+                                lsq_scales[p_idx],
+                            )
+                            scale_phi_grad.add_(
+                                (
+                                    beta_star.float()
+                                    * clipping_scale_direction.float()
+                                ).sum()
+                            )
+                            if lsq_scales[p_idx].grad is None:
+                                lsq_scales[p_idx].grad = scale_phi_grad.reshape_as(
+                                    lsq_scales[p_idx]
+                                )
+                            else:
+                                lsq_scales[p_idx].grad.add_(scale_phi_grad)
+                            lsq_metaq_scale_grad_last[p_idx] = float(
+                                scale_phi_grad.item()
+                            )
                         # winsorize beta* to clip stray coordinates, THEN auto-scale
                         # to the gradient norm exactly as the (proven-stable) old dual
                         # path does.  Winsorizing to the median only caps outliers; it
@@ -1740,7 +2004,11 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                         # weights up in the first test_125 (p50 -> -808 the moment T2
                         # turned on).  Rescaling ties the perspective update to
                         # T2_current * ref_grad_norm, bounding its magnitude.
-                        bstar = beta_star.float().reshape(-1)
+                        bstar = (
+                            beta_star * metaq_weight_in_range
+                            if joint_lsq_metaq
+                            else beta_star
+                        ).float().reshape(-1)
                         # test_126 diagnostic: common-mode fraction of the RAW beta*
                         # (intrinsic ~0.70), scale-invariant.  Logged to document why
                         # we center below.
@@ -1753,16 +2021,17 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                         # histogram (H_Q flat), and on GPU it feeds back (uniform shift
                         # -> skewed counts -> xi ran away to +-450, test_126).  Keeping
                         # only the differential part preserves the clustering signal.
-                        bstar = bstar - bstar.mean()
-                        bscale = bstar.abs().median().clamp_min(1e-12)
-                        bstar = bstar.clamp(min=-beta_clip_k * bscale, max=beta_clip_k * bscale)
                         grad_layer_norm = param.grad.detach().float().norm()
-                        if entropy_ref_grad_norm[p_idx] is None:
-                            entropy_ref_grad_norm[p_idx] = grad_layer_norm.detach().clone()
-                        ref_grad_norm = entropy_ref_grad_norm[p_idx]
-                        bstar_norm = bstar.norm().clamp_min(1e-12)
-                        bstar = (T2_current * ref_grad_norm / bstar_norm) * bstar
-                        param.grad.add_(bstar.view_as(param))
+                        if not joint_lsq_metaq:
+                            bstar = bstar - bstar.mean()
+                            bscale = bstar.abs().median().clamp_min(1e-12)
+                            bstar = bstar.clamp(min=-beta_clip_k * bscale, max=beta_clip_k * bscale)
+                            if entropy_ref_grad_norm[p_idx] is None:
+                                entropy_ref_grad_norm[p_idx] = grad_layer_norm.detach().clone()
+                            ref_grad_norm = entropy_ref_grad_norm[p_idx]
+                            bstar_norm = bstar.norm().clamp_min(1e-12)
+                            bstar = (T2_current * ref_grad_norm / bstar_norm) * bstar
+                            param.grad.add_(bstar.view_as(param))
                         if local_rank == 0:
                             persp_entropy_norm_sum += bstar.norm().item()
                             persp_grad_norm_sum += grad_layer_norm.item()
@@ -1990,6 +2259,20 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
 
             optimizer.step()
 
+            if scale_optimizer is not None:
+                if dist.is_initialized():
+                    for scale in lsq_scales:
+                        if scale.grad is not None:
+                            dist.all_reduce(scale.grad, op=dist.ReduceOp.SUM)
+                            scale.grad.div_(dist.get_world_size())
+                scale_optimizer.step()
+                with torch.no_grad():
+                    for scale in lsq_scales:
+                        scale.clamp_(min=1e-12)
+                        if dist.is_initialized():
+                            dist.broadcast(scale, src=0)
+                    _refresh_lsq_metaq_grids_()
+
             if train_centroids and codebook_active:
                 with torch.no_grad():
                     for p_idx, param in enumerate(params_for_quant):
@@ -2129,6 +2412,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
 
                     if full_idx in quant_param_indices and QuantizationType == "center":
                         v_layer = v_list[quant_state]
+                        quant_levels = _current_quant_levels(quant_state)
 
                         if not use_quantization:
                             # Pruning-only control: the dense and surviving
@@ -2158,11 +2442,21 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                             fixed_assignment = fixed_codebook_assignments[quant_state]
                             if train_centroids and fixed_assignment is not None:
                                 q_idx_layer = fixed_assignment
-                                q_layer = v_layer[q_idx_layer]
+                                q_layer = quant_levels[q_idx_layer]
+                            elif lsq_enabled:
+                                q_layer, integer_assignment = quantize_weight(
+                                    w_layer,
+                                    lsq_scales[quant_state].detach(),
+                                    lsq_integer_codebooks[quant_state],
+                                )
+                                q_idx_layer = (
+                                    integer_assignment
+                                    - lsq_integer_codebooks[quant_state][0]
+                                ).to(torch.long)
                             else:
                                 q_idx_layer, q_layer = _quantize_with_deadzone(
                                     w_layer,
-                                    v_layer,
+                                    quant_levels,
                                     apply_pruning_deadzone=False,
                                 )
 
@@ -2172,12 +2466,21 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                                 s_idx_layer = q_idx_layer
                                 s_layer = q_layer.clone()
                             elif use_perspective:
-                                s_idx_layer, s_layer = _quantize_with_magnitude_pruning(
-                                    w_layer,
-                                    v_layer,
-                                    target_prune_thresholds[quant_state],
-                                    frozen_mask=(frozen_prune_masks[quant_state]
-                                                 if freeze_mask else None),
+                                prune_mask = (
+                                    frozen_prune_masks[quant_state]
+                                    if freeze_mask
+                                    and frozen_prune_masks[quant_state] is not None
+                                    else _perspective_prune_mask(
+                                        w_layer,
+                                        v_layer,
+                                        target_prune_thresholds[quant_state],
+                                    )
+                                )
+                                s_idx_layer = q_idx_layer
+                                s_layer = torch.where(
+                                    prune_mask,
+                                    torch.zeros_like(q_layer),
+                                    q_layer,
                                 )
                             else:
                                 s_idx_layer, s_layer, _ = _quantize_with_dual_zero_pruning(
@@ -2288,6 +2591,10 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                         metadata_bits = 0
                     elif train_centroids and codebook_active:
                         metadata_bits = 32 + 32 + sum(C_by_layer) * 32
+                    elif lsq_enabled:
+                        # One fp32 step size per tensor; signed integer ranges
+                        # are determined globally by C and need no per-layer data.
+                        metadata_bits = 32 + 32 + num_param_tensors * 32
                     else:
                         metadata_bits = 32 + 32 + num_param_tensors * 2 * 32
 
@@ -2476,6 +2783,27 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                     p99 = qvals[3].item()
                     p999 = qvals[4].item()         
 
+                    lsq_scale_values = None
+                    lsq_total_scale_grad_last = None
+                    lsq_clipping_fractions = None
+                    if lsq_enabled:
+                        lsq_scale_values = [float(s.item()) for s in lsq_scales]
+                        lsq_total_scale_grad_last = [
+                            0.0 if s.grad is None else float(s.grad.item())
+                            for s in lsq_scales
+                        ]
+                        lsq_clipping_fractions = []
+                        for p_idx, param in enumerate(params_for_quant):
+                            scale = lsq_scales[p_idx].detach().clamp_min(1e-12)
+                            q_full = lsq_integer_codebooks[p_idx]
+                            normalized = param.detach().reshape(-1) / scale
+                            clipped = (normalized < q_full[0]) | (
+                                normalized > q_full[-1]
+                            )
+                            lsq_clipping_fractions.append(
+                                float(clipped.float().mean().item())
+                            )
+
                 delta_debug_log = ""
 
                 if hasattr(FISTA_leonardo, "_delta_debug"):
@@ -2539,6 +2867,18 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                     )
                 print(f"entropy_every = {entropy_every}", flush=True)
                 print(f"entropy_steps = {entropy_steps}", flush=True)
+                if lsq_enabled:
+                    print(
+                        "lsq_diag: "
+                        f"joint_metaq={joint_lsq_metaq}, "
+                        f"scale_lr={lsq_scale_lr:.6e}, "
+                        f"scales={lsq_scale_values}, "
+                        f"task_scale_grad_last={lsq_task_scale_grad_last}, "
+                        f"metaq_scale_grad_last={lsq_metaq_scale_grad_last}, "
+                        f"total_scale_grad_last={lsq_total_scale_grad_last}, "
+                        f"clipping_fractions={lsq_clipping_fractions}",
+                        flush=True,
+                    )
                 if persp_diag_count > 0:
                     n_d = persp_diag_count
                     persp_entropy_fraction = (

@@ -10,7 +10,8 @@
 #SBATCH --output=/dev/null
 #SBATCH --error=/dev/null
 
-# ResNet-18 / ImageNet weight-only 4-bit QAT control.
+# ResNet-18 / ImageNet joint LSQ-METaQ 4-bit baseline.
+# T1=T2=T3=0 isolates the learned quantizer before METaQ terms are enabled.
 # One 4-GPU node with batch 64/GPU reproduces the reference global batch of 256.
 
 LOG_DIR=$WORK/acardia0/LeonardoTests
@@ -55,6 +56,9 @@ srun --ntasks=1 --ntasks-per-node=1 \
     --flat_schedule Y \
     --mag_prune_ratio 0 \
     --quantization Y \
+    --quantizer lsq \
+    --lsq_scale_lr 1e-5 \
+    --joint_lsq_metaq Y \
     --C 16 \
     --metrics_interval 1 \
     --entropy_warmup_epochs 0 \

@@ -431,7 +431,9 @@ def FISTA_perspective_leonardo(xi, v, w, C, upper_c, lower_c, T1, T2, T3,
     symbol, kept only so the caller's state stays the same shape).  T2 does NOT
     scale the bucket costs of the x-subproblem; it appears only in c_b* above.
 
-    Returns (xi_updated, beta_star) with beta_star the per-weight gradient of phi.
+    Returns (xi_updated, beta_star, beta_constraint). ``beta_star`` is the full
+    per-weight gradient of phi; ``beta_constraint`` is the multiplier of the
+    bucket-representation equality and yields dphi/ds for an LSQ codebook.
 
     NOTE: verified offline for the inner solver (cost/y*/beta vs cvxpy); the FISTA
     xi-dynamics with the exp(.../T2) relation are NOT GPU-tested yet.
@@ -457,8 +459,9 @@ def FISTA_perspective_leonardo(xi, v, w, C, upper_c, lower_c, T1, T2, T3,
     xi_hi = T2_t * (math.log(max(upper_c, 1e-12)) + 1.0) / ln2
 
     beta_star = None
+    beta_constraint = None
     for _ in range(max_iterations):
-        x_ph, beta_star, y_star = knapsack_perspective_leonardo(
+        x_ph, beta_star, y_star, beta_constraint = knapsack_perspective_leonardo(
             xi_b, v, w, C, device, T1, T2, T3
         )
         idx_left = x_ph[:, 0].to(torch.long)
@@ -495,7 +498,7 @@ def FISTA_perspective_leonardo(xi, v, w, C, upper_c, lower_c, T1, T2, T3,
         t_prev = t_cur
 
     xi_out = torch.cat([xi[:1], xi_b]) if has_zero_slot else xi_b
-    return xi_out, beta_star
+    return xi_out, beta_star, beta_constraint
 
 
 def FISTA_prox_leonardo(xi, v, u, C, upper_c, lower_c, T1, T2, T3,

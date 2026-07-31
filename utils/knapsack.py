@@ -595,6 +595,8 @@ def knapsack_perspective_leonardo(xi_buckets, v, w, C, device, T1, T2, T3):
                        (bucket masses; x_left+x_right = y*, and z = 1 - y*)
         beta_star:     (M,)  full gradient dphi/dw = beta_old(w/y*) + 2 T1 w/y*
         y_star:        (M,)
+        beta_constraint: (M,) multiplier of w-sum_b(v_b*x_b)=0. This is
+                         beta_old and is needed for dphi/ds when v_b=s*q_b.
     """
     v = v.to(dtype=torch.float32, device=device)
     w = w.to(dtype=torch.float32, device=device)
@@ -672,6 +674,27 @@ def knapsack_perspective_leonardo(xi_buckets, v, w, C, device, T1, T2, T3):
     idx_right = one[seg + 1]
     x_left = y_star * theta_u
     x_right = y_star * (1.0 - theta_u)
+
+    # At the representability floor y=|w|/|v_edge|, the active solution puts
+    # all mass on an extreme bucket. The adjacent lower-hull slope is generally
+    # NOT the KKT multiplier of w-sum(v*x)=0 because the y feasibility boundary
+    # is active. Stationarity gives
+    #   mu = (xi_edge + T3)/v_edge - T1*v_edge.
+    # This multiplier is required both by dphi/dw and, for v=s*q, by dphi/ds.
+    at_representation_floor = torch.isclose(
+        y_star,
+        ymin,
+        rtol=1e-5,
+        atol=1e-7,
+    ) & (aw > 0)
+    edge_v = torch.where(w >= 0, V[-1], V[0])
+    edge_xi = torch.where(w >= 0, Xi[-1], Xi[0])
+    boundary_beta = (edge_xi + T3) / edge_v - T1 * edge_v
+    beta_old = torch.where(
+        at_representation_floor,
+        boundary_beta,
+        beta_old,
+    )
     beta_star = beta_old + 2.0 * T1 * w / y_star
 
     # weights that are exactly zero -> fully pruned, no gradient
@@ -684,7 +707,7 @@ def knapsack_perspective_leonardo(xi_buckets, v, w, C, device, T1, T2, T3):
         [idx_left.to(torch.int32), idx_right.to(torch.int32), x_left, x_right],
         dim=1,
     )  # (M, 4)
-    return x_placeholder, beta_star, y_star
+    return x_placeholder, beta_star, y_star, beta_old
 
 
 def prox_perspective_leonardo(xi_buckets, v, u, C, device, T1, T3, gamma):
@@ -1116,4 +1139,3 @@ def knapsack_specialized_histo(xi, v, w, C, device):
     objective_values = torch.matmul(x_opt, xi)
 
     return x_opt, lambda_opt, objective_values, iterations
-
