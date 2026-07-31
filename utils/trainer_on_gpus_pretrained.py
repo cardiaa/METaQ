@@ -11,7 +11,7 @@ import torch.distributed as dist
 import gc
 from utils.quantize_and_compress import compute_entropy, quantize_weights_center, compute_entropyGPU, quantize_weights_centerGPU, compute_entropy_hist
 from utils.optimization import FISTA, FISTA_leonardo, FISTA_perspective_leonardo, FISTA_prox_leonardo, ProximalBM, test_accuracy, test_accuracyGPU
-from utils.knapsack import knapsack_perspective_leonardo, prox_perspective_leonardo
+from utils.knapsack import prox_perspective_leonardo
 from utils.knapsack import knapsack_specialized_pruning, knapsack_specialized_pruning_sparse_leonardo
 from utils.weight_utils import initialize_weights
 from utils.lsq import (
@@ -1253,6 +1253,41 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
         g[nz] = 2.0 * T1_explicit * w_flat[nz] / y_star[nz]
         return g
 
+    def _zero_entropy_perspective_gradients(w_flat, v_layer):
+        """Exact dphi/dw and equality multiplier when the bucket costs are zero.
+
+        With T2=0 the inner problem reduces to a scalar minimization in y, so
+        invoking the general hull/knapsack solver for every weight is unnecessary.
+        The equality multiplier is zero away from the representability floor and
+        follows the boundary KKT condition on that floor.
+        """
+        y_star = _perspective_y_star(w_flat, v_layer)
+        beta_constraint = torch.zeros_like(w_flat)
+        beta_star = torch.zeros_like(w_flat)
+        nonzero = w_flat != 0
+        if not nonzero.any():
+            return beta_star, beta_constraint
+
+        positive_edge = v_layer[-1]
+        negative_edge = v_layer[0]
+        edge_v = torch.where(w_flat >= 0, positive_edge, negative_edge)
+        representation_floor = (
+            w_flat.abs() / edge_v.abs().clamp_min(1e-12)
+        ).clamp(max=1.0)
+        at_floor = nonzero & torch.isclose(
+            y_star,
+            representation_floor,
+            rtol=1e-5,
+            atol=1e-7,
+        )
+        boundary_multiplier = T3_explicit / edge_v - T1_explicit * edge_v
+        beta_constraint[at_floor] = boundary_multiplier[at_floor]
+        beta_star[nonzero] = (
+            beta_constraint[nonzero]
+            + 2.0 * T1_explicit * w_flat[nonzero] / y_star[nonzero]
+        )
+        return beta_star, beta_constraint
+
     def _perspective_mag_threshold(w_flat, v_layer, ts=None):
         # The magnitude threshold below which a weight is pruned.
         #  - target_sparsity > 0: per-layer, prune the smallest ts fraction of
@@ -1853,6 +1888,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
             # also needed for the exact envelope gradient with respect to the LSQ
             # scale, including the representability boundary.
             if (use_perspective and T2_current == 0
+                    and (T1_explicit != 0.0 or T3_explicit != 0.0)
                     and grid_reset_done and epoch >= entropy_warmup_epochs):
                 with torch.no_grad():
                     for p_idx, param in enumerate(params_for_quant):
@@ -1876,21 +1912,10 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                                     torch.zeros_like(normalized),
                                 ),
                             )
-                            zero_xi = torch.zeros(
-                                metaq_C_by_layer[p_idx],
-                                dtype=torch.float32,
-                                device=device,
-                            )
-                            _, beta_star, _, beta_constraint = (
-                                knapsack_perspective_leonardo(
-                                    zero_xi,
-                                    v_list[p_idx],
+                            beta_star, beta_constraint = (
+                                _zero_entropy_perspective_gradients(
                                     metaq_weight,
-                                    metaq_C_by_layer[p_idx],
-                                    device,
-                                    T1_explicit,
-                                    0.0,
-                                    T3_explicit,
+                                    v_list[p_idx],
                                 )
                             )
                             param.grad.add_((beta_star * in_range).view_as(param))
