@@ -16,6 +16,7 @@ from utils.knapsack import knapsack_specialized_pruning, knapsack_specialized_pr
 from utils.weight_utils import initialize_weights
 from utils.lsq import (
     initial_weight_step_size,
+    mse_weight_step_size,
     metaq_scale_gradient,
     quantize_weight,
     signed_integer_codebook,
@@ -197,7 +198,9 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                        sparsity_schedule=None, freeze_mask=False,
                        train_sparse=False, use_quantization=True,
                        quantizer="fixed", lsq_scale_lr=1e-5,
-                       joint_lsq_metaq=False, layer_C=None,
+                       lsq_init="lsq", lsq_grad_scaling=True,
+                       joint_lsq_metaq=False, bn_recalibration_batches=0,
+                       layer_C=None,
                        train_centroids=False,
                        centroid_lr_scale=1.0, centroid_kmeans_iterations=0,
                        centroid_freeze_epoch=0,
@@ -438,6 +441,10 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
             "The LSQ implementation currently supports only the gradient path, "
             "not the proximal path."
         )
+    if lsq_init not in ("lsq", "mse"):
+        raise ValueError(f"Unsupported LSQ initialization: {lsq_init}")
+    if bn_recalibration_batches < 0:
+        raise ValueError("bn_recalibration_batches must be >= 0.")
     if joint_lsq_metaq and not lsq_enabled:
         raise ValueError("Joint LSQ-METaQ requires the LSQ quantizer.")
     if joint_lsq_metaq and not use_perspective:
@@ -460,16 +467,18 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
         lsq_nonzero_integer_codebooks = [
             q[q != 0] for q in lsq_integer_codebooks
         ]
-        lsq_scales = [
-            torch.nn.Parameter(
-                torch.tensor(
-                    initial_weight_step_size(param, float(q[-1].item())),
-                    dtype=torch.float32,
-                    device=device,
+        initial_scales = []
+        for param, q in zip(params_for_quant, lsq_integer_codebooks):
+            if lsq_init == "mse":
+                value = mse_weight_step_size(param, q)
+            else:
+                value = initial_weight_step_size(param, float(q[-1].item()))
+            initial_scales.append(
+                torch.nn.Parameter(
+                    torch.tensor(value, dtype=torch.float32, device=device)
                 )
             )
-            for param, q in zip(params_for_quant, lsq_integer_codebooks)
-        ]
+        lsq_scales = initial_scales
         scale_optimizer = optim.Adam(
             lsq_scales,
             lr=lsq_scale_lr,
@@ -903,6 +912,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                     param.grad.detach().reshape(-1),
                     lsq_scales[q_state],
                     lsq_integer_codebooks[q_state],
+                    normalize=lsq_grad_scaling,
                 )
                 if lsq_scales[q_state].grad is None:
                     lsq_scales[q_state].grad = scale_gradient.reshape_as(
@@ -912,6 +922,74 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                     lsq_scales[q_state].grad.add_(scale_gradient)
                 lsq_task_scale_grad_last[q_state] = float(scale_gradient.item())
                 param.grad.mul_(in_range.reshape_as(param.grad))
+
+    def _reestimate_batchnorm_stats_():
+        """Re-estimate BN running statistics with the deployed quantized weights.
+
+        The reference protocol evaluates after averaging 50 training-batch
+        statistics with BN momentum 1. We aggregate those statistics across DDP
+        ranks and then install the same buffers on every rank.
+        """
+        if bn_recalibration_batches <= 0:
+            return 0
+        bn_modules = [
+            module
+            for module in model.modules()
+            if isinstance(module, torch.nn.modules.batchnorm._BatchNorm)
+            and module.track_running_stats
+        ]
+        if not bn_modules:
+            return 0
+
+        was_training = model.training
+        original_momenta = [module.momentum for module in bn_modules]
+        mean_sums = [torch.zeros_like(module.running_mean) for module in bn_modules]
+        var_sums = [torch.zeros_like(module.running_var) for module in bn_modules]
+        fake_quant_backups = _fake_quantize_weights_for_forward_()
+        model.eval()
+        for module in bn_modules:
+            module.momentum = 1.0
+            module.training = True
+
+        batches = 0
+        autocast_ctx = torch.autocast(
+            device_type="cuda",
+            dtype=torch.bfloat16,
+            enabled=(device.type == "cuda"),
+        )
+        with torch.no_grad(), autocast_ctx:
+            for inputs, _ in trainloader:
+                if batches >= bn_recalibration_batches:
+                    break
+                inputs = inputs.to(device, non_blocking=True)
+                if device.type == "cuda":
+                    inputs = inputs.contiguous(memory_format=torch.channels_last)
+                model(inputs)
+                for idx, module in enumerate(bn_modules):
+                    mean_sums[idx].add_(module.running_mean)
+                    var_sums[idx].add_(module.running_var)
+                batches += 1
+
+        count = torch.tensor(float(batches), device=device)
+        if dist.is_initialized():
+            dist.all_reduce(count, op=dist.ReduceOp.SUM)
+            for mean_sum, var_sum in zip(mean_sums, var_sums):
+                dist.all_reduce(mean_sum, op=dist.ReduceOp.SUM)
+                dist.all_reduce(var_sum, op=dist.ReduceOp.SUM)
+        denominator = count.clamp_min(1.0)
+        for module, momentum, mean_sum, var_sum in zip(
+            bn_modules, original_momenta, mean_sums, var_sums
+        ):
+            module.running_mean.copy_(mean_sum / denominator)
+            module.running_var.copy_(var_sum / denominator)
+            module.momentum = momentum
+
+        _restore_fake_quantized_weights_(fake_quant_backups)
+        if was_training:
+            model.train()
+        else:
+            model.eval()
+        return batches
 
     # Diagnostic norm of the currently accumulated gradients on this rank.
     def _grad_norm_from_current_grads() -> float:
@@ -2408,6 +2486,14 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
             if device.type == "cuda":
                 torch.cuda.synchronize(device)
             _dist_barrier()
+
+            bn_batches_used = _reestimate_batchnorm_stats_()
+            if local_rank == 0 and bn_batches_used > 0:
+                print(
+                    f"[BN RECALIBRATION] local_batches={bn_batches_used}, "
+                    f"world_size={dist.get_world_size() if dist.is_initialized() else 1}",
+                    flush=True,
+                )
 
             with torch.no_grad():
                 accuracy = test_accuracyGPU(model, testloader, device)

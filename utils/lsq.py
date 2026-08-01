@@ -25,6 +25,42 @@ def initial_weight_step_size(weight: torch.Tensor, q_positive_max: float) -> flo
     return max(value / math.sqrt(q_positive_max), 1e-12)
 
 
+def mse_weight_step_size(
+    weight: torch.Tensor,
+    q: torch.Tensor,
+    num_candidates: int = 100,
+    range_margin: float = 0.5,
+) -> float:
+    """Per-tensor symmetric MSE range search used by the reference paper.
+
+    This mirrors its grid estimator: search 100 positive clipping thresholds
+    between ``(max(abs(w)) + 0.5) / 100`` and ``max(abs(w)) + 0.5`` and choose
+    the scale whose signed uniform quantization minimizes squared weight error.
+    """
+    if num_candidates <= 0:
+        raise ValueError("num_candidates must be positive.")
+    qp = float(q[-1].item())
+    if qp <= 0:
+        raise ValueError("The positive integer range must be non-empty.")
+    with torch.no_grad():
+        w = weight.detach().float()
+        max_range = max(abs(float(w.min().item())), float(w.max().item()))
+        max_range += float(range_margin)
+        step = max_range / num_candidates
+        best_error = None
+        best_scale = None
+        qn_tensor = q[0]
+        qp_tensor = q[-1]
+        for candidate in range(1, num_candidates + 1):
+            scale = (step * candidate) / qp
+            quantized = (w / scale).round().clamp(qn_tensor, qp_tensor) * scale
+            error = (w - quantized).square().sum().item()
+            if best_error is None or error < best_error:
+                best_error = error
+                best_scale = scale
+    return max(float(best_scale), 1e-12)
+
+
 def quantize_weight(weight: torch.Tensor, scale: torch.Tensor, q: torch.Tensor):
     """Return the LSQ fake-quantized weight and its integer assignment."""
     scale_safe = scale.clamp_min(1e-12)
@@ -40,6 +76,7 @@ def task_scale_gradient(
     quantized_weight_gradient: torch.Tensor,
     scale: torch.Tensor,
     q: torch.Tensor,
+    normalize: bool = True,
 ) -> tuple[torch.Tensor, torch.Tensor]:
     """Compute the LSQ surrogate scale gradient and weight STE mask.
 
@@ -61,7 +98,11 @@ def task_scale_gradient(
             normalized.round() - normalized,
         ),
     )
-    gradient_scale = 1.0 / math.sqrt(weight.numel() * float(qp))
+    gradient_scale = (
+        1.0 / math.sqrt(weight.numel() * float(qp))
+        if normalize
+        else 1.0
+    )
     scale_gradient = (
         quantized_weight_gradient.detach().float()
         * d_quantized_d_scale.float()

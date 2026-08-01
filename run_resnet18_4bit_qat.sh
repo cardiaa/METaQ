@@ -47,18 +47,21 @@ srun --ntasks=1 --ntasks-per-node=1 \
     --val_workers 2 \
     --batch_size 64 \
     --n_epochs 20 \
-    --lr 1e-3 \
+    --lr 1e-2 \
     --optimizer_weight_decay 1e-4 \
     --T1 0 \
     --T2 0 \
     --T3 0 \
     --perspective Y \
-    --flat_schedule Y \
+    --flat_schedule N \
     --mag_prune_ratio 0 \
     --quantization Y \
     --quantizer lsq \
     --lsq_scale_lr 1e-5 \
+    --lsq_init mse \
+    --lsq_grad_scaling N \
     --joint_lsq_metaq Y \
+    --bn_recalibration_batches 50 \
     --C 16 \
     --metrics_interval 1 \
     --entropy_warmup_epochs 0 \
