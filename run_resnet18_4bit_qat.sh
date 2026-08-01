@@ -49,7 +49,7 @@ srun --ntasks=1 --ntasks-per-node=1 \
     --n_epochs 20 \
     --lr 1e-2 \
     --optimizer_weight_decay 1e-4 \
-    --T1 0 \
+    --T1 1e-4 \
     --T2 0 \
     --T3 0 \
     --perspective Y \
