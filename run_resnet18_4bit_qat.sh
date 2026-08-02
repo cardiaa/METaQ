@@ -51,7 +51,7 @@ srun --ntasks=1 --ntasks-per-node=1 \
     --optimizer_weight_decay 1e-4 \
     --T1 1e-5 \
     --T2 0 \
-    --T3 1e-4 \
+    --T3 1e-7 \
     --perspective Y \
     --flat_schedule N \
     --mag_prune_ratio 0 \
