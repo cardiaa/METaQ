@@ -10,8 +10,8 @@
 #SBATCH --output=/dev/null
 #SBATCH --error=/dev/null
 
-# ResNet-18 / ImageNet joint LSQ-METaQ 4-bit baseline.
-# T1=T2=T3=0 isolates the learned quantizer before METaQ terms are enabled.
+# ResNet-18 / ImageNet joint LSQ-METaQ 4-bit training with a conservative T1.
+# T2=T3=0 isolates the effect of T1 on the learned quantizer.
 # One 4-GPU node with batch 64/GPU reproduces the reference global batch of 256.
 
 LOG_DIR=$WORK/acardia0/LeonardoTests
@@ -49,7 +49,7 @@ srun --ntasks=1 --ntasks-per-node=1 \
     --n_epochs 20 \
     --lr 1e-2 \
     --optimizer_weight_decay 1e-4 \
-    --T1 1e-4 \
+    --T1 1e-5 \
     --T2 0 \
     --T3 0 \
     --perspective Y \
