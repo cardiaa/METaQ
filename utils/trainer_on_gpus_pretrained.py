@@ -2164,7 +2164,16 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                             _T2t = max(float(T2_current), 1e-12)
                             _xlo = _T2t * (math.log(max(lower_c, 1e-12)) + 1.0) / _ln2
                             _xhi = _T2t * (math.log(max(float(w_layer.numel()), 1e-12)) + 1.0) / _ln2
-                            _tol = 1e-6 * max(1.0, abs(_xhi - _xlo))
+                            # test_168: use a tolerance relative to the actual
+                            # dual interval. The previous absolute floor of 1e-6
+                            # covered a large part of the whole interval when
+                            # T2 <= 1e-7, falsely reporting interior xi values as
+                            # pinned (73% in test_167).
+                            _xi_scale = max(
+                                abs(_xlo), abs(_xhi),
+                                abs(_xhi - _xlo), 1e-12,
+                            )
+                            _tol = 1e-6 * _xi_scale
                             persp_xi_pinned_sum += (
                                 ((xi_b_now - _xlo).abs() < _tol)
                                 | ((xi_b_now - _xhi).abs() < _tol)

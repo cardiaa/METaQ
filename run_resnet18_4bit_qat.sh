@@ -64,7 +64,7 @@ srun --ntasks=$SLURM_NTASKS --ntasks-per-node=1 bash -lc '
     --lr 1e-2 \
     --optimizer_weight_decay 1e-4 \
     --T1 1e-5 \
-    --T2 1e-7 \
+    --T2 3e-8 \
     --T3 1e-7 \
     --perspective Y \
     --flat_schedule N \
@@ -81,7 +81,7 @@ srun --ntasks=$SLURM_NTASKS --ntasks-per-node=1 bash -lc '
     --metrics_interval 1 \
     --entropy_warmup_epochs 1 \
     --entropy_every 4 \
-    --dual_step 1e-8 \
+    --dual_step 3e-9 \
     --check_ddp_sync \
     --pretrained Y \
     > "$OUTPUT_TARGET" 2>&1
