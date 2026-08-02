@@ -6,13 +6,12 @@
 #SBATCH --ntasks=4
 #SBATCH --gres=gpu:4
 #SBATCH --cpus-per-task=32
-#SBATCH --time=01:30:00
+#SBATCH --time=02:00:00
 #SBATCH --output=/dev/null
 #SBATCH --error=/dev/null
 
-# ResNet-18 / ImageNet joint LSQ-METaQ 4-bit training with conservative T1 and T3.
-# T2 remains disabled to isolate the perspective sparsity terms.
-# Four 4-GPU nodes with batch 64/GPU test the global-batch-1024 regime before T2.
+# ResNet-18 / ImageNet joint LSQ-METaQ 4-bit training with conservative T1/T2/T3.
+# Four 4-GPU nodes with batch 64/GPU use the validated global-batch-1024 regime.
 
 LOG_DIR=$WORK/acardia0/LeonardoTests
 mkdir -p "$LOG_DIR"
@@ -65,7 +64,7 @@ srun --ntasks=$SLURM_NTASKS --ntasks-per-node=1 bash -lc '
     --lr 1e-2 \
     --optimizer_weight_decay 1e-4 \
     --T1 1e-5 \
-    --T2 0 \
+    --T2 1e-6 \
     --T3 1e-7 \
     --perspective Y \
     --flat_schedule N \
@@ -78,8 +77,10 @@ srun --ntasks=$SLURM_NTASKS --ntasks-per-node=1 bash -lc '
     --joint_lsq_metaq Y \
     --bn_recalibration_batches 50 \
     --C 16 \
+    --max_iterations 3 \
     --metrics_interval 1 \
-    --entropy_warmup_epochs 0 \
+    --entropy_warmup_epochs 1 \
+    --entropy_every 4 \
     --check_ddp_sync \
     --pretrained Y \
     > "$OUTPUT_TARGET" 2>&1
