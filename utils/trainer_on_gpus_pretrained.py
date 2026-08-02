@@ -1681,7 +1681,12 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
         # stale at each epoch start, the forward mask shifted, and the net
         # collapsed.
         codebook_initialized_now = False
-        if epoch >= entropy_warmup_epochs and not grid_reset_done:
+        # LSQ already owns a valid learned codebook, so expose it to METaQ from
+        # epoch 1 independently of the T2 warm-up. The warm-up controls only the
+        # entropy term; delaying this initialization also delayed T1/T3 and made
+        # test_165's first epoch incomparable with the T2=0 baseline. Fixed grids
+        # retain their historical warm-up behaviour.
+        if (lsq_enabled or epoch >= entropy_warmup_epochs) and not grid_reset_done:
             with torch.no_grad():
                 if lsq_enabled:
                     for scale in lsq_scales:
@@ -1965,9 +1970,12 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
             # solve the xi=0 inner problem explicitly: its constraint multiplier is
             # also needed for the exact envelope gradient with respect to the LSQ
             # scale, including the representability boundary.
+            # T1/T3 are active as soon as the codebook exists. In particular,
+            # entropy_warmup_epochs postpones T2 only; it must not silently
+            # disable the other METaQ terms during the warm-up (test_166).
             if (use_perspective and T2_current == 0
                     and (T1_explicit != 0.0 or T3_explicit != 0.0)
-                    and grid_reset_done and epoch >= entropy_warmup_epochs):
+                    and grid_reset_done):
                 with torch.no_grad():
                     for p_idx, param in enumerate(params_for_quant):
                         if param.grad is None:

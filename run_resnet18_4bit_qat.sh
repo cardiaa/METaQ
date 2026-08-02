@@ -6,7 +6,7 @@
 #SBATCH --ntasks=4
 #SBATCH --gres=gpu:4
 #SBATCH --cpus-per-task=32
-#SBATCH --time=02:00:00
+#SBATCH --time=02:30:00
 #SBATCH --output=/dev/null
 #SBATCH --error=/dev/null
 
@@ -81,6 +81,7 @@ srun --ntasks=$SLURM_NTASKS --ntasks-per-node=1 bash -lc '
     --metrics_interval 1 \
     --entropy_warmup_epochs 1 \
     --entropy_every 4 \
+    --dual_step 1e-7 \
     --check_ddp_sync \
     --pretrained Y \
     > "$OUTPUT_TARGET" 2>&1
