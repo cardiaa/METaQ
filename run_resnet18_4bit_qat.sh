@@ -1,18 +1,18 @@
 #!/bin/bash
 #SBATCH --partition=boost_usr_prod
 #SBATCH --account=IscrC_ObCTDoNN
-#SBATCH --nodes=1
+#SBATCH --nodes=4
 #SBATCH --ntasks-per-node=1
-#SBATCH --ntasks=1
+#SBATCH --ntasks=4
 #SBATCH --gres=gpu:4
 #SBATCH --cpus-per-task=32
-#SBATCH --time=03:00:00
+#SBATCH --time=01:30:00
 #SBATCH --output=/dev/null
 #SBATCH --error=/dev/null
 
 # ResNet-18 / ImageNet joint LSQ-METaQ 4-bit training with conservative T1 and T3.
 # T2 remains disabled to isolate the perspective sparsity terms.
-# One 4-GPU node with batch 64/GPU reproduces the reference global batch of 256.
+# Four 4-GPU nodes with batch 64/GPU test the global-batch-1024 regime before T2.
 
 LOG_DIR=$WORK/acardia0/LeonardoTests
 mkdir -p "$LOG_DIR"
@@ -26,6 +26,7 @@ else
 fi
 
 LOG_FILE=$LOG_DIR/Leonardo_test_${NEXT}.log
+export LOG_FILE
 
 module load profile/deeplrn
 module load cineca-ai/4.3.0
@@ -33,11 +34,25 @@ module load cineca-ai/4.3.0
 export OMP_NUM_THREADS=1
 export TRANSFORMERS_NO_ADVISORY_WARNINGS=1
 export PYTHONWARNINGS="ignore::UserWarning"
+export MASTER_ADDR=$(scontrol show hostnames "$SLURM_JOB_NODELIST" | head -n 1)
+export MASTER_PORT=29500
 
 cd "$WORK/acardia0/METaQ"
 
-srun --ntasks=1 --ntasks-per-node=1 \
-    torchrun --standalone --nproc_per_node=4 \
+srun --ntasks=$SLURM_NTASKS --ntasks-per-node=1 bash -lc '
+    if [ "$SLURM_NODEID" -eq 0 ]; then
+        OUTPUT_TARGET="$LOG_FILE"
+    else
+        OUTPUT_TARGET=/dev/null
+    fi
+
+    torchrun \
+    --nnodes=$SLURM_JOB_NUM_NODES \
+    --nproc_per_node=4 \
+    --node_rank=$SLURM_NODEID \
+    --rdzv_backend=c10d \
+    --rdzv_endpoint=$MASTER_ADDR:$MASTER_PORT \
+    --rdzv_id=$SLURM_JOB_ID \
     train_on_gpus_pretrained.py \
     --model_name ResNet-18 \
     --delta -10 \
@@ -67,4 +82,5 @@ srun --ntasks=1 --ntasks-per-node=1 \
     --entropy_warmup_epochs 0 \
     --check_ddp_sync \
     --pretrained Y \
-    > "$LOG_FILE" 2>&1
+    > "$OUTPUT_TARGET" 2>&1
+'
