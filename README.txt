@@ -60,5 +60,6 @@ The default Leonardo checkpoints are:
 - DeiT-Small:   $WORK/acardia0/imagenet_checkpoints/deit_small_patch16_224-cd65a155.pth
 
 Pass --pretrained_checkpoint to override the model-specific path. DeiT-Small
-requires timm. The tracked run_resnet18_4bit_qat.sh launcher is the initial
-weight-only C=16 (4-bit) ResNet-18 control.
+requires timm. The tracked run_resnet18_4bit_qat.sh and
+run_deit_small_4bit_qat.sh launchers run the joint weight-only C=16 (4-bit)
+LSQ-METaQ protocol on ResNet-18 and DeiT-Small, respectively.
