@@ -43,7 +43,7 @@ def segment_at(hull, target_q):
     raise ValueError(f"target {target_q} is outside the codebook hull")
 
 
-def solve_scalar(w, scale, q, xi, t1, t3):
+def solve_scalar(w, scale, q, xi, perspective_coeff, sparsity_coeff):
     hull = lower_hull(q, xi)
     q_min, q_max = hull[0][0], hull[-1][0]
     side = scale * (q_max if w >= 0 else abs(q_min))
@@ -62,9 +62,9 @@ def solve_scalar(w, scale, q, xi, t1, t3):
         slope_q = (xir - xil) / (qr - ql)
         beta = slope_q / scale
         intercept = xil - slope_q * ql
-        denominator = intercept + t3
-        if t1 > 0 and denominator > 0:
-            y = abs(w) * math.sqrt(t1 / denominator)
+        denominator = intercept + sparsity_coeff
+        if perspective_coeff > 0 and denominator > 0:
+            y = abs(w) * math.sqrt(perspective_coeff / denominator)
             target_q = w / (scale * y) if y > 0 else math.inf
             if y_min <= y <= 1.0 and ql <= target_q <= qr:
                 candidates.append(y)
@@ -76,7 +76,7 @@ def solve_scalar(w, scale, q, xi, t1, t3):
             segment, hull_value, slope_q, at_kink = segment_at(hull, target_q)
         except ValueError:
             continue
-        objective = y * hull_value + t1 * w * w / y + t3 * y
+        objective = y * hull_value + perspective_coeff * w * w / y + sparsity_coeff * y
         record = (objective, y, segment, slope_q, at_kink)
         if best is None or record[0] < best[0]:
             best = record
@@ -89,7 +89,7 @@ def solve_scalar(w, scale, q, xi, t1, t3):
     if at_representation_floor:
         q_edge, xi_edge = hull[-1] if w >= 0 else hull[0]
         v_edge = scale * q_edge
-        beta_old = (xi_edge + t3) / v_edge - t1 * v_edge
+        beta_old = (xi_edge + sparsity_coeff) / v_edge - perspective_coeff * v_edge
     predicted_scale_gradient = -beta_old * w / scale
     nonsmooth_kink = at_kink and not at_representation_floor
     return (
@@ -102,10 +102,10 @@ def solve_scalar(w, scale, q, xi, t1, t3):
     )
 
 
-def finite_difference(w, scale, q, xi, t1, t3):
+def finite_difference(w, scale, q, xi, perspective_coeff, sparsity_coeff):
     epsilon = 1e-5 * scale
-    plus = solve_scalar(w, scale + epsilon, q, xi, t1, t3)[0]
-    minus = solve_scalar(w, scale - epsilon, q, xi, t1, t3)[0]
+    plus = solve_scalar(w, scale + epsilon, q, xi, perspective_coeff, sparsity_coeff)[0]
+    minus = solve_scalar(w, scale - epsilon, q, xi, perspective_coeff, sparsity_coeff)[0]
     return (plus - minus) / (2 * epsilon)
 
 
@@ -125,14 +125,14 @@ def main():
         w = random.uniform(-0.75, 0.75) * scale * 7.0
         if abs(w) < 1e-4:
             continue
-        t1 = random.uniform(0.01, 0.2)
-        t3 = random.uniform(0.01, 0.3)
+        perspective_coeff = random.uniform(0.01, 0.2)
+        sparsity_coeff = random.uniform(0.01, 0.3)
 
         try:
             value, predicted, nonsmooth_kink, representation_boundary, _, _ = solve_scalar(
-                w, scale, q, xi, t1, t3
+                w, scale, q, xi, perspective_coeff, sparsity_coeff
             )
-            observed = finite_difference(w, scale, q, xi, t1, t3)
+            observed = finite_difference(w, scale, q, xi, perspective_coeff, sparsity_coeff)
         except ValueError:
             continue
 

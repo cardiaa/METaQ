@@ -15,15 +15,15 @@
 
 DELTA=$1
 BATCH_SIZE=$2
-T1=$3
-T2=$4
+PERSPECTIVE_COEFF=$3
+ENTROPY_COEFF=$4
 EPOCH_FRACTION=$5
 C=$6
 PRETRAINED=$7
 GAMMA=$8
 
-if [ -z "$DELTA" ] || [ -z "$BATCH_SIZE" ] || [ -z "$T1" ] || [ -z "$T2" ] || [ -z "$EPOCH_FRACTION" ] || [ -z "$C" ] || [ -z "$PRETRAINED" ] || [ -z "$GAMMA" ]; then
-    echo "Usage: sbatch run_alexnet_pruning_only_fp32.sh <delta> <batch_size> <T1> <T2> <epoch_fraction> <C> <pretrained> <gamma>"
+if [ -z "$DELTA" ] || [ -z "$BATCH_SIZE" ] || [ -z "$PERSPECTIVE_COEFF" ] || [ -z "$ENTROPY_COEFF" ] || [ -z "$EPOCH_FRACTION" ] || [ -z "$C" ] || [ -z "$PRETRAINED" ] || [ -z "$GAMMA" ]; then
+    echo "Usage: sbatch run_alexnet_pruning_only_fp32.sh <delta> <batch_size> <PERSPECTIVE_COEFF> <ENTROPY_COEFF> <epoch_fraction> <C> <pretrained> <gamma>"
     echo "Example: sbatch run_alexnet_pruning_only_fp32.sh -10 64 0 0 1.0 16 Y 2"
     exit 1
 fi
@@ -69,12 +69,12 @@ srun --ntasks=$SLURM_NTASKS --ntasks-per-node=1 bash -lc '
             --train_workers 4 \
             --val_workers 2 \
             --batch_size '"$BATCH_SIZE"' \
-            --T1 '"$T1"' \
-            --T2 '"$T2"' \
+            --perspective_coeff '"$PERSPECTIVE_COEFF"' \
+            --entropy_coeff '"$ENTROPY_COEFF"' \
             --epoch_fraction '"$EPOCH_FRACTION"' \
             --n_epochs 16 \
             --lr 1e-4 \
-            --T3 0 \
+            --sparsity_coeff 0 \
             --perspective Y \
             --flat_schedule Y \
             --layer_sparsity 0.08,0.31,0.325,0.315,0.315,0.455,0.455,0.375 \
@@ -107,12 +107,12 @@ srun --ntasks=$SLURM_NTASKS --ntasks-per-node=1 bash -lc '
             --train_workers 4 \
             --val_workers 2 \
             --batch_size '"$BATCH_SIZE"' \
-            --T1 '"$T1"' \
-            --T2 '"$T2"' \
+            --perspective_coeff '"$PERSPECTIVE_COEFF"' \
+            --entropy_coeff '"$ENTROPY_COEFF"' \
             --epoch_fraction '"$EPOCH_FRACTION"' \
             --n_epochs 16 \
             --lr 1e-4 \
-            --T3 0 \
+            --sparsity_coeff 0 \
             --perspective Y \
             --flat_schedule Y \
             --layer_sparsity 0.08,0.31,0.325,0.315,0.315,0.455,0.455,0.375 \

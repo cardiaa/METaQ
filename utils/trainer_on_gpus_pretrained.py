@@ -184,13 +184,13 @@ def _rebuild_sorted_codebook(
     )
 
 
-def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T1_explicit, T2_explicit, subgradient_step, w0, r, 
+def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, perspective_coeff, entropy_coeff, subgradient_step, w0, r,
                        first_best_indices, BestQuantization_target_acc, final_target_acc, target_zstd_ratio, min_xi, max_xi, upper_c, 
                        lower_c, c1, c2, zeta, l, n_epochs, max_iterations, device, train_optimizer, entropy_optimizer, trainloader,
                        testloader, train_sampler, steps_per_epoch, delta, pruning, QuantizationType, sparsity_threshold, accuracy_tollerance,
                        gamma=1.0, metrics_interval=1, entropy_warmup_epochs=0, entropy_every=1, check_ddp_sync=False,
                        optimizer_weight_decay=None,
-                       T3_explicit=0.0, mag_prune_ratio=0.5, use_perspective=False, target_sparsity=0.0,
+                       sparsity_coeff=0.0, mag_prune_ratio=0.5, use_perspective=False, target_sparsity=0.0,
                        sparsity_warmup_epochs=0, sparsity_ramp_power=1.0,
                        conv_sparsity=None, fc_sparsity=None, layer_sparsity=None,
                        flat_schedule=False, dual_step=0.5,
@@ -216,7 +216,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
     active, we explicitly all-reduce the final gradients before `optimizer.step()`.
 
     Args related to entropy:
-        T2_explicit: final weight of the entropy regularizer.  If zero, FISTA is
+        entropy_coeff: final weight of the entropy regularizer.  If zero, FISTA is
             never called.
         entropy_warmup_epochs: number of full epochs to train before enabling
             entropy regularization.
@@ -228,10 +228,10 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
             epochs.
         check_ddp_sync: if true, log a checksum range across ranks to detect DDP
             divergence.
-        flat_schedule: test_133.  Hold BOTH the learning rate and T2 constant for
-            the whole run (no cosine tail, no exponential T2 ramp).  Tests 128/129/
-            130 all shared one schedule SHAPE, scaled by T2, so the cumulative
-            "exposure" sum(T2*lr) and its per-epoch RATE moved together and the
+        flat_schedule: test_133.  Hold BOTH the learning rate and entropy_coeff constant for
+            the whole run (no cosine tail, no exponential entropy_coeff ramp).  Tests 128/129/
+            130 all shared one schedule SHAPE, scaled by entropy_coeff, so the cumulative
+            "exposure" sum(entropy_coeff*lr) and its per-epoch RATE moved together and the
             collapse threshold could not be attributed to either one.  A flat
             schedule decouples them: the exposure accumulates slowly to a total
             well past the observed 1.6 wall while the per-epoch rate stays far
@@ -257,7 +257,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
             step runs.  It must be decoupled from entropy_warmup_epochs, which
             also gates the grid reset AND the start of the sparsity ramp: delaying
             that would delay pruning too.  Setting this late lets the sparsity
-            ramp and the stabilisation run exactly as in the T2=0 baseline, and
+            ramp and the stabilisation run exactly as in the entropy_coeff=0 baseline, and
             only then turns the prox on to compress the values.  It also cuts the
             cost sharply, since a prox epoch costs ~5.6x a plain one (884s vs
             157s measured).  Default 0 = prox active as soon as entropy is.
@@ -338,14 +338,14 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
     if device.type == "cuda":
         torch.cuda.set_device(device.index if device.index is not None else local_rank)
 
-    # Under the perspective reformulation the ridge is T1 * w^2 / y* (perspective
-    # form), whose gradient 2*T1*w/y* is applied EXPLICITLY per step.  The plain
-    # SGD weight_decay (which would add a second, standard T1*w ridge) is disabled
+    # Under the perspective reformulation the ridge is perspective_coeff * w^2 / y* (perspective
+    # form), whose gradient 2*perspective_coeff*w/y* is applied EXPLICITLY per step.  The plain
+    # SGD weight_decay (which would add a second, standard perspective_coeff*w ridge) is disabled
     # to avoid double-counting.
     wd_init = (
         float(optimizer_weight_decay)
         if optimizer_weight_decay is not None
-        else (0.0 if use_perspective else T1_explicit)
+        else (0.0 if use_perspective else perspective_coeff)
     )
 
     if train_optimizer == 'ADAM':
@@ -373,7 +373,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
 
         def _persp_lr(e):
             # test_133: flat_schedule holds the LR constant for the whole run, so
-            # that the entropy displacement per epoch (proportional to T2*lr) stays
+            # that the entropy displacement per epoch (proportional to entropy_coeff*lr) stays
             # flat and the cumulative exposure can be decoupled from its rate.
             if flat_schedule:
                 return 1.0
@@ -518,9 +518,9 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                 "--quantization N currently supports magnitude pruning only; "
                 "use it with --perspective Y."
             )
-        if T2_explicit != 0.0:
+        if entropy_coeff != 0.0:
             raise ValueError(
-                "--quantization N requires --T2 0 because the entropy term is "
+                "--quantization N requires --entropy_coeff 0 because the entropy term is "
                 "defined on quantization buckets."
             )
         if train_centroids:
@@ -549,9 +549,9 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
         compression_terms_active = any(
             value is not None and float(value) != 0.0
             for value in (
-                T1_explicit,
-                T2_explicit,
-                T3_explicit,
+                perspective_coeff,
+                entropy_coeff,
+                sparsity_coeff,
                 mag_prune_ratio,
                 target_sparsity,
                 conv_sparsity,
@@ -564,7 +564,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
         )
         if compression_terms_active or layer_pruning_active:
             raise ValueError(
-                "--train_centroids Y currently requires T1=T2=T3=0 and no "
+                "--train_centroids Y currently requires perspective_coeff=entropy_coeff=sparsity_coeff=0 and no "
                 "magnitude/per-layer sparsity."
             )
         if any(
@@ -674,11 +674,11 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
     beta_clip_k = 5.0
 
     # Fixed per-layer reference loss-gradient norm for entropy auto-scaling
-    # (test_107).  The entropy update is scaled to T2_current * ref_grad_norm.
+    # (test_107).  The entropy update is scaled to entropy_coeff_current * ref_grad_norm.
     # Using a FIXED reference (captured at the first entropy step) instead of the
     # live loss-grad norm prevents a runaway: otherwise a dropping accuracy
     # inflates the loss gradient, which inflates the entropy push, which drops
-    # accuracy further (death spiral observed in test_106 at T2=5).
+    # accuracy further (death spiral observed in test_106 at entropy_coeff=5).
     entropy_ref_grad_norm = [None] * num_param_tensors
 
     # test_110: OPTIMIZATION-DRIVEN pruning.  Instead of the hand-coded magnitude
@@ -1292,17 +1292,17 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
         return q_idx, q_flat, z_mass
 
     # ------------------------------------------------------------------
-    # Perspective reformulation (test_113), T2 == 0 closed form.
+    # Perspective reformulation (test_113), entropy_coeff == 0 closed form.
     #
-    # Per-weight subproblem   min_x sum_b xi_b x_b + T1 w^2/y + T3 y  reduces,
-    # when the entropy costs vanish (T2 = 0 => xi = 0), to the closed form
+    # Per-weight subproblem   min_x sum_b xi_b x_b + perspective_coeff w^2/y + sparsity_coeff y  reduces,
+    # when the entropy costs vanish (entropy_coeff = 0 => xi = 0), to the closed form
     # verified in CheckCorrectnessPerspectiveAlgorithm.ipynb (TEST E):
     #
-    #     y*(w) = clamp( |w| * sqrt(T1/T3), [ymin, 1] )
+    #     y*(w) = clamp( |w| * sqrt(perspective_coeff/sparsity_coeff), [ymin, 1] )
     #     ymin  = |w| / (max positive bucket if w>=0 else |min negative bucket|)
-    #     dphi/dw = 2 * T1 * w / y*      (perspective ridge + L1 sparsity push)
+    #     dphi/dw = 2 * perspective_coeff * w / y*      (perspective ridge + L1 sparsity push)
     #
-    # Near w = 0 the push tends to 2*sqrt(T1*T3)*sign(w): an L1 term that drives
+    # Near w = 0 the push tends to 2*sqrt(perspective_coeff*sparsity_coeff)*sign(w): an L1 term that drives
     # small weights to 0, so the magnitude pruning below removes them cleanly.
     # ------------------------------------------------------------------
     def _perspective_y_star(w_flat, v_layer):
@@ -1315,8 +1315,8 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
         neg_absmax = v_layer.min().abs().clamp_min(1e-12)  # |most negative bucket| (>0)
         side_max = torch.where(w_flat >= 0, pos_max, neg_absmax)
         ymin_c = (aw / side_max).clamp_(max=1.0)
-        if T3_explicit > 0.0:
-            scale = math.sqrt(T1_explicit / T3_explicit)
+        if sparsity_coeff > 0.0:
+            scale = math.sqrt(perspective_coeff / sparsity_coeff)
             y_int = (aw * scale).clamp_(max=1.0)
         else:
             # No sparsity term: keep full mass (plain ridge, y* = 1).
@@ -1328,13 +1328,13 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
         y_star = _perspective_y_star(w_flat, v_layer)
         g = torch.zeros_like(w_flat)
         nz = y_star > 0.0
-        g[nz] = 2.0 * T1_explicit * w_flat[nz] / y_star[nz]
+        g[nz] = 2.0 * perspective_coeff * w_flat[nz] / y_star[nz]
         return g
 
     def _zero_entropy_perspective_gradients(w_flat, v_layer):
         """Exact dphi/dw and equality multiplier when the bucket costs are zero.
 
-        With T2=0 the inner problem reduces to a scalar minimization in y, so
+        With entropy_coeff=0 the inner problem reduces to a scalar minimization in y, so
         invoking the general hull/knapsack solver for every weight is unnecessary.
         The equality multiplier is zero away from the representability floor and
         follows the boundary KKT condition on that floor.
@@ -1358,11 +1358,11 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
             rtol=1e-5,
             atol=1e-7,
         )
-        boundary_multiplier = T3_explicit / edge_v - T1_explicit * edge_v
+        boundary_multiplier = sparsity_coeff / edge_v - perspective_coeff * edge_v
         beta_constraint[at_floor] = boundary_multiplier[at_floor]
         beta_star[nonzero] = (
             beta_constraint[nonzero]
-            + 2.0 * T1_explicit * w_flat[nonzero] / y_star[nonzero]
+            + 2.0 * perspective_coeff * w_flat[nonzero] / y_star[nonzero]
         )
         return beta_star, beta_constraint
 
@@ -1619,11 +1619,11 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                 flush=True,
             )
 
-    # test_133: cumulative entropy "exposure" = sum over epochs of T2_current*lr
+    # test_133: cumulative entropy "exposure" = sum over epochs of entropy_coeff_current*lr
     # (lr in units of 1e-4).  This is the accumulated displacement the entropy term
     # imposes on the weights, and across tests 128/129/130 the accuracy collapse
     # lined up with it at ~1.6.  Logging it per epoch makes the wall directly
-    # readable instead of reconstructed by hand from the T2/lr traces.
+    # readable instead of reconstructed by hand from the entropy_coeff/lr traces.
     exposure_cum = 0.0
 
     if evaluate_initial_model:
@@ -1641,20 +1641,20 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
     for epoch in range(n_epochs):
         should_eval_epoch = ((epoch + 1) % metrics_interval == 0) or (epoch == n_epochs - 1)
 
-        # T2 schedule: no entropy during warmup, then a gentle exponential ramp
-        # from T2/8 to T2.  This avoids abruptly injecting a large custom
+        # entropy_coeff schedule: no entropy during warmup, then a gentle exponential ramp
+        # from entropy_coeff/8 to entropy_coeff.  This avoids abruptly injecting a large custom
         # gradient after many epochs of standard training.
-        if T2_explicit > 0 and epoch >= entropy_warmup_epochs:
+        if entropy_coeff > 0 and epoch >= entropy_warmup_epochs:
             if flat_schedule:
-                # test_133: no ramp.  T2 is on at full value from the first
+                # test_133: no ramp.  entropy_coeff is on at full value from the first
                 # post-warmup epoch, so every active epoch spends exactly the same
-                # amount of exposure (T2*lr) and the rate is flat by construction.
-                T2_current = T2_explicit
+                # amount of exposure (entropy_coeff*lr) and the rate is flat by construction.
+                entropy_coeff_current = entropy_coeff
             else:
                 t = epoch - entropy_warmup_epochs
-                T2_current = T2_explicit * (1.0 - np.exp(-t)) + (T2_explicit / 8.0) * np.exp(-t)
+                entropy_coeff_current = entropy_coeff * (1.0 - np.exp(-t)) + (entropy_coeff / 8.0) * np.exp(-t)
         else:
-            T2_current = 0.0
+            entropy_coeff_current = 0.0
 
         if (
             train_centroids
@@ -1672,7 +1672,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
         # Exposure spent during THIS epoch, using the LR the epoch actually runs
         # with (the scheduler steps at the end of the epoch, so read it here).
         epoch_lr = optimizer.param_groups[0]['lr']
-        exposure_epoch = T2_current * (epoch_lr / 1e-4)
+        exposure_epoch = entropy_coeff_current * (epoch_lr / 1e-4)
         exposure_cum += exposure_epoch
 
         # Compression phase: adapt the per-layer quantization grid ONCE
@@ -1682,9 +1682,9 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
         # collapsed.
         codebook_initialized_now = False
         # LSQ already owns a valid learned codebook, so expose it to METaQ from
-        # epoch 1 independently of the T2 warm-up. The warm-up controls only the
-        # entropy term; delaying this initialization also delayed T1/T3 and made
-        # test_165's first epoch incomparable with the T2=0 baseline. Fixed grids
+        # epoch 1 independently of the entropy_coeff warm-up. The warm-up controls only the
+        # entropy term; delaying this initialization also delayed perspective_coeff/sparsity_coeff and made
+        # test_165's first epoch incomparable with the entropy_coeff=0 baseline. Fixed grids
         # retain their historical warm-up behaviour.
         if (lsq_enabled or epoch >= entropy_warmup_epochs) and not grid_reset_done:
             with torch.no_grad():
@@ -1970,11 +1970,11 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
             # solve the xi=0 inner problem explicitly: its constraint multiplier is
             # also needed for the exact envelope gradient with respect to the LSQ
             # scale, including the representability boundary.
-            # T1/T3 are active as soon as the codebook exists. In particular,
-            # entropy_warmup_epochs postpones T2 only; it must not silently
+            # perspective_coeff/sparsity_coeff are active as soon as the codebook exists. In particular,
+            # entropy_warmup_epochs postpones entropy_coeff only; it must not silently
             # disable the other METaQ terms during the warm-up (test_166).
-            if (use_perspective and T2_current == 0
-                    and (T1_explicit != 0.0 or T3_explicit != 0.0)
+            if (use_perspective and entropy_coeff_current == 0
+                    and (perspective_coeff != 0.0 or sparsity_coeff != 0.0)
                     and grid_reset_done):
                 with torch.no_grad():
                     for p_idx, param in enumerate(params_for_quant):
@@ -2031,12 +2031,12 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                             )
                             param.grad.add_(ridge_g.view_as(param))
 
-            # test_125: perspective entropy (T2 > 0).  Run the general perspective
+            # test_125: perspective entropy (entropy_coeff > 0).  Run the general perspective
             # FISTA every entropy_every steps: it updates the bucket duals xi and
             # returns beta* = dphi/dw (ridge + entropy) per weight, which we apply
             # directly.  NOT YET GPU-VALIDATED (the inner solver is offline-verified;
             # the xi-dynamics are new) -- treat the first run as a smoke test.
-            if (use_perspective and not use_prox and T2_current > 0
+            if (use_perspective and not use_prox and entropy_coeff_current > 0
                     and grid_reset_done and epoch >= entropy_warmup_epochs
                     and (global_step % entropy_every == 0)):
                 with torch.no_grad():
@@ -2078,7 +2078,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                         ) = FISTA_perspective_leonardo(
                             xi_list[p_idx], v_list[p_idx], metaq_weight, C_layer,
                             float(metaq_weight.numel()), lower_c,
-                            T1_explicit, T2_current, T3_explicit,
+                            perspective_coeff, entropy_coeff_current, sparsity_coeff,
                             subgradient_step, device, max_iterations,
                             dual_step,
                         )
@@ -2112,9 +2112,9 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                         # to the gradient norm exactly as the (proven-stable) old dual
                         # path does.  Winsorizing to the median only caps outliers; it
                         # cannot stop a near-uniform bulk shift of beta*, which blew the
-                        # weights up in the first test_125 (p50 -> -808 the moment T2
+                        # weights up in the first test_125 (p50 -> -808 the moment entropy_coeff
                         # turned on).  Rescaling ties the perspective update to
-                        # T2_current * ref_grad_norm, bounding its magnitude.
+                        # entropy_coeff_current * ref_grad_norm, bounding its magnitude.
                         bstar = (
                             beta_star * metaq_weight_in_range
                             if joint_lsq_metaq
@@ -2141,7 +2141,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                                 entropy_ref_grad_norm[p_idx] = grad_layer_norm.detach().clone()
                             ref_grad_norm = entropy_ref_grad_norm[p_idx]
                             bstar_norm = bstar.norm().clamp_min(1e-12)
-                            bstar = (T2_current * ref_grad_norm / bstar_norm) * bstar
+                            bstar = (entropy_coeff_current * ref_grad_norm / bstar_norm) * bstar
                             param.grad.add_(bstar.view_as(param))
                         if local_rank == 0:
                             persp_entropy_norm_sum += bstar.norm().item()
@@ -2161,13 +2161,13 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                             # chattering, dual never converged).  Near 0 means the
                             # dual found an interior solution.
                             _ln2 = math.log(2.0)
-                            _T2t = max(float(T2_current), 1e-12)
-                            _xlo = _T2t * (math.log(max(lower_c, 1e-12)) + 1.0) / _ln2
-                            _xhi = _T2t * (math.log(max(float(w_layer.numel()), 1e-12)) + 1.0) / _ln2
+                            entropy_coeff_safe = max(float(entropy_coeff_current), 1e-12)
+                            _xlo = entropy_coeff_safe * (math.log(max(lower_c, 1e-12)) + 1.0) / _ln2
+                            _xhi = entropy_coeff_safe * (math.log(max(float(w_layer.numel()), 1e-12)) + 1.0) / _ln2
                             # test_168: use a tolerance relative to the actual
                             # dual interval. The previous absolute floor of 1e-6
                             # covered a large part of the whole interval when
-                            # T2 <= 1e-7, falsely reporting interior xi values as
+                            # entropy_coeff <= 1e-7, falsely reporting interior xi values as
                             # pinned (73% in test_167).
                             _xi_scale = max(
                                 abs(_xlo), abs(_xhi),
@@ -2199,16 +2199,16 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
             run_dual = (
                 grid_reset_done
                 and (global_step % entropy_every == 0)
-                and (T2_current > 0 or prune_mode == "z")
+                and (entropy_coeff_current > 0 or prune_mode == "z")
                 # The entropy dual (old FISTA/knapsack with xi_zero/delta) is not
-                # part of the perspective path; the general T2>0 perspective solver
+                # part of the perspective path; the general entropy_coeff>0 perspective solver
                 # is a later step.  Never run the old dual under use_perspective.
                 and not use_perspective
             )
             if run_dual:
                 # The dual (FISTA on xi) runs to keep the pruning mass z meaningful
-                # even at T2 == 0 (pure optimization-driven pruning, no entropy
-                # gradient).  The entropy gradient is added only when T2 > 0.
+                # even at entropy_coeff == 0 (pure optimization-driven pruning, no entropy
+                # gradient).  The entropy gradient is added only when entropy_coeff > 0.
                 with torch.no_grad():
                     # FISTA is applied independently to each parameter tensor.
                     # Each tensor has its own xi, v, and possibly C.
@@ -2261,11 +2261,11 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                         else:
                             raise ValueError(f"Unsupported entropy optimizer: {entropy_optimizer}")
 
-                        # The entropy GRADIENT is applied only when T2 > 0.  When
-                        # T2 == 0 the dual still ran above (xi updated) so z stays
+                        # The entropy GRADIENT is applied only when entropy_coeff > 0.  When
+                        # entropy_coeff == 0 the dual still ran above (xi updated) so z stays
                         # meaningful, but nothing is added to the weights: the
                         # pruning is then purely optimization-driven.
-                        if T2_current > 0:
+                        if entropy_coeff_current > 0:
                             # Sanitize (winsorize) + auto-scale the entropy subgradient.
                             beta_dir = (-beta_layer).float().reshape(-1)
                             beta_scale = beta_dir.abs().median().clamp_min(1e-12)
@@ -2279,7 +2279,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                             ref_grad_norm = entropy_ref_grad_norm[p_idx]
                             beta_dir_norm = beta_dir.norm().clamp_min(1e-12)
                             entropy_update = (
-                                T2_current * ref_grad_norm / beta_dir_norm
+                                entropy_coeff_current * ref_grad_norm / beta_dir_norm
                             ) * beta_dir
                             param.grad.add_(entropy_update.view_as(param))
                             beta_norm_sq += entropy_update.pow(2).sum()
@@ -2296,7 +2296,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                     if dist.is_initialized():
                         # The entropy term is added after loss.backward()'s DDP sync,
                         # so re-sync the grads only when we actually added entropy.
-                        if T2_current > 0:
+                        if entropy_coeff_current > 0:
                             for param in model.parameters():
                                 if param.grad is not None:
                                     dist.all_reduce(param.grad, op=dist.ReduceOp.SUM)
@@ -2307,7 +2307,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
 
                     entropy_steps += 1
 
-                    if local_rank == 0 and T2_current > 0:
+                    if local_rank == 0 and entropy_coeff_current > 0:
                         last_custom_beta_norm = torch.sqrt(beta_norm_sq).item()
                         last_entropy_fraction = torch.sqrt(
                             beta_norm_sq / grad_norm_sq.clamp_min(1e-12)
@@ -2447,10 +2447,10 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
             # displacement no longer competes with the loss gradient inside one
             # summed direction, and it is no longer throttled by the learning rate
             # (its size is set by gamma).  All the beta* hygiene of tests 125-127
-            # (centering, winsorizing, rescaling to T2*ref_grad_norm) is
+            # (centering, winsorizing, rescaling to entropy_coeff*ref_grad_norm) is
             # unnecessary here: a prox is a well-defined operator, not a term to
             # be dosed against the loss.
-            if (use_prox and T2_current > 0
+            if (use_prox and entropy_coeff_current > 0
                     and grid_reset_done and epoch >= entropy_warmup_epochs
                     and epoch >= prox_start_epoch
                     and (global_step % entropy_every == 0)):
@@ -2461,7 +2461,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                         xi_list[p_idx], _, _ = FISTA_prox_leonardo(
                             xi_list[p_idx], v_list[p_idx], u_layer, C_layer,
                             float(u_layer.numel()), lower_c,
-                            T1_explicit, T2_current, T3_explicit,
+                            perspective_coeff, entropy_coeff_current, sparsity_coeff,
                             prox_gamma, device, max_iterations, dual_step,
                         )
                         # xi is updated through a non-deterministic scatter_add, so
@@ -2478,7 +2478,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                                 else xi_list[p_idx])
                         _, z_star, y_star = prox_perspective_leonardo(
                             xi_b, v_list[p_idx], u_layer, C_layer, device,
-                            T1_explicit, T3_explicit, prox_gamma,
+                            perspective_coeff, sparsity_coeff, prox_gamma,
                         )
                         if local_rank == 0:
                             prox_disp_sum += (z_star - u_layer).abs().mean().item()
@@ -2854,10 +2854,10 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
             model_matches_sparse_deploy = torch.equal(w_backup, flat_s)
 
             if local_rank == 0:
-                weighted_l2_norm = (last_loss_grad_norm * T1_explicit) if last_loss_grad_norm is not None else None
-                # last_custom_beta_norm is already the applied (T2-scaled) entropy
+                weighted_l2_norm = (last_loss_grad_norm * perspective_coeff) if last_loss_grad_norm is not None else None
+                # last_custom_beta_norm is already the applied (entropy_coeff-scaled) entropy
                 # gradient norm.  Report the realized entropy fraction instead of
-                # re-multiplying by T2 (which would be misleading).
+                # re-multiplying by entropy_coeff (which would be misleading).
                 weighted_custom_norm = last_entropy_fraction
                 training_time_global = round(time.time() - start_time_global)
                 sparse_mask_diag = (
@@ -2982,8 +2982,8 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                 print(f"============== Epoch {epoch + 1}/{n_epochs} ==============", flush=True)
                 print(f"train_batches = {train_batches}", flush=True)
                 print(f"training_time_without_metrics = {training_time_without_metrics}s", flush=True)
-                print(f"T1 = {T1_explicit}", flush=True)
-                print(f"T2_current = {T2_current}", flush=True)
+                print(f"perspective_coeff = {perspective_coeff}", flush=True)
+                print(f"entropy_coeff_current = {entropy_coeff_current}", flush=True)
                 print(f"flat_schedule = {flat_schedule}", flush=True)
                 print(f"exposure_epoch = {exposure_epoch:.6f}, exposure_cum = {exposure_cum:.6f}", flush=True)
                 if prox_diag_count > 0:
@@ -3140,9 +3140,9 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                             n_pruned += int(pm.sum().item())
                         mean_y = sum(y_means) / max(1, len(y_means))
                         overall_prune = n_pruned / max(1, n_tot)
-                        l1_push = 2.0 * math.sqrt(T1_explicit * T3_explicit) if T3_explicit > 0 else 0.0
+                        l1_push = 2.0 * math.sqrt(perspective_coeff * sparsity_coeff) if sparsity_coeff > 0 else 0.0
                         print(
-                            f"perspective_debug: T1={T1_explicit:.3e}, T3={T3_explicit:.3e}, "
+                            f"perspective_debug: perspective_coeff={perspective_coeff:.3e}, sparsity_coeff={sparsity_coeff:.3e}, "
                             f"target_sparsity={target_sparsity}, mag_prune_ratio={mag_prune_ratio:.3f}, "
                             f"l1_push_near_zero={l1_push:.3e}, "
                             f"mean_y_star={mean_y:.4f}, overall_prune_frac={overall_prune:.4%}, "

@@ -14,5 +14,8 @@ LeonardoTests/
 # Local LaTeX summary for the experiments
 TabellaDegliEsperimenti/
 
+# Local draft of the ICLR 2027 candidate paper
+CandidatePaperICLR2027/
+
 # Claude Code local project config
 .claude/

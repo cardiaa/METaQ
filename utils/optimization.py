@@ -409,18 +409,18 @@ def FISTA_leonardo(xi, v, w, C, upper_c, lower_c, delta, subgradient_step, devic
 
     return xi, lambda_plus
 
-def FISTA_perspective_leonardo(xi, v, w, C, upper_c, lower_c, T1, T2, T3,
+def FISTA_perspective_leonardo(xi, v, w, C, upper_c, lower_c, perspective_coeff, entropy_coeff, sparsity_coeff,
                                subgradient_step, device, max_iterations,
                                dual_step=0.5):
     """
-    FISTA for the entropy dual under the perspective reformulation (T2 > 0).
+    FISTA for the entropy dual under the perspective reformulation (entropy_coeff > 0).
 
     Per iteration:
       - solve the per-weight perspective subproblem (knapsack_perspective_leonardo),
         which returns the bucket masses, the per-weight gradient beta* = dphi/dw,
         and y*;
       - accumulate the bucket counts c_b = sum_i (mass of weight i in bucket b);
-      - the c-subproblem gives c_b* = exp(log2 * xi_b / T2 - 1);
+      - the c-subproblem gives c_b* = exp(log2 * xi_b / entropy_coeff - 1);
       - supergradient of the dual g_b = (c_b - c_b*)/upper_c, ascend xi with step
         `dual_step` (FISTA-accelerated).  The 1/upper_c normalization is the
         test_134 fix; see the comment at the update itself.  `subgradient_step` is
@@ -428,7 +428,7 @@ def FISTA_perspective_leonardo(xi, v, w, C, upper_c, lower_c, T1, T2, T3,
         longer used here.
 
     xi may be length C (bucket duals) or C+1 (legacy: xi[0] is an unused zero
-    symbol, kept only so the caller's state stays the same shape).  T2 does NOT
+    symbol, kept only so the caller's state stays the same shape).  entropy_coeff does NOT
     scale the bucket costs of the x-subproblem; it appears only in c_b* above.
 
     Returns (xi_updated, beta_star, beta_constraint). ``beta_star`` is the full
@@ -436,7 +436,7 @@ def FISTA_perspective_leonardo(xi, v, w, C, upper_c, lower_c, T1, T2, T3,
     bucket-representation equality and yields dphi/ds for an LSQ codebook.
 
     NOTE: verified offline for the inner solver (cost/y*/beta vs cvxpy); the FISTA
-    xi-dynamics with the exp(.../T2) relation are NOT GPU-tested yet.
+    xi-dynamics with the exp(.../entropy_coeff) relation are NOT GPU-tested yet.
     """
     xi = xi.to(dtype=torch.float32, device=device)
     has_zero_slot = (xi.numel() == C + 1)
@@ -445,9 +445,9 @@ def FISTA_perspective_leonardo(xi, v, w, C, upper_c, lower_c, T1, T2, T3,
     xi_prev = xi_b.clone()
     t_prev = torch.tensor(1.0, device=device)
     log2 = torch.log(torch.tensor(2.0, device=device))
-    T2_t = max(float(T2), 1e-12)
+    entropy_coeff_safe = max(float(entropy_coeff), 1e-12)
 
-    # test_128: clamp xi to the range where c* = exp(log2*xi/T2 - 1) actually
+    # test_128: clamp xi to the range where c* = exp(log2*xi/entropy_coeff - 1) actually
     # spans [lower_c, upper_c].  Beyond it c* is already clamped, so pushing xi
     # further changes nothing in the primal yet lets the dual run away: when c*
     # saturates, g = counts - c* ~ -upper_c = -(layer size), and the step
@@ -455,14 +455,14 @@ def FISTA_perspective_leonardo(xi, v, w, C, upper_c, lower_c, T1, T2, T3,
     # layers (test_127; harmless at the 300k sizes used in the offline check,
     # which is why it stayed bounded there).  A diverged xi makes beta* dirty.
     ln2 = math.log(2.0)
-    xi_lo = T2_t * (math.log(max(lower_c, 1e-12)) + 1.0) / ln2
-    xi_hi = T2_t * (math.log(max(upper_c, 1e-12)) + 1.0) / ln2
+    xi_lo = entropy_coeff_safe * (math.log(max(lower_c, 1e-12)) + 1.0) / ln2
+    xi_hi = entropy_coeff_safe * (math.log(max(upper_c, 1e-12)) + 1.0) / ln2
 
     beta_star = None
     beta_constraint = None
     for _ in range(max_iterations):
         x_ph, beta_star, y_star, beta_constraint = knapsack_perspective_leonardo(
-            xi_b, v, w, C, device, T1, T2, T3
+            xi_b, v, w, C, device, perspective_coeff, entropy_coeff, sparsity_coeff
         )
         idx_left = x_ph[:, 0].to(torch.long)
         idx_right = x_ph[:, 1].to(torch.long)
@@ -473,7 +473,7 @@ def FISTA_perspective_leonardo(xi, v, w, C, upper_c, lower_c, T1, T2, T3,
         counts.scatter_add_(0, idx_left, x_left)
         counts.scatter_add_(0, idx_right, x_right)
 
-        c_star = torch.exp(log2 * xi_b / T2_t - 1.0)
+        c_star = torch.exp(log2 * xi_b / entropy_coeff_safe - 1.0)
         c_star = torch.clamp(c_star, min=lower_c, max=upper_c)
 
         # test_134: NORMALIZE the supergradient by the layer size.  Both counts and
@@ -501,7 +501,7 @@ def FISTA_perspective_leonardo(xi, v, w, C, upper_c, lower_c, T1, T2, T3,
     return xi_out, beta_star, beta_constraint
 
 
-def FISTA_prox_leonardo(xi, v, u, C, upper_c, lower_c, T1, T2, T3,
+def FISTA_prox_leonardo(xi, v, u, C, upper_c, lower_c, perspective_coeff, entropy_coeff, sparsity_coeff,
                         gamma, device, max_iterations, dual_step=0.5):
     """
     test_135: dual loop for the PROXIMAL variant.
@@ -520,17 +520,17 @@ def FISTA_prox_leonardo(xi, v, u, C, upper_c, lower_c, T1, T2, T3,
     xi_prev = xi_b.clone()
     t_prev = torch.tensor(1.0, device=device)
     log2 = torch.log(torch.tensor(2.0, device=device))
-    T2_t = max(float(T2), 1e-12)
+    entropy_coeff_safe = max(float(entropy_coeff), 1e-12)
 
     ln2 = math.log(2.0)
-    xi_lo = T2_t * (math.log(max(lower_c, 1e-12)) + 1.0) / ln2
-    xi_hi = T2_t * (math.log(max(upper_c, 1e-12)) + 1.0) / ln2
+    xi_lo = entropy_coeff_safe * (math.log(max(lower_c, 1e-12)) + 1.0) / ln2
+    xi_hi = entropy_coeff_safe * (math.log(max(upper_c, 1e-12)) + 1.0) / ln2
 
     z_star = None
     y_star = None
     for _ in range(max_iterations):
         x_ph, z_star, y_star = prox_perspective_leonardo(
-            xi_b, v, u, C, device, T1, T3, gamma
+            xi_b, v, u, C, device, perspective_coeff, sparsity_coeff, gamma
         )
         idx_left = x_ph[:, 0].to(torch.long)
         idx_right = x_ph[:, 1].to(torch.long)
@@ -539,7 +539,7 @@ def FISTA_prox_leonardo(xi, v, u, C, upper_c, lower_c, T1, T2, T3,
         counts.scatter_add_(0, idx_left, x_ph[:, 2])
         counts.scatter_add_(0, idx_right, x_ph[:, 3])
 
-        c_star = torch.exp(log2 * xi_b / T2_t - 1.0)
+        c_star = torch.exp(log2 * xi_b / entropy_coeff_safe - 1.0)
         c_star = torch.clamp(c_star, min=lower_c, max=upper_c)
 
         g = (counts - c_star) / max(float(upper_c), 1.0)

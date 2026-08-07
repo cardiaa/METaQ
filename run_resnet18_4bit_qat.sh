@@ -10,7 +10,7 @@
 #SBATCH --output=/dev/null
 #SBATCH --error=/dev/null
 
-# ResNet-18 / ImageNet joint LSQ-METaQ 4-bit training with conservative T1/T2/T3.
+# ResNet-18 / ImageNet joint LSQ-METaQ 4-bit training with conservative perspective_coeff/entropy_coeff/sparsity_coeff.
 # Four 4-GPU nodes with batch 64/GPU use the validated global-batch-1024 regime.
 
 LOG_DIR=$WORK/acardia0/LeonardoTests
@@ -63,9 +63,9 @@ srun --ntasks=$SLURM_NTASKS --ntasks-per-node=1 bash -lc '
     --n_epochs 20 \
     --lr 1e-2 \
     --optimizer_weight_decay 1e-4 \
-    --T1 1e-5 \
-    --T2 3e-8 \
-    --T3 1e-7 \
+    --perspective_coeff 1e-5 \
+    --entropy_coeff 3e-8 \
+    --sparsity_coeff 1e-7 \
     --perspective Y \
     --flat_schedule N \
     --mag_prune_ratio 0 \

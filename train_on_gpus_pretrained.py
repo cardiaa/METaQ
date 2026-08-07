@@ -201,8 +201,8 @@ def build_model_and_hparams(model_name: str, device: torch.device, args, local_r
         batch_size=None,
         lambda_reg=0.0,
         alpha=1.0,
-        T1_explicit=0.0,
-        T2_explicit=0.0,
+        perspective_coeff=0.0,
+        entropy_coeff=0.0,
         subgradient_step=1e5,
         r=2.0,
         w0=0.0,
@@ -239,7 +239,7 @@ def build_model_and_hparams(model_name: str, device: torch.device, args, local_r
         bn_recalibration_batches=0,
         sparsity_threshold=1e-3,
         # test_113: perspective reformulation (Frangioni).
-        T3_explicit=0.0,          # sparsity weight; L1 push near 0 ~ 2*sqrt(T1*T3)
+        sparsity_coeff=0.0,          # sparsity weight; L1 push near 0 ~ 2*sqrt(perspective_coeff*sparsity_coeff)
         mag_prune_ratio=0.5,      # magnitude prune threshold = ratio * min_b|v_b|
         use_perspective=False,
         target_sparsity=0.0,      # if >0: per-layer prune the smallest this fraction of |w|
@@ -269,11 +269,11 @@ def build_model_and_hparams(model_name: str, device: torch.device, args, local_r
             lr=0.0007,
             #lambda_reg=lambda_reg,
             #alpha=alpha,
-            #T1_explicit=lambda_reg * alpha,
-            #T2_explicit=lambda_reg * (1 - alpha),
+            #perspective_coeff=lambda_reg * alpha,
+            #entropy_coeff=lambda_reg * (1 - alpha),
             # Override
-            T1_explicit=0.001,
-            T2_explicit=0.0005,            
+            perspective_coeff=0.001,
+            entropy_coeff=0.0005,
             r=r,
             w0=w0,
             n_epochs=500,
@@ -298,11 +298,11 @@ def build_model_and_hparams(model_name: str, device: torch.device, args, local_r
             lr=0.001,
             #lambda_reg=lambda_reg,
             #alpha=alpha,
-            #T1_explicit=lambda_reg * alpha,
-            #T2_explicit=lambda_reg * (1 - alpha),
+            #perspective_coeff=lambda_reg * alpha,
+            #entropy_coeff=lambda_reg * (1 - alpha),
             # Override
-            T1_explicit=0.001,
-            T2_explicit=0.0005,             
+            perspective_coeff=0.001,
+            entropy_coeff=0.0005,
             r=r,
             w0=w0,
             n_epochs=100,
@@ -339,8 +339,8 @@ def build_model_and_hparams(model_name: str, device: torch.device, args, local_r
             batch_size=128,  # Leonardo default; command-line arguments can override it.
             #lambda_reg=5e-4,
             #alpha=0.99999,
-            T1_explicit=1e-3,
-            T2_explicit=1e-6,
+            perspective_coeff=1e-3,
+            entropy_coeff=1e-6,
             r=1.51,
             w0=0.013,
             n_epochs=20,
@@ -370,8 +370,8 @@ def build_model_and_hparams(model_name: str, device: torch.device, args, local_r
             C=16,
             lr=1e-3 if model_name == "ResNet-18" else 1e-5,
             batch_size=64 if model_name == "ResNet-18" else 32,
-            T1_explicit=0.0,
-            T2_explicit=0.0,
+            perspective_coeff=0.0,
+            entropy_coeff=0.0,
             r=1.0,
             w0=0.0,
             n_epochs=20,
@@ -412,8 +412,8 @@ def build_model_and_hparams(model_name: str, device: torch.device, args, local_r
             C=16,
             lr=1e-4,
             batch_size=32,
-            T1_explicit=0.0,
-            T2_explicit=0.0,
+            perspective_coeff=0.0,
+            entropy_coeff=0.0,
             r=1.0,
             w0=0.0,
             n_epochs=20,
@@ -446,11 +446,11 @@ def build_model_and_hparams(model_name: str, device: torch.device, args, local_r
             batch_size=512,
             #lambda_reg=lambda_reg,
             #alpha=alpha,
-            #T1_explicit=lambda_reg * alpha,
-            #T2_explicit=lambda_reg * (1 - alpha),
+            #perspective_coeff=lambda_reg * alpha,
+            #entropy_coeff=lambda_reg * (1 - alpha),
             # Override
-            T1_explicit=0.001,
-            T2_explicit=0.0005,             
+            perspective_coeff=0.001,
+            entropy_coeff=0.0005,
             r=r,
             w0=w0,
             n_epochs=20,
@@ -741,9 +741,9 @@ def print_config(model_name, args, h, local_rank_to_print):
     if h["batch_size"] is not None:
         print(f"batch_size_per_gpu={h['batch_size']}", flush=True)
         print(f"global_batch_size={h['batch_size'] * world_size}", flush=True)
-    print(f"T1={h['T1_explicit']}", flush=True)
-    print(f"T2={h['T2_explicit']}", flush=True)
-    print(f"T3={h['T3_explicit']}", flush=True)
+    print(f"perspective_coeff={h['perspective_coeff']}", flush=True)
+    print(f"entropy_coeff={h['entropy_coeff']}", flush=True)
+    print(f"sparsity_coeff={h['sparsity_coeff']}", flush=True)
     print(f"use_perspective={h['use_perspective']}", flush=True)
     print(f"mag_prune_ratio={h['mag_prune_ratio']}", flush=True)
     print(f"target_sparsity={h['target_sparsity']}", flush=True)
@@ -880,16 +880,16 @@ def main():
         type=float,
         default=None,
         help=(
-            "Optimizer weight decay, independent of the METaQ T1 term. "
-            "If omitted, preserve the legacy T1-dependent behavior."
+            "Optimizer weight decay, independent of the METaQ perspective_coeff term. "
+            "If omitted, preserve the legacy perspective_coeff-dependent behavior."
         ),
     )
-    parser.add_argument("--T1", type=float, default=None, help="Override L2 weight decay term; 0 disables it")
-    parser.add_argument("--T2", type=float, default=None, help="Override entropy term; 0 disables it")
-    parser.add_argument("--T3", type=float, default=None, help="Perspective sparsity weight; L1 push near 0 ~ 2*sqrt(T1*T3)")
+    parser.add_argument("--perspective_coeff", type=float, default=None, help="Coefficient of the perspective ridge term; 0 disables it")
+    parser.add_argument("--entropy_coeff", type=float, default=None, help="Coefficient of the entropy-related symbol-count term; 0 disables it")
+    parser.add_argument("--sparsity_coeff", type=float, default=None, help="Coefficient of the nonzero-mass sparsity term; L1 push near 0 ~ 2*sqrt(perspective_coeff*sparsity_coeff)")
     parser.add_argument("--mag_prune_ratio", type=float, default=None, help="Magnitude prune threshold = ratio * min_b|v_b|")
     parser.add_argument("--perspective", type=str, default="N", choices=["Y", "N"], help="Enable the perspective reformulation (test_113)")
-    parser.add_argument("--flat_schedule", type=str, default="N", choices=["Y", "N"], help="Hold BOTH lr and T2 constant for the whole run: no cosine tail, no T2 ramp (test_133)")
+    parser.add_argument("--flat_schedule", type=str, default="N", choices=["Y", "N"], help="Hold BOTH lr and entropy_coeff constant for the whole run: no cosine tail, no entropy_coeff ramp (test_133)")
     parser.add_argument("--dual_step", type=float, default=None, help="Ascent step for the entropy dual on the layer-size-normalized supergradient (test_134)")
     parser.add_argument("--prox", type=str, default="N", choices=["Y", "N"], help="Apply phi as a proximal operator on the weights instead of summing beta* into the loss gradient (test_135)")
     parser.add_argument("--prox_gamma", type=float, default=None, help="Step of the proximal operator; sets the entropy displacement independently of the learning rate (test_135)")
@@ -1024,12 +1024,12 @@ def main():
         if args.optimizer_weight_decay < 0:
             raise ValueError("--optimizer_weight_decay must be >= 0.")
         h["optimizer_weight_decay"] = args.optimizer_weight_decay
-    if args.T1 is not None:
-        h["T1_explicit"] = args.T1
-    if args.T2 is not None:
-        h["T2_explicit"] = args.T2
-    if args.T3 is not None:
-        h["T3_explicit"] = args.T3
+    if args.perspective_coeff is not None:
+        h["perspective_coeff"] = args.perspective_coeff
+    if args.entropy_coeff is not None:
+        h["entropy_coeff"] = args.entropy_coeff
+    if args.sparsity_coeff is not None:
+        h["sparsity_coeff"] = args.sparsity_coeff
     if args.mag_prune_ratio is not None:
         h["mag_prune_ratio"] = args.mag_prune_ratio
     if args.target_sparsity is not None:
@@ -1180,8 +1180,8 @@ def main():
         lr=h["lr"],
         lambda_reg=h["lambda_reg"],
         alpha=h["alpha"],
-        T1_explicit=h["T1_explicit"],
-        T2_explicit=h["T2_explicit"],
+        perspective_coeff=h["perspective_coeff"],
+        entropy_coeff=h["entropy_coeff"],
         subgradient_step=h["subgradient_step"],
         w0=h["w0"],
         r=h["r"],
@@ -1217,7 +1217,7 @@ def main():
         entropy_warmup_epochs=h["entropy_warmup_epochs"],
         entropy_every=h["entropy_every"],
         check_ddp_sync=h["check_ddp_sync"],
-        T3_explicit=h["T3_explicit"],
+        sparsity_coeff=h["sparsity_coeff"],
         mag_prune_ratio=h["mag_prune_ratio"],
         use_perspective=h["use_perspective"],
         target_sparsity=h["target_sparsity"],

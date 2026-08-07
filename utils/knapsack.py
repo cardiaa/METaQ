@@ -573,19 +573,19 @@ def knapsack_specialized_pruning_sparse(xi, v, w, C, device, delta):
 
     return x, lambda_opt, objective_values
 
-def knapsack_perspective_leonardo(xi_buckets, v, w, C, device, T1, T2, T3):
+def knapsack_perspective_leonardo(xi_buckets, v, w, C, device, perspective_coeff, entropy_coeff, sparsity_coeff):
     """
-    General (T2 != 0) per-weight perspective subproblem solver.
+    General (entropy_coeff != 0) per-weight perspective subproblem solver.
 
     Solves, for each weight w:
-        min_x  sum_b (T2*xi_b) x_b  +  T1 w^2/y  +  T3 y,
+        min_x  sum_b (entropy_coeff*xi_b) x_b  +  perspective_coeff w^2/y  +  sparsity_coeff y,
         s.t.  sum_b v_b x_b = w,  y = sum_b x_b,  y <= 1,  x >= 0.
 
     via the reduction K(y) = y*K(1)[w/y] and the 1-D convex minimisation of
-    G(y) = K(y) + T1 w^2/y + T3 y over y in [ymin, 1], done as a segment-scan on
-    the lower convex envelope of the (v_b, T2*xi_b) points.  Candidates on each
+    G(y) = K(y) + perspective_coeff w^2/y + sparsity_coeff y over y in [ymin, 1], done as a segment-scan on
+    the lower convex envelope of the (v_b, entropy_coeff*xi_b) points.  Candidates on each
     envelope segment j (slope s_j, offset beta_j): the stationary point
-    y_j = |w| sqrt(T1/(s_j+T3)), the two breakpoints (kinks) w/V[j], w/V[j+1],
+    y_j = |w| sqrt(perspective_coeff/(s_j+sparsity_coeff)), the two breakpoints (kinks) w/V[j], w/V[j+1],
     and the global endpoints ymin, 1.  G convex => the min over accepted
     candidates is global.  The offline verification against cvxpy is in
     CheckCorrectnessPerspectiveAlgorithm.ipynb / scratchpad/verify_persp_general.py.
@@ -593,16 +593,16 @@ def knapsack_perspective_leonardo(xi_buckets, v, w, C, device, T1, T2, T3):
     Returns:
         x_placeholder: (M, 4) = [idx_left, idx_right, x_left, x_right]
                        (bucket masses; x_left+x_right = y*, and z = 1 - y*)
-        beta_star:     (M,)  full gradient dphi/dw = beta_old(w/y*) + 2 T1 w/y*
+        beta_star:     (M,)  full gradient dphi/dw = beta_old(w/y*) + 2 perspective_coeff w/y*
         y_star:        (M,)
         beta_constraint: (M,) multiplier of w-sum_b(v_b*x_b)=0. This is
                          beta_old and is needed for dphi/ds when v_b=s*q_b.
     """
     v = v.to(dtype=torch.float32, device=device)
     w = w.to(dtype=torch.float32, device=device)
-    # The x-subproblem cost is the RAW dual xi_b (verified offline).  T2 does NOT
+    # The x-subproblem cost is the RAW dual xi_b (verified offline).  entropy_coeff does NOT
     # multiply the bucket costs here; it enters only the entropy-dual relation
-    # c_b* = exp(log2*xi_b/T2 - 1) in the FISTA update.  (T2 is accepted for API
+    # c_b* = exp(log2*xi_b/entropy_coeff - 1) in the FISTA update.  (entropy_coeff is accepted for API
     # symmetry but unused in this solver.)
     xi_eff = xi_buckets.to(dtype=torch.float32, device=device)
     M = w.shape[0]
@@ -645,7 +645,7 @@ def knapsack_perspective_leonardo(xi_buckets, v, w, C, device, T1, T2, T3):
         cand = torch.minimum(torch.maximum(cand, ymin), ones)
         what = w / cand.clamp_min(1e-30)
         in_seg = allow & (what >= Vl - eps) & (what <= Vr + eps) & (aw > 0)
-        G = bj * w + sj * cand + T1 * w * w / cand.clamp_min(1e-30) + T3 * cand
+        G = bj * w + sj * cand + perspective_coeff * w * w / cand.clamp_min(1e-30) + sparsity_coeff * cand
         G = torch.where(in_seg, G, best_G.new_full((M,), float('inf')))
         upd = G < best_G
         best_G[upd] = G[upd]
@@ -654,9 +654,9 @@ def knapsack_perspective_leonardo(xi_buckets, v, w, C, device, T1, T2, T3):
     all_true = torch.ones_like(w, dtype=torch.bool)
     for j in range(P - 1):
         Vl = V[j]; Vr = V[j + 1]; sj = s_seg[j]; bj = beta_seg[j]
-        d = float(s_seg[j]) + T3                            # s_j + T3 (scalar)
+        d = float(s_seg[j]) + sparsity_coeff                            # s_j + sparsity_coeff (scalar)
         if d > 0:
-            ycand = aw * math.sqrt(T1 / d)                  # stationary point on segment j
+            ycand = aw * math.sqrt(perspective_coeff / d)                  # stationary point on segment j
             _consider(ycand, sj, bj, Vl, Vr, all_true)
         _consider(ymin.clone(), sj, bj, Vl, Vr, all_true)
         _consider(ones.clone(), sj, bj, Vl, Vr, all_true)
@@ -679,7 +679,7 @@ def knapsack_perspective_leonardo(xi_buckets, v, w, C, device, T1, T2, T3):
     # all mass on an extreme bucket. The adjacent lower-hull slope is generally
     # NOT the KKT multiplier of w-sum(v*x)=0 because the y feasibility boundary
     # is active. Stationarity gives
-    #   mu = (xi_edge + T3)/v_edge - T1*v_edge.
+    #   mu = (xi_edge + sparsity_coeff)/v_edge - perspective_coeff*v_edge.
     # This multiplier is required both by dphi/dw and, for v=s*q, by dphi/ds.
     at_representation_floor = torch.isclose(
         y_star,
@@ -689,13 +689,13 @@ def knapsack_perspective_leonardo(xi_buckets, v, w, C, device, T1, T2, T3):
     ) & (aw > 0)
     edge_v = torch.where(w >= 0, V[-1], V[0])
     edge_xi = torch.where(w >= 0, Xi[-1], Xi[0])
-    boundary_beta = (edge_xi + T3) / edge_v - T1 * edge_v
+    boundary_beta = (edge_xi + sparsity_coeff) / edge_v - perspective_coeff * edge_v
     beta_old = torch.where(
         at_representation_floor,
         boundary_beta,
         beta_old,
     )
-    beta_star = beta_old + 2.0 * T1 * w / y_star
+    beta_star = beta_old + 2.0 * perspective_coeff * w / y_star
 
     # weights that are exactly zero -> fully pruned, no gradient
     zero_w = aw <= 0
@@ -710,7 +710,7 @@ def knapsack_perspective_leonardo(xi_buckets, v, w, C, device, T1, T2, T3):
     return x_placeholder, beta_star, y_star, beta_old
 
 
-def prox_perspective_leonardo(xi_buckets, v, u, C, device, T1, T3, gamma):
+def prox_perspective_leonardo(xi_buckets, v, u, C, device, perspective_coeff, sparsity_coeff, gamma):
     """
     test_135: PROXIMAL per-weight subproblem.  Same model, different algorithm.
 
@@ -721,7 +721,7 @@ def prox_perspective_leonardo(xi_buckets, v, u, C, device, T1, T3, gamma):
 
     i.e., per weight,
 
-        min_{z,x,y}  sum_b xi_b x_b + T1 z^2/y + T3 y + (1/(2 gamma)) (z-u)^2
+        min_{z,x,y}  sum_b xi_b x_b + perspective_coeff z^2/y + sparsity_coeff y + (1/(2 gamma)) (z-u)^2
         s.t.  sum_b v_b x_b = z,  sum_b x_b = y,  y <= 1,  x >= 0.
 
     The weight itself is now a VARIABLE (z) rather than a fixed target, so the
@@ -733,20 +733,20 @@ def prox_perspective_leonardo(xi_buckets, v, u, C, device, T1, T3, gamma):
 
     Derivation (see the LaTeX "Fase 9").  On envelope segment j, where
     K(1)[zh] = beta_j*zh + s_j, the objective is
-        G(z,y) = beta_j z + s_j y + T1 z^2/y + T3 y + (1/(2 gamma))(z-u)^2,
+        G(z,y) = beta_j z + s_j y + perspective_coeff z^2/y + sparsity_coeff y + (1/(2 gamma))(z-u)^2,
     and the two stationarity conditions give
-        dG/dy = 0  =>  y = |z| sqrt(T1/(s_j+T3))          (same as the non-prox case)
-        dG/dz = 0  =>  z = u - gamma*beta_j - 2 gamma sign(z) sqrt(T1 (s_j+T3)),
+        dG/dy = 0  =>  y = |z| sqrt(perspective_coeff/(s_j+sparsity_coeff))          (same as the non-prox case)
+        dG/dz = 0  =>  z = u - gamma*beta_j - 2 gamma sign(z) sqrt(perspective_coeff (s_j+sparsity_coeff)),
     the latter being a shifted soft-threshold, so z = 0 is a genuine outcome:
     pruning falls out of the operator instead of needing the separate magnitude
     rule.  Candidates per segment are that interior point, the top edge y = 1
-    (closed form z = (u - gamma beta_j)/(1 + 2 gamma T1)), and the two cone edges
+    (closed form z = (u - gamma beta_j)/(1 + 2 gamma perspective_coeff)), and the two cone edges
     z/y = V_j, V_{j+1}; plus the global "prune" candidate z = y = 0.  G is convex,
     so the min over accepted candidates is global.
 
     Verified offline against cvxpy (scratchpad/verify_prox.py, verify_prox_edge.py):
     over ~750 random instances spanning gamma in [1e-4, 1e2], u from ~0 to the
-    distribution tail and T3 up to 1e-1, the closed form was never worse than the
+    distribution tail and sparsity_coeff up to 1e-1, the closed form was never worse than the
     exact optimum; max |z* - z*_cvxpy| ~ 1e-7.
 
     Returns:
@@ -795,8 +795,8 @@ def prox_perspective_leonardo(xi_buckets, v, u, C, device, T1, T3, gamma):
         pos = yc > 1e-12
         zh = torch.where(pos, zc / yc.clamp_min(1e-30), torch.zeros_like(zc))
         in_seg = allow & pos & (zh >= Vl - eps) & (zh <= Vr + eps)
-        G = (bj * zc + sj * yc + T1 * zc * zc / yc.clamp_min(1e-30)
-             + T3 * yc + (0.5 / gamma) * (zc - u) ** 2)
+        G = (bj * zc + sj * yc + perspective_coeff * zc * zc / yc.clamp_min(1e-30)
+             + sparsity_coeff * yc + (0.5 / gamma) * (zc - u) ** 2)
         G = torch.where(in_seg, G, torch.full_like(G, float('inf')))
         upd = G < best_G
         best_G[upd] = G[upd]
@@ -806,20 +806,20 @@ def prox_perspective_leonardo(xi_buckets, v, u, C, device, T1, T3, gamma):
     all_true = torch.ones_like(u, dtype=torch.bool)
     for j in range(P - 1):
         Vl = V[j]; Vr = V[j + 1]; bj = beta_seg[j]; sj = s_seg[j]
-        d = float(s_seg[j]) + T3
+        d = float(s_seg[j]) + sparsity_coeff
 
         # (1) interior in y: shifted soft-threshold, with sign consistency
         if d > 0.0:
             A = gamma * bj
-            B = 2.0 * gamma * math.sqrt(T1 * d)
-            root = math.sqrt(T1 / d)
+            B = 2.0 * gamma * math.sqrt(perspective_coeff * d)
+            root = math.sqrt(perspective_coeff / d)
             z_pos = u - A - B
             _consider(z_pos, z_pos.abs() * root, bj, sj, Vl, Vr, z_pos > 0)
             z_neg = u - A + B
             _consider(z_neg, z_neg.abs() * root, bj, sj, Vl, Vr, z_neg < 0)
 
         # (2) top edge y = 1
-        z_top = (u - gamma * bj) / (1.0 + 2.0 * gamma * T1)
+        z_top = (u - gamma * bj) / (1.0 + 2.0 * gamma * perspective_coeff)
         _consider(z_top, torch.ones_like(u), bj, sj, Vl, Vr, all_true)
 
         # (3)/(4) cone edges z/y = Vl and z/y = Vr
@@ -828,7 +828,7 @@ def prox_perspective_leonardo(xi_buckets, v, u, C, device, T1, T3, gamma):
             if abs(Vx_f) < 1e-14:
                 continue
             Xix = bj * Vx + sj                      # K(1)[Vx] at that vertex
-            y_edge = (u - gamma * (Xix + T3 + T1 * Vx * Vx) / Vx) / Vx
+            y_edge = (u - gamma * (Xix + sparsity_coeff + perspective_coeff * Vx * Vx) / Vx) / Vx
             y_edge = y_edge.clamp(min=0.0, max=1.0)
             _consider(Vx * y_edge, y_edge, bj, sj, Vl, Vr, all_true)
 

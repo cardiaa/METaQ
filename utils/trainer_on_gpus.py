@@ -14,7 +14,7 @@ from utils.weight_utils import initialize_weights
 from utils.quantize_and_compress import compress_zstd, BestQuantization, pack_bitmask, pack_bitmaskGPU
 from datetime import datetime, timedelta
 
-def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T1_explicit, T2_explicit, subgradient_step, w0, r, 
+def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, perspective_coeff, entropy_coeff, subgradient_step, w0, r,
                        first_best_indices, BestQuantization_target_acc, final_target_acc, target_zstd_ratio, min_xi, max_xi, upper_c, 
                        lower_c, c1, c2, zeta, l, n_epochs, max_iterations, device, train_optimizer, entropy_optimizer, trainloader,
                        testloader, train_sampler, steps_per_epoch, delta, pruning, QuantizationType, sparsity_threshold, accuracy_tollerance,
@@ -28,7 +28,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
     active, we explicitly all-reduce the final gradients before `optimizer.step()`.
 
     Args related to entropy:
-        T2_explicit: final weight of the entropy regularizer.  If zero, FISTA is
+        entropy_coeff: final weight of the entropy regularizer.  If zero, FISTA is
             never called.
         entropy_warmup_epochs: number of full epochs to train before enabling
             entropy regularization.
@@ -50,9 +50,9 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
         torch.cuda.set_device(device.index if device.index is not None else local_rank)
 
     if train_optimizer == 'ADAM':
-        optimizer = optim.Adam(model.parameters(), lr=lr, betas=(0.9, 0.999), eps=1e-08, weight_decay=T1_explicit)
+        optimizer = optim.Adam(model.parameters(), lr=lr, betas=(0.9, 0.999), eps=1e-08, weight_decay=perspective_coeff)
     elif train_optimizer == 'SGD':
-        optimizer = optim.SGD(model.parameters(), lr=lr, momentum=0.9, weight_decay=T1_explicit)
+        optimizer = optim.SGD(model.parameters(), lr=lr, momentum=0.9, weight_decay=perspective_coeff)
     else:
         raise ValueError(f"Unsupported optimizer: {train_optimizer}")
 
@@ -131,17 +131,17 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
     for epoch in range(n_epochs):
         should_eval_epoch = ((epoch + 1) % metrics_interval == 0) or (epoch == n_epochs - 1)
 
-        # T2 schedule: no entropy during warmup, then a gentle exponential ramp
-        # from T2/8 to T2.  This avoids abruptly injecting a large custom
+        # entropy_coeff schedule: no entropy during warmup, then a gentle exponential ramp
+        # from entropy_coeff/8 to entropy_coeff.  This avoids abruptly injecting a large custom
         # gradient after many epochs of standard training.
-        if T2_explicit > 0 and epoch >= entropy_warmup_epochs:
+        if entropy_coeff > 0 and epoch >= entropy_warmup_epochs:
             t = epoch - entropy_warmup_epochs
-            T2_current = T2_explicit * (1.0 - np.exp(-t)) + (T2_explicit / 8.0) * np.exp(-t)
+            entropy_coeff_current = entropy_coeff * (1.0 - np.exp(-t)) + (entropy_coeff / 8.0) * np.exp(-t)
         else:
-            T2_current = 0.0
+            entropy_coeff_current = 0.0
 
         for param_group in optimizer.param_groups:
-            param_group['weight_decay'] = T1_explicit
+            param_group['weight_decay'] = perspective_coeff
 
         if train_sampler is not None and hasattr(train_sampler, "set_epoch"):
             train_sampler.set_epoch(epoch)
@@ -186,7 +186,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
             beta_tensor = None
             # Entropy/FISTA is the expensive part of the method.  Applying it
             # every N global steps keeps the computational cost controlled.
-            apply_entropy = T2_current > 0 and (global_step % entropy_every == 0)
+            apply_entropy = entropy_coeff_current > 0 and (global_step % entropy_every == 0)
             if apply_entropy:
                 if not grid_reset_done:
                     # Build a tighter quantization grid from the current weight
@@ -247,7 +247,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                     for param in model.parameters():
                         numel = param.numel()
                         if param.grad is not None:
-                            update = (T2_current * (-beta_tensor[idx:idx + numel])).view(param.size())
+                            update = (entropy_coeff_current * (-beta_tensor[idx:idx + numel])).view(param.size())
                             param.grad.add_(update)
                         idx += numel
 
@@ -370,8 +370,8 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
             checksum_range = _param_checksum_range() if check_ddp_sync else None
 
             if local_rank == 0:
-                weighted_l2_norm = (last_loss_grad_norm * T1_explicit) if last_loss_grad_norm is not None else None
-                weighted_custom_norm = (last_custom_beta_norm * T2_current) if last_custom_beta_norm is not None else None
+                weighted_l2_norm = (last_loss_grad_norm * perspective_coeff) if last_loss_grad_norm is not None else None
+                weighted_custom_norm = (last_custom_beta_norm * entropy_coeff_current) if last_custom_beta_norm is not None else None
                 training_time_global = round(time.time() - start_time_global)
 
                 if epoch == 0:
@@ -400,8 +400,8 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, T
                 print(f"============== Epoch {epoch + 1}/{n_epochs} ==============", flush=True)
                 print(f"train_batches = {train_batches}", flush=True)
                 print(f"training_time_without_metrics = {training_time_without_metrics}s", flush=True)
-                print(f"T1 = {T1_explicit}", flush=True)
-                print(f"T2_current = {T2_current}", flush=True)
+                print(f"perspective_coeff = {perspective_coeff}", flush=True)
+                print(f"entropy_coeff_current = {entropy_coeff_current}", flush=True)
                 print(f"entropy_every = {entropy_every}", flush=True)
                 print(f"entropy_steps = {entropy_steps}", flush=True)
                 if last_loss_grad_norm is not None:

@@ -121,8 +121,8 @@ def build_model_and_hparams(model_name: str, device: torch.device, args, local_r
         batch_size=None,
         lambda_reg=0.0,
         alpha=1.0,
-        T1_explicit=0.0,
-        T2_explicit=0.0,
+        perspective_coeff=0.0,
+        entropy_coeff=0.0,
         subgradient_step=1e5,
         r=2.0,
         w0=0.0,
@@ -169,11 +169,11 @@ def build_model_and_hparams(model_name: str, device: torch.device, args, local_r
             lr=0.0007,
             #lambda_reg=lambda_reg,
             #alpha=alpha,
-            #T1_explicit=lambda_reg * alpha,
-            #T2_explicit=lambda_reg * (1 - alpha),
+            #perspective_coeff=lambda_reg * alpha,
+            #entropy_coeff=lambda_reg * (1 - alpha),
             # Override
-            T1_explicit=0.001,
-            T2_explicit=0.0005,            
+            perspective_coeff=0.001,
+            entropy_coeff=0.0005,
             r=r,
             w0=w0,
             n_epochs=500,
@@ -198,11 +198,11 @@ def build_model_and_hparams(model_name: str, device: torch.device, args, local_r
             lr=0.001,
             #lambda_reg=lambda_reg,
             #alpha=alpha,
-            #T1_explicit=lambda_reg * alpha,
-            #T2_explicit=lambda_reg * (1 - alpha),
+            #perspective_coeff=lambda_reg * alpha,
+            #entropy_coeff=lambda_reg * (1 - alpha),
             # Override
-            T1_explicit=0.001,
-            T2_explicit=0.0005,             
+            perspective_coeff=0.001,
+            entropy_coeff=0.0005,
             r=r,
             w0=w0,
             n_epochs=100,
@@ -226,8 +226,8 @@ def build_model_and_hparams(model_name: str, device: torch.device, args, local_r
             batch_size=128,  # First test on Leonardo
             #lambda_reg=5e-4,
             #alpha=0.99999,
-            T1_explicit=1e-3,
-            T2_explicit=1e-6,
+            perspective_coeff=1e-3,
+            entropy_coeff=1e-6,
             r=1.51,
             w0=0.013,
             n_epochs=20,
@@ -257,11 +257,11 @@ def build_model_and_hparams(model_name: str, device: torch.device, args, local_r
             batch_size=512,
             #lambda_reg=lambda_reg,
             #alpha=alpha,
-            #T1_explicit=lambda_reg * alpha,
-            #T2_explicit=lambda_reg * (1 - alpha),
+            #perspective_coeff=lambda_reg * alpha,
+            #entropy_coeff=lambda_reg * (1 - alpha),
             # Override
-            T1_explicit=0.001,
-            T2_explicit=0.0005,             
+            perspective_coeff=0.001,
+            entropy_coeff=0.0005,
             r=r,
             w0=w0,
             n_epochs=20,
@@ -540,8 +540,8 @@ def print_config(model_name, args, h, local_rank_to_print):
     if h["batch_size"] is not None:
         print(f"batch_size_per_gpu={h['batch_size']}", flush=True)
         print(f"global_batch_size={h['batch_size'] * world_size}", flush=True)
-    print(f"T1={h['T1_explicit']}", flush=True)
-    print(f"T2={h['T2_explicit']}", flush=True)
+    print(f"perspective_coeff={h['perspective_coeff']}", flush=True)
+    print(f"entropy_coeff={h['entropy_coeff']}", flush=True)
     print(f"metrics_interval={h['metrics_interval']}", flush=True)
     print(f"entropy_warmup_epochs={h['entropy_warmup_epochs']}", flush=True)
     print(f"entropy_every={h['entropy_every']}", flush=True)
@@ -634,8 +634,8 @@ def main():
     parser.add_argument("--n_epochs", type=int, default=None, help="Override number of epochs (if set)")
     parser.add_argument("--batch_size", type=int, default=None, help="Override per-GPU batch size (if set)")
     parser.add_argument("--lr", type=float, default=None, help="Override learning rate (if set)")
-    parser.add_argument("--T1", type=float, default=None, help="Override L2 weight decay term; 0 disables it")
-    parser.add_argument("--T2", type=float, default=None, help="Override entropy term; 0 disables it")
+    parser.add_argument("--perspective_coeff", type=float, default=None, help="Coefficient of the perspective/ridge term; 0 disables it")
+    parser.add_argument("--entropy_coeff", type=float, default=None, help="Override entropy term; 0 disables it")
     parser.add_argument("--max_iterations", type=int, default=None, help="Override FISTA/PBM iterations (if set)")
     parser.add_argument("--metrics_interval", type=int, default=1, help="Evaluate/compress every N epochs")
     parser.add_argument("--entropy_warmup_epochs", type=int, default=0, help="Epochs with entropy term disabled")
@@ -678,10 +678,10 @@ def main():
         h["batch_size"] = args.batch_size
     if args.lr is not None:
         h["lr"] = args.lr
-    if args.T1 is not None:
-        h["T1_explicit"] = args.T1
-    if args.T2 is not None:
-        h["T2_explicit"] = args.T2
+    if args.perspective_coeff is not None:
+        h["perspective_coeff"] = args.perspective_coeff
+    if args.entropy_coeff is not None:
+        h["entropy_coeff"] = args.entropy_coeff
     if args.max_iterations is not None:
         h["max_iterations"] = args.max_iterations
     if args.metrics_interval < 1:
@@ -779,8 +779,8 @@ def main():
         lr=h["lr"],
         lambda_reg=h["lambda_reg"],
         alpha=h["alpha"],
-        T1_explicit=h["T1_explicit"],
-        T2_explicit=h["T2_explicit"],
+        perspective_coeff=h["perspective_coeff"],
+        entropy_coeff=h["entropy_coeff"],
         subgradient_step=h["subgradient_step"],
         w0=h["w0"],
         r=h["r"],

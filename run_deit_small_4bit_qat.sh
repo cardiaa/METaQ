@@ -65,9 +65,9 @@ srun --ntasks=$SLURM_NTASKS --ntasks-per-node=1 bash -lc '
     --n_epochs 20 \
     --lr 1e-4 \
     --optimizer_weight_decay 1e-4 \
-    --T1 1e-5 \
-    --T2 3e-8 \
-    --T3 1e-7 \
+    --perspective_coeff 1e-5 \
+    --entropy_coeff 3e-8 \
+    --sparsity_coeff 1e-7 \
     --perspective Y \
     --flat_schedule N \
     --mag_prune_ratio 0 \

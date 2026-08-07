@@ -96,8 +96,8 @@ if __name__ == "__main__":
         print(f"lr={lr}", flush=True)    
         print(f"lambda_reg={lambda_reg}", flush=True)
         print(f"alpha={alpha}", flush=True)    
-        print(f"[T1=lambda_reg*alpha={round(lambda_reg*alpha, 6)}]", flush=True)
-        print(f"[T2=lambda_reg*(1-alpha)={round(lambda_reg*(1-alpha), 6)}]", flush=True)
+        print(f"[perspective_coeff=lambda_reg*alpha={round(lambda_reg*alpha, 6)}]", flush=True)
+        print(f"[entropy_coeff=lambda_reg*(1-alpha)={round(lambda_reg*(1-alpha), 6)}]", flush=True)
         print(f"subgradient_step={subgradient_step}", flush=True)    
         print(f"w0={w0}", flush=True)    
         print(f"r={r}", flush=True)  
@@ -134,4 +134,3 @@ if __name__ == "__main__":
         entropy_optimizer=entropy_optimizer, trainloader=trainloader, testloader=testloader, delta=args.delta, pruning=pruning, 
         QuantizationType=QuantizationType, sparsity_threshold=sparsity_threshold, accuracy_tollerance=accuracy_tollerance
     )
-
