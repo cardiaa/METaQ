@@ -1,0 +1,228 @@
+                                       Some thoughts
+                                          Paolo Ferragina
+
+
+The goal of this note is to define an approach for doing simultaneous training and quantization
+of an NN targeted to better compression. As far as we know this is the first time that all these
+three steps are managed simultaneously.
+We are given a NN with arbitrary weights vector w. For simplicity one can imagine an unstruc-
+tured vector of weights w = [wi ]i∈I . In actual applications, the weights are subdivided between
+the layers (or even, possibly, finer structures in the NN-like filters) and quantization might be
+applied separately to each sub-structure, but this only amounts to partitioning I and adding a
+new index.
+The NN is endowed with a loss function L(w), typically the sum of prediction errors over a given
+set of input-output pairs (xh , y h ); the exact form is immaterial for our discussion. The training of
+the NN is typically poised as the optimization problem of finding weights that minimize the loss.
+However, off-sample accuracy of the NN greatly benefits from adding to the loss a regularization
+term, such as the Ridge or the Lasso regularization, so that the problem reads as follows:
+
+                                 min{ L(w) + λΩ(w) : w ∈ Rn } ,
+
+where λ is the hyperparameter weighting the loss with the regularization (in order to allow ex-
+ploring the bias/variance trade-off). For example, one can choose Ω to try to achieve multiple
+goals at the same time. One instance is improving off-sample accuracy while at the same time
+pruning a large number of weights, i.e., having wi = 0 for many i in the optimal solution so
+as to obtain a sparser vector for which inference is cheaper: one can set Ω(w) = ∥w∥1 , which
+is known to be a simple yet effective way to achieve such a result. But, things may be more
+complex than that. That is, w may be partitioned into a number of “prunable structures”: by
+eliminating all weights in the structure NN is “effectively reduced in size”, meaning that its in-
+ference performances increase (possibly, but not necessarily, at the cost of some accuracy), while
+eliminating only some of them actually has no effect. Indeed, eliminating only one weight hardly
+impacts inference performances in current computer implementations (GPU, NN accelerators):
+for this to happen, appropriate subsets of weights need be pruned. This is at least one neuron
+(all its incident arcs), but often even larger structures like a filter in a convolutional NN. Achiev-
+ing “structured” sparsity can be obtained, e.g., by properly modified Ω such as the Structured
+Perspective Regularization (shortly, SPR [?]).
+We want to mimic this approach and define a regularization term Ω that promotes also com-
+pressibility of the weight vector w, again with the aim of improving performance in terms of
+inference time and compressibility.
+For this, the weights (of a level) of the NN, which are real values in the range [0, 1], will be
+quantized to a finite set and then compressed with entropy-based approaches (for now aiming
+at 0-th order entropy, then we will see...). We assume that quantization occurs in C buckets
+that, for simplicity, are equal-sized and thus 1/C. We count buckets from zero, and thus the
+b-th bucket is Bb = [b/C, (b + 1)/C), where the right extreme is not included. We assume that
+all weights falling in Bb will be quantized with one of the values in the bucket. This value is
+kept in a table, and can be chosen for simplicity as the left range-extreme b/C or the value in
+the middle. This is not important from a compression point of view because these values will be
+
+
+                                                  1
+encoded via the symbol b, and then "resolved" at matrix-vector multiplication time. If we define
+by cb the positive integer
+                     PC−1 counting how many weights belong to the bucket Bb , the entropy can
+be estimated as − b=0 cb log2 cb , and we wish to minimize the entropy of the optimal vector
+w. It is clearly also important to increase the accuracy (minimize the loss) of the NN, as well as
+regularising w. Since, intuitively, these goals are contrasting, some hyperparameters that govern
+their relative importance will be needed on top of the “standard” one.
+We therefore consider
+
+                        min{ L(w) + λ(αR(w) + (1 − α)ϕ(w)) : w ∈ Rn } ,
+
+where:
+
+   • L(w) is the loss of the NN, that will be defined and managed by whatever standard ML
+     tool (say Pytorch) we use, and therefore need not be discussed in any detail here; in
+     particular, what the tool needs is its gradient ∇L(w) or an approximation thereof (in case
+     L is nondifferentiable, which easily happens e.g. with the ReLU activation, but nobody
+     cares) that is enough to iteratively update the weights w;
+
+   • R(w) is any existing regularization term, such as R(w) = ∥w∥22 , R(w) = ∥w∥1 , or maybe
+     even the SPR to take into account structured sparsity; again we assume that the tool we
+     use already is able to compute its gradient ∇R(w) (or an approximation thereof);
+
+   • our new compression-enhancing term
+
+                                                                                               (1)
+                               P
+                   ϕ(w) = min b∈B cb log2 cb
+                                                                                               (2)
+                                    P
+                              wi = b∈B+ vb xi,b                              i∈I
+                                                                                               (3)
+                               P
+                                 b∈B xi,b = 1                                i∈I
+                                                                                               (4)
+                                   P
+                              cb = i∈I xi,b                                 b∈B
+                                  xi,b ∈ {0, 1}                      i∈I, b∈B                  (5)
+
+     where we have used B+ = B − {0}, because v0 = 0. Note that we use the standard 0-th
+     order entropy to measure the achieved amount of quantization+compression, measuring
+     which requires—by means of standard integer programming tricks—to introduce the very
+     large number of binary variables xi,b ∈ {0, 1}, denoting the fact that the weight wi ∈ Bb ,
+     and more precisely that wi = vb . Constraints (2) express the requirement that each wi
+     equals exactly one of the values vb because exactly one of the xi,b is one due to (3). Note
+     that we are not summing for b = 0 due to the assumption v0 = 0, as observed above. The
+     auxiliary variables cb defined by (4) just count the total number of occurrences of each
+     symbol b ∈ B, to be used in the objective; they do not need to be explicitly declared as
+     integral since the xbi are integrals (see (5)).
+
+Due to the min/min nature of the problem, one may think to look at it as a whole, i.e.,
+
+                min{ L(w) + λ(αR(w) + (1 − α) b∈B cb log2 cb ) : (2)–(5) }                     (6)
+                                               P
+
+but this problem is combinatorial and has many gazillions variables, since the w are many already,
+and there are a huge number of binary variables xi,b : with C = 256 corresponding to 8-bit floats
+or ints this is 256 × n, with n that can scale up to the 100s of billions. Hence, this problem
+is hugely difficult. Furthermore, we want to be able to exploit the standard ML tools (say,
+Pytorch) that are not set for solving that; rather, they do gradient-based approaches. For this,
+if Ω = R they would compute ∇L(w) (or an approximation thereof if L is nondifferentiable) and
+∇R(w) (ditto), which they can do efficiently, and use the overall gradient ∇L(w) + λ∇R(w) to
+update w. The only thing we need to do is then to compute (an approximation of) ∇ϕ(w) (since
+
+                                                  2
+the function, as it is stated, is not even continuous, let alone differentiable) and substitute in the
+above:
+                           ∇R(w)        with     α∇R(w) + (1 − α)∇ϕ(w)
+to be passed to Pytorch as ∇Ω; it will then do the rest. Thus, with a “minimal” modification
+(that Pytorch et similia are typically well organised to let us do) we can add to any existing regu-
+larization term another component that takes into account the achieved amount of quantization.
+This is of course yet different from, and possibly in contrast to, the two other objectives, i.e., loss
+and “generic” regularization; this is why the further hyperparameter α needs to be introduced.
+All this, however, relies on the ability to compute (an approximation of) ∇ϕ(w). The nice thing
+is that the overall approach can be expected to work even if the gradient is “very approximated”,
+so we are free to play around with it.
+We therefore want to compute some approximation of ∇ϕ(w). This is nontrivial because the
+function is not even continuous: since the right-hand-side in (2) is an integer (the xi,b are), there
+is no solution whenever w ∈  / Zn , i.e., ϕ(w) = +∞. Hence, the first thing we need to do surely is
+to relax (5) into
+                                      xi,b ∈ [0, 1] i∈I, b∈B                                        (7)
+to ensure that ϕ(w) is at least defined everywhere. Now, if the objective (1) were linear or at
+least convex, this would be easy. In fact, then ϕ(w) would be the value function of a convex
+program, which is a convex function for which a subgradient (an appropriate generalization of
+gradient which we are completely happy with) would be easy to find. In particular, if (1) were
+convex, any approach for solving (1)–(4) and (7) would produce optimal Lagrangian multipliers
+β ∗ = [βi∗ ]i∈I for constraints (2): then, it is well known that β ∗ ∈ ∂ϕ(w), i.e., β ∗ is a subgradient
+of the value function. We could therefore take ∇ϕ(w) = β ∗ and run away with it.
+We therefore need to find a convex version of the problem (1)–(4) and (7) that produces suitable
+dual optimal multipliers β ∗ , despite the fact that the entropy-related term in the objective is
+concave, while the problem is a minimization one. Besides, (1)–(4) and (7) is a huge problem
+that, even if it were convex (and it is not), would be difficult to solve. Fortunately, our beloved
+Lagrangian approaches give us a way to solve both problems at once. In fact, we consider the
+Lagrangian relaxation of the constraints (4) using multipliers ξ = [ξb ]b∈B :
+
+              ϕw (ξ) = min{ b∈B cb log2 cb + b∈B ξb (cb − i∈I xbi ) : (2) , (3) , (7) }              (8)
+                             P                   P            P
+
+and the corresponding Lagrangian Dual
+
+                                       max{ ϕw (ξ) ; ξ ∈ RC } .                                     (9)
+
+For any fixed w, ϕw (ξ) is a concave function of the ξ variables and hence “easy to maximize”
+provided one can solve the problem
+                                                         b                               (10)
+                 P                  P              P
+            min    b∈B cb log2 cb +   b∈B ξb (cb −  i∈I xi )
+                                                                                         (11)
+                      P
+                wi = b∈B+ vb xi,b                                            i∈I
+                                                                                         (12)
+                 P
+                   b∈B xi,b = 1                                              i∈I
+                  xi,b ∈ [0, 1]                                                i∈I, b∈B            (13)
+
+Indeed, the optimal solution x∗ for fixed ξ (and w) provides a subgradient of ϕw (ξ) that can be
+used to drive an iterative approach to find an optimal solution to (9); the details are not crucial
+here. The issue is therefore to be able to efficiently solve (10)–(13), which fortunately is easy in
+that the problem decomposes in many separate subproblems:
+   • One on each variable cb , b ∈ B, decoupled from all others, of the form
+
+                                    min{cb log2 cb − ξb cb : cb ∈ [0, c̄b ]}
+
+                                                   3
+     for some upper bound c̄b that should be easy to compute. This can be easily optimised
+     by a closed formula. Note that this eliminates one source of nonconvexity (the entropy)
+     since the Lagrangian dual automatically convexifies. On the other hand, the entropy being
+     concave it means that we are actually minimising its convex envelope, which is a linear
+     function. So, the approximation may be rather coarse and this may lead to bad results.
+     I’d say that computing a not-too-big c̄b may help, but we’ll have to see.
+
+   • One for each original weight wi , i ∈ I, of the form
+                                          b                                                   (14)
+                               P
+                          min    b∈B ξb xi
+                              wi = b∈B+ vb xbi                                                (15)
+                                    P
+
+                                        b                                                     (16)
+                               P
+                                 b∈B xi = 1
+                                xbi ∈ [0, 1]                           b∈B                    (17)
+
+     This is an extremely simple LP for which it should be trivial to devise specialised methods;
+     it’s basically akin to a continuous knapsack problem, I’m reasonably certain this can be
+     solved in O(C) time after that the Lagrangian multipliers ξb are ordered (and this ordering
+     need be done only once and then re-used for all i).
+
+The fact that (14)–(17) is an LP also means the following: each time we solve it, for fixed ξ
+(and w) we also find the optimal dual solution βi∗ of (15). Thus, assume that (for fixed w) we
+have computed the optimal solution ξ ∗ of (9): in doing so we have surely computed ϕw (ξ ∗ ), i.e.,
+solved all (14)–(17) for all i ∈ I, i.e., computed the optimal dual solution βi∗ of (15) for that
+fixed ξ ∗ (and w) and all i ∈ I. Then, these βi∗ are the optimal dual solution of constraints (2)
+in the “convexified version” of (1)–(4), (7) corresponding to the Lagrangian dual. Just believe
+it. Hence, one can take ∇ϕ(w) = β ∗ and run away with it. Of course, such a gradient will be
+approximate, but this is usually not a big deal.
+For this to work one needs to find the optimal Lagrangian multipliers ξ ∗ , which is an iterative
+process. However, as already mentioned, there are not too many buckets, hence not too many
+constraints (4), hence not too many multipliers ξ; let’s say not more than 256, so that dual space
+is not too huge. Anyway, the idea can be to run this optimization only approximately and be
+done with whatever best multipliers ξ¯ we get after an appropriately small number of iterations.
+Given ξ,¯ the dual optimal solution β̄ ∗ of the constraint (15) in (14)–(17) (for all i ∈ I) will
+provide the needed (approximation of) ∇ϕ(w) as above. This introduces error in the gradient,
+but the gradient is approximated anyway, so it could work. Each iteration of the process looks to
+be roughly linear in n = |I| = the number of neurons, so it should be doable even on a very-large
+scale provided that the total number of iterations to find ξ¯ is not too large (consider that the
+optimization of ξ will need to be re-done whenever w changes during the standard fitting process,
+although one can, say, re-start the process from the last solution of the previous round, which
+may help).
+On large problems the computational cost of this little trick will still be nontrivial, but with
+some effort it may be made work. If the thusly computed (sub)gradient ∇ϕ(w) is any effective
+in driving the minimization process towards a low-entropy w∗ is all to be seen, but it may even
+work.
+
+
+
+
+                                                4
+
