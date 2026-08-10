@@ -6,17 +6,32 @@
 #SBATCH --ntasks=4
 #SBATCH --gres=gpu:4
 #SBATCH --cpus-per-task=32
-#SBATCH --time=3:00:00
+#SBATCH --time=4:00:00
 #SBATCH --output=/dev/null
 #SBATCH --error=/dev/null
 
 # DeiT-Small / ImageNet transfer test for the complete joint LSQ-METaQ method.
-# The successful ResNet-18 test-168 regularization settings are transferred
-# unchanged; only the model-specific optimizer, learning rate, batch size, and
-# BatchNorm handling differ. Four 4-GPU nodes give a global batch size of 2048.
-# Relative to the initial DeiT-Small run, the larger batch quarters the number
-# of optimizer steps per epoch. Updating PEAQ every two steps also halves its
-# exposure per processed sample, providing a more conservative 10-epoch probe.
+# Four 4-GPU nodes give a global batch size of 2048.
+#
+# test_171 changes the FINE-TUNING RECIPE only; every PEAQ coefficient is left
+# exactly as in the successful ResNet-18 test-168. Measurements from test_170
+# motivate this: against an FP32 baseline of 79.742, one epoch of plain LSQ QAT
+# with PEAQ still disabled by the warm-up already cost 1.58 points (78.164),
+# while PEAQ added only 0.31 over the following nine epochs (77.850). Test_169,
+# same learning rate but four times the optimizer steps per epoch, lost 3.23
+# points in that same PEAQ-free first epoch. The damage therefore scales with
+# the number of optimizer steps, not with PEAQ.
+#
+# Accordingly: the learning rate drops from 1e-4 to 2e-5, weight decay goes to
+# zero (the optimizer is Adam with coupled L2, which shrinks weights toward the
+# zero bin and duplicates the perspective ridge), and the run is extended from
+# 10 to 20 epochs because PEAQ enters through the gradient and is throttled by
+# the same factor as the learning rate.
+#
+# Epoch 1 runs with PEAQ disabled (entropy_warmup_epochs=1) and is therefore a
+# free LSQ-only control for the new recipe: at or above 79.3 the learning rate
+# was the whole story, whereas a value near 78.2 would indicate a
+# representational floor of the per-tensor 16-level codebook instead.
 
 LOG_DIR=$WORK/acardia0/LeonardoTests
 mkdir -p "$LOG_DIR"
@@ -72,9 +87,9 @@ srun --ntasks=$SLURM_NTASKS --ntasks-per-node=1 bash -lc '
     --train_workers 4 \
     --val_workers 2 \
     --batch_size 128 \
-    --n_epochs 10 \
-    --lr 1e-4 \
-    --optimizer_weight_decay 1e-4 \
+    --n_epochs 20 \
+    --lr 2e-5 \
+    --optimizer_weight_decay 0 \
     --perspective_coeff 1e-5 \
     --entropy_coeff 3e-8 \
     --sparsity_coeff 1e-7 \
