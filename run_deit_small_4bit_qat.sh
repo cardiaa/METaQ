@@ -6,14 +6,17 @@
 #SBATCH --ntasks=4
 #SBATCH --gres=gpu:4
 #SBATCH --cpus-per-task=32
-#SBATCH --time=1:00:00
+#SBATCH --time=3:00:00
 #SBATCH --output=/dev/null
 #SBATCH --error=/dev/null
 
 # DeiT-Small / ImageNet transfer test for the complete joint LSQ-METaQ method.
 # The successful ResNet-18 test-168 regularization settings are transferred
 # unchanged; only the model-specific optimizer, learning rate, batch size, and
-# BatchNorm handling differ. Four 4-GPU nodes give a global batch size of 512.
+# BatchNorm handling differ. Four 4-GPU nodes give a global batch size of 2048.
+# Relative to the initial DeiT-Small run, the larger batch quarters the number
+# of optimizer steps per epoch. Updating PEAQ every two steps also halves its
+# exposure per processed sample, providing a more conservative 10-epoch probe.
 
 LOG_DIR=$WORK/acardia0/LeonardoTests
 mkdir -p "$LOG_DIR"
@@ -68,8 +71,8 @@ srun --ntasks=$SLURM_NTASKS --ntasks-per-node=1 bash -lc '
     --data_root /leonardo_work/IscrC_ObCTDoNN/acardia0/datasets \
     --train_workers 4 \
     --val_workers 2 \
-    --batch_size 32 \
-    --n_epochs 20 \
+    --batch_size 128 \
+    --n_epochs 10 \
     --lr 1e-4 \
     --optimizer_weight_decay 1e-4 \
     --perspective_coeff 1e-5 \
