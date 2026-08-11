@@ -21,9 +21,14 @@
 # directly and therefore decides whether the remaining gap is closable by
 # training at all.
 #
-# The configuration is identical to test_171 except that both learning rates
-# are zero, which freezes the latent weights, the LayerNorm affine parameters,
-# and the LSQ step sizes at their initial values. A single epoch is requested
+# The configuration is identical to test_171 except that the learning rates are
+# neutralized, which freezes the latent weights, the LayerNorm affine
+# parameters, and the LSQ step sizes at their initial values. The weight rate is
+# exactly zero; the step-size rate must be strictly positive, so it is set to
+# 1e-20 instead. Its optimizer is Adam, whose per-step displacement is of the
+# order of the rate itself, so 625 steps move step sizes of order 1e-2 by a
+# relative 1e-15, which is far below float32 resolution and therefore inert. A
+# single epoch is requested
 # and entropy_warmup_epochs=1 keeps PEAQ disabled throughout, so the code path
 # is exactly the one already exercised by the first epoch of tests 169, 170,
 # and 171 and the resulting number is directly comparable to theirs.
@@ -97,7 +102,7 @@ srun --ntasks=$SLURM_NTASKS --ntasks-per-node=1 bash -lc '
     --mag_prune_ratio 0 \
     --quantization Y \
     --quantizer lsq \
-    --lsq_scale_lr 0 \
+    --lsq_scale_lr 1e-20 \
     --lsq_init mse \
     --lsq_grad_scaling N \
     --joint_lsq_metaq Y \
