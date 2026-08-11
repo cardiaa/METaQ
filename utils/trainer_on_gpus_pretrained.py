@@ -619,8 +619,13 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, p
 
     min_w, max_w = w0 - r, w0 + r
     if lsq_enabled:
+        # Per-channel has no single level vector: v_list then holds the INTEGER
+        # codebook and the step sizes reach the solver separately. Kept in sync
+        # with _refresh_lsq_metaq_grids_, which rebuilds the same object.
         v_list = [
-            scale.detach() * q_nonzero
+            q_nonzero.clone()
+            if lsq_per_channel
+            else scale.detach() * q_nonzero
             for scale, q_nonzero in zip(
                 lsq_scales, lsq_nonzero_integer_codebooks
             )
@@ -838,6 +843,14 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, p
 
     def _current_quant_levels(q_state):
         if lsq_enabled:
+            if lsq_per_channel:
+                # (O, C): one real level vector per output channel. Only the
+                # non-LSQ deadzone and centroid paths consume this, and both are
+                # refused under per-channel, so it exists for diagnostics only.
+                return (
+                    lsq_scales[q_state].detach().clamp_min(1e-12).unsqueeze(1)
+                    * lsq_integer_codebooks[q_state].unsqueeze(0)
+                )
             return (
                 lsq_scales[q_state].detach().clamp_min(1e-12)
                 * lsq_integer_codebooks[q_state]
