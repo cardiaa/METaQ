@@ -6,44 +6,45 @@
 #SBATCH --ntasks=4
 #SBATCH --gres=gpu:4
 #SBATCH --cpus-per-task=32
-#SBATCH --time=1:00:00
+#SBATCH --time=0:30:00
 #SBATCH --output=/dev/null
 #SBATCH --error=/dev/null
 
-# test_179: is the step-size learning rate the last quantizer-side constraint?
+# test_181: are frozen step sizes better still, or have we bracketed the optimum?
 #
 # The step size a of a tensor fixes where its sixteen representable levels sit:
 # -8a, -7a, ..., -a, 0, a, ..., 7a. LSQ's whole point is that a is LEARNED
 # rather than fixed, so it needs its own learning rate, and lsq_scale_lr is
-# exactly that: how fast the quantization levels are allowed to move.
+# exactly that: how fast the quantization levels are allowed to move. Too slow
+# and the levels stay where initialization put them; too fast and the grid
+# chases the weight distribution, shifting under the network before the weights
+# can settle.
 #
-# Too slow and the levels stay where initialization put them, which throws away
-# the "learned" in learned-step quantization. Too fast and the grid chases the
-# weight distribution, shifting under the network before the weights can settle.
-# We picked 1e-5 by hand while working on ResNet-18 and never revisited it for a
-# transformer, whose weight distributions have heavier tails and vary far more
-# from tensor to tensor.
+# The 1e-5 we had used since ResNet-18 turns out not to be the right value for a
+# transformer. Comparing the average of the first four epochs with that of the
+# last three, over ten epochs, plain LSQ trends by -0.07 at 1e-5 (test_173),
+# +0.11 at 1e-4 (test_180) and +0.22 at 1e-6 (test_179), the last reaching
+# 79.208 and still climbing. That is the first rising trend we have seen on
+# DeiT, after granularity, initialization and bit allocation each failed to move
+# the plateau. Measured displacement of the scales from initialization to epoch
+# ten: 3.8% at 1e-6 against 10.5% at 1e-4.
 #
-# This is also the LAST untested difference from Q-ViT on the quantizer side.
-# Their alpha lives in the main optimizer at the network rate with a gradient
-# scale factor; ours has a separate Adam at a hand-set rate. That factor cannot
-# be probed directly in our design, because Adam divides by the gradient
-# magnitude and therefore cancels any constant multiplying it. The only quantity
-# that actually governs how fast our scales move is lsq_scale_lr, so sweeping it
-# covers the same ground without replicating their optimizer.
+# This run goes one decade further down, to 1e-7, where the scales are
+# essentially pinned to their MSE initialization. It brackets the optimum, and
+# the two outcomes are both informative. If accuracy climbs as it does at 1e-6,
+# then learning the step sizes contributes nothing on this architecture and they
+# may as well be frozen, which is a blunt but publishable statement about LSQ on
+# vision transformers. If it climbs less, the optimum sits near 1e-6 and the
+# long run should use that.
 #
 # Everything else is test_173: plain LSQ, per-tensor, MSE initialization, four
-# bits on all fifty tensors, no regularizer. The only change is
-# lsq_scale_lr = 1e-6 instead of 1e-5, a factor of ten slower.
+# bits on all fifty tensors, no regularizer.
 #
 # WHAT TO READ, against the first ten epochs of test_173, which run
 # 79.056, 79.120, 79.044, 79.110, 78.996, 78.984, 78.986, 78.998, 78.976, 79.068
-# and therefore peak by epoch 4 and settle at 78.99: does accuracy RISE between
-# epoch 1 and epoch 10? Granularity, initialization and bit allocation have each
-# already been changed without moving that plateau. If neither a tenfold
-# increase nor a tenfold decrease of the scale rate moves it either, the
-# quantizer is exhausted as an explanation and what remains is the training
-# recipe.
+# and therefore peak by epoch 4 and settle at 78.99: the SIGN and size of the
+# trend, not the endpoint, since the endpoint spread across these runs is within
+# the run-to-run noise we have observed.
 #
 # Ten epochs at about 143s each: roughly 25 minutes.
 #
@@ -131,7 +132,7 @@ srun --ntasks=$SLURM_NTASKS --ntasks-per-node=1 bash -lc '
     --mag_prune_ratio 0 \
     --quantization Y \
     --quantizer lsq \
-    --lsq_scale_lr 1e-6 \
+    --lsq_scale_lr 1e-7 \
     --lsq_init mse \
     --lsq_grad_scaling N \
     --joint_lsq_metaq Y \
