@@ -13,25 +13,33 @@
 # DeiT-Small / ImageNet transfer test for the complete joint LSQ-METaQ method.
 # Four 4-GPU nodes give a global batch size of 2048.
 #
-# test_171 changes the FINE-TUNING RECIPE only; every PEAQ coefficient is left
-# exactly as in the successful ResNet-18 test-168. Measurements from test_170
-# motivate this: against an FP32 baseline of 79.742, one epoch of plain LSQ QAT
-# with PEAQ still disabled by the warm-up already cost 1.58 points (78.164),
-# while PEAQ added only 0.31 over the following nine epochs (77.850). Test_169,
-# same learning rate but four times the optimizer steps per epoch, lost 3.23
-# points in that same PEAQ-free first epoch. The damage therefore scales with
-# the number of optimizer steps, not with PEAQ.
+# test_175 keeps the whole test_171 recipe and changes only the per-tensor
+# codebook sizes. The controls have by now located the missing accuracy
+# precisely. Against an FP32 baseline of 79.742, plain LSQ converges to 79.04
+# (test_173) and METaQ on top of it reaches 78.844 (test_171), so the gap splits
+# into 0.70 charged to the quantizer and 0.21 charged to the regularizer. The
+# ResNet-18 pair settles what the first term means: there plain LSQ reaches
+# 69.888, above its own 69.734 FP32 checkpoint (test_174). Per-tensor step sizes
+# are therefore sufficient for the convolutional network and insufficient for
+# the vision transformer.
 #
-# Accordingly: the learning rate drops from 1e-4 to 2e-5, weight decay goes to
-# zero (the optimizer is Adam with coupled L2, which shrinks weights toward the
-# zero bin and duplicates the perspective ridge), and the run is extended from
-# 10 to 20 epochs because PEAQ enters through the gradient and is throttled by
-# the same factor as the learning rate.
+# This run tests whether that insufficiency is concentrated in a few tensors.
+# The patch embedding and the classifier head receive 256 levels while the 48
+# attention and MLP tensors keep 16. Together they hold 678912 of 22050664
+# weights, that is 3.08% of the model, which at eight bits instead of the
+# current 2.7 effective bits costs about half a point of compression ratio.
 #
-# Epoch 1 runs with PEAQ disabled (entropy_warmup_epochs=1) and is therefore a
-# free LSQ-only control for the new recipe: at or above 79.3 the learning rate
-# was the whole story, whereas a value near 78.2 would indicate a
-# representational floor of the per-tensor 16-level codebook instead.
+# One caveat on the choice of those two tensors. It rests on the clipping
+# fractions of a trained network, where the patch embedding sits at 0.0237
+# against roughly 1e-5 elsewhere. At initialization, however, test_172 shows
+# clipping uniform between 0.005 and 0.014 across all fifty tensors, with the
+# patch embedding at 0.0078, exactly average. The outlier is thus produced by
+# training rather than intrinsic to the tensor, which makes this a cheap probe
+# rather than a well-founded prediction.
+#
+# Reading: recovering most of the 0.70 means the deficit is concentrated and can
+# be bought back today, whereas an unchanged 78.8 means it is spread across the
+# attention and MLP tensors and only per-channel step sizes will close it.
 
 LOG_DIR=$WORK/acardia0/LeonardoTests
 mkdir -p "$LOG_DIR"
@@ -104,6 +112,7 @@ srun --ntasks=$SLURM_NTASKS --ntasks-per-node=1 bash -lc '
     --joint_lsq_metaq Y \
     --bn_recalibration_batches 0 \
     --C 16 \
+    --layer_C 256,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,256 \
     --max_iterations 3 \
     --metrics_interval 1 \
     --entropy_warmup_epochs 1 \
