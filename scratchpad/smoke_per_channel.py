@@ -45,7 +45,7 @@ class Tiny(nn.Module):
         return self.head(self.norm(h))
 
 
-def run(per_channel: bool):
+def run(per_channel: bool, layer_C=None):
     torch.manual_seed(0)
     device = torch.device("cpu")
     model = Tiny().to(device)
@@ -113,6 +113,7 @@ def run(per_channel: bool):
         joint_lsq_metaq=True,
         bn_recalibration_batches=0,
         dual_step=3e-9,
+        layer_C=layer_C,
     )
 
 
@@ -121,10 +122,19 @@ if __name__ == "__main__":
     os.environ.setdefault("MASTER_ADDR", "127.0.0.1")
     os.environ.setdefault("MASTER_PORT", "29555")
     dist.init_process_group("gloo", rank=0, world_size=1)
+    # The Tiny model has six quantized tensors: stem, qkv, proj, fc1, fc2, head.
+    # The third mode mirrors test_178: per-channel step sizes together with a
+    # heterogeneous codebook, eight bits on the first and last tensor. That
+    # combination has never been executed before.
+    modes = {
+        "per_tensor": (False, None),
+        "per_channel": (True, None),
+        "per_channel_layerC": (True, [256, 16, 16, 16, 16, 256]),
+    }
     try:
-        for mode in (["per_tensor", "per_channel"] if which == "both" else [which]):
+        for mode in (list(modes) if which == "both" else [which]):
             print(f"\n{'=' * 30} {mode} {'=' * 30}", flush=True)
-            run(mode == "per_channel")
+            run(*modes[mode])
             print(f">>> {mode}: NESSUN ERRORE", flush=True)
     finally:
         dist.destroy_process_group()
