@@ -6,20 +6,39 @@
 #SBATCH --ntasks=4
 #SBATCH --gres=gpu:4
 #SBATCH --cpus-per-task=32
-#SBATCH --time=1:30:00
+#SBATCH --time=4:00:00
 #SBATCH --output=/dev/null
 #SBATCH --error=/dev/null
 
-# DeiT-Small / ImageNet plain-LSQ control: where does learned-step quantization
-# alone converge, with no METaQ regularizer of any kind?
+# test_177: does our plain LSQ only need a larger budget to reach the number
+# the literature reports?
 #
-# This is the reference every other DeiT number needs. Test_172 measured the
-# codebook at MSE initialization at 74.896 against an FP32 baseline of 79.742,
-# and test_171 then held 78.79 on average over 18 epochs. Fine-tuning therefore
-# performs about four points of repair, and the 78.8 plateau is an equilibrium
-# between the task loss pulling accuracy up and METaQ pulling toward
-# compression, not a representational limit of the codebook. Separating those
-# two forces requires running the task loss on its own.
+# Q-ViT (NeurIPS 2022, Table 2) trains LSQ on DeiT-S to 79.6 at 4-bit weights
+# AND 4-bit activations, a harder setting than our weight-only one. Our own
+# plain-LSQ control settled at 79.04 over 20 epochs (test_173), against an FP32
+# baseline of 79.742. Their recipe differs in four ways: 300 epochs instead of
+# 20, LAMB at base rate 2e-4 instead of Adam at 2e-5, the DeiT augmentation
+# pipeline instead of plain crop and flip, and 8 bits on the patch embedding and
+# the head. The last of those we have already priced at +0.10 (test_175).
+#
+# This run varies ONE of them, the budget: 80 epochs instead of 20, everything
+# else identical to test_173. That is a real increase rather than extra flat
+# epochs at the tail, because stretching the cosine over 80 epochs keeps the
+# rate high far longer and multiplies the total movement, the sum of the rate
+# over steps, by roughly four.
+#
+# It is decisive either way. Reaching about 79.5 means the budget was the whole
+# story, our quantizer needs no change, and the ResNet-18 results stay as they
+# are. Staying flat near 79.05 falsifies the budget explanation and justifies
+# investing in a faithful replication of their recipe, which would then require
+# redoing ResNet-18 as well for protocol consistency.
+#
+# Note against the "our LSQ is simply weaker" hypothesis: on ResNet-18 our plain
+# LSQ reaches 69.888, ABOVE its own 69.734 checkpoint (test_174). A deficient
+# implementation would show there too, so whatever is missing is specific to
+# vision transformers.
+#
+# At 142.6s per epoch without the entropy solver, 80 epochs cost about 3h10m.
 #
 # The configuration matches test_171 exactly except that all three coefficients
 # are zero. That combination is what actually disables the regularizer: the
@@ -94,7 +113,7 @@ srun --ntasks=$SLURM_NTASKS --ntasks-per-node=1 bash -lc '
     --train_workers 4 \
     --val_workers 2 \
     --batch_size 128 \
-    --n_epochs 20 \
+    --n_epochs 80 \
     --lr 2e-5 \
     --optimizer_weight_decay 0 \
     --perspective_coeff 0 \
