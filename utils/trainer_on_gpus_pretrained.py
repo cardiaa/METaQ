@@ -3263,8 +3263,13 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, p
                 )                
                 print(f"current lr = {optimizer.param_groups[0]['lr']}", flush=True)
                 print(f"training_time = {training_time_global}s", flush=True)
-                print(f"accuracies = {accuracies}", flush=True)
-                print(f"zstd_ratios = {zstd_ratios}", flush=True)
+                # The running histories printed each epoch are the DELIVERED
+                # metrics: the accuracy of the sparse quantized model actually
+                # shipped, and the size of its serialized package. The dense
+                # zstd ratio and the unquantized accuracy remain available above
+                # in this same block, per epoch.
+                print(f"sparse_accuracies = {sparse_accuracies}", flush=True)
+                print(f"sparse_ratios = {sparse_ratios}", flush=True)
                 if z_recompute_count > 0:
                     recompute_frac = (z_recompute_sum / z_recompute_count).item() * 100.0
                     print(
