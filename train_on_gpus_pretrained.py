@@ -235,6 +235,7 @@ def build_model_and_hparams(model_name: str, device: torch.device, args, local_r
         lsq_scale_lr=1e-5,
         lsq_init="lsq",
         lsq_grad_scaling=True,
+        lsq_per_channel=False,
         joint_lsq_metaq=False,
         bn_recalibration_batches=0,
         sparsity_threshold=1e-3,
@@ -796,6 +797,7 @@ def print_config(model_name, args, h, local_rank_to_print):
     print(f"lsq_scale_lr={h['lsq_scale_lr']}", flush=True)
     print(f"lsq_init={h['lsq_init']}", flush=True)
     print(f"lsq_grad_scaling={h['lsq_grad_scaling']}", flush=True)
+    print(f"lsq_per_channel={h['lsq_per_channel']}", flush=True)
     print(f"joint_lsq_metaq={h['joint_lsq_metaq']}", flush=True)
     print(f"bn_recalibration_batches={h['bn_recalibration_batches']}", flush=True)
     print(f"sparsity_threshold={h['sparsity_threshold']}", flush=True)
@@ -924,6 +926,17 @@ def main():
         default="Y",
         choices=["Y", "N"],
         help="Apply the LSQ 1/sqrt(N*Qp) scale-gradient normalization.",
+    )
+    parser.add_argument(
+        "--lsq_per_channel",
+        type=str,
+        default="N",
+        choices=["Y", "N"],
+        help=(
+            "Learn one LSQ step size per output channel instead of one per "
+            "tensor. The METaQ envelope is built once on the integer codebook "
+            "and rescaled per weight, so the solver cost is unchanged."
+        ),
     )
     parser.add_argument(
         "--bn_recalibration_batches",
@@ -1058,6 +1071,7 @@ def main():
     h["lsq_scale_lr"] = args.lsq_scale_lr
     h["lsq_init"] = args.lsq_init
     h["lsq_grad_scaling"] = (args.lsq_grad_scaling == "Y")
+    h["lsq_per_channel"] = (args.lsq_per_channel == "Y")
     h["joint_lsq_metaq"] = (args.joint_lsq_metaq == "Y")
     h["bn_recalibration_batches"] = args.bn_recalibration_batches
     if h["lsq_scale_lr"] <= 0:
@@ -1239,6 +1253,7 @@ def main():
         lsq_scale_lr=h["lsq_scale_lr"],
         lsq_init=h["lsq_init"],
         lsq_grad_scaling=h["lsq_grad_scaling"],
+        lsq_per_channel=h["lsq_per_channel"],
         joint_lsq_metaq=h["joint_lsq_metaq"],
         bn_recalibration_batches=h["bn_recalibration_batches"],
         layer_C=h["layer_C"],

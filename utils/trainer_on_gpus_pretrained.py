@@ -15,8 +15,10 @@ from utils.knapsack import prox_perspective_leonardo
 from utils.knapsack import knapsack_specialized_pruning, knapsack_specialized_pruning_sparse_leonardo
 from utils.weight_utils import initialize_weights
 from utils.lsq import (
+    expand_scale_flat,
     initial_weight_step_size,
     mse_weight_step_size,
+    mse_weight_step_size_per_channel,
     metaq_scale_gradient,
     quantize_weight,
     signed_integer_codebook,
@@ -198,7 +200,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, p
                        sparsity_schedule=None, freeze_mask=False,
                        train_sparse=False, use_quantization=True,
                        quantizer="fixed", lsq_scale_lr=1e-5,
-                       lsq_init="lsq", lsq_grad_scaling=True,
+                       lsq_init="lsq", lsq_grad_scaling=True, lsq_per_channel=False,
                        joint_lsq_metaq=False, bn_recalibration_batches=0,
                        layer_C=None,
                        train_centroids=False,
@@ -449,6 +451,28 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, p
         raise ValueError("Joint LSQ-METaQ requires the LSQ quantizer.")
     if joint_lsq_metaq and not use_perspective:
         raise ValueError("Joint LSQ-METaQ requires --perspective Y.")
+    if lsq_per_channel and not lsq_enabled:
+        raise ValueError("--lsq_per_channel Y requires --quantizer lsq.")
+    if lsq_per_channel and (
+        mag_prune_ratio or target_sparsity or layer_sparsity
+        or conv_sparsity is not None or fc_sparsity is not None
+        or sparsity_schedule
+    ):
+        # The magnitude-pruning helpers derive their thresholds from a single
+        # per-tensor level vector. Feeding them per-channel step sizes would
+        # silently compare weights against the wrong levels, so the combination
+        # is refused rather than approximated. Sparsity under per-channel comes
+        # from the LSQ zero bin, exactly as in tests 168 to 175.
+        raise ValueError(
+            "--lsq_per_channel Y is wired for the zero-bin sparsity regime "
+            "only: mag_prune_ratio, target_sparsity, conv/fc/layer_sparsity and "
+            "sparsity_schedule must all be unset."
+        )
+    if lsq_per_channel and (use_prox or train_centroids):
+        raise ValueError(
+            "--lsq_per_channel Y supports neither the proximal path nor "
+            "trained centroids."
+        )
     if joint_lsq_metaq and use_prox:
         raise ValueError(
             "Joint LSQ-METaQ scale gradients are defined for the gradient path, "
@@ -469,15 +493,27 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, p
         ]
         initial_scales = []
         for param, q in zip(params_for_quant, lsq_integer_codebooks):
-            if lsq_init == "mse":
-                value = mse_weight_step_size(param, q)
+            if lsq_per_channel:
+                if lsq_init == "mse":
+                    value = mse_weight_step_size_per_channel(param, q)
+                else:
+                    rows = param.detach().float().reshape(param.shape[0], -1)
+                    value = (
+                        2.0 * rows.abs().mean(dim=1)
+                        / math.sqrt(float(q[-1].item()))
+                    ).clamp_min(1e-12)
+                tensor_value = value.detach().to(
+                    dtype=torch.float32, device=device
+                ).clone()
             else:
-                value = initial_weight_step_size(param, float(q[-1].item()))
-            initial_scales.append(
-                torch.nn.Parameter(
-                    torch.tensor(value, dtype=torch.float32, device=device)
+                if lsq_init == "mse":
+                    value = mse_weight_step_size(param, q)
+                else:
+                    value = initial_weight_step_size(param, float(q[-1].item()))
+                tensor_value = torch.tensor(
+                    value, dtype=torch.float32, device=device
                 )
-            )
+            initial_scales.append(torch.nn.Parameter(tensor_value))
         lsq_scales = initial_scales
         scale_optimizer = optim.Adam(
             lsq_scales,
@@ -813,10 +849,44 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, p
             return
         with torch.no_grad():
             for q_state in range(num_param_tensors):
-                v_list[q_state] = (
-                    lsq_scales[q_state].detach().clamp_min(1e-12)
-                    * lsq_nonzero_integer_codebooks[q_state]
-                )
+                if lsq_per_channel:
+                    # There is no single level vector any more: each output
+                    # channel has its own. The METaQ solver instead receives the
+                    # INTEGER codebook plus a per-weight step size, which is
+                    # exact because the lower convex envelope is invariant under
+                    # positive rescaling of the abscissa.
+                    v_list[q_state] = lsq_nonzero_integer_codebooks[q_state]
+                else:
+                    v_list[q_state] = (
+                        lsq_scales[q_state].detach().clamp_min(1e-12)
+                        * lsq_nonzero_integer_codebooks[q_state]
+                    )
+
+    def _metaq_scale_flat(p_idx, param):
+        """Per-weight step sizes for the METaQ solver, or None per-tensor.
+
+        Output channels are the leading dimension, so the flat layout repeats
+        each channel's step size ``numel // O`` times.
+        """
+        if not (lsq_enabled and lsq_per_channel):
+            return None
+        return expand_scale_flat(
+            lsq_scales[p_idx].detach().clamp_min(1e-12), param
+        )
+
+    def _add_clipping_scale_term(
+        scale_grad, beta_star, clipping_direction, scale_param
+    ):
+        """Add the clipped-weight term of dphi/ds from Eq. (34).
+
+        Outside the representable interval dclip/ds is q_n or q_p, so the term
+        is sum_i beta*_i (dclip/ds)_i. With one step size per output channel
+        that sum runs over each channel separately.
+        """
+        term = beta_star.float() * clipping_direction.float()
+        if lsq_per_channel:
+            return scale_grad + term.reshape(scale_param.numel(), -1).sum(dim=1)
+        return scale_grad + term.sum()
 
     def _fake_quantize_weights_for_forward_():
         """
@@ -847,11 +917,15 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, p
                 elif train_centroids and fixed_assignment is not None:
                     q_flat = v_layer[fixed_assignment]
                 elif lsq_enabled:
+                    # Per-channel needs the original shape so that output
+                    # channels stay the leading dimension for broadcasting.
+                    q_source = param.data if lsq_per_channel else w_flat
                     q_flat, _ = quantize_weight(
-                        w_flat,
+                        q_source,
                         lsq_scales[q_state].detach(),
                         lsq_integer_codebooks[q_state],
                     )
+                    q_flat = q_flat.reshape(-1)
                 else:
                     _, q_flat = _quantize_with_deadzone(
                         w_flat,
@@ -907,9 +981,17 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, p
             for q_state, (param, original) in enumerate(backups):
                 if param.grad is None:
                     continue
+                # Per-channel reduces the scale gradient channel by channel, so
+                # it needs the original shape; per-tensor keeps the flat call.
+                if lsq_per_channel:
+                    grad_weight = original
+                    grad_upstream = param.grad.detach()
+                else:
+                    grad_weight = original.reshape(-1)
+                    grad_upstream = param.grad.detach().reshape(-1)
                 scale_gradient, in_range = task_scale_gradient(
-                    original.reshape(-1),
-                    param.grad.detach().reshape(-1),
+                    grad_weight,
+                    grad_upstream,
                     lsq_scales[q_state],
                     lsq_integer_codebooks[q_state],
                     normalize=lsq_grad_scaling,
@@ -920,7 +1002,9 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, p
                     )
                 else:
                     lsq_scales[q_state].grad.add_(scale_gradient)
-                lsq_task_scale_grad_last[q_state] = float(scale_gradient.item())
+                lsq_task_scale_grad_last[q_state] = float(
+                    scale_gradient.mean().item()
+                )
                 param.grad.mul_(in_range.reshape_as(param.grad))
 
     def _reestimate_batchnorm_stats_():
@@ -1305,7 +1389,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, p
     # Near w = 0 the push tends to 2*sqrt(perspective_coeff*sparsity_coeff)*sign(w): an L1 term that drives
     # small weights to 0, so the magnitude pruning below removes them cleanly.
     # ------------------------------------------------------------------
-    def _perspective_y_star(w_flat, v_layer):
+    def _perspective_y_star(w_flat, v_layer, step_scale=None):
         aw = w_flat.abs()
         # Feasibility floor: w/y must be representable, i.e. w/y in [min v, max v].
         # For w>0 that means y >= w / max_positive_bucket; for w<0, y >= |w| / |min
@@ -1314,6 +1398,10 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, p
         pos_max = v_layer.max().clamp_min(1e-12)      # most positive bucket (>0)
         neg_absmax = v_layer.min().abs().clamp_min(1e-12)  # |most negative bucket| (>0)
         side_max = torch.where(w_flat >= 0, pos_max, neg_absmax)
+        if step_scale is not None:
+            # v_layer holds integer codes under per-channel quantization, so the
+            # real extreme level of weight i is step_scale_i * q_edge.
+            side_max = (side_max * step_scale).clamp_min(1e-12)
         ymin_c = (aw / side_max).clamp_(max=1.0)
         if sparsity_coeff > 0.0:
             scale = math.sqrt(perspective_coeff / sparsity_coeff)
@@ -1331,15 +1419,19 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, p
         g[nz] = 2.0 * perspective_coeff * w_flat[nz] / y_star[nz]
         return g
 
-    def _zero_entropy_perspective_gradients(w_flat, v_layer):
+    def _zero_entropy_perspective_gradients(w_flat, v_layer, scale=None):
         """Exact dphi/dw and equality multiplier when the bucket costs are zero.
 
         With entropy_coeff=0 the inner problem reduces to a scalar minimization in y, so
         invoking the general hull/knapsack solver for every weight is unnecessary.
         The equality multiplier is zero away from the representability floor and
         follows the boundary KKT condition on that floor.
+
+        ``scale`` carries one step size per weight under per-channel
+        quantization. ``v_layer`` is then the INTEGER codebook, so the real
+        extreme level of weight i is scale_i * q_edge.
         """
-        y_star = _perspective_y_star(w_flat, v_layer)
+        y_star = _perspective_y_star(w_flat, v_layer, step_scale=scale)
         beta_constraint = torch.zeros_like(w_flat)
         beta_star = torch.zeros_like(w_flat)
         nonzero = w_flat != 0
@@ -1349,6 +1441,8 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, p
         positive_edge = v_layer[-1]
         negative_edge = v_layer[0]
         edge_v = torch.where(w_flat >= 0, positive_edge, negative_edge)
+        if scale is not None:
+            edge_v = edge_v * scale        # real extreme level scale_i*q_edge
         representation_floor = (
             w_flat.abs() / edge_v.abs().clamp_min(1e-12)
         ).clamp(max=1.0)
@@ -1697,7 +1791,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, p
                     if local_rank == 0:
                         print(
                             f"[LSQ GRID INIT] epoch={epoch + 1}, "
-                            f"scales={[float(s.item()) for s in lsq_scales]}, "
+                            f"scales={[float(s.detach().mean().item()) for s in lsq_scales]}, "
                             f"deployment_levels={C_by_layer}, "
                             f"metaq_nonzero_buckets={metaq_C_by_layer}",
                             flush=True,
@@ -1982,12 +2076,21 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, p
                             continue
                         w_layer = param.detach().reshape(-1)
                         if joint_lsq_metaq:
-                            scale = lsq_scales[p_idx].detach().clamp_min(1e-12)
+                            # Under per-channel `scale` is one step size per
+                            # weight, so every expression below stays elementwise
+                            # and torch.clamp's scalar bounds become tensors.
+                            scale = (
+                                _metaq_scale_flat(p_idx, param)
+                                if lsq_per_channel
+                                else lsq_scales[p_idx].detach().clamp_min(1e-12)
+                            )
                             q_full = lsq_integer_codebooks[p_idx]
                             normalized = w_layer / scale
                             qn = q_full[0]
                             qp = q_full[-1]
-                            metaq_weight = w_layer.clamp(qn * scale, qp * scale)
+                            metaq_weight = torch.minimum(
+                                torch.maximum(w_layer, qn * scale), qp * scale
+                            )
                             in_range = (normalized >= qn) & (normalized <= qp)
                             clipping_scale_direction = torch.where(
                                 normalized < qn,
@@ -2002,19 +2105,22 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, p
                                 _zero_entropy_perspective_gradients(
                                     metaq_weight,
                                     v_list[p_idx],
+                                    scale=(
+                                        scale if lsq_per_channel else None
+                                    ),
                                 )
                             )
                             param.grad.add_((beta_star * in_range).view_as(param))
                             scale_phi_grad = metaq_scale_gradient(
                                 beta_constraint,
                                 metaq_weight,
-                                scale,
+                                lsq_scales[p_idx],
                             )
-                            scale_phi_grad.add_(
-                                (
-                                    beta_star.float()
-                                    * clipping_scale_direction.float()
-                                ).sum()
+                            scale_phi_grad = _add_clipping_scale_term(
+                                scale_phi_grad,
+                                beta_star,
+                                clipping_scale_direction,
+                                lsq_scales[p_idx],
                             )
                             if lsq_scales[p_idx].grad is None:
                                 lsq_scales[p_idx].grad = scale_phi_grad.reshape_as(
@@ -2023,7 +2129,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, p
                             else:
                                 lsq_scales[p_idx].grad.add_(scale_phi_grad)
                             lsq_metaq_scale_grad_last[p_idx] = float(
-                                scale_phi_grad.item()
+                                scale_phi_grad.mean().item()
                             )
                         else:
                             ridge_g = _perspective_ridge_grad(
@@ -2045,13 +2151,20 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, p
                             continue
                         w_layer = param.detach().reshape(-1).to(device)
                         C_layer = metaq_C_by_layer[p_idx]
+                        metaq_scale = _metaq_scale_flat(p_idx, param)
                         if lsq_enabled:
-                            scale = lsq_scales[p_idx].detach().clamp_min(1e-12)
+                            scale = (
+                                metaq_scale
+                                if lsq_per_channel
+                                else lsq_scales[p_idx].detach().clamp_min(1e-12)
+                            )
                             q_full = lsq_integer_codebooks[p_idx]
                             normalized = w_layer / scale
                             qn = q_full[0]
                             qp = q_full[-1]
-                            metaq_weight = w_layer.clamp(qn * scale, qp * scale)
+                            metaq_weight = torch.minimum(
+                                torch.maximum(w_layer, qn * scale), qp * scale
+                            )
                             metaq_weight_in_range = (
                                 (normalized >= qn) & (normalized <= qp)
                             )
@@ -2081,6 +2194,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, p
                             perspective_coeff, entropy_coeff_current, sparsity_coeff,
                             subgradient_step, device, max_iterations,
                             dual_step,
+                            scale=metaq_scale,
                         )
                         if joint_lsq_metaq:
                             # Exact envelope contribution for
@@ -2093,11 +2207,11 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, p
                                 metaq_weight,
                                 lsq_scales[p_idx],
                             )
-                            scale_phi_grad.add_(
-                                (
-                                    beta_star.float()
-                                    * clipping_scale_direction.float()
-                                ).sum()
+                            scale_phi_grad = _add_clipping_scale_term(
+                                scale_phi_grad,
+                                beta_star,
+                                clipping_scale_direction,
+                                lsq_scales[p_idx],
                             )
                             if lsq_scales[p_idx].grad is None:
                                 lsq_scales[p_idx].grad = scale_phi_grad.reshape_as(
@@ -2106,7 +2220,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, p
                             else:
                                 lsq_scales[p_idx].grad.add_(scale_phi_grad)
                             lsq_metaq_scale_grad_last[p_idx] = float(
-                                scale_phi_grad.item()
+                                scale_phi_grad.mean().item()
                             )
                         # winsorize beta* to clip stray coordinates, THEN auto-scale
                         # to the gradient norm exactly as the (proven-stable) old dual
@@ -2572,9 +2686,17 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, p
                                 q_idx_layer = fixed_assignment
                                 q_layer = quant_levels[q_idx_layer]
                             elif lsq_enabled:
+                                # w_layer is flat here, so under per-channel the
+                                # step sizes are expanded to one per weight.
+                                eval_scale = lsq_scales[quant_state].detach()
+                                if lsq_per_channel:
+                                    eval_scale = expand_scale_flat(
+                                        eval_scale.clamp_min(1e-12),
+                                        params_for_quant[quant_state],
+                                    )
                                 q_layer, integer_assignment = quantize_weight(
                                     w_layer,
-                                    lsq_scales[quant_state].detach(),
+                                    eval_scale,
                                     lsq_integer_codebooks[quant_state],
                                 )
                                 q_idx_layer = (
@@ -2722,7 +2844,15 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, p
                     elif lsq_enabled:
                         # One fp32 step size per tensor; signed integer ranges
                         # are determined globally by C and need no per-layer data.
-                        metadata_bits = 32 + 32 + num_param_tensors * 32
+                        # Per-channel quantization ships one step size per output
+                        # channel instead, and those bits must be paid for here
+                        # or the reported ratio would be dishonest.
+                        num_step_sizes = (
+                            sum(int(s.numel()) for s in lsq_scales)
+                            if (lsq_enabled and lsq_per_channel)
+                            else num_param_tensors
+                        )
+                        metadata_bits = 32 + 32 + num_step_sizes * 32
                     else:
                         metadata_bits = 32 + 32 + num_param_tensors * 2 * 32
 
@@ -2915,14 +3045,21 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, p
                     lsq_total_scale_grad_last = None
                     lsq_clipping_fractions = None
                     if lsq_enabled:
-                        lsq_scale_values = [float(s.item()) for s in lsq_scales]
+                        # Under per-channel a tensor has one step size per output
+                        # channel; the log keeps one number per tensor, so it
+                        # reports the mean.
+                        lsq_scale_values = [
+                            float(s.detach().mean().item()) for s in lsq_scales
+                        ]
                         lsq_total_scale_grad_last = [
-                            0.0 if s.grad is None else float(s.grad.item())
+                            0.0 if s.grad is None else float(s.grad.mean().item())
                             for s in lsq_scales
                         ]
                         lsq_clipping_fractions = []
                         for p_idx, param in enumerate(params_for_quant):
                             scale = lsq_scales[p_idx].detach().clamp_min(1e-12)
+                            if lsq_per_channel:
+                                scale = expand_scale_flat(scale, param)
                             q_full = lsq_integer_codebooks[p_idx]
                             normalized = param.detach().reshape(-1) / scale
                             clipped = (normalized < q_full[0]) | (

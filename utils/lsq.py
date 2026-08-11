@@ -7,6 +7,46 @@ import math
 import torch
 
 
+def is_per_channel(scale: torch.Tensor) -> bool:
+    """True when ``scale`` holds one step size per output channel."""
+    return isinstance(scale, torch.Tensor) and scale.dim() > 0
+
+
+def channel_view(scale: torch.Tensor, weight: torch.Tensor) -> torch.Tensor:
+    """Reshape a per-channel ``scale`` so that it broadcasts against ``weight``.
+
+    Output channels are the leading dimension of every weight tensor handled
+    here, so the step sizes are viewed as ``(O, 1, ..., 1)``. A scalar scale is
+    returned unchanged and therefore broadcasts as before.
+    """
+    if not is_per_channel(scale):
+        return scale
+    if scale.numel() != weight.shape[0]:
+        raise ValueError(
+            f"Per-channel scale has {scale.numel()} entries but the weight has "
+            f"{weight.shape[0]} output channels."
+        )
+    return scale.reshape(-1, *([1] * (weight.dim() - 1)))
+
+
+def expand_scale_flat(scale: torch.Tensor, weight: torch.Tensor) -> torch.Tensor:
+    """Return one step size per weight, matching ``weight.reshape(-1)``.
+
+    Several call sites flatten the tensor before handing it to the METaQ
+    solver. Since output channels are the leading dimension, the flat layout
+    repeats each channel step size ``weight.numel() // O`` times.
+    """
+    if not is_per_channel(scale):
+        return scale
+    per_channel_count = weight.numel() // weight.shape[0]
+    return scale.repeat_interleave(per_channel_count)
+
+
+def channel_rows(flat: torch.Tensor, num_channels: int) -> torch.Tensor:
+    """View a flat per-weight vector as ``(O, -1)`` for per-channel reductions."""
+    return flat.reshape(num_channels, -1)
+
+
 def signed_integer_codebook(num_levels: int, device) -> torch.Tensor:
     """Return the full signed integer codebook, including zero."""
     if num_levels < 2 or num_levels & (num_levels - 1):
@@ -61,9 +101,61 @@ def mse_weight_step_size(
     return max(float(best_scale), 1e-12)
 
 
+def mse_weight_step_size_per_channel(
+    weight: torch.Tensor,
+    q: torch.Tensor,
+    num_candidates: int = 100,
+    range_margin: float = 0.5,
+) -> torch.Tensor:
+    """Per-output-channel version of :func:`mse_weight_step_size`.
+
+    Runs the same grid of ``num_candidates`` clipping thresholds, but keeps one
+    independent search per output channel and returns the winning step sizes as
+    a tensor of shape ``(O,)``. The candidate grid is built from each channel's
+    own weight range, which is the entire point of the per-channel quantizer:
+    channels whose weights span a narrow interval no longer have to share a
+    step size with the widest channel in the tensor.
+    """
+    if num_candidates <= 0:
+        raise ValueError("num_candidates must be positive.")
+    qp = float(q[-1].item())
+    if qp <= 0:
+        raise ValueError("The positive integer range must be non-empty.")
+    with torch.no_grad():
+        rows = weight.detach().float().reshape(weight.shape[0], -1)
+        max_range = torch.maximum(
+            rows.min(dim=1).values.abs(), rows.max(dim=1).values
+        ) + float(range_margin)
+        step = (max_range / num_candidates).unsqueeze(1)
+        qn_tensor = q[0]
+        qp_tensor = q[-1]
+        best_error = None
+        best_scale = None
+        for candidate in range(1, num_candidates + 1):
+            scale = (step * candidate) / qp
+            quantized = (rows / scale).round().clamp(qn_tensor, qp_tensor) * scale
+            error = (rows - quantized).square().sum(dim=1)
+            if best_error is None:
+                best_error = error
+                best_scale = scale.squeeze(1).clone()
+            else:
+                improved = error < best_error
+                best_error = torch.where(improved, error, best_error)
+                best_scale = torch.where(
+                    improved, scale.squeeze(1), best_scale
+                )
+    return best_scale.clamp_min(1e-12)
+
+
 def quantize_weight(weight: torch.Tensor, scale: torch.Tensor, q: torch.Tensor):
-    """Return the LSQ fake-quantized weight and its integer assignment."""
+    """Return the LSQ fake-quantized weight and its integer assignment.
+
+    With a per-channel ``scale`` the weight must be passed in its original
+    shape, so that output channels remain the leading dimension.
+    """
     scale_safe = scale.clamp_min(1e-12)
+    if is_per_channel(scale_safe):
+        scale_safe = channel_view(scale_safe, weight)
     normalized = weight / scale_safe
     qn = q[0]
     qp = q[-1]
@@ -84,7 +176,11 @@ def task_scale_gradient(
     so ``quantized_weight_gradient`` is dL/d(w_hat). This function returns the
     normalized LSQ dL/ds and the in-range mask implementing d(w_hat)/dw.
     """
-    scale_safe = scale.detach().clamp_min(1e-12)
+    scale_detached = scale.detach().clamp_min(1e-12)
+    per_channel = is_per_channel(scale_detached)
+    scale_safe = (
+        channel_view(scale_detached, weight) if per_channel else scale_detached
+    )
     normalized = weight.detach() / scale_safe
     qn = q[0]
     qp = q[-1]
@@ -98,15 +194,23 @@ def task_scale_gradient(
             normalized.round() - normalized,
         ),
     )
-    gradient_scale = (
-        1.0 / math.sqrt(weight.numel() * float(qp))
-        if normalize
-        else 1.0
-    )
-    scale_gradient = (
+    product = (
         quantized_weight_gradient.detach().float()
         * d_quantized_d_scale.float()
-    ).sum() * gradient_scale
+    )
+    if per_channel:
+        # One independent step size per output channel, so the LSQ gradient
+        # scale uses that channel's element count rather than the tensor's.
+        rows = product.reshape(weight.shape[0], -1)
+        gradient_scale = (
+            1.0 / math.sqrt(rows.shape[1] * float(qp)) if normalize else 1.0
+        )
+        scale_gradient = rows.sum(dim=1) * gradient_scale
+    else:
+        gradient_scale = (
+            1.0 / math.sqrt(weight.numel() * float(qp)) if normalize else 1.0
+        )
+        scale_gradient = product.sum() * gradient_scale
     return scale_gradient, in_range
 
 
@@ -122,7 +226,12 @@ def metaq_scale_gradient(
     the explicit perspective-ridge derivative.
     """
     scale_safe = scale.detach().clamp_min(1e-12)
-    return -(
+    product = -(
         constraint_multiplier.detach().float()
         * represented_weight.detach().float()
-    ).sum() / scale_safe
+    )
+    if is_per_channel(scale_safe):
+        # Both inputs arrive flattened from the solver; output channels are the
+        # leading dimension, so the flat vector reshapes into one row each.
+        return channel_rows(product, scale_safe.numel()).sum(dim=1) / scale_safe
+    return product.sum() / scale_safe

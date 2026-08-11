@@ -411,7 +411,7 @@ def FISTA_leonardo(xi, v, w, C, upper_c, lower_c, delta, subgradient_step, devic
 
 def FISTA_perspective_leonardo(xi, v, w, C, upper_c, lower_c, perspective_coeff, entropy_coeff, sparsity_coeff,
                                subgradient_step, device, max_iterations,
-                               dual_step=0.5):
+                               dual_step=0.5, scale=None):
     """
     FISTA for the entropy dual under the perspective reformulation (entropy_coeff > 0).
 
@@ -430,6 +430,12 @@ def FISTA_perspective_leonardo(xi, v, w, C, upper_c, lower_c, perspective_coeff,
     xi may be length C (bucket duals) or C+1 (legacy: xi[0] is an unused zero
     symbol, kept only so the caller's state stays the same shape).  entropy_coeff does NOT
     scale the bucket costs of the x-subproblem; it appears only in c_b* above.
+
+    ``scale`` is the optional per-weight LSQ step size used by per-channel
+    quantization; ``v`` is then the integer codebook.  The dual itself is
+    untouched by this: the counts c_b are counts of INTEGER SYMBOLS over the
+    tensor, which is exactly what the entropy coder emits, so xi stays per
+    tensor no matter how many distinct step sizes the tensor carries.
 
     Returns (xi_updated, beta_star, beta_constraint). ``beta_star`` is the full
     per-weight gradient of phi; ``beta_constraint`` is the multiplier of the
@@ -462,7 +468,8 @@ def FISTA_perspective_leonardo(xi, v, w, C, upper_c, lower_c, perspective_coeff,
     beta_constraint = None
     for _ in range(max_iterations):
         x_ph, beta_star, y_star, beta_constraint = knapsack_perspective_leonardo(
-            xi_b, v, w, C, device, perspective_coeff, entropy_coeff, sparsity_coeff
+            xi_b, v, w, C, device, perspective_coeff, entropy_coeff, sparsity_coeff,
+            scale=scale,
         )
         idx_left = x_ph[:, 0].to(torch.long)
         idx_right = x_ph[:, 1].to(torch.long)

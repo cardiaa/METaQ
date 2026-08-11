@@ -13,33 +13,38 @@
 # DeiT-Small / ImageNet transfer test for the complete joint LSQ-METaQ method.
 # Four 4-GPU nodes give a global batch size of 2048.
 #
-# test_175 keeps the whole test_171 recipe and changes only the per-tensor
-# codebook sizes. The controls have by now located the missing accuracy
-# precisely. Against an FP32 baseline of 79.742, plain LSQ converges to 79.04
-# (test_173) and METaQ on top of it reaches 78.844 (test_171), so the gap splits
-# into 0.70 charged to the quantizer and 0.21 charged to the regularizer. The
-# ResNet-18 pair settles what the first term means: there plain LSQ reaches
-# 69.888, above its own 69.734 FP32 checkpoint (test_174). Per-tensor step sizes
-# are therefore sufficient for the convolutional network and insufficient for
-# the vision transformer.
+# test_176 keeps the whole test_171 recipe and changes only the granularity of
+# the learned step sizes: one per output channel instead of one per tensor.
 #
-# This run tests whether that insufficiency is concentrated in a few tensors.
-# The patch embedding and the classifier head receive 256 levels while the 48
-# attention and MLP tensors keep 16. Together they hold 678912 of 22050664
-# weights, that is 3.08% of the model, which at eight bits instead of the
-# current 2.7 effective bits costs about half a point of compression ratio.
+# The controls have located the missing accuracy exactly. Against an FP32
+# baseline of 79.742, plain LSQ converges to 79.04 (test_173) and METaQ on top
+# reaches 78.844 (test_171), so the gap splits into 0.70 charged to the
+# quantizer and 0.21 charged to the regularizer. On ResNet-18 plain LSQ instead
+# reaches 69.888, ABOVE its own 69.734 checkpoint (test_174): per-tensor step
+# sizes suffice for the convolutional network and fail for the transformer.
+# Test_175 then showed the deficit is not concentrated, since 256 levels on the
+# patch embedding and the head bought only 0.10 of the 0.70 while costing 0.16
+# of compression ratio. What remains is the granularity of the step size itself.
 #
-# One caveat on the choice of those two tensors. It rests on the clipping
-# fractions of a trained network, where the patch embedding sits at 0.0237
-# against roughly 1e-5 elsewhere. At initialization, however, test_172 shows
-# clipping uniform between 0.005 and 0.014 across all fifty tensors, with the
-# patch embedding at 0.0078, exactly average. The outlier is thus produced by
-# training rather than intrinsic to the tensor, which makes this a cheap probe
-# rather than a well-founded prediction.
+# The METaQ solver is unchanged in cost. Scaling the abscissa by a positive
+# constant leaves the lower convex envelope's vertex set untouched, and the
+# facet intercept s does not depend on the step size at all, so the envelope is
+# built once on the integer codebook and only the slope is rescaled per weight.
+# The dual is untouched as well: the counts are counts of INTEGER symbols over
+# the tensor, which is exactly what the entropy coder emits.
 #
-# Reading: recovering most of the 0.70 means the deficit is concentrated and can
-# be bought back today, whereas an unchanged 78.8 means it is spread across the
-# attention and MLP tensors and only per-channel step sizes will close it.
+# The extra step sizes are paid for in the reported ratio: 42856 channels across
+# the 50 tensors, that is 0.194% of the FP32 weight storage.
+#
+# FIRST GPU RUN OF THIS CODE PATH. It is verified offline only
+# (scratchpad/verify_per_channel_*.py). Check the first epoch before trusting
+# the rest: no NaN, xi_pinned_frac at zero, and the per-tensor mean step sizes
+# printed by lsq_diag in the same 1e-2 range as test_171.
+#
+# Reading: epoch 1 runs with the entropy solver off and is directly comparable
+# to the 78.908 of test_171 at the same point. At or above 79.4 the granularity
+# was the blocker and lossless is in reach; near 78.9 it was not, and the cause
+# lies outside the quantizer.
 
 LOG_DIR=$WORK/acardia0/LeonardoTests
 mkdir -p "$LOG_DIR"
@@ -109,10 +114,10 @@ srun --ntasks=$SLURM_NTASKS --ntasks-per-node=1 bash -lc '
     --lsq_scale_lr 1e-5 \
     --lsq_init mse \
     --lsq_grad_scaling N \
+    --lsq_per_channel Y \
     --joint_lsq_metaq Y \
     --bn_recalibration_batches 0 \
     --C 16 \
-    --layer_C 256,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,256 \
     --max_iterations 3 \
     --metrics_interval 1 \
     --entropy_warmup_epochs 1 \

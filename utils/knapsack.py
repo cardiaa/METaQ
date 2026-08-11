@@ -573,7 +573,7 @@ def knapsack_specialized_pruning_sparse(xi, v, w, C, device, delta):
 
     return x, lambda_opt, objective_values
 
-def knapsack_perspective_leonardo(xi_buckets, v, w, C, device, perspective_coeff, entropy_coeff, sparsity_coeff):
+def knapsack_perspective_leonardo(xi_buckets, v, w, C, device, perspective_coeff, entropy_coeff, sparsity_coeff, scale=None):
     """
     General (entropy_coeff != 0) per-weight perspective subproblem solver.
 
@@ -590,6 +590,36 @@ def knapsack_perspective_leonardo(xi_buckets, v, w, C, device, perspective_coeff
     candidates is global.  The offline verification against cvxpy is in
     CheckCorrectnessPerspectiveAlgorithm.ipynb / scratchpad/verify_persp_general.py.
 
+    PER-CHANNEL STEP SIZES (``scale`` not None).  When each weight carries its
+    own step size a_i, its levels are v_b = a_i q_b and the tensor no longer has
+    a single level vector.  Solving one problem per channel would be hopeless,
+    but it is unnecessary: scaling the abscissa by a positive constant leaves the
+    lower convex envelope's VERTEX SET unchanged, and moreover
+
+        s   = (xi_- q_+ - xi_+ q_-)/(q_+ - q_-)      is independent of a,
+        mu  = (xi_+ - xi_-)/(a (q_+ - q_-)) = mu_q/a scales as 1/a.
+
+    Hence the envelope is built ONCE on the integer points (q_b, xi_b) -- caller
+    passes the integer codebook as ``v`` -- and each weight only needs the
+    normalized abscissa wn = w/a_i wherever w meets the levels, because
+
+        K(y) = (mu_q/a) w + s y = mu_q wn + s y.
+
+    The one place that must keep the UNNORMALIZED w is the perspective ridge,
+    and therefore the stationary candidate y = |w| sqrt(perspective_coeff/(s+sparsity_coeff)):
+    the ridge sees the real weight, not its normalized abscissa.  Getting that
+    single term wrong is the only silent failure mode of this generalization.
+    With ``scale=None`` every expression below reduces to the per-tensor one.
+
+    Verified offline in scratchpad/verify_per_channel_knapsack.py: scale=None is
+    bit-identical to the previous code; a constant per-channel scale reproduces
+    the per-tensor call on the real levels; against cvxpy on the ORIGINAL
+    problem with per-weight real levels spanning two decades, the excess over
+    the optimum is 1.5e-8 and beta_star matches dPhi/dw to 7.8e-5 by central
+    differences.  Note that cvxpy's DUALS are unusable as a reference here: the
+    problem is badly scaled (xi ~ 3e-7, T1 = 1e-5) and ECOS and CLARABEL
+    disagree on them while agreeing on the value.
+
     Returns:
         x_placeholder: (M, 4) = [idx_left, idx_right, x_left, x_right]
                        (bucket masses; x_left+x_right = y*, and z = 1 - y*)
@@ -600,6 +630,17 @@ def knapsack_perspective_leonardo(xi_buckets, v, w, C, device, perspective_coeff
     """
     v = v.to(dtype=torch.float32, device=device)
     w = w.to(dtype=torch.float32, device=device)
+    if scale is None:
+        a = None
+        wn = w
+    else:
+        a = scale.to(dtype=torch.float32, device=device).clamp_min(1e-12)
+        if a.shape != w.shape:
+            raise ValueError(
+                f"Per-weight scale has shape {tuple(a.shape)} but the weight "
+                f"vector has shape {tuple(w.shape)}."
+            )
+        wn = w / a
     # The x-subproblem cost is the RAW dual xi_b (verified offline).  entropy_coeff does NOT
     # multiply the bucket costs here; it enters only the entropy-dual relation
     # c_b* = exp(log2*xi_b/entropy_coeff - 1) in the FISTA update.  (entropy_coeff is accepted for API
@@ -630,22 +671,30 @@ def knapsack_perspective_leonardo(xi_buckets, v, w, C, device, perspective_coeff
     beta_seg = (Xi[1:] - Xi[:-1]) / dV                     # (P-1,) slope of K(1) on segment j
     s_seg = (Xi[:-1] * V[1:] - Xi[1:] * V[:-1]) / dV        # (P-1,) intercept s_j
 
-    aw = w.abs()
+    aw = w.abs()          # real magnitude: drives the perspective ridge
+    awn = wn.abs()        # normalized magnitude: drives representability
     pos_max = V[-1].clamp_min(1e-12)
     neg_absmax = V[0].abs().clamp_min(1e-12)
     side = torch.where(w >= 0, pos_max, neg_absmax)
-    ymin = (aw / side).clamp_(max=1.0)
+    ymin = (awn / side).clamp_(max=1.0)
     ones = torch.ones_like(w)
-    eps = 1e-6
+    # Facet-membership slack. It is an ABSOLUTE tolerance on the abscissa, so it
+    # must be expressed in the units of whatever abscissa is in use: real levels
+    # spaced by a, or integer levels spaced by 1. Dividing by a keeps the slack
+    # worth the same 1e-6 in real units in both parameterizations, which is what
+    # makes the per-channel and per-tensor calls agree exactly.
+    eps = 1e-6 if a is None else 1e-6 / a
 
     best_G = torch.full((M,), float('inf'), device=device, dtype=torch.float32)
     best_y = ones.clone()
 
     def _consider(cand, sj, bj, Vl, Vr, allow):
         cand = torch.minimum(torch.maximum(cand, ymin), ones)
-        what = w / cand.clamp_min(1e-30)
+        what = wn / cand.clamp_min(1e-30)
         in_seg = allow & (what >= Vl - eps) & (what <= Vr + eps) & (aw > 0)
-        G = bj * w + sj * cand + perspective_coeff * w * w / cand.clamp_min(1e-30) + sparsity_coeff * cand
+        # bj*wn is mu_q*wn = (mu_q/a)*w, i.e. the real-level linear term; the
+        # ridge keeps the real w.
+        G = bj * wn + sj * cand + perspective_coeff * w * w / cand.clamp_min(1e-30) + sparsity_coeff * cand
         G = torch.where(in_seg, G, best_G.new_full((M,), float('inf')))
         upd = G < best_G
         best_G[upd] = G[upd]
@@ -660,13 +709,16 @@ def knapsack_perspective_leonardo(xi_buckets, v, w, C, device, perspective_coeff
             _consider(ycand, sj, bj, Vl, Vr, all_true)
         _consider(ymin.clone(), sj, bj, Vl, Vr, all_true)
         _consider(ones.clone(), sj, bj, Vl, Vr, all_true)
-        _consider(w / Vl, sj, bj, Vl, Vr, all_true)         # breakpoint (kink) at wh=Vl
-        _consider(w / Vr, sj, bj, Vl, Vr, all_true)         # breakpoint (kink) at wh=Vr
+        _consider(wn / Vl, sj, bj, Vl, Vr, all_true)        # breakpoint (kink) at wh=Vl
+        _consider(wn / Vr, sj, bj, Vl, Vr, all_true)        # breakpoint (kink) at wh=Vr
 
     y_star = best_y.clamp_min(1e-12)
-    what = w / y_star
+    what = wn / y_star
     seg = torch.searchsorted(V, what).clamp_(1, P - 1) - 1  # bracketing segment of w/y*
-    beta_old = beta_seg[seg]
+    # beta_seg is the slope against the passed abscissa. With per-channel step
+    # sizes that abscissa is the integer codebook, so the slope in real level
+    # units is mu_q/a.
+    beta_old = beta_seg[seg] if a is None else beta_seg[seg] / a
     # bucket masses: at wh in [V[seg],V[seg+1]], K(1) uses buckets one[seg], one[seg+1]
     Vl = V[seg]; Vr = V[seg + 1]
     theta_u = ((Vr - what) / (Vr - Vl)).clamp_(0.0, 1.0)    # mass fraction on the left bucket
@@ -689,6 +741,8 @@ def knapsack_perspective_leonardo(xi_buckets, v, w, C, device, perspective_coeff
     ) & (aw > 0)
     edge_v = torch.where(w >= 0, V[-1], V[0])
     edge_xi = torch.where(w >= 0, Xi[-1], Xi[0])
+    if a is not None:
+        edge_v = edge_v * a          # real extreme level a*q_edge
     boundary_beta = (edge_xi + sparsity_coeff) / edge_v - perspective_coeff * edge_v
     beta_old = torch.where(
         at_representation_floor,
