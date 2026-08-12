@@ -202,6 +202,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, p
                        quantizer="fixed", lsq_scale_lr=1e-5,
                        lsq_init="lsq", lsq_grad_scaling=True, lsq_per_channel=False,
                        distillation=False, distill_alpha=0.5, distill_tau=1.0,
+                       min_lr=None,
                        joint_lsq_metaq=False, bn_recalibration_batches=0,
                        layer_C=None,
                        train_centroids=False,
@@ -372,7 +373,26 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, p
             else n_epochs
         )
         _decay_len = max(1, _schedule_end - _ramp_end)
+        # Floor of the cosine, as a fraction of the base rate. The historical
+        # value is 1%, which for the 2e-5 used on DeiT means 2e-7: the tail is
+        # effectively dead, and since PEAQ enters by being added to the loss
+        # gradient it switches off along with it. Test_186 shows exactly that,
+        # with compression bottoming at 8.18% while the rate is still 7.5e-6 and
+        # then REVERSING to 8.27% as the rate collapses twelvefold over the last
+        # eight epochs. Q-ViT instead floors its cosine at 1e-5 against a 2e-4
+        # base, five times higher in relative terms, and holds it there for a
+        # ten-epoch cooldown. --min_lr makes the floor an explicit absolute rate;
+        # leaving it unset preserves the 1% behaviour exactly.
         _lr_floor = 0.01
+        if min_lr is not None:
+            if min_lr < 0:
+                raise ValueError("--min_lr must be >= 0.")
+            if min_lr >= lr:
+                raise ValueError(
+                    f"--min_lr ({min_lr}) must be below the base learning rate "
+                    f"({lr})."
+                )
+            _lr_floor = min_lr / lr
 
         def _persp_lr(e):
             # test_133: flat_schedule holds the LR constant for the whole run, so

@@ -236,6 +236,7 @@ def build_model_and_hparams(model_name: str, device: torch.device, args, local_r
         lsq_init="lsq",
         lsq_grad_scaling=True,
         lsq_per_channel=False,
+        min_lr=None,
         distillation=False,
         distill_alpha=0.5,
         distill_tau=1.0,
@@ -801,6 +802,7 @@ def print_config(model_name, args, h, local_rank_to_print):
     print(f"lsq_init={h['lsq_init']}", flush=True)
     print(f"lsq_grad_scaling={h['lsq_grad_scaling']}", flush=True)
     print(f"lsq_per_channel={h['lsq_per_channel']}", flush=True)
+    print(f"min_lr={h['min_lr']}", flush=True)
     print(f"distillation={h['distillation']}", flush=True)
     print(f"distill_alpha={h['distill_alpha']}", flush=True)
     print(f"distill_tau={h['distill_tau']}", flush=True)
@@ -932,6 +934,16 @@ def main():
         default="Y",
         choices=["Y", "N"],
         help="Apply the LSQ 1/sqrt(N*Qp) scale-gradient normalization.",
+    )
+    parser.add_argument(
+        "--min_lr",
+        type=float,
+        default=None,
+        help=(
+            "Absolute floor of the cosine schedule. Unset keeps the historical "
+            "floor of 1%% of the base rate, which on DeiT is effectively zero "
+            "and switches PEAQ off in the tail."
+        ),
     )
     parser.add_argument(
         "--distillation",
@@ -1100,6 +1112,7 @@ def main():
     h["lsq_init"] = args.lsq_init
     h["lsq_grad_scaling"] = (args.lsq_grad_scaling == "Y")
     h["lsq_per_channel"] = (args.lsq_per_channel == "Y")
+    h["min_lr"] = args.min_lr
     h["distillation"] = (args.distillation == "Y")
     h["distill_alpha"] = args.distill_alpha
     h["distill_tau"] = args.distill_tau
@@ -1289,6 +1302,7 @@ def main():
         lsq_init=h["lsq_init"],
         lsq_grad_scaling=h["lsq_grad_scaling"],
         lsq_per_channel=h["lsq_per_channel"],
+        min_lr=h["min_lr"],
         distillation=h["distillation"],
         distill_alpha=h["distill_alpha"],
         distill_tau=h["distill_tau"],

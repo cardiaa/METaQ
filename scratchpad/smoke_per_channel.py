@@ -135,6 +135,7 @@ if __name__ == "__main__":
         "per_channel_layerC": (True, [256, 16, 16, 16, 16, 256]),
         "distill": (False, None, True),
         "distill_peaq_per_channel": (True, None, True),
+        "distill_per_channel_layerC": (True, [256, 16, 16, 16, 16, 256], True),
     }
     try:
         for mode in (list(modes) if which == "both" else [which]):
