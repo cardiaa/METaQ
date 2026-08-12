@@ -45,7 +45,7 @@ class Tiny(nn.Module):
         return self.head(self.norm(h))
 
 
-def run(per_channel: bool, layer_C=None):
+def run(per_channel: bool, layer_C=None, distillation=False):
     torch.manual_seed(0)
     device = torch.device("cpu")
     model = Tiny().to(device)
@@ -114,6 +114,9 @@ def run(per_channel: bool, layer_C=None):
         bn_recalibration_batches=0,
         dual_step=3e-9,
         layer_C=layer_C,
+        distillation=distillation,
+        distill_alpha=0.5,
+        distill_tau=1.0,
     )
 
 
@@ -130,6 +133,8 @@ if __name__ == "__main__":
         "per_tensor": (False, None),
         "per_channel": (True, None),
         "per_channel_layerC": (True, [256, 16, 16, 16, 16, 256]),
+        "distill": (False, None, True),
+        "distill_peaq_per_channel": (True, None, True),
     }
     try:
         for mode in (list(modes) if which == "both" else [which]):

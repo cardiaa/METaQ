@@ -201,6 +201,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, p
                        train_sparse=False, use_quantization=True,
                        quantizer="fixed", lsq_scale_lr=1e-5,
                        lsq_init="lsq", lsq_grad_scaling=True, lsq_per_channel=False,
+                       distillation=False, distill_alpha=0.5, distill_tau=1.0,
                        joint_lsq_metaq=False, bn_recalibration_batches=0,
                        layer_C=None,
                        train_centroids=False,
@@ -657,9 +658,34 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, p
 
         xi_list.append(xi_layer)
 
+    # Knowledge distillation: a frozen full-precision copy of the network taken
+    # BEFORE any training, used as the teacher. Every DeiT run so far shows the
+    # same shape, a peak within five to seven epochs and then a drift downwards,
+    # because nothing anchors the student to the function we are trying to
+    # preserve. The teacher is exactly that anchor. It is a separate module, so
+    # the fake-quantization that temporarily overwrites the student's weights
+    # during the forward pass leaves it untouched, and it never receives
+    # gradients.
+    teacher_model = None
+    if distillation:
+        source = model.module if hasattr(model, "module") else model
+        teacher_model = copy.deepcopy(source).to(device)
+        teacher_model.eval()
+        for teacher_param in teacher_model.parameters():
+            teacher_param.requires_grad_(False)
+        if local_rank == 0:
+            print(
+                f"[DISTILLATION] teacher cloned from the pretrained weights, "
+                f"alpha={distill_alpha}, tau={distill_tau}, "
+                f"parameters={sum(p.numel() for p in teacher_model.parameters())}",
+                flush=True,
+            )
+
     log = ""
     accuracy = None
     accuracies, entropies, zstd_ratios = [], [], []
+    distill_loss_last = None
+    task_loss_last = None
     # test_126: track the SPARSE metrics we actually optimize (quantized+pruned
     # accuracy and the sparse compression ratio), not just the dense A_NQ / zstd.
     sparse_accuracies, sparse_ratios = [], []
@@ -2061,6 +2087,33 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, p
             ):
                 outputs = model(inputs)
                 loss = criterion(outputs, targets)
+                if teacher_model is not None:
+                    # Soft knowledge distillation. The teacher runs on the same
+                    # inputs with its own full-precision weights; the student is
+                    # asked to reproduce the whole class distribution, not just
+                    # the label, which is far more information and is precisely
+                    # the function we want the quantized model to keep.
+                    with torch.no_grad():
+                        teacher_logits = teacher_model(inputs)
+                    student_log_probs = torch.nn.functional.log_softmax(
+                        outputs.float() / distill_tau, dim=1
+                    )
+                    teacher_probs = torch.nn.functional.softmax(
+                        teacher_logits.float() / distill_tau, dim=1
+                    )
+                    # The tau^2 factor keeps the gradient magnitude of this term
+                    # independent of the temperature.
+                    distill_loss = torch.nn.functional.kl_div(
+                        student_log_probs,
+                        teacher_probs,
+                        reduction="batchmean",
+                    ) * (distill_tau ** 2)
+                    task_loss_last = float(loss.detach())
+                    distill_loss_last = float(distill_loss.detach())
+                    loss = (
+                        (1.0 - distill_alpha) * loss
+                        + distill_alpha * distill_loss
+                    )
 
             loss.backward()
 
@@ -3262,6 +3315,13 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, p
                     flush=True
                 )                
                 print(f"current lr = {optimizer.param_groups[0]['lr']}", flush=True)
+                if distill_loss_last is not None:
+                    print(
+                        f"distill_diag: alpha={distill_alpha}, tau={distill_tau}, "
+                        f"task_loss_last={task_loss_last:.6f}, "
+                        f"distill_loss_last={distill_loss_last:.6f}",
+                        flush=True,
+                    )
                 print(f"training_time = {training_time_global}s", flush=True)
                 # The running histories printed each epoch are the DELIVERED
                 # metrics: the accuracy of the sparse quantized model actually

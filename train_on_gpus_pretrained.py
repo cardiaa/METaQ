@@ -236,6 +236,9 @@ def build_model_and_hparams(model_name: str, device: torch.device, args, local_r
         lsq_init="lsq",
         lsq_grad_scaling=True,
         lsq_per_channel=False,
+        distillation=False,
+        distill_alpha=0.5,
+        distill_tau=1.0,
         joint_lsq_metaq=False,
         bn_recalibration_batches=0,
         sparsity_threshold=1e-3,
@@ -798,6 +801,9 @@ def print_config(model_name, args, h, local_rank_to_print):
     print(f"lsq_init={h['lsq_init']}", flush=True)
     print(f"lsq_grad_scaling={h['lsq_grad_scaling']}", flush=True)
     print(f"lsq_per_channel={h['lsq_per_channel']}", flush=True)
+    print(f"distillation={h['distillation']}", flush=True)
+    print(f"distill_alpha={h['distill_alpha']}", flush=True)
+    print(f"distill_tau={h['distill_tau']}", flush=True)
     print(f"joint_lsq_metaq={h['joint_lsq_metaq']}", flush=True)
     print(f"bn_recalibration_batches={h['bn_recalibration_batches']}", flush=True)
     print(f"sparsity_threshold={h['sparsity_threshold']}", flush=True)
@@ -926,6 +932,28 @@ def main():
         default="Y",
         choices=["Y", "N"],
         help="Apply the LSQ 1/sqrt(N*Qp) scale-gradient normalization.",
+    )
+    parser.add_argument(
+        "--distillation",
+        type=str,
+        default="N",
+        choices=["Y", "N"],
+        help=(
+            "Anchor the quantized student to a frozen full-precision copy of "
+            "the pretrained network through soft knowledge distillation."
+        ),
+    )
+    parser.add_argument(
+        "--distill_alpha",
+        type=float,
+        default=0.5,
+        help="Convex weight of the distillation term: (1-a)*CE + a*KD.",
+    )
+    parser.add_argument(
+        "--distill_tau",
+        type=float,
+        default=1.0,
+        help="Softmax temperature of the distillation term.",
     )
     parser.add_argument(
         "--lsq_per_channel",
@@ -1072,6 +1100,13 @@ def main():
     h["lsq_init"] = args.lsq_init
     h["lsq_grad_scaling"] = (args.lsq_grad_scaling == "Y")
     h["lsq_per_channel"] = (args.lsq_per_channel == "Y")
+    h["distillation"] = (args.distillation == "Y")
+    h["distill_alpha"] = args.distill_alpha
+    h["distill_tau"] = args.distill_tau
+    if not 0.0 <= h["distill_alpha"] <= 1.0:
+        raise ValueError("--distill_alpha must lie in [0, 1].")
+    if h["distill_tau"] <= 0:
+        raise ValueError("--distill_tau must be > 0.")
     h["joint_lsq_metaq"] = (args.joint_lsq_metaq == "Y")
     h["bn_recalibration_batches"] = args.bn_recalibration_batches
     if h["lsq_scale_lr"] <= 0:
@@ -1254,6 +1289,9 @@ def main():
         lsq_init=h["lsq_init"],
         lsq_grad_scaling=h["lsq_grad_scaling"],
         lsq_per_channel=h["lsq_per_channel"],
+        distillation=h["distillation"],
+        distill_alpha=h["distill_alpha"],
+        distill_tau=h["distill_tau"],
         joint_lsq_metaq=h["joint_lsq_metaq"],
         bn_recalibration_batches=h["bn_recalibration_batches"],
         layer_C=h["layer_C"],
