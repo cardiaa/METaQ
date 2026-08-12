@@ -237,6 +237,7 @@ def build_model_and_hparams(model_name: str, device: torch.device, args, local_r
         lsq_grad_scaling=True,
         lsq_per_channel=False,
         min_lr=None,
+        lsq_scale_lr_schedule=False,
         distillation=False,
         distill_alpha=0.5,
         distill_tau=1.0,
@@ -803,6 +804,7 @@ def print_config(model_name, args, h, local_rank_to_print):
     print(f"lsq_grad_scaling={h['lsq_grad_scaling']}", flush=True)
     print(f"lsq_per_channel={h['lsq_per_channel']}", flush=True)
     print(f"min_lr={h['min_lr']}", flush=True)
+    print(f"lsq_scale_lr_schedule={h['lsq_scale_lr_schedule']}", flush=True)
     print(f"distillation={h['distillation']}", flush=True)
     print(f"distill_alpha={h['distill_alpha']}", flush=True)
     print(f"distill_tau={h['distill_tau']}", flush=True)
@@ -934,6 +936,17 @@ def main():
         default="Y",
         choices=["Y", "N"],
         help="Apply the LSQ 1/sqrt(N*Qp) scale-gradient normalization.",
+    )
+    parser.add_argument(
+        "--lsq_scale_lr_schedule",
+        type=str,
+        default="N",
+        choices=["Y", "N"],
+        help=(
+            "Decay the LSQ step-size rate along the same schedule as the "
+            "weights. Unset keeps it constant for the whole run, which lets "
+            "the grid keep moving after the network has frozen."
+        ),
     )
     parser.add_argument(
         "--min_lr",
@@ -1113,6 +1126,7 @@ def main():
     h["lsq_grad_scaling"] = (args.lsq_grad_scaling == "Y")
     h["lsq_per_channel"] = (args.lsq_per_channel == "Y")
     h["min_lr"] = args.min_lr
+    h["lsq_scale_lr_schedule"] = (args.lsq_scale_lr_schedule == "Y")
     h["distillation"] = (args.distillation == "Y")
     h["distill_alpha"] = args.distill_alpha
     h["distill_tau"] = args.distill_tau
@@ -1303,6 +1317,7 @@ def main():
         lsq_grad_scaling=h["lsq_grad_scaling"],
         lsq_per_channel=h["lsq_per_channel"],
         min_lr=h["min_lr"],
+        lsq_scale_lr_schedule=h["lsq_scale_lr_schedule"],
         distillation=h["distillation"],
         distill_alpha=h["distill_alpha"],
         distill_tau=h["distill_tau"],

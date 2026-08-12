@@ -202,7 +202,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, p
                        quantizer="fixed", lsq_scale_lr=1e-5,
                        lsq_init="lsq", lsq_grad_scaling=True, lsq_per_channel=False,
                        distillation=False, distill_alpha=0.5, distill_tau=1.0,
-                       min_lr=None,
+                       min_lr=None, lsq_scale_lr_schedule=False,
                        joint_lsq_metaq=False, bn_recalibration_batches=0,
                        layer_C=None,
                        train_centroids=False,
@@ -542,6 +542,31 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, p
             betas=(0.9, 0.999),
             eps=1e-8,
             weight_decay=0.0,
+        )
+
+    # Giving the step sizes their own optimizer decoupled them from the weight
+    # schedule, which was never intended. The weights decay along the cosine to
+    # 1% of the base rate while the step sizes keep learning at a constant
+    # lsq_scale_lr, so their relative speed changes by a factor of a hundred
+    # across a run: on DeiT they start at half the weight rate and end at fifty
+    # times it. Since the deployed model is a discontinuous function of the
+    # latent weights, a grid that keeps moving after the network has frozen
+    # reassigns weights between levels and shifts the zero-bin boundary, which
+    # shows up as epoch-to-epoch accuracy jitter that never settles and as the
+    # compression reversal of test_186, where the ratio bottomed at 8.18% and
+    # climbed back to 8.27% while sparsity fell and the weight rate collapsed.
+    # Canonical LSQ has no such split, since alpha sits in the weight optimizer,
+    # and neither does Q-ViT, where alpha is an ordinary Parameter inside LAMB.
+    # The default keeps the historical constant rate.
+    scale_scheduler = None
+    if scale_optimizer is not None and lsq_scale_lr_schedule:
+        if not use_perspective:
+            raise ValueError(
+                "--lsq_scale_lr_schedule Y mirrors the perspective schedule and "
+                "requires --perspective Y."
+            )
+        scale_scheduler = torch.optim.lr_scheduler.LambdaLR(
+            scale_optimizer, lr_lambda=_persp_lr
         )
 
     # C_by_layer is the deployment alphabet size (including zero under LSQ).
@@ -2692,6 +2717,8 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, p
             and codebook_active
         ):
             scheduler.step()
+            if scale_scheduler is not None:
+                scale_scheduler.step()
 
         training_time_without_metrics = round(time.time() - start_time_global)
 
@@ -3222,7 +3249,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, p
                     print(
                         "lsq_diag: "
                         f"joint_metaq={joint_lsq_metaq}, "
-                        f"scale_lr={lsq_scale_lr:.6e}, "
+                        f"scale_lr={(scale_optimizer.param_groups[0]['lr'] if scale_optimizer is not None else lsq_scale_lr):.6e}, "
                         f"scales={lsq_scale_values}, "
                         f"task_scale_grad_last={lsq_task_scale_grad_last}, "
                         f"metaq_scale_grad_last={lsq_metaq_scale_grad_last}, "

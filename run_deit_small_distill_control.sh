@@ -10,57 +10,29 @@
 #SBATCH --output=/dev/null
 #SBATCH --error=/dev/null
 
-# test_184: how far does the distillation dose go?
+# test_185: the matched LSQ control with distillation, at a real budget.
 #
-# Test_183 removed the sag that every DeiT run had shown. Where plain LSQ
-# (test_173) drops to 78.98 across epochs five to nine, distillation climbs to
-# 79.42 and peaks at 79.542, lifting the level over the last three epochs from
-# 79.014 to 79.473. That is +0.46 against an FP32 baseline of 79.742, so a gap
-# of -0.27, matching the -0.3 that Q-ViT reports for LSQ on DeiT-S, reached in
-# ten epochs rather than three hundred. The limit was never the quantizer, whose
-# four knobs we swept without moving the plateau, nor the budget, which made
-# things worse: it was that nothing anchored the network to the function we are
-# trying to preserve.
+# Distillation solved what four quantizer knobs and a longer schedule could not.
+# Against an FP32 baseline of 79.742, plain LSQ lands at 79.014 over ten epochs
+# (test_173) and sags mid-run; with a frozen full-precision teacher it reaches
+# 79.473 at alpha 0.5 (test_183) and 79.536 at alpha 0.9 (test_184), the sag
+# gone. Between 0.5 and 0.9 the gain is only 0.06, so the dose is saturated.
 #
-# The dose is still gentle. In test_183 distill_loss_last sits between 0.056 and
-# 0.088 while task_loss_last sits between 0.47 and 0.85, so the distillation
-# term is about ten times smaller in magnitude. At alpha = 0.5 the two are
-# weighted equally in the convex combination, which means the anchor still
-# contributes roughly a tenth of the gradient. Raising alpha to 0.9 makes their
-# effective contributions comparable, and since half strength already bought
-# 0.46 it is worth measuring where the curve turns.
+# Two reasons for this run. First the MATCHED CONTROL: the PEAQ row for DeiT
+# cannot be read without a plain-LSQ run at the same budget and recipe, which is
+# the lesson of tests 173 and 174. Second the BUDGET QUESTION, since without an
+# anchor training destroyed accuracy (test_177 lost 1.13 points over fifty
+# epochs) while with one both test_183 and test_184 were still rising at epoch
+# nine.
 #
-# Only alpha changes. The regularizer stays off, so this remains a question
-# about the training signal alone.
+# Only n_epochs changes with respect to test_184. The regularizer stays off.
 #
-# WHAT TO READ, against the ten epochs of test_183, which run 79.114, 79.360,
-# 79.192, 79.380, 79.416, 79.424, 79.460, 79.462, 79.542, 79.414: the level over
-# the last three epochs, 79.473. Above it, the dose was not yet saturated and
-# the extra headroom can later be spent on compression. Below it, alpha = 0.5
-# was already past the optimum and the student is starting to ignore the labels,
-# which distill_diag will show as distill_loss_last dominating task_loss_last.
+# RESULT: 79.592 over the last three epochs at a sparse ratio of 11.09%, so
+# -0.15 from full precision, against the -0.3 Q-ViT reports for LSQ on this
+# network with three hundred epochs. Accuracy plateaus from epoch 11, so
+# distillation stopped the drift without making the budget pay indefinitely.
 #
-# The teacher costs no measurable time: test_183 ran at 134s per epoch against
-# 143s for test_173. Ten epochs in about half an hour.
-#
-# The configuration matches test_171 exactly except that all three coefficients
-# are zero. That combination is what actually disables the regularizer: the
-# closed-form branch guarding the perspective ridge and the sparsity term
-# requires one of them to be nonzero, and the entropy branch requires a positive
-# entropy coefficient, so neither contributes a gradient. Note that
-# entropy_warmup_epochs alone would NOT have been enough, since it postpones the
-# entropy coefficient only and leaves the other two terms active, which is why
-# the first epoch of tests 169 to 171 was not a plain-LSQ measurement. The
-# perspective flag itself stays Y because joint LSQ-METaQ requires it and
-# because turning it off would enable the legacy non-perspective dual instead.
-#
-# Reading against the 78.844 that test_171 reached at epoch 18: a plain-LSQ
-# result near 79.7 means the missing accuracy is the METaQ dose and the fix is
-# to retune it, whereas a plain-LSQ result also near 78.8 means the limit is in
-# the quantization setup and per-channel step sizes become the way forward.
-#
-# Without the regularizer an epoch costs about 133s instead of 420s, so the
-# whole run takes roughly 45 minutes.
+# At about 134s per epoch, twenty-five epochs take roughly an hour.
 
 LOG_DIR=$WORK/acardia0/LeonardoTests
 mkdir -p "$LOG_DIR"
