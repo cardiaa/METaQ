@@ -13,27 +13,28 @@
 # test_192: give PEAQ the epochs to recover, not just to compress.
 #
 # Two PEAQ runs on the lossless baseline landed at the same place: 79.16 at
-# 7.55% (test_190, full dose) and 79.24 at 7.78% (test_191, sparsity halved).
-# Halving sparsity_coeff barely moved anything, because sparsity turned out to
-# be EMERGENT here, driven to ~44% by the ridge and the entropy term rather than
-# by the sparsity coefficient, which is a weak lever at this operating point.
-# Both runs sit at the same point on the accuracy-ratio frontier, about 0.5
-# below the 79.742 lossless line.
+# 7.55% (test_190, sparsity_coeff 1e-7) and 79.24 at 7.78% (test_191, halved to
+# 5e-8). Halving barely moved anything, because sparsity turned out to be
+# EMERGENT here, driven to ~44% by the ridge and the entropy term rather than by
+# the sparsity coefficient, a weak lever at this operating point. Both sit at the
+# same point on the accuracy-ratio frontier, about 0.5 below the 79.742 lossless
+# line.
 #
-# The reason to extend rather than retune is in the trajectory. In both runs
-# accuracy dips to about 78.5 by epoch ten, then climbs monotonically to the end
-# and is STILL climbing at epoch twenty-five, while sparsity reaches its ~44%
-# plateau already by epoch fifteen. So the compression finishes early and the
-# remaining epochs are recovery that has not completed when the run stops.
-# Twenty-five epochs are enough to compress but not to compress AND heal. With
-# min_lr holding the rate at 5% of base, PEAQ keeps the compression alive through
-# the tail instead of releasing it as in test_186, so more epochs should recover
-# accuracy while the ratio holds, potentially lossless AND at 7.7% at once.
+# The reason to extend rather than retune is the trajectory. In both runs
+# accuracy dips to about 78.5 by epoch ten, then climbs monotonically and is
+# STILL climbing at epoch twenty-five, while sparsity reaches its ~44% plateau by
+# epoch fifteen. The compression finishes early and the remaining epochs are
+# recovery that has not completed when the run stops. With min_lr holding the
+# rate at 5% of base, PEAQ keeps the compression alive through the tail instead
+# of releasing it as in test_186, so more epochs should recover accuracy while
+# the ratio holds, potentially lossless AND at 7.7% at once.
 #
-# Only n_epochs changes, 25 to 40. Everything else is test_190: distillation at
-# alpha 0.9, lr 1e-4, min_lr 5e-6, the step-size schedule, coefficients 1e-5 /
-# 3e-8 / 1e-7. sparsity_coeff is kept at the standard 1e-7 since test_191 showed
-# it barely matters.
+# This run is built from test_191, changing only n_epochs, 25 to 40. It keeps
+# sparsity_coeff at 5e-8 rather than 190's 1e-7 on purpose: since the goal is
+# accuracy recovery, the run inherits the dose that leaned marginally toward
+# accuracy, and starting from 44% rather than 46% sparsity leaves more headroom
+# before over-pruning across the longer schedule. The pair 191 to 192 therefore
+# isolates the budget exactly.
 #
 # HONEST CAVEAT. A late climb has fooled us three times as a cosine-tail
 # artefact (tests 178, 179, 182). The difference claimed here is mechanistic:
@@ -41,13 +42,12 @@
 # compression genuinely completes early and the rest is healing with the rate
 # still alive at the 5% floor. That is an inference, and this run is its test. If
 # accuracy clears 79.5 the recovery is real and we may reach lossless at maximum
-# compression; if it flattens near 79.25 it was the tail again and the frontier
-# is what it is, at which point lowering entropy_coeff maps the trade instead.
+# compression; if it flattens near 79.25 it was the tail again, and lowering
+# entropy_coeff maps the trade instead.
 #
 # WHAT TO READ. Sparse accuracy against 79.24 and the 79.742 lossless line, as a
 # mean over the last three epochs; sparse ratio against 7.78%, which should HOLD
-# rather than drift up; and whether accuracy is still rising at epoch 40 or has
-# plateaued.
+# rather than drift up; and whether accuracy is still rising at epoch 40.
 #
 # Forty epochs at about 430s each with the entropy solver: roughly four and a
 # half hours.
@@ -111,7 +111,7 @@ srun --ntasks=$SLURM_NTASKS --ntasks-per-node=1 bash -lc '
     --optimizer_weight_decay 0 \
     --perspective_coeff 1e-5 \
     --entropy_coeff 3e-8 \
-    --sparsity_coeff 1e-7 \
+    --sparsity_coeff 5e-8 \
     --perspective Y \
     --flat_schedule N \
     --mag_prune_ratio 0 \
