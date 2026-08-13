@@ -238,6 +238,7 @@ def build_model_and_hparams(model_name: str, device: torch.device, args, local_r
         lsq_per_channel=False,
         min_lr=None,
         lsq_scale_lr_schedule=False,
+        lr_decay_epochs=None,
         distillation=False,
         distill_alpha=0.5,
         distill_tau=1.0,
@@ -804,6 +805,7 @@ def print_config(model_name, args, h, local_rank_to_print):
     print(f"lsq_grad_scaling={h['lsq_grad_scaling']}", flush=True)
     print(f"lsq_per_channel={h['lsq_per_channel']}", flush=True)
     print(f"min_lr={h['min_lr']}", flush=True)
+    print(f"lr_decay_epochs={h['lr_decay_epochs']}", flush=True)
     print(f"lsq_scale_lr_schedule={h['lsq_scale_lr_schedule']}", flush=True)
     print(f"distillation={h['distillation']}", flush=True)
     print(f"distill_alpha={h['distill_alpha']}", flush=True)
@@ -946,6 +948,16 @@ def main():
             "Decay the LSQ step-size rate along the same schedule as the "
             "weights. Unset keeps it constant for the whole run, which lets "
             "the grid keep moving after the network has frozen."
+        ),
+    )
+    parser.add_argument(
+        "--lr_decay_epochs",
+        type=int,
+        default=None,
+        help=(
+            "Length in epochs of the cosine descent. Unset spans the whole "
+            "run; set to K the rate floors after K epochs and is then held, "
+            "separating compression (descent) from healing (floor tail)."
         ),
     )
     parser.add_argument(
@@ -1126,6 +1138,7 @@ def main():
     h["lsq_grad_scaling"] = (args.lsq_grad_scaling == "Y")
     h["lsq_per_channel"] = (args.lsq_per_channel == "Y")
     h["min_lr"] = args.min_lr
+    h["lr_decay_epochs"] = args.lr_decay_epochs
     h["lsq_scale_lr_schedule"] = (args.lsq_scale_lr_schedule == "Y")
     h["distillation"] = (args.distillation == "Y")
     h["distill_alpha"] = args.distill_alpha
@@ -1318,6 +1331,7 @@ def main():
         lsq_per_channel=h["lsq_per_channel"],
         min_lr=h["min_lr"],
         lsq_scale_lr_schedule=h["lsq_scale_lr_schedule"],
+        lr_decay_epochs=h["lr_decay_epochs"],
         distillation=h["distillation"],
         distill_alpha=h["distill_alpha"],
         distill_tau=h["distill_tau"],

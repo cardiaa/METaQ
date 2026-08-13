@@ -118,6 +118,7 @@ def run(per_channel: bool, layer_C=None, distillation=False, scale_sched=False):
         distill_alpha=0.5,
         distill_tau=1.0,
         lsq_scale_lr_schedule=scale_sched,
+        lr_decay_epochs=2,
     )
 
 

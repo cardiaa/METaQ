@@ -203,6 +203,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, p
                        lsq_init="lsq", lsq_grad_scaling=True, lsq_per_channel=False,
                        distillation=False, distill_alpha=0.5, distill_tau=1.0,
                        min_lr=None, lsq_scale_lr_schedule=False,
+                       lr_decay_epochs=None,
                        joint_lsq_metaq=False, bn_recalibration_batches=0,
                        layer_C=None,
                        train_centroids=False,
@@ -373,6 +374,21 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, p
             else n_epochs
         )
         _decay_len = max(1, _schedule_end - _ramp_end)
+        # lr_decay_epochs decouples the length of the cosine descent from the
+        # number of epochs. Left unset, the cosine spans the whole run as before.
+        # Set to K, the rate reaches its floor after K epochs of descent and is
+        # then HELD at the floor for the rest of the run. This separates the
+        # compression phase (the descent, where PEAQ exposure is high) from a
+        # healing phase (the floor tail, where PEAQ is weak and the network
+        # settles into the compressed configuration). Test_191's tail showed
+        # accuracy recovering about 0.05 per epoch at the floor rate, so a long
+        # floor tail may recover the accuracy that a bare 25-epoch run leaves on
+        # the table. Setting it equal to test_191's descent length makes the
+        # first 25 epochs identical to test_191 and the rest a controlled tail.
+        if lr_decay_epochs is not None:
+            if lr_decay_epochs < 1:
+                raise ValueError("--lr_decay_epochs must be >= 1.")
+            _decay_len = int(lr_decay_epochs)
         # Floor of the cosine, as a fraction of the base rate. The historical
         # value is 1%, which for the 2e-5 used on DeiT means 2e-7: the tail is
         # effectively dead, and since PEAQ enters by being added to the loss
