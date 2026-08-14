@@ -710,7 +710,6 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, p
         xi_zero = min_xi + (max_xi - min_xi) * torch.rand(1, device=device)
 
         xi_buckets = min_xi + (max_xi - min_xi) * torch.rand(C_layer, device=device)
-        xi_buckets = torch.sort(xi_buckets)[0]
 
         xi_layer = torch.cat([xi_zero, xi_buckets])
 

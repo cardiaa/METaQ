@@ -64,7 +64,6 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, p
     # IMPORTANT: every rank must use the same xi. Otherwise the custom gradient differs
     # after DDP has already synchronized the loss gradient.
     xi = min_xi + (max_xi - min_xi) * torch.rand(C, device=device)
-    xi = torch.sort(xi)[0]
     if dist.is_initialized():
         dist.broadcast(xi, src=0)
 

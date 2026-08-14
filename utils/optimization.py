@@ -180,8 +180,7 @@ def FISTA(xi, v, w, C, upper_c, lower_c, delta, subgradient_step, device, max_it
         xi = xi_next.clone()
         t_prev = t_current
 
-        # Ensure xi remains sorted
-        xi = torch.sort(xi)[0]
+        # xi components remain attached to their corresponding codebook symbols.
 
     #return xi, lambda_plus, x_i_star, phi
     return xi, lambda_plus
@@ -398,14 +397,8 @@ def FISTA_leonardo(xi, v, w, C, upper_c, lower_c, delta, subgradient_step, devic
         xi = xi_next.clone()
         t_prev = t_current
 
-        # Keep bucket multipliers ordered, but do NOT sort the zero multiplier
-        # together with the non-zero bucket multipliers.
-        if use_zero_symbol:
-            xi_zero = xi[:1]
-            xi_buckets = torch.sort(xi[1:])[0]
-            xi = torch.cat([xi_zero, xi_buckets])
-        else:
-            xi = torch.sort(xi)[0]
+        # Keep every multiplier attached to its own codebook symbol.  Sorting
+        # xi would reassign dual costs to different fixed codepoints.
 
     return xi, lambda_plus
 
@@ -501,7 +494,7 @@ def FISTA_perspective_leonardo(xi, v, w, C, upper_c, lower_c, perspective_coeff,
         xi_next = y + dual_step * g
 
         xi_prev = xi_b.clone()
-        xi_b = torch.sort(xi_next.clamp(min=xi_lo, max=xi_hi))[0]
+        xi_b = xi_next.clamp(min=xi_lo, max=xi_hi)
         t_prev = t_cur
 
     xi_out = torch.cat([xi[:1], xi_b]) if has_zero_slot else xi_b
@@ -556,7 +549,7 @@ def FISTA_prox_leonardo(xi, v, u, C, upper_c, lower_c, perspective_coeff, entrop
         xi_next = y + dual_step * g
 
         xi_prev = xi_b.clone()
-        xi_b = torch.sort(xi_next.clamp(min=xi_lo, max=xi_hi))[0]
+        xi_b = xi_next.clamp(min=xi_lo, max=xi_hi)
         t_prev = t_cur
 
     xi_out = torch.cat([xi[:1], xi_b]) if has_zero_slot else xi_b
