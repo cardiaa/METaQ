@@ -43,6 +43,16 @@ export LOG_FILE
 module load profile/deeplrn
 module load cineca-ai/4.3.0
 
+# Use the metaq venv, not the bare cineca-ai python: some second-wave targets
+# (RegNetX-600MF via timm, ViT-B-16) need timm, which the module environment
+# lacks. This is the same interpreter the DeiT launcher uses.
+METAQ_PYTHON=$WORK/acardia0/venvs/metaq/bin/python
+if [ ! -x "$METAQ_PYTHON" ]; then
+    echo "metaq environment not found: $METAQ_PYTHON" > "$LOG_FILE"
+    exit 1
+fi
+export METAQ_PYTHON
+
 export OMP_NUM_THREADS=1
 export TRANSFORMERS_NO_ADVISORY_WARNINGS=1
 export PYTHONWARNINGS="ignore::UserWarning"
@@ -58,7 +68,7 @@ srun --ntasks=$SLURM_NTASKS --ntasks-per-node=1 bash -lc '
         OUTPUT_TARGET=/dev/null
     fi
 
-    torchrun \
+    "$METAQ_PYTHON" -m torch.distributed.run \
     --nnodes=$SLURM_JOB_NUM_NODES \
     --nproc_per_node=4 \
     --node_rank=$SLURM_NODEID \
