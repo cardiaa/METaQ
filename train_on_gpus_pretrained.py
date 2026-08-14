@@ -21,7 +21,30 @@ from utils.trainer_on_gpus_pretrained import train_and_evaluate
 from utils.networks import LeNet5, LeNet5_Original, LeNet300_100
 
 
-IMAGENET_MODELS = ("AlexNet", "VGG16", "ResNet-18", "ResNet-50", "DeiT-Small")
+IMAGENET_MODELS = (
+    "AlexNet", "VGG16", "ResNet-18", "ResNet-50", "DeiT-Small",
+    # Second wave: convolutional nets share the ResNet recipe (SGD, no
+    # distillation); ViT-B/16 shares the DeiT recipe (Adam, distillation).
+    "MobileNetV2", "MNasNet-1.0", "EfficientNet-B0",
+    "RegNetX-800MF", "RegNetX-3.2GF", "ViT-B-16",
+)
+
+# torchvision constructors for the convolutional targets. All follow the ResNet
+# path: build empty, load a staged checkpoint, quantize weight tensors. The
+# checkpoint each expects is the torchvision IMAGENET1K_V1 weight, so the FP32
+# accuracy matches the value the literature (notably L2, arXiv 2308.04269)
+# reports for the same net, which keeps the head-to-head clean.
+_TORCHVISION_CONV = {
+    "ResNet-18": "resnet18",
+    "ResNet-50": "resnet50",
+    "MobileNetV2": "mobilenet_v2",
+    "MNasNet-1.0": "mnasnet1_0",
+    "EfficientNet-B0": "efficientnet_b0",
+    "RegNetX-800MF": "regnet_x_800mf",
+    "RegNetX-3.2GF": "regnet_x_3_2gf",
+}
+
+_CKPT_DIR = "/leonardo_work/IscrC_ObCTDoNN/acardia0/imagenet_checkpoints/"
 
 DEFAULT_PRETRAINED_CHECKPOINTS = {
     "AlexNet": (
@@ -40,6 +63,12 @@ DEFAULT_PRETRAINED_CHECKPOINTS = {
         "/leonardo_work/IscrC_ObCTDoNN/acardia0/imagenet_checkpoints/"
         "deit_small_patch16_224-cd65a155.pth"
     ),
+    "MobileNetV2": _CKPT_DIR + "mobilenet_v2-b0353104.pth",
+    "MNasNet-1.0": _CKPT_DIR + "mnasnet1.0_top1_73.512-f206786ef8.pth",
+    "EfficientNet-B0": _CKPT_DIR + "efficientnet_b0_rwightman-7f5810bc.pth",
+    "RegNetX-800MF": _CKPT_DIR + "regnet_x_800mf-ad17e45c.pth",
+    "RegNetX-3.2GF": _CKPT_DIR + "regnet_x_3_2gf-f342aeae.pth",
+    "ViT-B-16": _CKPT_DIR + "vit_b_16-c867db91.pth",
 }
 
 PRETRAINED_CHECKPOINT_URLS = {
@@ -50,6 +79,15 @@ PRETRAINED_CHECKPOINT_URLS = {
         "https://dl.fbaipublicfiles.com/deit/"
         "deit_small_patch16_224-cd65a155.pth"
     ),
+    # torchvision IMAGENET1K_V1 weights. Stage these under _CKPT_DIR on Leonardo
+    # (the compute nodes are offline) before launching the corresponding test.
+    "MobileNetV2": "https://download.pytorch.org/models/mobilenet_v2-b0353104.pth",
+    "MNasNet-1.0": "https://download.pytorch.org/models/mnasnet1.0_top1_73.512-f206786ef8.pth",
+    "EfficientNet-B0": "https://download.pytorch.org/models/efficientnet_b0_rwightman-7f5810bc.pth",
+    "RegNetX-800MF": "https://download.pytorch.org/models/regnet_x_800mf-ad17e45c.pth",
+    "RegNetX-3.2GF": "https://download.pytorch.org/models/regnet_x_3_2gf-f342aeae.pth",
+    # torchvision ViT-B/16 IMAGENET1K_V1 (81.07%); loaded through timm below.
+    "ViT-B-16": "https://download.pytorch.org/models/vit_b_16-c867db91.pth",
 }
 
 
@@ -356,13 +394,11 @@ def build_model_and_hparams(model_name: str, device: torch.device, args, local_r
         )
         h["upper_c"] = sum(p.numel() for p in model.parameters())
 
-    elif model_name in ("ResNet-18", "ResNet-50"):
+    elif model_name in _TORCHVISION_CONV:
         if local_rank is None:
             raise RuntimeError(f"{model_name} requires DDP setup (local_rank is None).")
 
-        constructor = (
-            models.resnet18 if model_name == "ResNet-18" else models.resnet50
-        )
+        constructor = getattr(models, _TORCHVISION_CONV[model_name])
         model = constructor(weights=None)
         checkpoint_path = None
         if args.pretrained == "Y":
@@ -373,10 +409,16 @@ def build_model_and_hparams(model_name: str, device: torch.device, args, local_r
         model = model.to(device, memory_format=torch.channels_last)
         model = DDP(model, device_ids=[local_rank])
 
+        # All convolutional targets share the ResNet-18 recipe: SGD, no
+        # distillation, 20 epochs. The launcher overrides lr and the PEAQ
+        # coefficients; these are the fallbacks. ResNet-50 keeps its historical
+        # lower lr. NOTE: MobileNetV2 and EfficientNet-B0 use depthwise
+        # convolutions, which per-tensor LSQ quantizes poorly; if their first
+        # pass underperforms, rerun with --lsq_per_channel Y.
         h.update(
             C=16,
-            lr=1e-3 if model_name == "ResNet-18" else 1e-5,
-            batch_size=64 if model_name == "ResNet-18" else 32,
+            lr=1e-5 if model_name == "ResNet-50" else 1e-3,
+            batch_size=32 if model_name == "ResNet-50" else 64,
             perspective_coeff=0.0,
             entropy_coeff=0.0,
             r=1.0,
@@ -427,6 +469,44 @@ def build_model_and_hparams(model_name: str, device: torch.device, args, local_r
             train_optimizer="ADAM",
             # timm's DeiT-S evaluation recipe uses crop_pct=0.9.
             val_resize=248,
+            pretrained_checkpoint=checkpoint_path,
+        )
+        h["upper_c"] = sum(p.numel() for p in model.parameters())
+
+    elif model_name == "ViT-B-16":
+        if local_rank is None:
+            raise RuntimeError("ViT-B-16 requires DDP setup (local_rank is None).")
+
+        # torchvision ViT-B/16 so the staged checkpoint keys match. The
+        # quantizer selects weight tensors generically, so no timm dependency is
+        # needed here. This is the only entropy-coded ViT competitor in the
+        # literature (NNCodec covers ViT-B/16), so it gives a direct ViT
+        # head-to-head. It shares the DeiT recipe: Adam, no channels-last,
+        # distillation supplied by the launcher. At 86M parameters the entropy
+        # solver is heavier than DeiT's, so keep the epoch budget modest and drop
+        # the per-GPU batch if memory is tight.
+        model = models.vit_b_16(weights=None)
+        checkpoint_path = None
+        if args.pretrained == "Y":
+            checkpoint_path = _load_pretrained_checkpoint(
+                model, model_name, args.pretrained_checkpoint
+            )
+
+        model = model.to(device)
+        model = DDP(model, device_ids=[local_rank])
+
+        h.update(
+            C=16,
+            lr=1e-4,
+            batch_size=32,
+            perspective_coeff=0.0,
+            entropy_coeff=0.0,
+            r=1.0,
+            w0=0.0,
+            n_epochs=20,
+            train_optimizer="ADAM",
+            # torchvision ViT_B_16 IMAGENET1K_V1 evaluates at resize 256, crop 224.
+            val_resize=256,
             pretrained_checkpoint=checkpoint_path,
         )
         h["upper_c"] = sum(p.numel() for p in model.parameters())
