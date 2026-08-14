@@ -26,7 +26,7 @@ IMAGENET_MODELS = (
     # Second wave: convolutional nets share the ResNet recipe (SGD, no
     # distillation); ViT-B/16 shares the DeiT recipe (Adam, distillation).
     "MobileNetV2", "MNasNet-1.0", "EfficientNet-B0",
-    "RegNetX-800MF", "RegNetX-3.2GF", "ViT-B-16",
+    "RegNetX-600MF", "RegNetX-3.2GF", "ViT-B-16",
 )
 
 # torchvision constructors for the convolutional targets. All follow the ResNet
@@ -40,8 +40,15 @@ _TORCHVISION_CONV = {
     "MobileNetV2": "mobilenet_v2",
     "MNasNet-1.0": "mnasnet1_0",
     "EfficientNet-B0": "efficientnet_b0",
-    "RegNetX-800MF": "regnet_x_800mf",
     "RegNetX-3.2GF": "regnet_x_3_2gf",
+}
+
+# RegNetX-600MF is absent from torchvision (which jumps 400->800MF), so it is
+# built through timm instead. timm's regnetx_006 ports Facebook's pycls
+# RegNetX-600MF weights, which is the exact net L2 (arXiv 2308.04269) reports at
+# 11.9x, so the head-to-head stays clean without adding a pycls dependency.
+_TIMM_CONV = {
+    "RegNetX-600MF": "regnetx_006",
 }
 
 _CKPT_DIR = "/leonardo_work/IscrC_ObCTDoNN/acardia0/imagenet_checkpoints/"
@@ -66,7 +73,7 @@ DEFAULT_PRETRAINED_CHECKPOINTS = {
     "MobileNetV2": _CKPT_DIR + "mobilenet_v2-b0353104.pth",
     "MNasNet-1.0": _CKPT_DIR + "mnasnet1.0_top1_73.512-f206786ef8.pth",
     "EfficientNet-B0": _CKPT_DIR + "efficientnet_b0_rwightman-7f5810bc.pth",
-    "RegNetX-800MF": _CKPT_DIR + "regnet_x_800mf-ad17e45c.pth",
+    "RegNetX-600MF": _CKPT_DIR + "regnetx_006_pycls_in1k.pth",
     "RegNetX-3.2GF": _CKPT_DIR + "regnet_x_3_2gf-f342aeae.pth",
     "ViT-B-16": _CKPT_DIR + "vit_b_16-c867db91.pth",
 }
@@ -84,7 +91,9 @@ PRETRAINED_CHECKPOINT_URLS = {
     "MobileNetV2": "https://download.pytorch.org/models/mobilenet_v2-b0353104.pth",
     "MNasNet-1.0": "https://download.pytorch.org/models/mnasnet1.0_top1_73.512-f206786ef8.pth",
     "EfficientNet-B0": "https://download.pytorch.org/models/efficientnet_b0_rwightman-7f5810bc.pth",
-    "RegNetX-800MF": "https://download.pytorch.org/models/regnet_x_800mf-ad17e45c.pth",
+    # RegNetX-600MF comes from timm (regnetx_006, pycls weights); stage it on the
+    # login node with the snippet in the run script rather than a plain wget.
+    "RegNetX-600MF": "timm:regnetx_006.pycls_in1k",
     "RegNetX-3.2GF": "https://download.pytorch.org/models/regnet_x_3_2gf-f342aeae.pth",
     # torchvision ViT-B/16 IMAGENET1K_V1 (81.07%); loaded through timm below.
     "ViT-B-16": "https://download.pytorch.org/models/vit_b_16-c867db91.pth",
@@ -394,12 +403,17 @@ def build_model_and_hparams(model_name: str, device: torch.device, args, local_r
         )
         h["upper_c"] = sum(p.numel() for p in model.parameters())
 
-    elif model_name in _TORCHVISION_CONV:
+    elif model_name in _TORCHVISION_CONV or model_name in _TIMM_CONV:
         if local_rank is None:
             raise RuntimeError(f"{model_name} requires DDP setup (local_rank is None).")
 
-        constructor = getattr(models, _TORCHVISION_CONV[model_name])
-        model = constructor(weights=None)
+        if model_name in _TORCHVISION_CONV:
+            model = getattr(models, _TORCHVISION_CONV[model_name])(weights=None)
+        else:
+            import timm
+            model = timm.create_model(
+                _TIMM_CONV[model_name], pretrained=False, num_classes=1000
+            )
         checkpoint_path = None
         if args.pretrained == "Y":
             checkpoint_path = _load_pretrained_checkpoint(
