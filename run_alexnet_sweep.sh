@@ -22,6 +22,7 @@ ENTROPY_COEFF=${2:-5e-8}
 BATCH_SIZE=${3:-128}
 DISTILLATION=${4:-N}
 NO_METAQ=${5:-N}
+C_LEVELS=${6:-16}
 if [ "$NO_METAQ" = "Y" ]; then
     PERSPECTIVE_COEFF=0
     ENTROPY_COEFF=0
@@ -102,7 +103,7 @@ srun --ntasks=$SLURM_NTASKS --ntasks-per-node=1 bash -lc '
         --distill_alpha '"$DISTILL_ALPHA"' \
         --distill_tau 1.0 \
         --bn_recalibration_batches 50 \
-        --C 16 \
+        --C '"$C_LEVELS"' \
         --max_iterations 3 \
         --metrics_interval 1 \
         --entropy_warmup_epochs 1 \
