@@ -3517,4 +3517,10 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, p
         if adiabatic_enabled:
             print(f"adiabatic_best_target = {adiabatic_best_target}", flush=True)
             print(f"adiabatic_best_floor = {adiabatic_best_floor}", flush=True)
+        checkpoint_path = os.environ.get("METAQ_CHECKPOINT_PATH")
+        if checkpoint_path:
+            os.makedirs(os.path.dirname(checkpoint_path), exist_ok=True)
+            state_model = model.module if hasattr(model, "module") else model
+            torch.save(state_model.state_dict(), checkpoint_path)
+            print(f"[CHECKPOINT SAVED] {checkpoint_path}", flush=True)
     return

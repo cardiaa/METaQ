@@ -6,7 +6,7 @@
 #SBATCH --ntasks=4
 #SBATCH --gres=gpu:4
 #SBATCH --cpus-per-task=32
-#SBATCH --time=06:00:00
+#SBATCH --time=02:30:00
 #SBATCH --output=/dev/null
 #SBATCH --error=/dev/null
 
@@ -20,6 +20,16 @@
 N_EPOCHS=${1:-20}
 ENTROPY_COEFF=${2:-5e-8}
 BATCH_SIZE=${3:-128}
+DISTILLATION=${4:-N}
+if [ "$DISTILLATION" = "Y" ]; then
+    PERSPECTIVE_COEFF=0
+    ENTROPY_COEFF=0
+    SPARSITY_COEFF=0
+    DISTILL_ALPHA=0.5
+else
+    PERSPECTIVE_COEFF=1e-5
+    DISTILL_ALPHA=0.0
+fi
 
 LOG_DIR=$WORK/acardia0/LeonardoTests
 mkdir -p "$LOG_DIR"
@@ -44,6 +54,12 @@ export MASTER_ADDR=$(scontrol show hostnames "$SLURM_JOB_NODELIST" | head -n 1)
 export MASTER_PORT=29500
 
 cd "$WORK/acardia0/METaQ"
+if [ "$DISTILLATION" = "Y" ]; then
+    mkdir -p "$WORK/acardia0/METaQCheckpoints/AlexNet"
+    export METAQ_CHECKPOINT_PATH="$WORK/acardia0/METaQCheckpoints/AlexNet/AlexNetCheckpoint1.pth"
+else
+    unset METAQ_CHECKPOINT_PATH
+fi
 
 srun --ntasks=$SLURM_NTASKS --ntasks-per-node=1 bash -lc '
     if [ "$SLURM_NODEID" -eq 0 ]; then OUTPUT_TARGET="$LOG_FILE"; else OUTPUT_TARGET=/dev/null; fi
@@ -65,9 +81,9 @@ srun --ntasks=$SLURM_NTASKS --ntasks-per-node=1 bash -lc '
         --n_epochs '"$N_EPOCHS"' \
         --lr 1e-4 \
         --optimizer_weight_decay 1e-4 \
-        --perspective_coeff 1e-5 \
+        --perspective_coeff '"$PERSPECTIVE_COEFF"' \
         --entropy_coeff '"$ENTROPY_COEFF"' \
-        --sparsity_coeff 1e-7 \
+        --sparsity_coeff '"$SPARSITY_COEFF"' \
         --perspective Y \
         --flat_schedule N \
         --mag_prune_ratio 0 \
@@ -77,6 +93,9 @@ srun --ntasks=$SLURM_NTASKS --ntasks-per-node=1 bash -lc '
         --lsq_init mse \
         --lsq_grad_scaling N \
         --joint_lsq_metaq Y \
+        --distillation '"$DISTILLATION"' \
+        --distill_alpha '"$DISTILL_ALPHA"' \
+        --distill_tau 1.0 \
         --bn_recalibration_batches 50 \
         --C 16 \
         --max_iterations 3 \
