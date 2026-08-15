@@ -24,6 +24,7 @@ DISTILLATION=${4:-N}
 NO_METAQ=${5:-N}
 C_LEVELS=${6:-16}
 LSQ_PER_CHANNEL=${7:-N}
+SAVE_CHECKPOINT=${8:-N}
 if [ "$NO_METAQ" = "Y" ]; then
     PERSPECTIVE_COEFF=0
     ENTROPY_COEFF=0
@@ -61,7 +62,7 @@ export MASTER_ADDR=$(scontrol show hostnames "$SLURM_JOB_NODELIST" | head -n 1)
 export MASTER_PORT=29500
 
 cd "$WORK/acardia0/METaQ"
-if [ "$NO_METAQ" = "Y" ]; then
+if [ "$NO_METAQ" = "Y" ] || [ "$SAVE_CHECKPOINT" = "Y" ]; then
     mkdir -p "$WORK/acardia0/METaQCheckpoints/AlexNet"
     export METAQ_CHECKPOINT_PATH="$WORK/acardia0/METaQCheckpoints/AlexNet/AlexNetCheckpoint1.pth"
 else
