@@ -23,6 +23,7 @@ BATCH_SIZE=${3:-128}
 DISTILLATION=${4:-N}
 NO_METAQ=${5:-N}
 C_LEVELS=${6:-16}
+LSQ_PER_CHANNEL=${7:-N}
 if [ "$NO_METAQ" = "Y" ]; then
     PERSPECTIVE_COEFF=0
     ENTROPY_COEFF=0
@@ -98,6 +99,7 @@ srun --ntasks=$SLURM_NTASKS --ntasks-per-node=1 bash -lc '
         --lsq_scale_lr 1e-5 \
         --lsq_init mse \
         --lsq_grad_scaling N \
+        --lsq_per_channel '"$LSQ_PER_CHANNEL"' \
         --joint_lsq_metaq Y \
         --distillation '"$DISTILLATION"' \
         --distill_alpha '"$DISTILL_ALPHA"' \
