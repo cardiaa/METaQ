@@ -14,9 +14,12 @@
 # It deliberately reuses the cross-architecture regularizer recipe (C=16,
 # T1/T2/T3 = 1e-5/1e-7/3e-8) but keeps AlexNet's pretrained fine-tuning LR.
 # Pass the number of epochs as the first sbatch argument: 3 for calibration,
-# 20 for the full run.
+# 20 for the full run. The second argument overrides entropy_coeff and the
+# third overrides the per-GPU batch size (default 128, global 2048 on 16 GPUs).
 
 N_EPOCHS=${1:-20}
+ENTROPY_COEFF=${2:-3e-8}
+BATCH_SIZE=${3:-128}
 
 LOG_DIR=$WORK/acardia0/LeonardoTests
 mkdir -p "$LOG_DIR"
@@ -58,12 +61,12 @@ srun --ntasks=$SLURM_NTASKS --ntasks-per-node=1 bash -lc '
         --data_root /leonardo_work/IscrC_ObCTDoNN/acardia0/datasets \
         --train_workers 4 \
         --val_workers 2 \
-        --batch_size 64 \
+        --batch_size '"$BATCH_SIZE"' \
         --n_epochs '"$N_EPOCHS"' \
         --lr 1e-4 \
         --optimizer_weight_decay 1e-4 \
         --perspective_coeff 1e-5 \
-        --entropy_coeff 3e-8 \
+        --entropy_coeff '"$ENTROPY_COEFF"' \
         --sparsity_coeff 1e-7 \
         --perspective Y \
         --flat_schedule N \
