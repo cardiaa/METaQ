@@ -10,6 +10,9 @@
 #SBATCH --output=/dev/null
 #SBATCH --error=/dev/null
 
+# Test 203 ablation: default to twice the dual iterations used in test 199.
+MAX_ITERATIONS=${1:-6}
+
 # test_194: map the frontier with a lower entropy dose.
 #
 # Budget is exhausted as a lever. Three runs at the standard dose land on the
@@ -118,7 +121,7 @@ srun --ntasks=$SLURM_NTASKS --ntasks-per-node=1 bash -lc '
     --distill_tau 1.0 \
     --bn_recalibration_batches 0 \
     --C 16 \
-    --max_iterations 3 \
+    --max_iterations "$MAX_ITERATIONS" \
     --metrics_interval 1 \
     --entropy_warmup_epochs 1 \
     --entropy_every 4 \
