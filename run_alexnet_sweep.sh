@@ -18,7 +18,7 @@
 # third overrides the per-GPU batch size (default 128, global 2048 on 16 GPUs).
 
 N_EPOCHS=${1:-20}
-ENTROPY_COEFF=${2:-3e-8}
+ENTROPY_COEFF=${2:-5e-8}
 BATCH_SIZE=${3:-128}
 
 LOG_DIR=$WORK/acardia0/LeonardoTests
