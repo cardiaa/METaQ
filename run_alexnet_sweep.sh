@@ -71,6 +71,10 @@ fi
 
 srun --ntasks=$SLURM_NTASKS --ntasks-per-node=1 bash -lc '
     if [ "$SLURM_NODEID" -eq 0 ]; then OUTPUT_TARGET="$LOG_FILE"; else OUTPUT_TARGET=/dev/null; fi
+    export METAQ_CHECKPOINT_PATH="'"$METAQ_CHECKPOINT_PATH"'"
+    if [ "$SLURM_NODEID" -eq 0 ]; then
+        echo "[CHECKPOINT TARGET] ${METAQ_CHECKPOINT_PATH:-disabled}" >> "$OUTPUT_TARGET"
+    fi
     "$METAQ_PYTHON" -m torch.distributed.run \
         --nnodes=$SLURM_JOB_NUM_NODES \
         --nproc_per_node=4 \
