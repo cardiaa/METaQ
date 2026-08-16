@@ -211,7 +211,8 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, p
                        centroid_freeze_epoch=0,
                        adiabatic_accuracy_target=None, adiabatic_accuracy_tolerance=0.2,
                        adiabatic_step=0.02, adiabatic_backoff=0.04,
-                       adiabatic_patience=2, evaluate_initial_model=False):
+                       adiabatic_patience=2, evaluate_initial_model=False,
+                       z_pruning=False):
     """Train and evaluate a model with optional entropy regularization.
 
     This function is intentionally self-contained because the compression
@@ -820,7 +821,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, p
     # magnitude-based (Frangioni's advice), driven by the perspective ridge L1
     # push; the entropy dual (FISTA/knapsack, the z-symbol, delta) is NOT used.
     # "magnitude" therefore disables the z-branch and the dual altogether.
-    prune_mode = "magnitude" if use_perspective else "z"   # "z"=optimization-driven; "deadzone"=old rule
+    prune_mode = "z" if z_pruning else ("magnitude" if use_perspective else "z")
     z_prune_threshold = 0.5
     z_prune_masks = [None] * num_param_tensors
     # Per-layer magnitude thresholds for target_sparsity mode, frozen once per

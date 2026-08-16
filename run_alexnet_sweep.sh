@@ -30,6 +30,7 @@ CHECKPOINT_OUTPUT_NAME=${10:-AlexNetCheckpoint1.pth}
 LR=${11:-1e-4}
 FLAT_SCHEDULE=${12:-N}
 ENTROPY_WARMUP=${13:-1}
+Z_PRUNING=${14:-N}
 if [ "$NO_METAQ" = "Y" ]; then
     PERSPECTIVE_COEFF=0
     ENTROPY_COEFF=0
@@ -104,6 +105,7 @@ srun --ntasks=$SLURM_NTASKS --ntasks-per-node=1 bash -lc '
         --perspective Y \
         --flat_schedule '"$FLAT_SCHEDULE"' \
         --mag_prune_ratio 0 \
+        --z_pruning '"$Z_PRUNING"' \
         --quantization Y \
         --quantizer lsq \
         --lsq_scale_lr 1e-5 \

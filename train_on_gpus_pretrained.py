@@ -1006,6 +1006,7 @@ def main():
     parser.add_argument("--prox_start_epoch", type=int, default=0, help="First epoch (0-based) at which the proximal step runs; decoupled from entropy_warmup_epochs so the sparsity ramp is unaffected (test_139)")
     parser.add_argument("--sparsity_schedule", type=str, default=None, help="Iterative prune-and-heal schedule, replacing the smooth ramp. Stages ';'-separated, each 'reach:hold:s1,...,s8' with 1-based epochs (test_143)")
     parser.add_argument("--freeze_mask", type=str, default="N", choices=["Y", "N"], help="Freeze the pruned index set per plateau (Deep-Compression style) instead of recomputing |w|<=thr every epoch (test_144)")
+    parser.add_argument("--z_pruning", type=str, default="N", choices=["Y", "N"], help="Use the dual z_i>0.5 pruning mask with the perspective path.")
     parser.add_argument("--train_sparse", type=str, default="N", choices=["Y", "N"], help="Optimize the sparse subnetwork directly: hold pruned weights at zero with zero gradient, update only survivors (test_146)")
     parser.add_argument("--quantization", type=str, default="Y", choices=["Y", "N"], help="Enable quantization in training, evaluation, and compression metrics. Set N for an FP32 pruning-only control (test_155)")
     parser.add_argument(
@@ -1226,6 +1227,7 @@ def main():
     h["prox_start_epoch"] = args.prox_start_epoch
     h["sparsity_schedule"] = args.sparsity_schedule if args.sparsity_schedule else None
     h["freeze_mask"] = (args.freeze_mask == "Y")
+    h["z_pruning"] = (args.z_pruning == "Y")
     h["train_sparse"] = (args.train_sparse == "Y")
     h["use_quantization"] = (args.quantization == "Y")
     h["quantizer"] = args.quantizer
@@ -1418,6 +1420,7 @@ def main():
         prox_start_epoch=h["prox_start_epoch"],
         sparsity_schedule=h["sparsity_schedule"],
         freeze_mask=h["freeze_mask"],
+        z_pruning=h["z_pruning"],
         train_sparse=h["train_sparse"],
         use_quantization=h["use_quantization"],
         quantizer=h["quantizer"],
