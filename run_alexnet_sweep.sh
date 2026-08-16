@@ -25,6 +25,11 @@ NO_METAQ=${5:-N}
 C_LEVELS=${6:-16}
 LSQ_PER_CHANNEL=${7:-N}
 SAVE_CHECKPOINT=${8:-N}
+PRETRAINED_CHECKPOINT=${9:-/leonardo_work/IscrC_ObCTDoNN/acardia0/alexnet_checkpoints/alexnet-owt-7be5be79.pth}
+CHECKPOINT_OUTPUT_NAME=${10:-AlexNetCheckpoint1.pth}
+LR=${11:-1e-4}
+FLAT_SCHEDULE=${12:-N}
+ENTROPY_WARMUP=${13:-1}
 if [ "$NO_METAQ" = "Y" ]; then
     PERSPECTIVE_COEFF=0
     ENTROPY_COEFF=0
@@ -64,7 +69,7 @@ export MASTER_PORT=29500
 cd "$WORK/acardia0/METaQ"
 if [ "$NO_METAQ" = "Y" ] || [ "$SAVE_CHECKPOINT" = "Y" ]; then
     mkdir -p "$WORK/acardia0/METaQCheckpoints/AlexNet"
-    export METAQ_CHECKPOINT_PATH="$WORK/acardia0/METaQCheckpoints/AlexNet/AlexNetCheckpoint1.pth"
+    export METAQ_CHECKPOINT_PATH="$WORK/acardia0/METaQCheckpoints/AlexNet/$CHECKPOINT_OUTPUT_NAME"
 else
     unset METAQ_CHECKPOINT_PATH
 fi
@@ -91,13 +96,13 @@ srun --ntasks=$SLURM_NTASKS --ntasks-per-node=1 bash -lc '
         --val_workers 2 \
         --batch_size '"$BATCH_SIZE"' \
         --n_epochs '"$N_EPOCHS"' \
-        --lr 1e-4 \
+        --lr '"$LR"' \
         --optimizer_weight_decay 1e-4 \
         --perspective_coeff '"$PERSPECTIVE_COEFF"' \
         --entropy_coeff '"$ENTROPY_COEFF"' \
         --sparsity_coeff '"$SPARSITY_COEFF"' \
         --perspective Y \
-        --flat_schedule N \
+        --flat_schedule '"$FLAT_SCHEDULE"' \
         --mag_prune_ratio 0 \
         --quantization Y \
         --quantizer lsq \
@@ -113,10 +118,11 @@ srun --ntasks=$SLURM_NTASKS --ntasks-per-node=1 bash -lc '
         --C '"$C_LEVELS"' \
         --max_iterations 3 \
         --metrics_interval 1 \
-        --entropy_warmup_epochs 1 \
+        --entropy_warmup_epochs '"$ENTROPY_WARMUP"' \
         --entropy_every 4 \
         --dual_step 3e-9 \
         --check_ddp_sync \
         --pretrained Y \
+        --pretrained_checkpoint '"$PRETRAINED_CHECKPOINT"' \
         >> "$OUTPUT_TARGET" 2>&1
 '
