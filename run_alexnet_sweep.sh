@@ -118,5 +118,5 @@ srun --ntasks=$SLURM_NTASKS --ntasks-per-node=1 bash -lc '
         --dual_step 3e-9 \
         --check_ddp_sync \
         --pretrained Y \
-        > "$OUTPUT_TARGET" 2>&1
+        >> "$OUTPUT_TARGET" 2>&1
 '
