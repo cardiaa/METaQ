@@ -217,7 +217,9 @@ def _load_pretrained_checkpoint(model, model_name: str, requested_path: str | No
         )
 
     checkpoint = torch.load(checkpoint_path, map_location="cpu")
-    if isinstance(checkpoint, dict) and "model" in checkpoint:
+    if isinstance(checkpoint, dict) and "model_fp32" in checkpoint:
+        state_dict = checkpoint["model_fp32"]
+    elif isinstance(checkpoint, dict) and "model" in checkpoint:
         state_dict = checkpoint["model"]
     elif isinstance(checkpoint, dict) and "state_dict" in checkpoint:
         state_dict = checkpoint["state_dict"]

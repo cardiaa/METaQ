@@ -3521,6 +3521,25 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, p
         if checkpoint_path:
             os.makedirs(os.path.dirname(checkpoint_path), exist_ok=True)
             state_model = model.module if hasattr(model, "module") else model
-            torch.save(state_model.state_dict(), checkpoint_path)
+            checkpoint = {
+                "format": "metaq_training_v2",
+                "epoch": int(n_epochs),
+                "model_fp32": state_model.state_dict(),
+                "optimizer": optimizer.state_dict(),
+                "scheduler": scheduler.state_dict(),
+                "scale_optimizer": scale_optimizer.state_dict() if scale_optimizer is not None else None,
+                "scale_scheduler": scale_scheduler.state_dict() if scale_scheduler is not None else None,
+                "config": {
+                    "model_name": model_name,
+                    "C": C,
+                    "quantizer": quantizer,
+                    "lsq_per_channel": lsq_per_channel,
+                    "entropy_coeff": entropy_coeff,
+                    "sparsity_coeff": sparsity_coeff,
+                },
+            }
+            tmp_path = checkpoint_path + ".tmp"
+            torch.save(checkpoint, tmp_path)
+            os.replace(tmp_path, checkpoint_path)
             print(f"[CHECKPOINT SAVED] {checkpoint_path}", flush=True)
     return
