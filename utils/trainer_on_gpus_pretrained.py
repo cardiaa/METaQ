@@ -1420,6 +1420,14 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, p
         and WHICH weights are pruned come from the optimization, not a magnitude
         threshold.
         """
+        # Under the perspective path, z must come from the actual METaQ
+        # per-weight mass y*(w), not from the legacy knapsack dead-zone
+        # controlled by ``delta``.  This is the path used by the T1/T2
+        # ablations: z_i = 1-y_i and the hard deployment rule is z_i>0.5.
+        if use_perspective:
+            y_star = _perspective_y_star(w_flat, v_layer)
+            return (1.0 - y_star).clamp_(0.0, 1.0) > z_prune_threshold
+
         xi_layer = xi_layer.to(dtype=torch.float32, device=device)
         C_local = v_layer.numel()
 
@@ -3403,13 +3411,21 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, p
                     print(delta_debug_log, flush=True)
                 if use_perspective:
                     with torch.no_grad():
-                        y_means, prune_fracs, thr_list = [], [], []
+                        y_means, z_means, z_fracs, z_p10s, z_p50s, z_p90s = [], [], [], [], [], []
+                        prune_fracs, thr_list = [], []
                         n_tot, n_pruned = 0, 0
                         for p_idx, param in enumerate(params_for_quant):
                             wl = param.detach().reshape(-1)
                             vl = v_list[p_idx]
                             thr = target_prune_thresholds[p_idx]
-                            y_means.append(_perspective_y_star(wl, vl).mean().item())
+                            y_star_diag = _perspective_y_star(wl, vl)
+                            z_diag = (1.0 - y_star_diag).clamp(0.0, 1.0)
+                            y_means.append(y_star_diag.mean().item())
+                            z_means.append(z_diag.mean().item())
+                            z_fracs.append((z_diag > z_prune_threshold).float().mean().item())
+                            z_p10s.append(torch.quantile(z_diag, 0.10).item())
+                            z_p50s.append(torch.quantile(z_diag, 0.50).item())
+                            z_p90s.append(torch.quantile(z_diag, 0.90).item())
                             pm = _mask_to_apply(p_idx, wl, vl)   # test_144: frozen if on
                             prune_fracs.append(pm.float().mean().item())
                             eff_thr = thr if thr is not None else (mag_prune_ratio * vl.abs().min())
@@ -3417,13 +3433,20 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, p
                             n_tot += wl.numel()
                             n_pruned += int(pm.sum().item())
                         mean_y = sum(y_means) / max(1, len(y_means))
+                        mean_z = sum(z_means) / max(1, len(z_means))
+                        mean_z_frac = sum(z_fracs) / max(1, len(z_fracs))
                         overall_prune = n_pruned / max(1, n_tot)
                         l1_push = 2.0 * math.sqrt(perspective_coeff * sparsity_coeff) if sparsity_coeff > 0 else 0.0
                         print(
                             f"perspective_debug: perspective_coeff={perspective_coeff:.3e}, sparsity_coeff={sparsity_coeff:.3e}, "
                             f"target_sparsity={target_sparsity}, mag_prune_ratio={mag_prune_ratio:.3f}, "
                             f"l1_push_near_zero={l1_push:.3e}, "
-                            f"mean_y_star={mean_y:.4f}, overall_prune_frac={overall_prune:.4%}, "
+                            f"mean_y_star={mean_y:.4f}, mean_z_star={mean_z:.4f}, "
+                            f"z_gt_0.5_frac_mean_layers={mean_z_frac:.4%}, "
+                            f"z_quantiles_mean_layers=[{sum(z_p10s)/max(1,len(z_p10s)):.4f},"
+                            f"{sum(z_p50s)/max(1,len(z_p50s)):.4f},"
+                            f"{sum(z_p90s)/max(1,len(z_p90s)):.4f}], "
+                            f"overall_prune_frac={overall_prune:.4%}, "
                             f"mag_thr_first_layers={[round(t, 5) for t in thr_list[:4]]}, "
                             f"prune_frac_first_layers={[round(f, 4) for f in prune_fracs[:4]]}",
                             flush=True
