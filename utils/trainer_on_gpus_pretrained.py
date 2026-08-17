@@ -3208,6 +3208,19 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, p
                     p99 = qvals[3].item()
                     p999 = qvals[4].item()         
 
+                    # Calibration diagnostics for the z_i>0.5 rule.  From
+                    # y*=|w|*sqrt(T1/T2), a desired dual sparsity p corresponds
+                    # to T2 = 4*T1*q_p(|w|)^2, where q_p is the p-quantile of
+                    # absolute weights.  These values let us choose T2 from
+                    # the observed weight distribution rather than by trial.
+                    abs_q = _percentiles_large_tensor(
+                        w_stats.abs(), [0.80, 0.85, 0.89]
+                    )
+                    t2_calibration = [
+                        4.0 * perspective_coeff * float(q.item()) ** 2
+                        for q in abs_q
+                    ]
+
                     lsq_scale_values = None
                     lsq_total_scale_grad_last = None
                     lsq_clipping_fractions = None
@@ -3420,15 +3433,25 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, p
                     f"p0.1={p001:.6e}, p1={p01:.6e}, "
                     f"p50={p50:.6e}, p99={p99:.6e}, p99.9={p999:.6e}",
                     flush=True
-                )                
+                )
                 print(f"current lr = {optimizer.param_groups[0]['lr']}", flush=True)
                 if distill_loss_last is not None:
                     print(
                         f"distill_diag: alpha={distill_alpha}, tau={distill_tau}, "
                         f"task_loss_last={task_loss_last:.6f}, "
                         f"distill_loss_last={distill_loss_last:.6f}",
-                        flush=True,
-                    )
+                    flush=True,
+                )                
+                print(
+                    "sparsity_calibration_abs_weight_quantiles: "
+                    f"q80={abs_q[0].item():.6e}, "
+                    f"q85={abs_q[1].item():.6e}, "
+                    f"q89={abs_q[2].item():.6e}, "
+                    f"T2_for_80%={t2_calibration[0]:.6e}, "
+                    f"T2_for_85%={t2_calibration[1]:.6e}, "
+                    f"T2_for_89%={t2_calibration[2]:.6e}",
+                    flush=True,
+                )
                 print(f"training_time = {training_time_global}s", flush=True)
                 # The running histories printed each epoch are the DELIVERED
                 # metrics: the accuracy of the sparse quantized model actually
