@@ -1406,7 +1406,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, p
 
         return prune_mask, z_mass
 
-    def _z_prune_mask(w_flat, v_layer, xi_layer):
+    def _z_prune_mask(w_flat, v_layer, xi_layer, step_scale=None):
         """
         Optimization-driven pruning mask.
 
@@ -1425,7 +1425,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, p
         # controlled by ``delta``.  This is the path used by the T1/T2
         # ablations: z_i = 1-y_i and the hard deployment rule is z_i>0.5.
         if use_perspective:
-            y_star = _perspective_y_star(w_flat, v_layer)
+            y_star = _perspective_y_star(w_flat, v_layer, step_scale=step_scale)
             return (1.0 - y_star).clamp_(0.0, 1.0) > z_prune_threshold
 
         xi_layer = xi_layer.to(dtype=torch.float32, device=device)
@@ -1969,7 +1969,10 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, p
                 total_pruned_fz = 0
                 for p_idx, param in enumerate(params_for_quant):
                     w_layer = param.detach().reshape(-1)
-                    mask = _z_prune_mask(w_layer, v_list[p_idx], xi_list[p_idx])
+                    mask = _z_prune_mask(
+                        w_layer, v_list[p_idx], xi_list[p_idx],
+                        _metaq_scale_flat(p_idx, param),
+                    )
                     z_prune_masks[p_idx] = mask
                     total_n_fz += mask.numel()
                     total_pruned_fz += int(mask.sum().item())
@@ -2853,16 +2856,33 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, p
                                 s_idx_layer = q_idx_layer
                                 s_layer = q_layer.clone()
                             elif use_perspective:
-                                prune_mask = (
-                                    frozen_prune_masks[quant_state]
-                                    if freeze_mask
-                                    and frozen_prune_masks[quant_state] is not None
-                                    else _perspective_prune_mask(
-                                        w_layer,
-                                        v_layer,
-                                        target_prune_thresholds[quant_state],
+                                if prune_mode == "z":
+                                    # Use exactly the mask used by the fake-
+                                    # quantized training forward. Recomputing a
+                                    # different magnitude mask here was the
+                                    # source of the 99.5% vs 17% discrepancy.
+                                    prune_mask = z_prune_masks[quant_state]
+                                    if prune_mask is None:
+                                        prune_mask = _z_prune_mask(
+                                            w_layer,
+                                            v_layer,
+                                            xi_list[quant_state],
+                                            _metaq_scale_flat(
+                                                quant_state,
+                                                params_for_quant[quant_state],
+                                            ),
+                                        )
+                                else:
+                                    prune_mask = (
+                                        frozen_prune_masks[quant_state]
+                                        if freeze_mask
+                                        and frozen_prune_masks[quant_state] is not None
+                                        else _perspective_prune_mask(
+                                            w_layer,
+                                            v_layer,
+                                            target_prune_thresholds[quant_state],
+                                        )
                                     )
-                                )
                                 s_idx_layer = q_idx_layer
                                 s_layer = torch.where(
                                     prune_mask,
@@ -2897,6 +2917,16 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, p
                 w_backup = torch.cat(w_backup_parts)
                 flat_q = torch.cat(flat_q_parts)
                 flat_s = torch.cat(flat_s_parts)
+
+                # Distinguish the requested logical pruning mask from the
+                # zeros that happen to arise after LSQ quantization.
+                z_mask_total = 0
+                z_mask_pruned = 0
+                if prune_mode == "z":
+                    for mask in z_prune_masks:
+                        if mask is not None:
+                            z_mask_total += mask.numel()
+                            z_mask_pruned += int(mask.sum().item())
 
             if local_rank == 0:
                 with torch.no_grad():
@@ -3350,6 +3380,12 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, p
                 print(f"zstd_ratio = {zstd_ratio:.2%}", flush=True)
                 print(f"sparse_ratio = {sparse_ratio:.2%}", flush=True)
                 print(f"sparsity = {sparsity:.2%}", flush=True)
+                if z_mask_total > 0:
+                    print(
+                        f"z_mask_fraction = {z_mask_pruned / z_mask_total:.2%}, "
+                        f"encoded_zero_fraction = {sparsity:.2%}",
+                        flush=True,
+                    )
                 print(f"sparse_accuracy = {sparse_accuracy}", flush=True)
                 print(f"dual_zero_rounding = {dual_zero_rounding}", flush=True)
                 print(f"dual_zero_score_eps = {dual_zero_score_eps}", flush=True)
