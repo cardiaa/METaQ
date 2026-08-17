@@ -1038,7 +1038,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, p
                 # (epoch >= entropy_warmup_epochs + 1) lets xi converge before we
                 # start pruning the forward.
                 if (prune_mode == "z"
-                        and epoch >= entropy_warmup_epochs + 1
+                        and epoch >= entropy_warmup_epochs
                         and z_prune_masks[q_state] is not None):
                     q_flat = torch.where(
                         z_prune_masks[q_state],
@@ -1963,7 +1963,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, p
         # (from the converged xi) and hold it for every forward of this epoch.
         # Stable counterpart of the per-step recompute that destabilised test_110.
         # Pruning starts after one epoch of dual warmup.
-        if prune_mode == "z" and grid_reset_done and epoch >= entropy_warmup_epochs + 1:
+        if prune_mode == "z" and grid_reset_done and epoch >= entropy_warmup_epochs:
             with torch.no_grad():
                 total_n_fz = 0
                 total_pruned_fz = 0
@@ -3423,9 +3423,13 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, p
                             y_means.append(y_star_diag.mean().item())
                             z_means.append(z_diag.mean().item())
                             z_fracs.append((z_diag > z_prune_threshold).float().mean().item())
-                            z_p10s.append(torch.quantile(z_diag, 0.10).item())
-                            z_p50s.append(torch.quantile(z_diag, 0.50).item())
-                            z_p90s.append(torch.quantile(z_diag, 0.90).item())
+                            # torch.quantile does not support tensors of AlexNet
+                            # scale on Leonardo; use the existing bounded-memory
+                            # percentile helper instead.
+                            z_q = _percentiles_large_tensor(z_diag, [0.10, 0.50, 0.90])
+                            z_p10s.append(z_q[0].item())
+                            z_p50s.append(z_q[1].item())
+                            z_p90s.append(z_q[2].item())
                             pm = _mask_to_apply(p_idx, wl, vl)   # test_144: frozen if on
                             prune_fracs.append(pm.float().mean().item())
                             eff_thr = thr if thr is not None else (mag_prune_ratio * vl.abs().min())
