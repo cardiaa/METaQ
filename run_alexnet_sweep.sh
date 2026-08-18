@@ -6,7 +6,7 @@
 #SBATCH --ntasks=4
 #SBATCH --gres=gpu:4
 #SBATCH --cpus-per-task=32
-#SBATCH --time=02:00:00
+#SBATCH --time=03:00:00
 #SBATCH --output=/dev/null
 #SBATCH --error=/dev/null
 
@@ -18,6 +18,8 @@
 # z-sparsity per quantized tensor; T2_l is calibrated from the corresponding
 # |w_l| quantile after the diagnostic phase. Argument 21 couples the LSQ-scale
 # learning-rate schedule to the weight schedule.
+# Test_219 configuration: A=30, B=1, C=24, D=5, with targets at 90% of the
+# test_218 values.
 
 N_EPOCHS=${1:-20}
 ENTROPY_COEFF=${2:-5e-8}
