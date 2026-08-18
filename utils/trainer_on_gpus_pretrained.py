@@ -212,7 +212,9 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, p
                        adiabatic_accuracy_target=None, adiabatic_accuracy_tolerance=0.2,
                        adiabatic_step=0.02, adiabatic_backoff=0.04,
                        adiabatic_patience=2, evaluate_initial_model=False,
-                       z_pruning=False):
+                       z_pruning=False,
+                       diagnostic_epochs=0, metaq_ramp_epochs=0,
+                       metaq_flat_epochs=0, layerwise_t2_targets=None):
     """Train and evaluate a model with optional entropy regularization.
 
     This function is intentionally self-contained because the compression
@@ -348,6 +350,20 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, p
     # form), whose gradient 2*perspective_coeff*w/y* is applied EXPLICITLY per step.  The plain
     # SGD weight_decay (which would add a second, standard perspective_coeff*w ridge) is disabled
     # to avoid double-counting.
+    phase_schedule_enabled = (
+        diagnostic_epochs > 0
+        or metaq_ramp_epochs > 0
+        or layerwise_t2_targets is not None
+    )
+    if phase_schedule_enabled:
+        if min(diagnostic_epochs, metaq_ramp_epochs, metaq_flat_epochs) < 0:
+            raise ValueError("Phase epoch counts must be non-negative.")
+        if n_epochs != diagnostic_epochs + metaq_ramp_epochs + metaq_flat_epochs:
+            raise ValueError(
+                "n_epochs must equal diagnostic_epochs + metaq_ramp_epochs + "
+                "metaq_flat_epochs."
+            )
+
     wd_init = (
         float(optimizer_weight_decay)
         if optimizer_weight_decay is not None
@@ -369,6 +385,8 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, p
     # cosine decay in the TAIL only, after the ramp completes.
     if use_perspective:
         _ramp_end = entropy_warmup_epochs + max(0, sparsity_warmup_epochs)   # epoch (0-based) at full sparsity
+        if phase_schedule_enabled:
+            _ramp_end = diagnostic_epochs + metaq_ramp_epochs
         _schedule_end = (
             centroid_freeze_epoch - 1
             if train_centroids and centroid_freeze_epoch > 0
@@ -417,6 +435,23 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, p
             # flat and the cumulative exposure can be decoupled from its rate.
             if flat_schedule:
                 return 1.0
+            if phase_schedule_enabled:
+                if e < diagnostic_epochs:
+                    return 1.0
+                if metaq_ramp_epochs <= 0:
+                    return _lr_floor
+                p = min(
+                    1.0,
+                    max(
+                        0.0,
+                        (e - diagnostic_epochs + 1) / float(metaq_ramp_epochs),
+                    ),
+                )
+                # The common C phase carries every ramp; D then holds every
+                # scheduled quantity, including weight and LSQ-scale LRs, flat.
+                return _lr_floor + (1.0 - _lr_floor) * 0.5 * (
+                    1.0 + math.cos(math.pi * p)
+                )
             if e <= _ramp_end:
                 return 1.0
             p = min(1.0, (e - _ramp_end) / _decay_len)
@@ -451,6 +486,20 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, p
     num_param_tensors = len(params_for_quant)
     if num_param_tensors == 0:
         raise ValueError(f"{model_name} has no convolutional or linear weights to quantize.")
+
+    if layerwise_t2_targets is not None:
+        layerwise_t2_targets = [float(v) for v in layerwise_t2_targets]
+        if len(layerwise_t2_targets) != num_param_tensors:
+            raise ValueError(
+                f"layerwise_t2_targets has {len(layerwise_t2_targets)} values, "
+                f"but the model has {num_param_tensors} quantized tensors."
+            )
+        if any(v < 0.0 or v >= 1.0 for v in layerwise_t2_targets):
+            raise ValueError("Every layerwise T2 target sparsity must be in [0, 1).")
+
+    layerwise_t2_final = None
+    layerwise_t2_current = [float(sparsity_coeff)] * num_param_tensors
+    layerwise_t2_quantiles = None
 
     if layer_C is None:
         C_by_layer = [int(C)] * num_param_tensors
@@ -1406,7 +1455,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, p
 
         return prune_mask, z_mass
 
-    def _z_prune_mask(w_flat, v_layer, xi_layer, step_scale=None):
+    def _z_prune_mask(w_flat, v_layer, xi_layer, step_scale=None, t2_coeff=None):
         """
         Optimization-driven pruning mask.
 
@@ -1425,7 +1474,9 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, p
         # controlled by ``delta``.  This is the path used by the T1/T2
         # ablations: z_i = 1-y_i and the hard deployment rule is z_i>0.5.
         if use_perspective:
-            y_star = _perspective_y_star(w_flat, v_layer, step_scale=step_scale)
+            y_star = _perspective_y_star(
+                w_flat, v_layer, step_scale=step_scale, t2_coeff=t2_coeff
+            )
             return (1.0 - y_star).clamp_(0.0, 1.0) > z_prune_threshold
 
         xi_layer = xi_layer.to(dtype=torch.float32, device=device)
@@ -1497,7 +1548,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, p
     # Near w = 0 the push tends to 2*sqrt(perspective_coeff*sparsity_coeff)*sign(w): an L1 term that drives
     # small weights to 0, so the magnitude pruning below removes them cleanly.
     # ------------------------------------------------------------------
-    def _perspective_y_star(w_flat, v_layer, step_scale=None):
+    def _perspective_y_star(w_flat, v_layer, step_scale=None, t2_coeff=None):
         aw = w_flat.abs()
         # Feasibility floor: w/y must be representable, i.e. w/y in [min v, max v].
         # For w>0 that means y >= w / max_positive_bucket; for w<0, y >= |w| / |min
@@ -1511,8 +1562,9 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, p
             # real extreme level of weight i is step_scale_i * q_edge.
             side_max = (side_max * step_scale).clamp_min(1e-12)
         ymin_c = (aw / side_max).clamp_(max=1.0)
-        if sparsity_coeff > 0.0:
-            scale = math.sqrt(perspective_coeff / sparsity_coeff)
+        effective_t2 = sparsity_coeff if t2_coeff is None else float(t2_coeff)
+        if effective_t2 > 0.0:
+            scale = math.sqrt(perspective_coeff / effective_t2)
             y_int = (aw * scale).clamp_(max=1.0)
         else:
             # No sparsity term: keep full mass (plain ridge, y* = 1).
@@ -1520,14 +1572,16 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, p
         # y* = max(interior stationary point, feasibility floor), capped at 1.
         return torch.maximum(y_int, ymin_c)
 
-    def _perspective_ridge_grad(w_flat, v_layer):
-        y_star = _perspective_y_star(w_flat, v_layer)
+    def _perspective_ridge_grad(w_flat, v_layer, t2_coeff=None):
+        y_star = _perspective_y_star(w_flat, v_layer, t2_coeff=t2_coeff)
         g = torch.zeros_like(w_flat)
         nz = y_star > 0.0
         g[nz] = 2.0 * perspective_coeff * w_flat[nz] / y_star[nz]
         return g
 
-    def _zero_entropy_perspective_gradients(w_flat, v_layer, scale=None):
+    def _zero_entropy_perspective_gradients(
+        w_flat, v_layer, scale=None, t2_coeff=None
+    ):
         """Exact dphi/dw and equality multiplier when the bucket costs are zero.
 
         With entropy_coeff=0 the inner problem reduces to a scalar minimization in y, so
@@ -1539,7 +1593,10 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, p
         quantization. ``v_layer`` is then the INTEGER codebook, so the real
         extreme level of weight i is scale_i * q_edge.
         """
-        y_star = _perspective_y_star(w_flat, v_layer, step_scale=scale)
+        effective_t2 = sparsity_coeff if t2_coeff is None else float(t2_coeff)
+        y_star = _perspective_y_star(
+            w_flat, v_layer, step_scale=scale, t2_coeff=effective_t2
+        )
         beta_constraint = torch.zeros_like(w_flat)
         beta_star = torch.zeros_like(w_flat)
         nonzero = w_flat != 0
@@ -1560,7 +1617,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, p
             rtol=1e-5,
             atol=1e-7,
         )
-        boundary_multiplier = sparsity_coeff / edge_v - perspective_coeff * edge_v
+        boundary_multiplier = effective_t2 / edge_v - perspective_coeff * edge_v
         beta_constraint[at_floor] = boundary_multiplier[at_floor]
         beta_star[nonzero] = (
             beta_constraint[nonzero]
@@ -1843,10 +1900,70 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, p
     for epoch in range(n_epochs):
         should_eval_epoch = ((epoch + 1) % metrics_interval == 0) or (epoch == n_epochs - 1)
 
+        if phase_schedule_enabled:
+            if epoch < diagnostic_epochs:
+                phase_name = "diagnostic"
+                metaq_ramp_fraction = 0.0
+            elif metaq_ramp_epochs > 0 and epoch < diagnostic_epochs + metaq_ramp_epochs:
+                phase_name = "metaq_ramp"
+                ramp_step = epoch - diagnostic_epochs + 1
+                metaq_ramp_fraction = ramp_step / float(metaq_ramp_epochs)
+            else:
+                phase_name = "metaq_flat"
+                metaq_ramp_fraction = 1.0
+
+            # Calibrate once, from the weights delivered by the complete
+            # diagnostic phase. q_p(|w_l|) gives the T2_l that makes z>0.5
+            # equivalent to pruning the requested p fraction at calibration.
+            if (
+                layerwise_t2_targets is not None
+                and layerwise_t2_final is None
+                and epoch >= diagnostic_epochs
+            ):
+                with torch.no_grad():
+                    layerwise_t2_quantiles = []
+                    layerwise_t2_final = []
+                    for p_idx, param in enumerate(params_for_quant):
+                        target = layerwise_t2_targets[p_idx]
+                        w_abs = param.detach().reshape(-1).float().abs()
+                        if target <= 0.0:
+                            quantile = 0.0
+                            t2_final = 0.0
+                        else:
+                            quantile = float(
+                                _percentiles_large_tensor(w_abs, [target])[0].item()
+                            )
+                            t2_final = 4.0 * perspective_coeff * quantile ** 2
+                        layerwise_t2_quantiles.append(quantile)
+                        layerwise_t2_final.append(t2_final)
+                    if local_rank == 0:
+                        print(
+                            "[LAYERWISE T2 CALIBRATION] "
+                            f"epoch={epoch + 1}, targets={layerwise_t2_targets}, "
+                            f"abs_weight_quantiles={layerwise_t2_quantiles}, "
+                            f"T2_final={layerwise_t2_final}",
+                            flush=True,
+                        )
+
+            if layerwise_t2_final is not None:
+                layerwise_t2_current = [
+                    value * metaq_ramp_fraction for value in layerwise_t2_final
+                ]
+            else:
+                layerwise_t2_current = [
+                    float(sparsity_coeff) * metaq_ramp_fraction
+                ] * num_param_tensors
+        else:
+            phase_name = "legacy"
+            metaq_ramp_fraction = 1.0
+            layerwise_t2_current = [float(sparsity_coeff)] * num_param_tensors
+
         # entropy_coeff schedule: no entropy during warmup, then a gentle exponential ramp
         # from entropy_coeff/8 to entropy_coeff.  This avoids abruptly injecting a large custom
         # gradient after many epochs of standard training.
-        if entropy_coeff > 0 and epoch >= entropy_warmup_epochs:
+        if phase_schedule_enabled:
+            entropy_coeff_current = entropy_coeff * metaq_ramp_fraction
+        elif entropy_coeff > 0 and epoch >= entropy_warmup_epochs:
             if flat_schedule:
                 # test_133: no ramp.  entropy_coeff is on at full value from the first
                 # post-warmup epoch, so every active epoch spends exactly the same
@@ -1857,6 +1974,23 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, p
                 entropy_coeff_current = entropy_coeff * (1.0 - np.exp(-t)) + (entropy_coeff / 8.0) * np.exp(-t)
         else:
             entropy_coeff_current = 0.0
+
+        if local_rank == 0 and phase_schedule_enabled:
+            scale_lr_now = (
+                scale_optimizer.param_groups[0]["lr"]
+                if scale_optimizer is not None
+                else None
+            )
+            print(
+                "[PHASE SCHEDULE] "
+                f"epoch={epoch + 1}, phase={phase_name}, "
+                f"ramp_fraction={metaq_ramp_fraction:.6f}, "
+                f"T3_current={entropy_coeff_current:.6e}, "
+                f"T2_current={layerwise_t2_current}, "
+                f"weight_lr={optimizer.param_groups[0]['lr']:.6e}, "
+                f"lsq_scale_lr={scale_lr_now}",
+                flush=True,
+            )
 
         if (
             train_centroids
@@ -1963,24 +2097,34 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, p
         # (from the converged xi) and hold it for every forward of this epoch.
         # Stable counterpart of the per-step recompute that destabilised test_110.
         # Pruning starts after one epoch of dual warmup.
-        if prune_mode == "z" and grid_reset_done and epoch >= entropy_warmup_epochs:
+        if (
+            prune_mode == "z"
+            and grid_reset_done
+            and metaq_ramp_fraction > 0.0
+            and (phase_schedule_enabled or epoch >= entropy_warmup_epochs)
+        ):
             with torch.no_grad():
                 total_n_fz = 0
                 total_pruned_fz = 0
+                layer_pruned_fz = []
                 for p_idx, param in enumerate(params_for_quant):
                     w_layer = param.detach().reshape(-1)
                     mask = _z_prune_mask(
                         w_layer, v_list[p_idx], xi_list[p_idx],
                         _metaq_scale_flat(p_idx, param),
+                        layerwise_t2_current[p_idx],
                     )
                     z_prune_masks[p_idx] = mask
                     total_n_fz += mask.numel()
                     total_pruned_fz += int(mask.sum().item())
+                    layer_pruned_fz.append(float(mask.float().mean().item()))
                 if local_rank == 0:
                     frac_fz = 100.0 * total_pruned_fz / max(1, total_n_fz)
                     print(
                         f"[FROZEN Z-MASK] epoch={epoch + 1}, "
-                        f"pruned={frac_fz:.2f}%, delta={delta}",
+                        f"pruned={frac_fz:.2f}%, "
+                        f"per_layer={[round(100.0 * v, 3) for v in layer_pruned_fz]}, "
+                        f"T2_current={layerwise_t2_current}",
                         flush=True
                     )
 
@@ -2246,6 +2390,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, p
                                     scale=(
                                         scale if lsq_per_channel else None
                                     ),
+                                    t2_coeff=layerwise_t2_current[p_idx],
                                 )
                             )
                             param.grad.add_((beta_star * in_range).view_as(param))
@@ -2271,7 +2416,8 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, p
                             )
                         else:
                             ridge_g = _perspective_ridge_grad(
-                                w_layer, v_list[p_idx]
+                                w_layer, v_list[p_idx],
+                                t2_coeff=layerwise_t2_current[p_idx],
                             )
                             param.grad.add_(ridge_g.view_as(param))
 
@@ -2329,7 +2475,8 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, p
                         ) = FISTA_perspective_leonardo(
                             xi_list[p_idx], v_list[p_idx], metaq_weight, C_layer,
                             float(metaq_weight.numel()), lower_c,
-                            perspective_coeff, entropy_coeff_current, sparsity_coeff,
+                            perspective_coeff, entropy_coeff_current,
+                            layerwise_t2_current[p_idx],
                             subgradient_step, device, max_iterations,
                             dual_step,
                             scale=metaq_scale,
@@ -2541,7 +2688,9 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, p
                         # moment as FISTA's internal z debug.
                         if prune_mode == "z":
                             z_recompute_sum = z_recompute_sum + _z_prune_mask(
-                                w_layer, v_list[p_idx], xi_list[p_idx]
+                                w_layer, v_list[p_idx], xi_list[p_idx],
+                                _metaq_scale_flat(p_idx, param),
+                                layerwise_t2_current[p_idx],
                             ).float().mean()
                             z_recompute_count += 1
 
@@ -2713,7 +2862,8 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, p
                         xi_list[p_idx], _, _ = FISTA_prox_leonardo(
                             xi_list[p_idx], v_list[p_idx], u_layer, C_layer,
                             float(u_layer.numel()), lower_c,
-                            perspective_coeff, entropy_coeff_current, sparsity_coeff,
+                            perspective_coeff, entropy_coeff_current,
+                            layerwise_t2_current[p_idx],
                             prox_gamma, device, max_iterations, dual_step,
                         )
                         # xi is updated through a non-deterministic scatter_add, so
@@ -2730,7 +2880,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, p
                                 else xi_list[p_idx])
                         _, z_star, y_star = prox_perspective_leonardo(
                             xi_b, v_list[p_idx], u_layer, C_layer, device,
-                            perspective_coeff, sparsity_coeff, prox_gamma,
+                            perspective_coeff, layerwise_t2_current[p_idx], prox_gamma,
                         )
                         if local_rank == 0:
                             prox_disp_sum += (z_star - u_layer).abs().mean().item()
@@ -2871,6 +3021,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, p
                                                 quant_state,
                                                 params_for_quant[quant_state],
                                             ),
+                                            layerwise_t2_current[quant_state],
                                         )
                                 else:
                                     prune_mask = (
@@ -3477,7 +3628,11 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, p
                             wl = param.detach().reshape(-1)
                             vl = v_list[p_idx]
                             thr = target_prune_thresholds[p_idx]
-                            y_star_diag = _perspective_y_star(wl, vl)
+                            y_star_diag = _perspective_y_star(
+                                wl, vl,
+                                step_scale=_metaq_scale_flat(p_idx, param),
+                                t2_coeff=layerwise_t2_current[p_idx],
+                            )
                             z_diag = (1.0 - y_star_diag).clamp(0.0, 1.0)
                             y_means.append(y_star_diag.mean().item())
                             z_means.append(z_diag.mean().item())
@@ -3489,7 +3644,12 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, p
                             z_p10s.append(z_q[0].item())
                             z_p50s.append(z_q[1].item())
                             z_p90s.append(z_q[2].item())
-                            pm = _mask_to_apply(p_idx, wl, vl)   # test_144: frozen if on
+                            if prune_mode == "z":
+                                pm = z_prune_masks[p_idx]
+                                if pm is None:
+                                    pm = torch.zeros_like(wl, dtype=torch.bool)
+                            else:
+                                pm = _mask_to_apply(p_idx, wl, vl)
                             prune_fracs.append(pm.float().mean().item())
                             eff_thr = thr if thr is not None else (mag_prune_ratio * vl.abs().min())
                             thr_list.append(float(eff_thr))
@@ -3499,11 +3659,17 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, p
                         mean_z = sum(z_means) / max(1, len(z_means))
                         mean_z_frac = sum(z_fracs) / max(1, len(z_fracs))
                         overall_prune = n_pruned / max(1, n_tot)
-                        l1_push = 2.0 * math.sqrt(perspective_coeff * sparsity_coeff) if sparsity_coeff > 0 else 0.0
+                        l1_push_by_layer = [
+                            2.0 * math.sqrt(perspective_coeff * t2)
+                            if t2 > 0 else 0.0
+                            for t2 in layerwise_t2_current
+                        ]
                         print(
                             f"perspective_debug: perspective_coeff={perspective_coeff:.3e}, sparsity_coeff={sparsity_coeff:.3e}, "
+                            f"phase={phase_name}, ramp_fraction={metaq_ramp_fraction:.4f}, "
+                            f"layer_T2_current={layerwise_t2_current}, "
                             f"target_sparsity={target_sparsity}, mag_prune_ratio={mag_prune_ratio:.3f}, "
-                            f"l1_push_near_zero={l1_push:.3e}, "
+                            f"l1_push_near_zero_by_layer={l1_push_by_layer}, "
                             f"mean_y_star={mean_y:.4f}, mean_z_star={mean_z:.4f}, "
                             f"z_gt_0.5_frac_mean_layers={mean_z_frac:.4%}, "
                             f"z_quantiles_mean_layers=[{sum(z_p10s)/max(1,len(z_p10s)):.4f},"
@@ -3623,6 +3789,11 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, p
                     "lsq_per_channel": lsq_per_channel,
                     "entropy_coeff": entropy_coeff,
                     "sparsity_coeff": sparsity_coeff,
+                    "layerwise_t2_targets": layerwise_t2_targets,
+                    "layerwise_t2_final": layerwise_t2_final,
+                    "diagnostic_epochs": diagnostic_epochs,
+                    "metaq_ramp_epochs": metaq_ramp_epochs,
+                    "metaq_flat_epochs": metaq_flat_epochs,
                 },
             }
             tmp_path = checkpoint_path + ".tmp"

@@ -6,16 +6,18 @@
 #SBATCH --ntasks=4
 #SBATCH --gres=gpu:4
 #SBATCH --cpus-per-task=32
-#SBATCH --time=10:00:00
+#SBATCH --time=02:00:00
 #SBATCH --output=/dev/null
 #SBATCH --error=/dev/null
 
 # First untuned METaQ sweep point for pretrained ImageNet AlexNet.
 # It deliberately reuses the cross-architecture regularizer recipe (C=16,
 # T1/T2/T3 = 1e-5/1e-7/3e-8) but keeps AlexNet's pretrained fine-tuning LR.
-# Pass the number of epochs as the first sbatch argument: 3 for calibration,
-# 20 for the full run. The second argument overrides entropy_coeff and the
-# third overrides the per-GPU batch size (default 128, global 2048 on 16 GPUs).
+# Arguments 17--19 split the run into diagnostic, common-ramp, and common-flat
+# phases and must sum to argument 1. Argument 20 optionally supplies one target
+# z-sparsity per quantized tensor; T2_l is calibrated from the corresponding
+# |w_l| quantile after the diagnostic phase. Argument 21 couples the LSQ-scale
+# learning-rate schedule to the weight schedule.
 
 N_EPOCHS=${1:-20}
 ENTROPY_COEFF=${2:-5e-8}
@@ -33,6 +35,16 @@ ENTROPY_WARMUP=${13:-1}
 Z_PRUNING=${14:-N}
 SPARSITY_COEFF=${15:-1e-7}
 DISTILL_ALPHA_OVERRIDE=${16:-0.5}
+DIAGNOSTIC_EPOCHS=${17:-0}
+METAQ_RAMP_EPOCHS=${18:-0}
+METAQ_FLAT_EPOCHS=${19:-$N_EPOCHS}
+LAYERWISE_T2_TARGETS=${20:-}
+LSQ_SCALE_LR_SCHEDULE=${21:-N}
+
+if [ "$N_EPOCHS" -ne $((DIAGNOSTIC_EPOCHS + METAQ_RAMP_EPOCHS + METAQ_FLAT_EPOCHS)) ]; then
+    echo "Invalid epoch schedule: total=$N_EPOCHS but diagnostic=$DIAGNOSTIC_EPOCHS + metaq_ramp=$METAQ_RAMP_EPOCHS + metaq_flat=$METAQ_FLAT_EPOCHS" >&2
+    exit 2
+fi
 if [ "$NO_METAQ" = "Y" ]; then
     PERSPECTIVE_COEFF=0
     ENTROPY_COEFF=0
@@ -98,6 +110,10 @@ srun --ntasks=$SLURM_NTASKS --ntasks-per-node=1 bash -lc '
         --val_workers 2 \
         --batch_size '"$BATCH_SIZE"' \
         --n_epochs '"$N_EPOCHS"' \
+        --diagnostic_epochs '"$DIAGNOSTIC_EPOCHS"' \
+        --metaq_ramp_epochs '"$METAQ_RAMP_EPOCHS"' \
+        --metaq_flat_epochs '"$METAQ_FLAT_EPOCHS"' \
+        --layerwise_t2_targets '"$LAYERWISE_T2_TARGETS"' \
         --lr '"$LR"' \
         --optimizer_weight_decay 1e-4 \
         --perspective_coeff '"$PERSPECTIVE_COEFF"' \
@@ -113,6 +129,7 @@ srun --ntasks=$SLURM_NTASKS --ntasks-per-node=1 bash -lc '
         --lsq_init mse \
         --lsq_grad_scaling N \
         --lsq_per_channel '"$LSQ_PER_CHANNEL"' \
+        --lsq_scale_lr_schedule '"$LSQ_SCALE_LR_SCHEDULE"' \
         --joint_lsq_metaq Y \
         --distillation '"$DISTILLATION"' \
         --distill_alpha '"$DISTILL_ALPHA"' \

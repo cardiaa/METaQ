@@ -888,6 +888,10 @@ def print_config(model_name, args, h, local_rank_to_print):
     print(f"zeta={h['zeta']}", flush=True)
     print(f"l={h['l']}", flush=True)
     print(f"n_epochs={h['n_epochs']}", flush=True)
+    print(f"diagnostic_epochs={h.get('diagnostic_epochs', 0)}", flush=True)
+    print(f"metaq_ramp_epochs={h.get('metaq_ramp_epochs', 0)}", flush=True)
+    print(f"metaq_flat_epochs={h.get('metaq_flat_epochs', 0)}", flush=True)
+    print(f"layerwise_t2_targets={h.get('layerwise_t2_targets')}", flush=True)
     print(f"max_iterations={h['max_iterations']}", flush=True)
     print(f"train_optimizer={h['train_optimizer']}", flush=True)
     print(f"optimizer_weight_decay={h['optimizer_weight_decay']}", flush=True)
@@ -983,6 +987,19 @@ def main():
     parser.add_argument("--train_workers", type=int, default=1, help="Number of DataLoader workers for training")
     parser.add_argument("--val_workers", type=int, default=2, help="Number of DataLoader workers for validation")
     parser.add_argument("--n_epochs", type=int, default=None, help="Override number of epochs (if set)")
+    parser.add_argument("--diagnostic_epochs", type=int, default=0, help="Initial epochs with METaQ coefficients disabled")
+    parser.add_argument("--metaq_ramp_epochs", type=int, default=0, help="Epochs of METaQ ramp")
+    parser.add_argument("--metaq_flat_epochs", type=int, default=0, help="Final epochs at constant METaQ target")
+    parser.add_argument(
+        "--layerwise_t2_targets",
+        type=str,
+        default=None,
+        help=(
+            "Comma-separated target z-pruning fractions, one per quantized "
+            "tensor. T2_l is calibrated after diagnostic_epochs from "
+            "T2_l=4*T1*q_target(|w_l|)^2."
+        ),
+    )
     parser.add_argument("--batch_size", type=int, default=None, help="Override per-GPU batch size (if set)")
     parser.add_argument("--lr", type=float, default=None, help="Override learning rate (if set)")
     parser.add_argument(
@@ -1141,7 +1158,7 @@ def main():
         "--epoch_fraction",
         type=float,
         default=1.0,
-        help="Fraction of ImageNet seen per epoch, e.g. 0.25 means 25%"
+        help="Fraction of ImageNet seen per epoch, e.g. 0.25 means 25%%"
     )
     parser.add_argument(
         "--C",
@@ -1191,6 +1208,29 @@ def main():
 
     if args.n_epochs is not None:
         h["n_epochs"] = args.n_epochs
+    h["diagnostic_epochs"] = args.diagnostic_epochs
+    h["metaq_ramp_epochs"] = args.metaq_ramp_epochs
+    h["metaq_flat_epochs"] = args.metaq_flat_epochs
+    h["layerwise_t2_targets"] = (
+        [float(s) for s in args.layerwise_t2_targets.split(",") if s.strip()]
+        if args.layerwise_t2_targets
+        else None
+    )
+    phase_schedule_requested = (
+        h["diagnostic_epochs"] > 0
+        or h["metaq_ramp_epochs"] > 0
+        or h["metaq_flat_epochs"] > 0
+        or h["layerwise_t2_targets"] is not None
+    )
+    if (
+        phase_schedule_requested
+        and h["n_epochs"]
+        != h["diagnostic_epochs"] + h["metaq_ramp_epochs"] + h["metaq_flat_epochs"]
+    ):
+        raise ValueError(
+            "Epoch schedule mismatch: n_epochs must equal diagnostic_epochs + "
+            "metaq_ramp_epochs + metaq_flat_epochs"
+        )
     if args.batch_size is not None:
         h["batch_size"] = args.batch_size
     if args.lr is not None:
@@ -1421,6 +1461,10 @@ def main():
         sparsity_schedule=h["sparsity_schedule"],
         freeze_mask=h["freeze_mask"],
         z_pruning=h["z_pruning"],
+        diagnostic_epochs=h["diagnostic_epochs"],
+        metaq_ramp_epochs=h["metaq_ramp_epochs"],
+        metaq_flat_epochs=h["metaq_flat_epochs"],
+        layerwise_t2_targets=h["layerwise_t2_targets"],
         train_sparse=h["train_sparse"],
         use_quantization=h["use_quantization"],
         quantizer=h["quantizer"],
