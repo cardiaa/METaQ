@@ -388,9 +388,26 @@ def build_model_and_hparams(model_name: str, device: torch.device, args, local_r
 
         h.update(
             C=16,
-            # Pretrained fine-tuning uses a small learning rate to avoid
-            # destroying the already trained ImageNet representation.
-            lr=1e-4 if args.pretrained == "Y" else 1e-1,
+            # Fine-tuning rate for the pretrained checkpoint, at the historical
+            # per-GPU batch of 128.
+            #
+            # The old value here was 1e-4, copied from the DeiT-Small recipe,
+            # which uses ADAM: there lr multiplies a normalized step, here it
+            # multiplies the raw gradient, so the same number means something
+            # entirely different. Measured consequence: over ten epochs of
+            # test_205 the whole AlexNet weight distribution moved by 0.02%
+            # (first percentile -3.174981e-02 -> -3.174318e-02) and the total
+            # displacement budget was about 0.2 quantization steps, against 176
+            # for the lossless ResNet-18 of test_168. QAT cannot reassign a
+            # single weight to a different level in that regime.
+            #
+            # 2e-3 is calibrated for GLOBAL batch 1024: AlexNet's own
+            # from-scratch per-sample rate (1e-2 at batch 128, i.e. 7.8e-6 per
+            # sample) divided by about forty, which is exactly the safety factor
+            # test_168 uses on ResNet-18 (1e-1 at 256 from scratch, 1e-2 at 1024
+            # for QAT). Rescale it linearly with the global batch. The launcher
+            # overrides it; this is only the fallback.
+            lr=2e-3 if args.pretrained == "Y" else 1e-1,
             #batch_size=2048,
             batch_size=128,  # Leonardo default; command-line arguments can override it.
             #lambda_reg=5e-4,
@@ -901,6 +918,8 @@ def print_config(model_name, args, h, local_rank_to_print):
     print(f"use_quantization={h['use_quantization']}", flush=True)
     print(f"quantizer={h['quantizer']}", flush=True)
     print(f"lsq_scale_lr={h['lsq_scale_lr']}", flush=True)
+    print(f"lsq_scale_lr_mode={h['lsq_scale_lr_mode']}", flush=True)
+    print(f"lr_warmup_epochs={h['lr_warmup_epochs']}", flush=True)
     print(f"lsq_init={h['lsq_init']}", flush=True)
     print(f"lsq_grad_scaling={h['lsq_grad_scaling']}", flush=True)
     print(f"lsq_per_channel={h['lsq_per_channel']}", flush=True)
@@ -1052,6 +1071,32 @@ def main():
         default="Y",
         choices=["Y", "N"],
         help="Apply the LSQ 1/sqrt(N*Qp) scale-gradient normalization.",
+    )
+    parser.add_argument(
+        "--lsq_scale_lr_mode",
+        type=str,
+        default="absolute",
+        choices=["absolute", "relative"],
+        help=(
+            "How --lsq_scale_lr is interpreted. 'absolute' is the historical "
+            "behaviour: one Adam rate for every step size, which under Adam is "
+            "an absolute displacement per step and therefore a wildly "
+            "different RELATIVE rate per tensor. 'relative' multiplies it by "
+            "each tensor's own initial step size, making the relative "
+            "displacement uniform; 1e-3 reproduces the conditioning of the "
+            "lossless test_168 on ResNet-18."
+        ),
+    )
+    parser.add_argument(
+        "--lr_warmup_epochs",
+        type=int,
+        default=0,
+        help=(
+            "Linear warm-up on the weight (and step-size) learning rate over "
+            "the first K epochs. Epoch e runs at (e+1)/(K+1) of the base rate. "
+            "Recommended for networks without normalization layers at large "
+            "global batch."
+        ),
     )
     parser.add_argument(
         "--lsq_scale_lr_schedule",
@@ -1273,6 +1318,8 @@ def main():
     h["use_quantization"] = (args.quantization == "Y")
     h["quantizer"] = args.quantizer
     h["lsq_scale_lr"] = args.lsq_scale_lr
+    h["lsq_scale_lr_mode"] = args.lsq_scale_lr_mode
+    h["lr_warmup_epochs"] = args.lr_warmup_epochs
     h["lsq_init"] = args.lsq_init
     h["lsq_grad_scaling"] = (args.lsq_grad_scaling == "Y")
     h["lsq_per_channel"] = (args.lsq_per_channel == "Y")
@@ -1471,12 +1518,14 @@ def main():
         use_quantization=h["use_quantization"],
         quantizer=h["quantizer"],
         lsq_scale_lr=h["lsq_scale_lr"],
+        lsq_scale_lr_mode=h["lsq_scale_lr_mode"],
         lsq_init=h["lsq_init"],
         lsq_grad_scaling=h["lsq_grad_scaling"],
         lsq_per_channel=h["lsq_per_channel"],
         min_lr=h["min_lr"],
         lsq_scale_lr_schedule=h["lsq_scale_lr_schedule"],
         lr_decay_epochs=h["lr_decay_epochs"],
+        lr_warmup_epochs=h["lr_warmup_epochs"],
         distillation=h["distillation"],
         distill_alpha=h["distill_alpha"],
         distill_tau=h["distill_tau"],

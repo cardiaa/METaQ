@@ -69,13 +69,26 @@ def mse_weight_step_size(
     weight: torch.Tensor,
     q: torch.Tensor,
     num_candidates: int = 100,
-    range_margin: float = 0.5,
+    range_margin: float = 0.0,
 ) -> float:
-    """Per-tensor symmetric MSE range search used by the reference paper.
+    """Per-tensor symmetric MSE range search.
 
-    This mirrors its grid estimator: search 100 positive clipping thresholds
-    between ``(max(abs(w)) + 0.5) / 100`` and ``max(abs(w)) + 0.5`` and choose
-    the scale whose signed uniform quantization minimizes squared weight error.
+    Search ``num_candidates`` positive clipping thresholds between
+    ``(max(abs(w)) + margin) / num_candidates`` and ``max(abs(w)) + margin`` and
+    choose the scale whose signed uniform quantization minimizes the squared
+    weight error.
+
+    The reference implementation uses ``range_margin=0.5`` because it searches
+    ACTIVATION ranges, which are O(1). On weights that additive margin destroys
+    the resolution of the search: with 4 bits the optimal step size sits at
+    roughly ``0.4 * max|w| / q_p``, so the winning candidate has index
+    ``~40 * max|w| / (max|w| + margin)`` out of ``num_candidates``. Measured on
+    the real AlexNet weights with ``margin=0.5``: index 4/100 for
+    ``classifier.1`` (37.7M parameters, 25% resolution on the step size), 5/100
+    for ``classifier.4``, 8/100 for ``features.3``. Per output channel it is
+    worse still, since narrow channels have an even smaller ``max|w|``. The
+    default is therefore 0, which spreads the candidates over the range that
+    actually matters.
     """
     if num_candidates <= 0:
         raise ValueError("num_candidates must be positive.")
@@ -105,7 +118,7 @@ def mse_weight_step_size_per_channel(
     weight: torch.Tensor,
     q: torch.Tensor,
     num_candidates: int = 100,
-    range_margin: float = 0.5,
+    range_margin: float = 0.0,
 ) -> torch.Tensor:
     """Per-output-channel version of :func:`mse_weight_step_size`.
 
@@ -114,7 +127,8 @@ def mse_weight_step_size_per_channel(
     a tensor of shape ``(O,)``. The candidate grid is built from each channel's
     own weight range, which is the entire point of the per-channel quantizer:
     channels whose weights span a narrow interval no longer have to share a
-    step size with the widest channel in the tensor.
+    step size with the widest channel in the tensor. See
+    :func:`mse_weight_step_size` for why ``range_margin`` defaults to 0.
     """
     if num_candidates <= 0:
         raise ValueError("num_candidates must be positive.")

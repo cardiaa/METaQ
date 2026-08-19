@@ -200,10 +200,11 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, p
                        sparsity_schedule=None, freeze_mask=False,
                        train_sparse=False, use_quantization=True,
                        quantizer="fixed", lsq_scale_lr=1e-5,
+                       lsq_scale_lr_mode="absolute",
                        lsq_init="lsq", lsq_grad_scaling=True, lsq_per_channel=False,
                        distillation=False, distill_alpha=0.5, distill_tau=1.0,
                        min_lr=None, lsq_scale_lr_schedule=False,
-                       lr_decay_epochs=None,
+                       lr_decay_epochs=None, lr_warmup_epochs=0,
                        joint_lsq_metaq=False, bn_recalibration_batches=0,
                        layer_C=None,
                        train_centroids=False,
@@ -385,9 +386,15 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, p
     # surviving weights oscillate and the accuracy sbanda (test_123).  So we add a
     # cosine decay in the TAIL only, after the ramp completes.
     if use_perspective:
+        if lr_warmup_epochs < 0:
+            raise ValueError("--lr_warmup_epochs must be >= 0.")
+        if lr_warmup_epochs >= n_epochs:
+            raise ValueError("--lr_warmup_epochs must be below n_epochs.")
         _ramp_end = entropy_warmup_epochs + max(0, sparsity_warmup_epochs)   # epoch (0-based) at full sparsity
         if phase_schedule_enabled:
             _ramp_end = diagnostic_epochs + metaq_ramp_epochs
+        # The cosine descent must not start eating into the warm-up.
+        _ramp_end = max(_ramp_end, lr_warmup_epochs)
         _schedule_end = (
             centroid_freeze_epoch - 1
             if train_centroids and centroid_freeze_epoch > 0
@@ -431,6 +438,16 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, p
             _lr_floor = min_lr / lr
 
         def _persp_lr(e):
+            # Linear warm-up on the first lr_warmup_epochs epochs. Networks
+            # without normalization layers (AlexNet, VGG) are sensitive to the
+            # first steps at a large batch, and the corrected learning rates are
+            # two orders of magnitude above the historical ones. Granularity is
+            # the epoch, since the scheduler steps once per epoch; with
+            # lr_warmup_epochs=1 the first epoch runs at half the base rate.
+            # The warm-up applies before flat_schedule so that a flat run is
+            # also protected.
+            if lr_warmup_epochs > 0 and e < lr_warmup_epochs:
+                return (e + 1) / float(lr_warmup_epochs + 1)
             # test_133: flat_schedule holds the LR constant for the whole run, so
             # that the entropy displacement per epoch (proportional to entropy_coeff*lr) stays
             # flat and the cumulative exposure can be decoupled from its rate.
@@ -603,13 +620,47 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, p
                 )
             initial_scales.append(torch.nn.Parameter(tensor_value))
         lsq_scales = initial_scales
+        if lsq_scale_lr_mode not in ("absolute", "relative"):
+            raise ValueError(
+                "--lsq_scale_lr_mode must be 'absolute' or 'relative'."
+            )
+        if lsq_scale_lr_mode == "relative":
+            # Adam's update is of order lr in ABSOLUTE units, because it divides
+            # by the running second moment. A single absolute rate therefore
+            # means a completely different relative rate per tensor: on
+            # EfficientNet-B0 the mean step sizes span 0.0106 to 0.215, a factor
+            # of twenty, so the same 1e-5 is 0.005% of one step size and 0.1% of
+            # another. Under 'relative' the rate is lsq_scale_lr times the
+            # tensor's own initial step size, which makes the per-step relative
+            # displacement uniform across the network. The reference point is
+            # test_168 (ResNet-18, lossless): absolute 1e-5 against a mean step
+            # size of 0.0102, i.e. a relative rate of about 1e-3.
+            scale_param_groups = [
+                {
+                    "params": [scale],
+                    "lr": lsq_scale_lr
+                    * max(float(scale.detach().abs().mean().item()), 1e-12),
+                }
+                for scale in lsq_scales
+            ]
+        else:
+            scale_param_groups = [{"params": lsq_scales, "lr": lsq_scale_lr}]
         scale_optimizer = optim.Adam(
-            lsq_scales,
+            scale_param_groups,
             lr=lsq_scale_lr,
             betas=(0.9, 0.999),
             eps=1e-8,
             weight_decay=0.0,
         )
+        if local_rank == 0:
+            print(
+                "[LSQ SCALE OPTIMIZER] "
+                f"mode={lsq_scale_lr_mode}, base_lr={lsq_scale_lr:.6e}, "
+                f"groups={len(scale_param_groups)}, "
+                "effective_lrs="
+                f"{[float(g['lr']) for g in scale_param_groups]}",
+                flush=True,
+            )
 
     # Giving the step sizes their own optimizer decoupled them from the weight
     # schedule, which was never intended. The weights decay along the cosine to
@@ -806,6 +857,9 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, p
     # epoch.  It is triggered at the first real entropy step, so it remains
     # correct even when `global_step % entropy_every != 0` at batch 0.
     grid_reset_done = False
+    # Previous-evaluation snapshots for the QAT-progress diagnostic below.
+    previous_level_indices = [None] * num_param_tensors
+    previous_latent_weights = [None] * num_param_tensors
     fixed_codebook_assignments = [None] * num_param_tensors
     codebook_active = False
 
@@ -1978,6 +2032,32 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, p
         else:
             entropy_coeff_current = 0.0
 
+        # Does METaQ still couple to the LSQ step sizes this epoch?
+        #
+        # With T2 (sparsity_coeff) and T3 (entropy_coeff) both zero the inner
+        # problem degenerates: y*=1 everywhere and phi reduces to the plain
+        # ridge T1 * sum(clip(w)^2). Its only remaining dependence on the step
+        # size is through the clipping operator, and that dependence has a fixed
+        # sign: for every clipped weight the contribution to dphi/ds is
+        # +T1 * s * q_edge^2 > 0, on both sides of the range. Under Adam, which
+        # normalizes by the second moment, a small one-signed bias turns into a
+        # systematic drift: measured on test_222, the step sizes shrank
+        # monotonically, the mean clipped fraction rose 2.58% -> 3.93% and
+        # features.7.0.block.1.0 went from 9.3% to 34.7% clipped, i.e. a third
+        # of that layer pinned at the codebook edge with zero gradient (the STE
+        # mask zeroes it). That is a self-reinforcing loop with no compression
+        # benefit whatsoever, since nothing is being compressed at T2=T3=0.
+        #
+        # So when only T1 is on it acts as what it is meant to be in that
+        # regime: a plain ridge on the latent weights, with no say over the
+        # quantization grid. As soon as T2 or T3 becomes non-zero the grid
+        # geometry does carry compression information and the full envelope
+        # derivative is restored.
+        metaq_couples_to_scale = (
+            entropy_coeff_current > 0.0
+            or any(float(t) > 0.0 for t in layerwise_t2_current)
+        )
+
         if local_rank == 0 and phase_schedule_enabled:
             scale_lr_now = (
                 scale_optimizer.param_groups[0]["lr"]
@@ -2360,7 +2440,41 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, p
                         if param.grad is None:
                             continue
                         w_layer = param.detach().reshape(-1)
-                        if joint_lsq_metaq:
+                        if joint_lsq_metaq and not metaq_couples_to_scale:
+                            # Fast path, provably identical to the general one
+                            # below when T2 = T3 = 0, and roughly ten times
+                            # cheaper because it allocates one temporary over
+                            # the layer instead of about ten.
+                            #
+                            # Proof. With T2 = 0 we have y* = 1 everywhere, so
+                            # beta* = beta_constraint + 2*T1*clip(w). The
+                            # constraint multiplier is non-zero only where the
+                            # representability floor is active, i.e. exactly on
+                            # the clipped weights; and beta* is applied masked by
+                            # in_range, which is zero on precisely those weights.
+                            # The surviving term is 2*T1*clip(w) on the in-range
+                            # weights, where clip(w) = w. The step-size
+                            # contribution is suppressed by the gate. So the whole
+                            # block reduces to a ridge on the latent weights.
+                            # scratchpad/verify_lossless_fixes.py checks this
+                            # numerically against the general path.
+                            scale = (
+                                _metaq_scale_flat(p_idx, param)
+                                if lsq_per_channel
+                                else lsq_scales[p_idx].detach().clamp_min(1e-12)
+                            )
+                            q_full = lsq_integer_codebooks[p_idx]
+                            normalized = w_layer / scale
+                            in_range = (
+                                (normalized >= q_full[0])
+                                & (normalized <= q_full[-1])
+                            )
+                            param.grad.add_(
+                                (2.0 * perspective_coeff * w_layer * in_range)
+                                .view_as(param)
+                            )
+                            lsq_metaq_scale_grad_last[p_idx] = 0.0
+                        elif joint_lsq_metaq:
                             # Under per-channel `scale` is one step size per
                             # weight, so every expression below stays elementwise
                             # and torch.clamp's scalar bounds become tensors.
@@ -2397,6 +2511,9 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, p
                                 )
                             )
                             param.grad.add_((beta_star * in_range).view_as(param))
+                            # Reached only when T2 or T3 is live, so the grid
+                            # geometry does carry compression information and the
+                            # envelope derivative with respect to s is meaningful.
                             scale_phi_grad = metaq_scale_gradient(
                                 beta_constraint,
                                 metaq_weight,
@@ -3072,6 +3189,59 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, p
                 flat_q = torch.cat(flat_q_parts)
                 flat_s = torch.cat(flat_s_parts)
 
+                # QAT progress: the fraction of weights whose INTEGER level
+                # changed since the previous evaluation, plus the mean absolute
+                # latent displacement expressed in step sizes.
+                #
+                # This is the metric that says whether quantization-aware
+                # training is doing anything at all. Fine-tuning can only help
+                # by reassigning weights to different levels; if nothing is
+                # reassigned, the deployed model is the post-training
+                # quantization of the checkpoint plus a rounding tremor, no
+                # matter how many epochs are spent. Reconstructed after the
+                # fact, test_205 (AlexNet) and test_222 (EfficientNet-B0) had a
+                # total displacement budget of about 0.2 step sizes for the
+                # whole run, against 176 for the lossless test_168 on
+                # ResNet-18, and their weight percentiles were frozen to the
+                # fourth significant digit. Logging it makes that visible on
+                # epoch one instead of after a campaign.
+                level_change_fraction = None
+                latent_move_in_steps = None
+                if use_quantization and q_idx_layers and all(
+                    idx is not None for idx in q_idx_layers
+                ):
+                    changed = 0
+                    counted = 0
+                    move_sum = 0.0
+                    move_count = 0
+                    for q_state, idx_layer in enumerate(q_idx_layers):
+                        current = idx_layer.to(torch.int16)
+                        previous = previous_level_indices[q_state]
+                        if previous is not None and previous.numel() == current.numel():
+                            changed += int((current != previous).sum().item())
+                            counted += current.numel()
+                        previous_level_indices[q_state] = current.clone()
+
+                        w_now = params_for_quant[q_state].detach().reshape(-1)
+                        w_before = previous_latent_weights[q_state]
+                        if w_before is not None and w_before.numel() == w_now.numel():
+                            step = _metaq_scale_flat(
+                                q_state, params_for_quant[q_state]
+                            )
+                            if step is None:
+                                step = lsq_scales[q_state].detach().clamp_min(1e-12) \
+                                    if lsq_enabled else None
+                            if step is not None:
+                                move_sum += float(
+                                    ((w_now - w_before).abs() / step).sum().item()
+                                )
+                                move_count += w_now.numel()
+                        previous_latent_weights[q_state] = w_now.clone()
+                    if counted > 0:
+                        level_change_fraction = changed / float(counted)
+                    if move_count > 0:
+                        latent_move_in_steps = move_sum / float(move_count)
+
                 # Distinguish the requested logical pruning mask from the
                 # zeros that happen to arise after LSQ quantization.
                 z_mask_total = 0
@@ -3344,6 +3514,8 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, p
                     f"A_Q = {quantized_accuracy}, H_Q = {quantized_entropy}, "
                     f"zstd_ratio = {zstd_ratio:.2%}, sparse_ratio = {sparse_ratio:.2%}, "
                     f"sparsity = {sparsity:.2%}, sparse_accuracy = {sparse_accuracy}, "
+                    f"level_change = "
+                    f"{'n/a' if level_change_fraction is None else format(level_change_fraction, '.3%')}, "
                     f"training_time = {training_time_global}s\n"
                 )
 
@@ -3589,6 +3761,14 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, p
                     flush=True
                 )
                 print(f"current lr = {optimizer.param_groups[0]['lr']}", flush=True)
+                print(
+                    "qat_progress: "
+                    f"level_change_fraction="
+                    f"{'n/a' if level_change_fraction is None else format(level_change_fraction, '.6%')}, "
+                    f"latent_move_in_steps="
+                    f"{'n/a' if latent_move_in_steps is None else format(latent_move_in_steps, '.6f')}",
+                    flush=True,
+                )
                 if distill_loss_last is not None:
                     print(
                         f"distill_diag: alpha={distill_alpha}, tau={distill_tau}, "
