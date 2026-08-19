@@ -10,7 +10,7 @@
 #SBATCH --output=/dev/null
 #SBATCH --error=/dev/null
 
-# test_221: EfficientNet-B0 10-epoch LSQ probe. T2 (sparsity) and T3 (entropy)
+# test_222: EfficientNet-B0 20-epoch LSQ probe at lr=2e-4. T2 (sparsity) and T3 (entropy)
 # are disabled; T1 is retained at the standard perspective value. EfficientNet
 # contains depthwise convolutions, so LSQ uses per-channel scales from the
 # outset rather than the per-tensor first-pass recipe.
@@ -56,8 +56,8 @@ srun --ntasks=$SLURM_NTASKS --ntasks-per-node=1 bash -lc '
         --train_workers 4 \
         --val_workers 2 \
         --batch_size 256 \
-        --n_epochs 10 \
-        --lr 1e-4 \
+        --n_epochs 20 \
+        --lr 2e-4 \
         --optimizer_weight_decay 0 \
         --perspective_coeff 1e-5 \
         --entropy_coeff 0 \
