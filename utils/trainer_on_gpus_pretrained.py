@@ -211,7 +211,8 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, p
                        centroid_freeze_epoch=0,
                        adiabatic_accuracy_target=None, adiabatic_accuracy_tolerance=0.2,
                        adiabatic_step=0.02, adiabatic_backoff=0.04,
-                       adiabatic_patience=2, evaluate_initial_model=False,
+                       adiabatic_patience=2, adiabatic_stop_patience=0,
+                       evaluate_initial_model=False,
                        z_pruning=False,
                        diagnostic_epochs=0, metaq_ramp_epochs=0,
                        metaq_flat_epochs=0, layerwise_t2_targets=None):
@@ -920,8 +921,8 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, p
             raise ValueError("--adiabatic_accuracy_tolerance must be >= 0.")
         if not 0 < adiabatic_step <= 1:
             raise ValueError("--adiabatic_step must be in (0, 1].")
-        if not 0 < adiabatic_backoff <= 1:
-            raise ValueError("--adiabatic_backoff must be in (0, 1].")
+        if not 0 <= adiabatic_backoff <= 1:
+            raise ValueError("--adiabatic_backoff must be in [0, 1].")
         if adiabatic_patience < 1:
             raise ValueError("--adiabatic_patience must be >= 1.")
 
@@ -958,6 +959,8 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, p
         adiabatic_good_epochs = 0
     adiabatic_best_target = None
     adiabatic_best_floor = None
+    adiabatic_below_epochs = 0
+    adiabatic_termination_reason = None
 
     # NCCL barriers need the CUDA device id on some multi-node launches.
     def _dist_barrier():
@@ -3728,15 +3731,54 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, p
                     patience=int(adiabatic_patience),
                 )
                 if local_rank == 0:
+                    if float(sparse_accuracy) < adiabatic_accuracy_target:
+                        adiabatic_below_epochs += 1
+                    else:
+                        adiabatic_below_epochs = 0
                     print(
                         f"[ADIABATIC CONTROL] epoch={epoch + 1}, "
                         f"sparse_accuracy={float(sparse_accuracy):.4f}, "
                         f"target={adiabatic_accuracy_target:.4f}, "
                         f"floor={adiabatic_accuracy_target - adiabatic_accuracy_tolerance:.4f}, "
                         f"action={adiabatic_action}, progress={previous_progress:.4f}"
-                        f"->{adiabatic_progress:.4f}, good_epochs={adiabatic_good_epochs}",
+                        f"->{adiabatic_progress:.4f}, good_epochs={adiabatic_good_epochs}, "
+                        f"below_threshold_epochs={adiabatic_below_epochs}, "
+                        f"stop_patience={adiabatic_stop_patience}",
                         flush=True,
                     )
+                    if (
+                        adiabatic_stop_patience > 0
+                        and adiabatic_below_epochs >= adiabatic_stop_patience
+                    ):
+                        adiabatic_termination_reason = "ACCURACY_PATIENCE"
+                        print(
+                            f"[ADAPTIVE TERMINATION] epoch={epoch + 1}, "
+                            f"reason={adiabatic_termination_reason}, "
+                            f"below_threshold_epochs={adiabatic_below_epochs}",
+                            flush=True,
+                        )
+                    elif adiabatic_progress >= 1.0:
+                        adiabatic_termination_reason = "MAX_SPARSITY"
+                        print(
+                            f"[ADAPTIVE TERMINATION] epoch={epoch + 1}, "
+                            f"reason={adiabatic_termination_reason}",
+                            flush=True,
+                        )
+                if dist.is_initialized():
+                    stop_tensor = torch.tensor(
+                        1 if adiabatic_termination_reason is not None else 0,
+                        device=device,
+                        dtype=torch.int32,
+                    )
+                    dist.broadcast(stop_tensor, src=0)
+                else:
+                    stop_tensor = torch.tensor(
+                        1 if adiabatic_termination_reason is not None else 0,
+                        device=device,
+                        dtype=torch.int32,
+                    )
+                if int(stop_tensor.item()) != 0:
+                    break
 
             if model_name in (
                 "AlexNet",
@@ -3770,6 +3812,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, p
         if adiabatic_enabled:
             print(f"adiabatic_best_target = {adiabatic_best_target}", flush=True)
             print(f"adiabatic_best_floor = {adiabatic_best_floor}", flush=True)
+            print(f"adiabatic_termination_reason = {adiabatic_termination_reason or 'NONE'}", flush=True)
         checkpoint_path = os.environ.get("METAQ_CHECKPOINT_PATH")
         if checkpoint_path:
             os.makedirs(os.path.dirname(checkpoint_path), exist_ok=True)

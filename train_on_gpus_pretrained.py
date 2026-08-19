@@ -1143,6 +1143,7 @@ def main():
     parser.add_argument("--adiabatic_step", type=float, default=0.02, help="Fraction of the final per-layer sparsity vector added after each accepted plateau")
     parser.add_argument("--adiabatic_backoff", type=float, default=0.04, help="Fraction of final sparsity removed when accuracy falls below the hysteresis band")
     parser.add_argument("--adiabatic_patience", type=int, default=2, help="Consecutive evaluations at target accuracy required before increasing sparsity")
+    parser.add_argument("--adiabatic_stop_patience", type=int, default=0, help="Stop after this many consecutive sparse-accuracy evaluations below the target; 0 disables early stopping")
     parser.add_argument("--target_sparsity", type=float, default=None, help="If >0: per-layer prune the smallest this fraction of |w| (overrides mag_prune_ratio)")
     parser.add_argument("--sparsity_warmup_epochs", type=int, default=None, help="If >0: ramp effective sparsity 0->target linearly over this many epochs")
     parser.add_argument("--sparsity_ramp_power", type=float, default=None, help="Ramp profile exponent: 1.0 linear, <1 concave (gentle increments near target)")
@@ -1307,6 +1308,7 @@ def main():
     h["adiabatic_step"] = args.adiabatic_step
     h["adiabatic_backoff"] = args.adiabatic_backoff
     h["adiabatic_patience"] = args.adiabatic_patience
+    h["adiabatic_stop_patience"] = args.adiabatic_stop_patience
     if args.max_iterations is not None:
         h["max_iterations"] = args.max_iterations
     if args.C is not None:
@@ -1490,6 +1492,7 @@ def main():
         adiabatic_step=h["adiabatic_step"],
         adiabatic_backoff=h["adiabatic_backoff"],
         adiabatic_patience=h["adiabatic_patience"],
+        adiabatic_stop_patience=h["adiabatic_stop_patience"],
         evaluate_initial_model=(
             args.pretrained == "Y" and h["pretrained_checkpoint"] is not None
         ),
