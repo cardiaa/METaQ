@@ -45,6 +45,12 @@ METAQ_FLAT_EPOCHS=${19:-$N_EPOCHS}
 LAYERWISE_T2_TARGETS=${20:-}
 LSQ_SCALE_LR_SCHEDULE=${21:-N}
 OPTIMIZER_WEIGHT_DECAY=${22:-1e-4}
+ADIABATIC_ACCURACY_TARGET=${23:-}
+ADIABATIC_ACCURACY_TOLERANCE=${24:-0}
+ADIABATIC_STEP=${25:-0.02}
+ADIABATIC_BACKOFF=${26:-0}
+ADIABATIC_PATIENCE=${27:-1}
+ADIABATIC_STOP_PATIENCE=${28:-10}
 
 if [ "$N_EPOCHS" -ne $((DIAGNOSTIC_EPOCHS + METAQ_RAMP_EPOCHS + METAQ_FLAT_EPOCHS)) ]; then
     echo "Invalid epoch schedule: total=$N_EPOCHS but diagnostic=$DIAGNOSTIC_EPOCHS + metaq_ramp=$METAQ_RAMP_EPOCHS + metaq_flat=$METAQ_FLAT_EPOCHS" >&2
@@ -84,6 +90,7 @@ export TRANSFORMERS_NO_ADVISORY_WARNINGS=1
 export PYTHONWARNINGS="ignore::UserWarning"
 export MASTER_ADDR=$(scontrol show hostnames "$SLURM_JOB_NODELIST" | head -n 1)
 export MASTER_PORT=29500
+export ADIABATIC_ACCURACY_TARGET ADIABATIC_ACCURACY_TOLERANCE ADIABATIC_STEP ADIABATIC_BACKOFF ADIABATIC_PATIENCE ADIABATIC_STOP_PATIENCE
 
 cd "$WORK/acardia0/METaQ"
 if [ "$NO_METAQ" = "Y" ] || [ "$SAVE_CHECKPOINT" = "Y" ]; then
@@ -149,5 +156,11 @@ srun --ntasks=$SLURM_NTASKS --ntasks-per-node=1 bash -lc '
         --check_ddp_sync \
         --pretrained Y \
         --pretrained_checkpoint '"$PRETRAINED_CHECKPOINT"' \
+        ${ADIABATIC_ACCURACY_TARGET:+--adiabatic_accuracy_target "$ADIABATIC_ACCURACY_TARGET"} \
+        --adiabatic_accuracy_tolerance '"$ADIABATIC_ACCURACY_TOLERANCE"' \
+        --adiabatic_step '"$ADIABATIC_STEP"' \
+        --adiabatic_backoff '"$ADIABATIC_BACKOFF"' \
+        --adiabatic_patience '"$ADIABATIC_PATIENCE"' \
+        --adiabatic_stop_patience '"$ADIABATIC_STOP_PATIENCE"' \
         >> "$OUTPUT_TARGET" 2>&1
 '
