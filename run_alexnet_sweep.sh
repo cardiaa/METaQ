@@ -20,6 +20,8 @@
 # learning-rate schedule to the weight schedule.
 # Test_219 configuration: A=30, B=1, C=24, D=5, with targets at 90% of the
 # test_218 values.
+# Argument 22 explicitly controls optimizer weight decay; use 0 to isolate the
+# METaQ T1 ridge from the optimizer's independent ridge term.
 
 N_EPOCHS=${1:-20}
 ENTROPY_COEFF=${2:-5e-8}
@@ -42,6 +44,7 @@ METAQ_RAMP_EPOCHS=${18:-0}
 METAQ_FLAT_EPOCHS=${19:-$N_EPOCHS}
 LAYERWISE_T2_TARGETS=${20:-}
 LSQ_SCALE_LR_SCHEDULE=${21:-N}
+OPTIMIZER_WEIGHT_DECAY=${22:-1e-4}
 
 if [ "$N_EPOCHS" -ne $((DIAGNOSTIC_EPOCHS + METAQ_RAMP_EPOCHS + METAQ_FLAT_EPOCHS)) ]; then
     echo "Invalid epoch schedule: total=$N_EPOCHS but diagnostic=$DIAGNOSTIC_EPOCHS + metaq_ramp=$METAQ_RAMP_EPOCHS + metaq_flat=$METAQ_FLAT_EPOCHS" >&2
@@ -117,7 +120,7 @@ srun --ntasks=$SLURM_NTASKS --ntasks-per-node=1 bash -lc '
         --metaq_flat_epochs '"$METAQ_FLAT_EPOCHS"' \
         --layerwise_t2_targets '"$LAYERWISE_T2_TARGETS"' \
         --lr '"$LR"' \
-        --optimizer_weight_decay 1e-4 \
+        --optimizer_weight_decay '"$OPTIMIZER_WEIGHT_DECAY"' \
         --perspective_coeff '"$PERSPECTIVE_COEFF"' \
         --entropy_coeff '"$ENTROPY_COEFF"' \
         --sparsity_coeff '"$SPARSITY_COEFF"' \
