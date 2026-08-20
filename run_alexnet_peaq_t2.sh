@@ -10,139 +10,48 @@
 #SBATCH --output=/dev/null
 #SBATCH --error=/dev/null
 
-# test_228: AlexNet, second rung of the ladder, with the T2 force law corrected.
-# PEAQ with the sparsity term T2 only; the entropy term T3 stays off.
+# test_229: AlexNet, second rung of the ladder. LSQ baseline (test_225) plus the
+# sparsity term T2. The entropy term T3 stays off.
 #
-# Two runs of this configuration have now bracketed the answer from both sides.
-#   test_226, dual-rule calibration: INERT. 17.12% sparsity against the 16.11%
-#     the same recipe reaches with T2 off, and the packet slightly worse.
-#   test_227, displacement calibration on the wrong asymptote: RUNAWAY. 45.6%
-#     sparsity after ONE ramp epoch at 3.3% of full dose, 99.40% and 23.8% top-1
-#     by epoch 28, irreversibly, because once the weights are all at zero the
-#     reassignment rate collapses and nothing can come back.
+# Baseline to beat: test_225, A_Q 56.552 against 56.524 FP32, packet 10.75%
+# (9.30x), 16.11% sparsity emerging from the LSQ zero bin alone.
 #
-# The error in test_227 was the exponent, not the idea. The perspective term
-# applies a constant-magnitude force, but which constant depends on whether the
-# representability floor is active, and it essentially always is: the floor binds
-# when q_edge*a < sqrt(T2/T1), and there |beta*| = T2/(q_edge*a) + T1*(q_edge*a),
-# LINEAR in T2. The familiar 2*sqrt(T1*T2) is the interior asymptote, which never
-# applies here. Calibrating on it meant asking for sixty times more force and
-# raising T2 by sixty SQUARED; the force went up by that same factor of three
-# thousand six hundred, and the network dissolved.
+# DOSE. One knob, --t2_scale. The per-layer targets set the shape of the push
+# across layers; t2_scale sets its magnitude, and its value is read off the
+# frontier that test_228 measured one epoch at a time as its ramp climbed:
 #
-# The corrected law is now validated against both runs, three orders of magnitude
-# apart in dose: predicted 16.8% for test_226 against 17.12% measured, and 99.9%
-# for test_227 against 99.40% measured. On this schedule it also splits the two
-# terms across their own ramp weights, S_linear = 150.4 and S_constant = 407.2,
-# both reproduced exactly by the trainer's own computation.
+#   t2_scale   sparsity   packet   accuracy lost (mid-ramp)
+#     0.08       28%       8.3%      -0.05
+#     0.16       40%       6.6%      -0.12
+#     0.23       50%       5.5%      -0.47
+#     0.31       58%       4.7%      -0.85   <-- this run
+#     0.39       65%       4.1%      -1.36
+#     0.47       71%       3.6%      -1.64
 #
-# Predicted global sparsity with the corrected dose: 84.3% against the 85.3%
-# target, with per-layer L1 forces between 0.18 and 0.48 of the typical task
-# gradient. The model ignores the task gradient, which resists on the weights
-# that matter, so the realized figure should land below that. Also fixed in this
-# commit: the --t2_calibration keyword was shadowed by a local variable in the
-# diagnostics, which silently disabled the 'dual' option and printed a list where
-# the log said mode=.
+# The budget for repaying that loss is what annealing is worth on this recipe:
+# +0.76, measured on test_225 itself, 55.790 at epoch 13 to 56.552 at epoch 60.
+# So the lossless zone sits around 50-60% sparsity, not the 89% of Deep
+# Compression, which buys its extra room with a different representation: 8-bit
+# convolutions, 5-bit fully connected, k-means weight sharing and iterative
+# prune-retrain cycles. More bits per surviving weight, so more weights can go.
 #
-# KILL CRITERIA, because test_227 showed the failure is not recoverable.
-# Sparsity should climb smoothly along the thirty ramp epochs, roughly two to
-# three points per epoch. If epoch 11, the first with T2 alive at one thirtieth
-# of full dose, already shows sparsity above about 25%, the dose is again too
-# strong and the run should be killed on the spot rather than left to dissolve.
+# The frontier rows are pessimistic, though: each was measured mid-ramp on a
+# network driven from 15.7% to 71% sparsity in six epochs with no settling phase
+# at all. This run ramps over forty epochs and then holds the dose for twenty
+# more with the rate on its floor, so the same sparsity should cost less.
 #
-# Everything else is byte-for-byte the frozen test_225 recipe plus the phase
-# schedule and --min_lr.
+# SCHEDULE. T2 live from epoch one, since test_225 already served as the
+# diagnostic phase and repeating it would waste ten epochs; forty-epoch ramp;
+# twenty epochs at fixed T2 and at min_lr for the network to settle into the
+# compressed configuration.
 #
-# test_226 ran this exact configuration and was INERT. At epoch 39 of 60, with
-# the ramp at 96.7% of full dose, it had 17.12% sparsity against the 16.11% the
-# same recipe reaches with T2 switched off entirely, and zstd 10.87% against
-# 10.75%: one point of sparsity bought, and the packet slightly WORSE. Accuracy
-# was untouched at 56.44, because nothing was happening.
+# Everything else is the frozen test_225 recipe, plus --min_lr 1e-4, which the
+# phase schedule requires: at the historical 1% floor the flat phase would run at
+# 2e-5, where test_225 measured a level-change rate of 0.115% per epoch, i.e. a
+# frozen network being asked to absorb full-dose compression.
 #
-# The cause is not a bug in the solver, it is the calibration rule. The dual was
-# doing its job perfectly (mean_z_star 0.5405, z>0.5 on 60.6% of the weights);
-# what never happened was the transmission of that opinion to the deployed model.
-# T2 does not prune: it applies a constant-magnitude L1 push of 2*sqrt(T1*T2) and
-# the LSQ zero bin absorbs whatever reaches it. The historical rule
-# T2 = 4*T1*q^2 sets the DUAL threshold at q and says nothing about whether the
-# push can carry a weight that far. On test_226 it produced coefficients of
-# 4.7e-9 to 2.4e-8, a total displacement of about 2e-4, against the 0.010 to
-# 0.022 needed to reach the requested quantiles. Three to four orders of
-# magnitude short.
-#
-# The arithmetic was checked against the run itself: modelling the deployed
-# sparsity as the fraction of weights with |w| < D + a/2 predicts 16.2% global,
-# and the run measured 17.12%. The model holds to within one point, so the dose,
-# not the machinery, is what failed.
-#
-# --t2_calibration displacement (now the default) inverts the relation instead:
-# it solves 2*sqrt(T1*T2)*S = q_target - a/2, where S is the exact schedule sum
-# the trainer computes from its own learning-rate curve, ramp shape and step
-# count. On this schedule S = 230.1, verified offline against a hand calculation.
-# The resulting coefficients are 4e-5 to 2e-4, i.e. six to eleven thousand times
-# the old ones, and the implied L1 force is 15% to 30% of the typical task
-# gradient: strong, but an ordinary L1 strength rather than an absurd one.
-#
-# Note the model deliberately IGNORES the task gradient, which resists on the
-# weights that matter. The realized sparsity will therefore land BELOW the 85.3%
-# target, which is the safe direction to be wrong in.
-#
-# Everything else is byte-for-byte the test_226 configuration, which is itself
-# the frozen test_225 recipe plus the phase schedule and --min_lr.
-#
-# Baseline to beat, test_225 (run_alexnet_lsq_lossless.sh, LSQ only):
-#   A_Q 56.552 and sparse 56.556 against 56.524 FP32, both ABOVE the checkpoint,
-#   at zstd 10.75% dense / 10.76% sparse, i.e. 9.30x, with 16.11% of the weights
-#   landing in the LSQ zero bin on their own.
-#
-# THE RECIPE IS FROZEN. Everything below is identical to test_225 except the
-# three things this experiment is about, listed at the end. Do not tune anything
-# else here: the whole point of the ladder is that the LSQ row and the PEAQ rows
-# differ only by the coefficients.
-#
-# 1. --layerwise_t2_targets 0.15,0.55,0.60,0.60,0.60,0.88,0.88,0.65
-#    One target sparsity per quantized tensor, in order conv1..conv5, fc6, fc7,
-#    fc8. After the diagnostic phase the trainer calibrates each layer's
-#    coefficient as T2_l = 4*T1*q_target(|w_l|)^2, so the dose is set from the
-#    weight distribution the network actually has rather than by guessing a
-#    scalar. The profile is Deep Compression's own lossless AlexNet pruning
-#    profile (conv1 16%, conv2 62%, conv3-5 63-65%, fc6/fc7 91%, fc8 75%),
-#    trimmed slightly because we are pruning AND quantizing to 4 bits, whereas
-#    they pruned first. Global target 85.3%; the estimated packet is about 3.5%,
-#    i.e. roughly 29x, against the 9.30x of the baseline.
-#    Note that T2 does not prune anything directly: it puts an L1-like push of
-#    about 2*sqrt(T1*T2) on the small weights, and the LSQ zero bin then absorbs
-#    them. mag_prune_ratio and target_sparsity stay at zero, as they must under
-#    --lsq_per_channel Y.
-#
-# 2. Phase schedule 10 + 30 + 20 = 60 epochs.
-#    Ten diagnostic epochs at T2=0, which reproduce the first ten epochs of
-#    test_225 exactly (during them layerwise_t2_current is all zero, so the
-#    trainer takes the T1-only fast path and the step sizes stay untouched);
-#    thirty epochs ramping T2 linearly to its calibrated value; twenty flat
-#    epochs at full dose. A long ramp is what an 85% target needs. The ramp also
-#    means that even if the accuracy breaks we read WHERE it breaks, which is the
-#    frontier point this run is meant to produce.
-#
-# 3. --min_lr 1e-4.
-#    Structurally necessary, and the one deviation from the frozen recipe. Under
-#    the phase schedule the rate falls to the floor by the end of the ramp and is
-#    then HELD for the whole flat phase; at the historical 1% floor that is 2e-5,
-#    where test_225 measured level_change at 0.115% per epoch, i.e. a frozen
-#    network. The compression would arrive on a model that can no longer heal.
-#    At 1e-4 (5% of the base rate) test_225 measured 0.5% to 0.8% of weights
-#    changing level per epoch, so the flat phase is a genuine healing tail.
-#
-# WHAT TO CHECK ON EPOCH 1: training_time. The general perspective path replaces
-# the T1-only fast path once T2 goes live, and it runs on every step over all 61M
-# weights. The estimate is about six seconds per epoch of extra traffic against
-# the 157s of test_225, so anything up to ~170s is fine. If epoch 11, the first
-# with T2 alive, jumps well past 200s the run will not fit the slot and should be
-# killed rather than left to time out.
-#
-# WHAT TO CHECK ON EPOCH 11: the [LAYERWISE T2 CALIBRATION] line, and that
-# metaq_scale_grad_last stops being all zeros. Both confirm the gate handing over
-# from the ridge regime to the full envelope exactly when T2 becomes live.
+# IF IT LANDS LOSSLESS, raise t2_scale one row. IF IT LANDS SHORT BY A FEW
+# TENTHS, drop to 0.23. Either way the next dose is one line.
 
 LOG_DIR=$WORK/acardia0/LeonardoTests
 mkdir -p "$LOG_DIR"
@@ -186,8 +95,8 @@ srun --ntasks=$SLURM_NTASKS --ntasks-per-node=1 bash -lc '
         --val_workers 2 \
         --batch_size 64 \
         --n_epochs 60 \
-        --diagnostic_epochs 10 \
-        --metaq_ramp_epochs 30 \
+        --diagnostic_epochs 0 \
+        --metaq_ramp_epochs 40 \
         --metaq_flat_epochs 20 \
         --lr 2e-3 \
         --lr_warmup_epochs 1 \
@@ -196,8 +105,9 @@ srun --ntasks=$SLURM_NTASKS --ntasks-per-node=1 bash -lc '
         --perspective_coeff 1e-5 \
         --entropy_coeff 0 \
         --sparsity_coeff 0 \
-        --layerwise_t2_targets 0.15,0.55,0.60,0.60,0.60,0.88,0.88,0.65 \
+        --layerwise_t2_targets 0.112,0.434,0.455,0.441,0.441,0.637,0.637,0.525 \
         --t2_calibration displacement \
+        --t2_scale 0.31 \
         --perspective Y \
         --flat_schedule N \
         --mag_prune_ratio 0 \
