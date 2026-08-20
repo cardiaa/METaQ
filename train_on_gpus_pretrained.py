@@ -921,6 +921,7 @@ def print_config(model_name, args, h, local_rank_to_print):
     print(f"lsq_scale_lr_mode={h['lsq_scale_lr_mode']}", flush=True)
     print(f"lr_warmup_epochs={h['lr_warmup_epochs']}", flush=True)
     print(f"t2_calibration={h['t2_calibration']}", flush=True)
+    print(f"t2_scale={h['t2_scale']}", flush=True)
     print(f"lsq_init={h['lsq_init']}", flush=True)
     print(f"lsq_grad_scaling={h['lsq_grad_scaling']}", flush=True)
     print(f"lsq_per_channel={h['lsq_per_channel']}", flush=True)
@@ -1100,6 +1101,21 @@ def main():
             "bin. 'dual' is the historical rule T2 = 4*T1*q^2, which calibrates "
             "z>0.5 but leaves the push three to four orders of magnitude too "
             "weak to deploy any of it (test_226)."
+        ),
+    )
+    parser.add_argument(
+        "--t2_scale",
+        type=float,
+        default=1.0,
+        help=(
+            "Plain multiplier on every calibrated T2. The analytic rule fixes "
+            "the RELATIVE dose across layers, which it gets roughly right; the "
+            "absolute dose is measured, not derived, because three successive "
+            "analytic models of it were wrong (test_226 inert, test_227 runaway, "
+            "test_228 over-dosed by a factor of ten through a scale-inflation "
+            "channel none of them contained). Read it off the ramp of a "
+            "deliberately over-dosed run: the ramp fraction at the last "
+            "acceptable frontier point IS this number."
         ),
     )
     parser.add_argument(
@@ -1336,6 +1352,7 @@ def main():
     h["lsq_scale_lr_mode"] = args.lsq_scale_lr_mode
     h["lr_warmup_epochs"] = args.lr_warmup_epochs
     h["t2_calibration"] = args.t2_calibration
+    h["t2_scale"] = args.t2_scale
     h["lsq_init"] = args.lsq_init
     h["lsq_grad_scaling"] = (args.lsq_grad_scaling == "Y")
     h["lsq_per_channel"] = (args.lsq_per_channel == "Y")
@@ -1543,6 +1560,7 @@ def main():
         lr_decay_epochs=h["lr_decay_epochs"],
         lr_warmup_epochs=h["lr_warmup_epochs"],
         t2_calibration=h["t2_calibration"],
+        t2_scale=h["t2_scale"],
         distillation=h["distillation"],
         distill_alpha=h["distill_alpha"],
         distill_tau=h["distill_tau"],

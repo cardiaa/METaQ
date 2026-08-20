@@ -204,7 +204,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, p
                        lsq_init="lsq", lsq_grad_scaling=True, lsq_per_channel=False,
                        distillation=False, distill_alpha=0.5, distill_tau=1.0,
                        min_lr=None, lsq_scale_lr_schedule=False,
-                       t2_calibration="displacement",
+                       t2_calibration="displacement", t2_scale=1.0,
                        lr_decay_epochs=None, lr_warmup_epochs=0,
                        joint_lsq_metaq=False, bn_recalibration_batches=0,
                        layer_C=None,
@@ -2097,6 +2097,10 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, p
                                 if t2_calibration == "dual"
                                 else _t2_from_displacement(p_idx, quantile)
                             )
+                            # The analytic rule sets the SHAPE across layers;
+                            # the overall dose is a measured quantity. See the
+                            # --t2_scale help text.
+                            t2_final *= float(t2_scale)
                         layerwise_t2_quantiles.append(quantile)
                         layerwise_t2_dual.append(t2_dual)
                         layerwise_t2_final.append(t2_final)
@@ -2104,6 +2108,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, p
                         print(
                             "[LAYERWISE T2 CALIBRATION] "
                             f"epoch={epoch + 1}, mode={t2_calibration}, "
+                            f"scale={t2_scale}, "
                             f"schedule_sums={_l1_schedule_sums(epoch)}, "
                             f"targets={layerwise_t2_targets}, "
                             f"abs_weight_quantiles={layerwise_t2_quantiles}, "
