@@ -10,7 +10,42 @@
 #SBATCH --output=/dev/null
 #SBATCH --error=/dev/null
 
-# test_224: AlexNet, LSQ-only lossless baseline, second attempt.
+# test_225: AlexNet, LSQ-only lossless baseline, third and final attempt.
+#
+# test_224 (same recipe, 40 epochs, 8-bit input convolutions) reached A_Q 56.520
+# at epoch 39 against 56.524 FP32, i.e. -0.004, two images out of fifty thousand,
+# and its sparse stream was +0.030 ABOVE the checkpoint. By the convention every
+# paper we compare against uses, best top-1 over the run, that is already
+# lossless. The plateau, however, sits at 56.451 over the last six epochs, i.e.
+# -0.073, about 1.2 sigma of the run's own epoch-to-epoch jitter (0.060). Close
+# enough to be indistinguishable from parity, but with the central value on the
+# wrong side, which is not the row we want to defend.
+#
+# The run is also still not converged: the slope over the last ten epochs is
+# +0.0148 points per epoch and level_change had decayed to 0.115%, so once again
+# the cosine switched the reassignment off while the accuracy was still rising.
+# Health is perfect everywhere: clipping between 0.03% and 1.2% on every layer,
+# every step size within 7% of its init, metaq_scale_grad_last exactly zero for
+# all forty epochs.
+#
+# So this run changes ONE thing: --n_epochs 40 -> 60, same cosine shape. Going
+# from 20 to 40 epochs moved the plateau by +0.49, of which about +0.28 came from
+# the 8-bit input convolutions, leaving roughly +0.21 for the doubling alone; a
+# further 1.5x extension should be worth about +0.10, and we need +0.073. A
+# 60-epoch cosine also spends epochs 40 to 55 in exactly the productive rate band
+# and still anneals properly at the end, which a constant floor would not.
+#
+# Deliberately NOT changed: distill_alpha stays at 0.5. The one AlexNet
+# comparison available (test_216 at 0.5 against test_217 at 0.9, best-vs-best
+# 52.92 against 52.82) does not support 0.9, so raising it would be a gamble on
+# top of a change whose direction is already known.
+#
+# Whatever this run produces becomes the FROZEN AlexNet recipe: the T2 run and
+# the T2+T3 run must reproduce it exactly, changing only the coefficients.
+#
+# Original test_224 header follows.
+#
+# AlexNet, LSQ-only lossless baseline, second attempt.
 #
 # test_223 (same recipe, 20 epochs, uniform C=16) landed at A_Q 55.956 against
 # 56.524 FP32, i.e. -0.568, against -1.644 for the best previous AlexNet
@@ -135,7 +170,7 @@ srun --ntasks=$SLURM_NTASKS --ntasks-per-node=1 bash -lc '
         --train_workers 4 \
         --val_workers 2 \
         --batch_size 64 \
-        --n_epochs 40 \
+        --n_epochs 60 \
         --lr 2e-3 \
         --lr_warmup_epochs 1 \
         --optimizer_weight_decay 1e-4 \
