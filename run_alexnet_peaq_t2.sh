@@ -10,8 +10,48 @@
 #SBATCH --output=/dev/null
 #SBATCH --error=/dev/null
 
-# test_227: AlexNet, second rung of the ladder, with the T2 calibration fixed.
+# test_228: AlexNet, second rung of the ladder, with the T2 force law corrected.
 # PEAQ with the sparsity term T2 only; the entropy term T3 stays off.
+#
+# Two runs of this configuration have now bracketed the answer from both sides.
+#   test_226, dual-rule calibration: INERT. 17.12% sparsity against the 16.11%
+#     the same recipe reaches with T2 off, and the packet slightly worse.
+#   test_227, displacement calibration on the wrong asymptote: RUNAWAY. 45.6%
+#     sparsity after ONE ramp epoch at 3.3% of full dose, 99.40% and 23.8% top-1
+#     by epoch 28, irreversibly, because once the weights are all at zero the
+#     reassignment rate collapses and nothing can come back.
+#
+# The error in test_227 was the exponent, not the idea. The perspective term
+# applies a constant-magnitude force, but which constant depends on whether the
+# representability floor is active, and it essentially always is: the floor binds
+# when q_edge*a < sqrt(T2/T1), and there |beta*| = T2/(q_edge*a) + T1*(q_edge*a),
+# LINEAR in T2. The familiar 2*sqrt(T1*T2) is the interior asymptote, which never
+# applies here. Calibrating on it meant asking for sixty times more force and
+# raising T2 by sixty SQUARED; the force went up by that same factor of three
+# thousand six hundred, and the network dissolved.
+#
+# The corrected law is now validated against both runs, three orders of magnitude
+# apart in dose: predicted 16.8% for test_226 against 17.12% measured, and 99.9%
+# for test_227 against 99.40% measured. On this schedule it also splits the two
+# terms across their own ramp weights, S_linear = 150.4 and S_constant = 407.2,
+# both reproduced exactly by the trainer's own computation.
+#
+# Predicted global sparsity with the corrected dose: 84.3% against the 85.3%
+# target, with per-layer L1 forces between 0.18 and 0.48 of the typical task
+# gradient. The model ignores the task gradient, which resists on the weights
+# that matter, so the realized figure should land below that. Also fixed in this
+# commit: the --t2_calibration keyword was shadowed by a local variable in the
+# diagnostics, which silently disabled the 'dual' option and printed a list where
+# the log said mode=.
+#
+# KILL CRITERIA, because test_227 showed the failure is not recoverable.
+# Sparsity should climb smoothly along the thirty ramp epochs, roughly two to
+# three points per epoch. If epoch 11, the first with T2 alive at one thirtieth
+# of full dose, already shows sparsity above about 25%, the dose is again too
+# strong and the run should be killed on the spot rather than left to dissolve.
+#
+# Everything else is byte-for-byte the frozen test_225 recipe plus the phase
+# schedule and --min_lr.
 #
 # test_226 ran this exact configuration and was INERT. At epoch 39 of 60, with
 # the ramp at 96.7% of full dose, it had 17.12% sparsity against the 16.11% the

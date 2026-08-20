@@ -1282,25 +1282,43 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, p
             model.eval()
         return batches
 
-    def _l1_schedule_sum(from_epoch: int) -> float:
-        """Schedule weight of the METaQ L1 push, from ``from_epoch`` to the end.
+    def _l1_schedule_sums(from_epoch: int) -> tuple[float, float]:
+        """Schedule weights of the two components of the METaQ push to zero.
 
-        With T2 > 0 the perspective term contributes a CONSTANT-magnitude force
-        to every latent weight below the dual threshold: beta* = 2*T1*w/y* with
-        y* = |w|*sqrt(T1/T2) gives |beta*| = 2*sqrt(T1*T2), independent of w.
-        Under SGD with momentum the displacement it accumulates is therefore
+        With T2 > 0 the perspective term applies a force of CONSTANT magnitude to
+        every latent weight, but which constant depends on whether the
+        representability floor is active, and it almost always is. The floor
+        binds when q_edge*a < sqrt(T2/T1), i.e. when the codebook cannot reach
+        far enough for the interior stationary point to be feasible. There
+        y* = |w|/(q_edge*a), and collecting the boundary multiplier with the
+        ridge gives
 
-            D = 2*sqrt(T1*T2) * sum_t lr_t * sqrt(ramp_fraction_t) / (1 - momentum)
+            |beta*| = T2/(q_edge*a) + T1*(q_edge*a)
 
-        and this returns the sum, so that D = 2*sqrt(T1*T2) * _l1_schedule_sum().
-        The sqrt appears because the ramp scales T2, and the force goes with its
-        square root.
+        while in the interior regime it is the familiar 2*sqrt(T1*T2). The two
+        agree exactly at the crossover, and by AM-GM the floor expression is the
+        larger one, so the floor regime is the strong one.
+
+        This distinction is what test_227 got wrong. Calibrating on the interior
+        asymptote assumes the force grows like sqrt(T2); on the floor it grows
+        LINEARLY in T2. Asking for sixty times more force and taking a square
+        root that did not apply raised T2 by three thousand six hundred times,
+        the force went up by the same three thousand six hundred, and the network
+        went to 99.4% sparsity and 23.8% top-1.
+
+        The two terms also ride the ramp differently: T2/(q_edge*a) is linear in
+        T2 and therefore in the ramp fraction, while T1*(q_edge*a) does not scale
+        with T2 at all and is simply on whenever the term is active. Hence two
+        sums, returned as (linear, constant), with displacement
+
+            D = T2/(q_edge*a) * S_linear + T1*(q_edge*a) * S_constant
         """
         if steps_per_epoch is None:
-            return 0.0
+            return 0.0, 0.0
         momentum = 0.9 if train_optimizer == "SGD" else 1.0
         damping = max(1.0 - momentum, 1e-6)
-        total = 0.0
+        linear = 0.0
+        constant = 0.0
         for e in range(int(from_epoch), int(n_epochs)):
             if phase_schedule_enabled:
                 if e < diagnostic_epochs:
@@ -1313,8 +1331,10 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, p
                 fraction = 1.0
             if fraction <= 0.0:
                 continue
-            total += lr * _persp_lr(e) * steps_per_epoch * math.sqrt(fraction)
-        return total / damping
+            weight = lr * _persp_lr(e) * steps_per_epoch
+            linear += weight * fraction
+            constant += weight
+        return linear / damping, constant / damping
 
     def _t2_from_displacement(p_idx: int, quantile: float) -> float:
         """T2 that actually moves the targeted weights into the LSQ zero bin.
@@ -1322,35 +1342,43 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, p
         The historical rule, T2 = 4*T1*q^2, calibrates the DUAL: it makes z>0.5
         coincide with |w| < q. But nothing deploys z. A weight is shipped as zero
         only when its LATENT value lands inside the zero bin, |w| < a/2, and it
-        gets there only if the L1 push has budget to carry it. Those are two
+        gets there only if the push has the budget to carry it. Those are two
         different requirements and the dual rule addresses only the first.
+        Measured on test_226 it was three to four orders of magnitude too weak:
+        17.12% sparsity against 16.11% with the term switched off entirely.
 
-        Measured on test_226 (AlexNet, targets 0.15..0.88, global 85.3%): the dual
-        rule produced coefficients between 4.7e-9 and 2.4e-8, giving a total
-        displacement of about 2e-4 against a required 0.010 to 0.022. The
-        predicted global sparsity was 16.2% and the run measured 17.12%, against
-        16.11% for the same recipe with T2 switched off entirely. The term was
-        three to four orders of magnitude too weak to do anything at all.
+        So invert the displacement relation instead, using the floor-regime force
+        documented in :func:`_l1_schedule_sums`:
 
-        So invert the displacement relation instead: ask for
-        D = q - a/2, the distance from the target quantile to the edge of the zero
-        bin, and solve 2*sqrt(T1*T2)*S = D for T2. Note this ignores the task
-        gradient, which resists on the weights that matter, so the realized
-        sparsity lands BELOW the target. That is the safe direction.
+            T2/(q_edge*a) * S_lin + T1*(q_edge*a) * S_con = q_target - a/2
+
+        The model was validated against two runs three orders of magnitude apart
+        in dose: it predicts 16.8% for test_226 (measured 17.12%) and 99.9% for
+        test_227 (measured 99.40%).
+
+        It deliberately ignores the task gradient, which resists on the weights
+        that matter, so the realized sparsity lands BELOW the target. That is the
+        safe direction to be wrong in.
         """
         if perspective_coeff <= 0.0:
             raise ValueError(
-                "Displacement-based T2 calibration needs perspective_coeff > 0, "
-                "since the L1 push is 2*sqrt(T1*T2)."
+                "Displacement-based T2 calibration needs perspective_coeff > 0."
             )
-        schedule_sum = _l1_schedule_sum(epoch)
-        if schedule_sum <= 0.0:
+        linear_sum, constant_sum = _l1_schedule_sums(epoch)
+        if linear_sum <= 0.0:
             return 0.0
-        scale = lsq_scales[p_idx].detach().abs()
-        half_bin = float(scale.mean().item()) / 2.0
-        distance = max(float(quantile) - half_bin, 0.0)
-        push = distance / schedule_sum
-        return push * push / (4.0 * perspective_coeff)
+        codebook = lsq_integer_codebooks[p_idx]
+        mean_edge = 0.5 * (
+            float(codebook[-1].item()) + abs(float(codebook[0].item()))
+        )
+        step = float(lsq_scales[p_idx].detach().abs().mean().item())
+        reach = max(mean_edge * step, 1e-12)     # q_edge * a
+        distance = max(float(quantile) - step / 2.0, 0.0)
+        # The ridge part is not tunable; T2 only has to cover what is left.
+        residual = distance - perspective_coeff * reach * constant_sum
+        if residual <= 0.0:
+            return 0.0
+        return residual * reach / linear_sum
 
     # Diagnostic norm of the currently accumulated gradients on this rank.
     def _grad_norm_from_current_grads() -> float:
@@ -2076,7 +2104,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, p
                         print(
                             "[LAYERWISE T2 CALIBRATION] "
                             f"epoch={epoch + 1}, mode={t2_calibration}, "
-                            f"schedule_sum={_l1_schedule_sum(epoch):.6g}, "
+                            f"schedule_sums={_l1_schedule_sums(epoch)}, "
                             f"targets={layerwise_t2_targets}, "
                             f"abs_weight_quantiles={layerwise_t2_quantiles}, "
                             f"T2_dual_rule={layerwise_t2_dual}, "
@@ -3624,7 +3652,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, p
                     abs_q = _percentiles_large_tensor(
                         w_stats.abs(), [0.80, 0.85, 0.89]
                     )
-                    t2_calibration = [
+                    t2_dual_quantile_diag = [
                         4.0 * perspective_coeff * float(q.item()) ** 2
                         for q in abs_q
                     ]
@@ -3863,9 +3891,9 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, p
                     f"q80={abs_q[0].item():.6e}, "
                     f"q85={abs_q[1].item():.6e}, "
                     f"q89={abs_q[2].item():.6e}, "
-                    f"T2_for_80%={t2_calibration[0]:.6e}, "
-                    f"T2_for_85%={t2_calibration[1]:.6e}, "
-                    f"T2_for_89%={t2_calibration[2]:.6e}",
+                    f"T2_for_80%={t2_dual_quantile_diag[0]:.6e}, "
+                    f"T2_for_85%={t2_dual_quantile_diag[1]:.6e}, "
+                    f"T2_for_89%={t2_dual_quantile_diag[2]:.6e}",
                     flush=True,
                 )
                 print(f"training_time = {training_time_global}s", flush=True)
