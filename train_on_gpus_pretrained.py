@@ -920,6 +920,7 @@ def print_config(model_name, args, h, local_rank_to_print):
     print(f"lsq_scale_lr={h['lsq_scale_lr']}", flush=True)
     print(f"lsq_scale_lr_mode={h['lsq_scale_lr_mode']}", flush=True)
     print(f"lr_warmup_epochs={h['lr_warmup_epochs']}", flush=True)
+    print(f"t2_calibration={h['t2_calibration']}", flush=True)
     print(f"lsq_init={h['lsq_init']}", flush=True)
     print(f"lsq_grad_scaling={h['lsq_grad_scaling']}", flush=True)
     print(f"lsq_per_channel={h['lsq_per_channel']}", flush=True)
@@ -1085,6 +1086,20 @@ def main():
             "each tensor's own initial step size, making the relative "
             "displacement uniform; 1e-3 reproduces the conditioning of the "
             "lossless test_168 on ResNet-18."
+        ),
+    )
+    parser.add_argument(
+        "--t2_calibration",
+        type=str,
+        default="displacement",
+        choices=["displacement", "dual"],
+        help=(
+            "How --layerwise_t2_targets becomes a coefficient. 'displacement' "
+            "solves 2*sqrt(T1*T2)*S = q_target - a/2 so the L1 push has the "
+            "budget to actually carry the targeted weights into the LSQ zero "
+            "bin. 'dual' is the historical rule T2 = 4*T1*q^2, which calibrates "
+            "z>0.5 but leaves the push three to four orders of magnitude too "
+            "weak to deploy any of it (test_226)."
         ),
     )
     parser.add_argument(
@@ -1320,6 +1335,7 @@ def main():
     h["lsq_scale_lr"] = args.lsq_scale_lr
     h["lsq_scale_lr_mode"] = args.lsq_scale_lr_mode
     h["lr_warmup_epochs"] = args.lr_warmup_epochs
+    h["t2_calibration"] = args.t2_calibration
     h["lsq_init"] = args.lsq_init
     h["lsq_grad_scaling"] = (args.lsq_grad_scaling == "Y")
     h["lsq_per_channel"] = (args.lsq_per_channel == "Y")
@@ -1526,6 +1542,7 @@ def main():
         lsq_scale_lr_schedule=h["lsq_scale_lr_schedule"],
         lr_decay_epochs=h["lr_decay_epochs"],
         lr_warmup_epochs=h["lr_warmup_epochs"],
+        t2_calibration=h["t2_calibration"],
         distillation=h["distillation"],
         distill_alpha=h["distill_alpha"],
         distill_tau=h["distill_tau"],

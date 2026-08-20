@@ -10,8 +10,45 @@
 #SBATCH --output=/dev/null
 #SBATCH --error=/dev/null
 
-# test_226: AlexNet, second rung of the ladder. PEAQ with the sparsity term T2
-# only; the entropy term T3 stays off.
+# test_227: AlexNet, second rung of the ladder, with the T2 calibration fixed.
+# PEAQ with the sparsity term T2 only; the entropy term T3 stays off.
+#
+# test_226 ran this exact configuration and was INERT. At epoch 39 of 60, with
+# the ramp at 96.7% of full dose, it had 17.12% sparsity against the 16.11% the
+# same recipe reaches with T2 switched off entirely, and zstd 10.87% against
+# 10.75%: one point of sparsity bought, and the packet slightly WORSE. Accuracy
+# was untouched at 56.44, because nothing was happening.
+#
+# The cause is not a bug in the solver, it is the calibration rule. The dual was
+# doing its job perfectly (mean_z_star 0.5405, z>0.5 on 60.6% of the weights);
+# what never happened was the transmission of that opinion to the deployed model.
+# T2 does not prune: it applies a constant-magnitude L1 push of 2*sqrt(T1*T2) and
+# the LSQ zero bin absorbs whatever reaches it. The historical rule
+# T2 = 4*T1*q^2 sets the DUAL threshold at q and says nothing about whether the
+# push can carry a weight that far. On test_226 it produced coefficients of
+# 4.7e-9 to 2.4e-8, a total displacement of about 2e-4, against the 0.010 to
+# 0.022 needed to reach the requested quantiles. Three to four orders of
+# magnitude short.
+#
+# The arithmetic was checked against the run itself: modelling the deployed
+# sparsity as the fraction of weights with |w| < D + a/2 predicts 16.2% global,
+# and the run measured 17.12%. The model holds to within one point, so the dose,
+# not the machinery, is what failed.
+#
+# --t2_calibration displacement (now the default) inverts the relation instead:
+# it solves 2*sqrt(T1*T2)*S = q_target - a/2, where S is the exact schedule sum
+# the trainer computes from its own learning-rate curve, ramp shape and step
+# count. On this schedule S = 230.1, verified offline against a hand calculation.
+# The resulting coefficients are 4e-5 to 2e-4, i.e. six to eleven thousand times
+# the old ones, and the implied L1 force is 15% to 30% of the typical task
+# gradient: strong, but an ordinary L1 strength rather than an absurd one.
+#
+# Note the model deliberately IGNORES the task gradient, which resists on the
+# weights that matter. The realized sparsity will therefore land BELOW the 85.3%
+# target, which is the safe direction to be wrong in.
+#
+# Everything else is byte-for-byte the test_226 configuration, which is itself
+# the frozen test_225 recipe plus the phase schedule and --min_lr.
 #
 # Baseline to beat, test_225 (run_alexnet_lsq_lossless.sh, LSQ only):
 #   A_Q 56.552 and sparse 56.556 against 56.524 FP32, both ABOVE the checkpoint,
@@ -120,6 +157,7 @@ srun --ntasks=$SLURM_NTASKS --ntasks-per-node=1 bash -lc '
         --entropy_coeff 0 \
         --sparsity_coeff 0 \
         --layerwise_t2_targets 0.15,0.55,0.60,0.60,0.60,0.88,0.88,0.65 \
+        --t2_calibration displacement \
         --perspective Y \
         --flat_schedule N \
         --mag_prune_ratio 0 \

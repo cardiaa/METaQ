@@ -204,6 +204,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, p
                        lsq_init="lsq", lsq_grad_scaling=True, lsq_per_channel=False,
                        distillation=False, distill_alpha=0.5, distill_tau=1.0,
                        min_lr=None, lsq_scale_lr_schedule=False,
+                       t2_calibration="displacement",
                        lr_decay_epochs=None, lr_warmup_epochs=0,
                        joint_lsq_metaq=False, bn_recalibration_batches=0,
                        layer_C=None,
@@ -1281,6 +1282,76 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, p
             model.eval()
         return batches
 
+    def _l1_schedule_sum(from_epoch: int) -> float:
+        """Schedule weight of the METaQ L1 push, from ``from_epoch`` to the end.
+
+        With T2 > 0 the perspective term contributes a CONSTANT-magnitude force
+        to every latent weight below the dual threshold: beta* = 2*T1*w/y* with
+        y* = |w|*sqrt(T1/T2) gives |beta*| = 2*sqrt(T1*T2), independent of w.
+        Under SGD with momentum the displacement it accumulates is therefore
+
+            D = 2*sqrt(T1*T2) * sum_t lr_t * sqrt(ramp_fraction_t) / (1 - momentum)
+
+        and this returns the sum, so that D = 2*sqrt(T1*T2) * _l1_schedule_sum().
+        The sqrt appears because the ramp scales T2, and the force goes with its
+        square root.
+        """
+        if steps_per_epoch is None:
+            return 0.0
+        momentum = 0.9 if train_optimizer == "SGD" else 1.0
+        damping = max(1.0 - momentum, 1e-6)
+        total = 0.0
+        for e in range(int(from_epoch), int(n_epochs)):
+            if phase_schedule_enabled:
+                if e < diagnostic_epochs:
+                    fraction = 0.0
+                elif metaq_ramp_epochs > 0 and e < diagnostic_epochs + metaq_ramp_epochs:
+                    fraction = (e - diagnostic_epochs + 1) / float(metaq_ramp_epochs)
+                else:
+                    fraction = 1.0
+            else:
+                fraction = 1.0
+            if fraction <= 0.0:
+                continue
+            total += lr * _persp_lr(e) * steps_per_epoch * math.sqrt(fraction)
+        return total / damping
+
+    def _t2_from_displacement(p_idx: int, quantile: float) -> float:
+        """T2 that actually moves the targeted weights into the LSQ zero bin.
+
+        The historical rule, T2 = 4*T1*q^2, calibrates the DUAL: it makes z>0.5
+        coincide with |w| < q. But nothing deploys z. A weight is shipped as zero
+        only when its LATENT value lands inside the zero bin, |w| < a/2, and it
+        gets there only if the L1 push has budget to carry it. Those are two
+        different requirements and the dual rule addresses only the first.
+
+        Measured on test_226 (AlexNet, targets 0.15..0.88, global 85.3%): the dual
+        rule produced coefficients between 4.7e-9 and 2.4e-8, giving a total
+        displacement of about 2e-4 against a required 0.010 to 0.022. The
+        predicted global sparsity was 16.2% and the run measured 17.12%, against
+        16.11% for the same recipe with T2 switched off entirely. The term was
+        three to four orders of magnitude too weak to do anything at all.
+
+        So invert the displacement relation instead: ask for
+        D = q - a/2, the distance from the target quantile to the edge of the zero
+        bin, and solve 2*sqrt(T1*T2)*S = D for T2. Note this ignores the task
+        gradient, which resists on the weights that matter, so the realized
+        sparsity lands BELOW the target. That is the safe direction.
+        """
+        if perspective_coeff <= 0.0:
+            raise ValueError(
+                "Displacement-based T2 calibration needs perspective_coeff > 0, "
+                "since the L1 push is 2*sqrt(T1*T2)."
+            )
+        schedule_sum = _l1_schedule_sum(epoch)
+        if schedule_sum <= 0.0:
+            return 0.0
+        scale = lsq_scales[p_idx].detach().abs()
+        half_bin = float(scale.mean().item()) / 2.0
+        distance = max(float(quantile) - half_bin, 0.0)
+        push = distance / schedule_sum
+        return push * push / (4.0 * perspective_coeff)
+
     # Diagnostic norm of the currently accumulated gradients on this rank.
     def _grad_norm_from_current_grads() -> float:
         with torch.no_grad():
@@ -1979,25 +2050,36 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, p
             ):
                 with torch.no_grad():
                     layerwise_t2_quantiles = []
+                    layerwise_t2_dual = []
                     layerwise_t2_final = []
                     for p_idx, param in enumerate(params_for_quant):
                         target = layerwise_t2_targets[p_idx]
                         w_abs = param.detach().reshape(-1).float().abs()
                         if target <= 0.0:
                             quantile = 0.0
+                            t2_dual = 0.0
                             t2_final = 0.0
                         else:
                             quantile = float(
                                 _percentiles_large_tensor(w_abs, [target])[0].item()
                             )
-                            t2_final = 4.0 * perspective_coeff * quantile ** 2
+                            t2_dual = 4.0 * perspective_coeff * quantile ** 2
+                            t2_final = (
+                                t2_dual
+                                if t2_calibration == "dual"
+                                else _t2_from_displacement(p_idx, quantile)
+                            )
                         layerwise_t2_quantiles.append(quantile)
+                        layerwise_t2_dual.append(t2_dual)
                         layerwise_t2_final.append(t2_final)
                     if local_rank == 0:
                         print(
                             "[LAYERWISE T2 CALIBRATION] "
-                            f"epoch={epoch + 1}, targets={layerwise_t2_targets}, "
+                            f"epoch={epoch + 1}, mode={t2_calibration}, "
+                            f"schedule_sum={_l1_schedule_sum(epoch):.6g}, "
+                            f"targets={layerwise_t2_targets}, "
                             f"abs_weight_quantiles={layerwise_t2_quantiles}, "
+                            f"T2_dual_rule={layerwise_t2_dual}, "
                             f"T2_final={layerwise_t2_final}",
                             flush=True,
                         )
