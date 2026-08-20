@@ -6,11 +6,45 @@
 #SBATCH --ntasks=4
 #SBATCH --gres=gpu:4
 #SBATCH --cpus-per-task=32
-#SBATCH --time=02:00:00
+#SBATCH --time=03:00:00
 #SBATCH --output=/dev/null
 #SBATCH --error=/dev/null
 
-# test_223: AlexNet, LSQ-only lossless baseline. First run of the sweep with the
+# test_224: AlexNet, LSQ-only lossless baseline, second attempt.
+#
+# test_223 (same recipe, 20 epochs, uniform C=16) landed at A_Q 55.956 against
+# 56.524 FP32, i.e. -0.568, against -1.644 for the best previous AlexNet
+# (test_204).  Two thirds of the gap closed, but not lossless.  The log says the
+# run was stopped by its budget, not by the method:
+#   - A_Q rises monotonically over the last eight epochs, 55.250 -> 55.956, and
+#     the FINAL epoch still gains +0.098;
+#   - level_change decays 6.23% -> 0.143% as the cosine kills the rate, so the
+#     reassignment mechanism switched off while the accuracy was still climbing.
+#     Exactly the shape of test_168 on ResNet-18, which was also still rising at
+#     the end.
+#   - no layer is in a pathological regime: clipping is flat between 0.5% and
+#     1.0% everywhere and every step size is stable within 8% of its init, with
+#     one exception, features.0, whose clipped fraction nearly doubled
+#     (1.29% -> 2.37%) while its step size shrank to 0.893.
+#   - metaq_scale_grad_last stayed exactly zero for all twenty epochs: the T1
+#     gate holds.
+#
+# So this run changes exactly two things.
+#   a) --n_epochs 20 -> 40.  The cosine now traverses the productive band of the
+#      schedule over twice as many steps.  The whole +0.71 of test_223 was
+#      earned between epoch 10 and epoch 20, i.e. while the rate fell from
+#      1.1e-3 to the floor; doubling the length doubles the time spent there and
+#      still anneals properly at the end, which a constant floor would not.
+#   b) --layer_C 256,256,16,16,16,16,16,16: the two input convolutions at 8 bits.
+#      features.0 is the only layer showing a runaway, and it is 11x11x3 with a
+#      very wide per-filter dynamic range; features.3 is the next most fragile.
+#      Together they are 330432 parameters, 0.54% of the network, so the extra
+#      four bits cost 0.068% of the FP32 size in nominal terms and less after
+#      entropy coding.  This is also what Deep Compression does on AlexNet.
+#
+# Original test_223 header follows.
+#
+# AlexNet, LSQ-only lossless baseline. First run of the sweep with the
 # corrected training recipe, and the reference point that every later AlexNet run
 # (T2 on, then T2 and T3 on) must reproduce exactly except for the coefficients.
 #
@@ -101,7 +135,7 @@ srun --ntasks=$SLURM_NTASKS --ntasks-per-node=1 bash -lc '
         --train_workers 4 \
         --val_workers 2 \
         --batch_size 64 \
-        --n_epochs 20 \
+        --n_epochs 40 \
         --lr 2e-3 \
         --lr_warmup_epochs 1 \
         --optimizer_weight_decay 1e-4 \
@@ -125,6 +159,7 @@ srun --ntasks=$SLURM_NTASKS --ntasks-per-node=1 bash -lc '
         --distill_tau 1.0 \
         --bn_recalibration_batches 0 \
         --C 16 \
+        --layer_C 256,256,16,16,16,16,16,16 \
         --max_iterations 3 \
         --metrics_interval 1 \
         --entropy_warmup_epochs 0 \
