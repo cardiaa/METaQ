@@ -404,7 +404,7 @@ def FISTA_leonardo(xi, v, w, C, upper_c, lower_c, delta, subgradient_step, devic
 
 def FISTA_perspective_leonardo(xi, v, w, C, upper_c, lower_c, perspective_coeff, entropy_coeff, sparsity_coeff,
                                subgradient_step, device, max_iterations,
-                               dual_step=0.5, scale=None):
+                               dual_step=0.5, scale=None, dual_step_relative=False):
     """
     FISTA for the entropy dual under the perspective reformulation (entropy_coeff > 0).
 
@@ -456,6 +456,27 @@ def FISTA_perspective_leonardo(xi, v, w, C, upper_c, lower_c, perspective_coeff,
     ln2 = math.log(2.0)
     xi_lo = entropy_coeff_safe * (math.log(max(lower_c, 1e-12)) + 1.0) / ln2
     xi_hi = entropy_coeff_safe * (math.log(max(upper_c, 1e-12)) + 1.0) / ln2
+
+    # test_233: the dual's travel speed and the distance it has to travel were
+    # measured in different units, and only one of them scaled with entropy_coeff.
+    # The supergradient is normalized to [-1,1] (the test_134 fix), so an ABSOLUTE
+    # dual_step moves xi by a fixed amount per iteration; but xi's useful range is
+    # xi_hi - xi_lo = entropy_coeff * log2(upper_c/lower_c), i.e. proportional to
+    # entropy_coeff. Raising the coefficient therefore moves the target further
+    # away at exactly the rate at which it raises it, and the dual converges
+    # SLOWER. Measured: test_232 and test_233 differ tenfold in entropy_coeff and
+    # their beta* norms at epoch one agree to four significant figures
+    # (2.756366e-04 against 2.756720e-04), because entropy_coeff reaches the
+    # weights only through xi (the x-subproblem sees the raw xi_b, see
+    # knapsack_perspective_leonardo) and xi had barely moved in either. Both runs
+    # compressed LESS than the same recipe with the entropy term switched off.
+    #
+    # In relative mode dual_step is a fraction of that range per iteration, which
+    # is the transferable quantity: it holds the dual's convergence rate fixed
+    # when entropy_coeff, the layer size or the number of dual calls per epoch
+    # change. Absolute stays the default so every previous run is untouched.
+    if dual_step_relative:
+        dual_step = float(dual_step) * (xi_hi - xi_lo)
 
     beta_star = None
     beta_constraint = None

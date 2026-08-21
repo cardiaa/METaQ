@@ -1039,6 +1039,23 @@ def main():
     parser.add_argument("--perspective", type=str, default="N", choices=["Y", "N"], help="Enable the perspective reformulation (test_113)")
     parser.add_argument("--flat_schedule", type=str, default="N", choices=["Y", "N"], help="Hold BOTH lr and entropy_coeff constant for the whole run: no cosine tail, no entropy_coeff ramp (test_133)")
     parser.add_argument("--dual_step", type=float, default=None, help="Ascent step for the entropy dual on the layer-size-normalized supergradient (test_134)")
+    parser.add_argument(
+        "--dual_step_mode",
+        type=str,
+        default="absolute",
+        choices=["absolute", "relative"],
+        help=(
+            "How --dual_step is measured. 'absolute' moves xi by that amount per "
+            "iteration, which is what every run up to test_233 did. 'relative' "
+            "makes it a fraction of xi's useful range, entropy_coeff*log2("
+            "upper_c/lower_c), and is the transferable form: the range scales "
+            "with entropy_coeff while an absolute step does not, so raising the "
+            "coefficient with a fixed step slows the dual by the same factor it "
+            "raises the target. test_232/233 measured exactly that -- tenfold in "
+            "entropy_coeff, identical beta* norms, both compressing less than "
+            "the run with the entropy term off."
+        ),
+    )
     parser.add_argument("--prox", type=str, default="N", choices=["Y", "N"], help="Apply phi as a proximal operator on the weights instead of summing beta* into the loss gradient (test_135)")
     parser.add_argument("--prox_gamma", type=float, default=None, help="Step of the proximal operator; sets the entropy displacement independently of the learning rate (test_135)")
     parser.add_argument("--prox_start_epoch", type=int, default=0, help="First epoch (0-based) at which the proximal step runs; decoupled from entropy_warmup_epochs so the sparsity ramp is unaffected (test_139)")
@@ -1345,6 +1362,7 @@ def main():
     h["use_perspective"] = (args.perspective == "Y")
     h["flat_schedule"] = (args.flat_schedule == "Y")
     h["dual_step"] = 0.5 if args.dual_step is None else args.dual_step
+    h["dual_step_relative"] = (args.dual_step_mode == "relative")
     h["use_prox"] = (args.prox == "Y")
     h["prox_gamma"] = 1e-7 if args.prox_gamma is None else args.prox_gamma
     h["prox_start_epoch"] = args.prox_start_epoch
@@ -1543,6 +1561,7 @@ def main():
         layer_sparsity=h["layer_sparsity"],
         flat_schedule=h["flat_schedule"],
         dual_step=h["dual_step"],
+        dual_step_relative=h["dual_step_relative"],
         use_prox=h["use_prox"],
         prox_gamma=h["prox_gamma"],
         prox_start_epoch=h["prox_start_epoch"],

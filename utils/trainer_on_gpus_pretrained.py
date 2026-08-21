@@ -195,7 +195,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, p
                        sparsity_coeff=0.0, mag_prune_ratio=0.5, use_perspective=False, target_sparsity=0.0,
                        sparsity_warmup_epochs=0, sparsity_ramp_power=1.0,
                        conv_sparsity=None, fc_sparsity=None, layer_sparsity=None,
-                       flat_schedule=False, dual_step=0.5,
+                       flat_schedule=False, dual_step=0.5, dual_step_relative=False,
                        use_prox=False, prox_gamma=1e-7, prox_start_epoch=0,
                        sparsity_schedule=None, freeze_mask=False,
                        train_sparse=False, use_quantization=True,
@@ -2745,6 +2745,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, p
                             subgradient_step, device, max_iterations,
                             dual_step,
                             scale=metaq_scale,
+                            dual_step_relative=dual_step_relative,
                         )
                         if joint_lsq_metaq:
                             # Exact envelope contribution for
@@ -3809,7 +3810,8 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, p
                         f"xi_min={persp_xi_min:.6e}, xi_max={persp_xi_max:.6e}, "
                         f"xi_mean={persp_xi_mean_sum / n_d:.6e}, "
                         f"xi_pinned_frac={persp_xi_pinned_sum / n_d:.6f}, "
-                        f"dual_step={dual_step}",
+                        f"dual_step={dual_step}"
+                        f"{' (relative)' if dual_step_relative else ''}",
                         flush=True
                     )
                 if last_loss_grad_norm is not None:
