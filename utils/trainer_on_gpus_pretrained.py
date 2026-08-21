@@ -353,10 +353,15 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, p
     # form), whose gradient 2*perspective_coeff*w/y* is applied EXPLICITLY per step.  The plain
     # SGD weight_decay (which would add a second, standard perspective_coeff*w ridge) is disabled
     # to avoid double-counting.
+    # Per-layer T2 calibration no longer implies the phase schedule: the two were
+    # coupled only because the calibration block used to live inside it. Keeping
+    # them coupled forced --layerwise_t2_targets to drag in the diagnostic/ramp/
+    # flat structure and its learning-rate shape, which is not always wanted. With
+    # the phase schedule off, the targets are calibrated once at epoch one and
+    # applied at full value from the first step, under the ordinary cosine.
     phase_schedule_enabled = (
         diagnostic_epochs > 0
         or metaq_ramp_epochs > 0
-        or layerwise_t2_targets is not None
     )
     if phase_schedule_enabled:
         if min(diagnostic_epochs, metaq_ramp_epochs, metaq_flat_epochs) < 0:
@@ -1312,11 +1317,30 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, p
         sums, returned as (linear, constant), with displacement
 
             D = T2/(q_edge*a) * S_linear + T1*(q_edge*a) * S_constant
+
+        Both sums are weighted by the DUTY CYCLE of the METaQ gradient, i.e. by
+        the fraction of optimizer steps on which the force is actually applied
+        (see below). With T3 off that is every step; with T3 on it is one step in
+        entropy_every, because the two live in different branches of the update.
         """
         if steps_per_epoch is None:
             return 0.0, 0.0
         momentum = 0.9 if train_optimizer == "SGD" else 1.0
         damping = max(1.0 - momentum, 1e-6)
+        # DUTY CYCLE. The sums count the steps on which the METaQ force is
+        # ACTUALLY applied, which is not always every step. With T3 off, the
+        # ridge/T2 gradient goes through the cheap per-step path; with T3 on that
+        # path is excluded by its own guard (entropy_coeff_current == 0) and the
+        # WHOLE perspective gradient -- ridge, T2 and the step-size term alike --
+        # is delivered by the FISTA block, which runs one step in entropy_every.
+        # Without this factor --t2_scale means one thing with T3 off and
+        # entropy_every times less with it on, and the calibration silently
+        # under-delivers the displacement it was asked for by that same factor.
+        duty_cycle = (
+            1.0 / float(max(1, int(entropy_every)))
+            if entropy_coeff > 0.0
+            else 1.0
+        )
         linear = 0.0
         constant = 0.0
         for e in range(int(from_epoch), int(n_epochs)):
@@ -1331,7 +1355,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, p
                 fraction = 1.0
             if fraction <= 0.0:
                 continue
-            weight = lr * _persp_lr(e) * steps_per_epoch
+            weight = lr * _persp_lr(e) * steps_per_epoch * duty_cycle
             linear += weight * fraction
             constant += weight
         return linear / damping, constant / damping
@@ -2068,67 +2092,69 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, p
                 phase_name = "metaq_flat"
                 metaq_ramp_fraction = 1.0
 
-            # Calibrate once, from the weights delivered by the complete
-            # diagnostic phase. q_p(|w_l|) gives the T2_l that makes z>0.5
-            # equivalent to pruning the requested p fraction at calibration.
-            if (
-                layerwise_t2_targets is not None
-                and layerwise_t2_final is None
-                and epoch >= diagnostic_epochs
-            ):
-                with torch.no_grad():
-                    layerwise_t2_quantiles = []
-                    layerwise_t2_dual = []
-                    layerwise_t2_final = []
-                    for p_idx, param in enumerate(params_for_quant):
-                        target = layerwise_t2_targets[p_idx]
-                        w_abs = param.detach().reshape(-1).float().abs()
-                        if target <= 0.0:
-                            quantile = 0.0
-                            t2_dual = 0.0
-                            t2_final = 0.0
-                        else:
-                            quantile = float(
-                                _percentiles_large_tensor(w_abs, [target])[0].item()
-                            )
-                            t2_dual = 4.0 * perspective_coeff * quantile ** 2
-                            t2_final = (
-                                t2_dual
-                                if t2_calibration == "dual"
-                                else _t2_from_displacement(p_idx, quantile)
-                            )
-                            # The analytic rule sets the SHAPE across layers;
-                            # the overall dose is a measured quantity. See the
-                            # --t2_scale help text.
-                            t2_final *= float(t2_scale)
-                        layerwise_t2_quantiles.append(quantile)
-                        layerwise_t2_dual.append(t2_dual)
-                        layerwise_t2_final.append(t2_final)
-                    if local_rank == 0:
-                        print(
-                            "[LAYERWISE T2 CALIBRATION] "
-                            f"epoch={epoch + 1}, mode={t2_calibration}, "
-                            f"scale={t2_scale}, "
-                            f"schedule_sums={_l1_schedule_sums(epoch)}, "
-                            f"targets={layerwise_t2_targets}, "
-                            f"abs_weight_quantiles={layerwise_t2_quantiles}, "
-                            f"T2_dual_rule={layerwise_t2_dual}, "
-                            f"T2_final={layerwise_t2_final}",
-                            flush=True,
-                        )
-
-            if layerwise_t2_final is not None:
-                layerwise_t2_current = [
-                    value * metaq_ramp_fraction for value in layerwise_t2_final
-                ]
-            else:
-                layerwise_t2_current = [
-                    float(sparsity_coeff) * metaq_ramp_fraction
-                ] * num_param_tensors
         else:
             phase_name = "legacy"
             metaq_ramp_fraction = 1.0
-            layerwise_t2_current = [float(sparsity_coeff)] * num_param_tensors
+
+        # Calibrate once, from the weights delivered by the complete
+        # diagnostic phase. q_p(|w_l|) gives the T2_l that makes z>0.5
+        # equivalent to pruning the requested p fraction at calibration.
+        if (
+            layerwise_t2_targets is not None
+            and layerwise_t2_final is None
+            and epoch >= diagnostic_epochs
+        ):
+            with torch.no_grad():
+                layerwise_t2_quantiles = []
+                layerwise_t2_dual = []
+                layerwise_t2_final = []
+                for p_idx, param in enumerate(params_for_quant):
+                    target = layerwise_t2_targets[p_idx]
+                    w_abs = param.detach().reshape(-1).float().abs()
+                    if target <= 0.0:
+                        quantile = 0.0
+                        t2_dual = 0.0
+                        t2_final = 0.0
+                    else:
+                        quantile = float(
+                            _percentiles_large_tensor(w_abs, [target])[0].item()
+                        )
+                        t2_dual = 4.0 * perspective_coeff * quantile ** 2
+                        t2_final = (
+                            t2_dual
+                            if t2_calibration == "dual"
+                            else _t2_from_displacement(p_idx, quantile)
+                        )
+                        # The analytic rule sets the SHAPE across layers;
+                        # the overall dose is a measured quantity. See the
+                        # --t2_scale help text.
+                        t2_final *= float(t2_scale)
+                    layerwise_t2_quantiles.append(quantile)
+                    layerwise_t2_dual.append(t2_dual)
+                    layerwise_t2_final.append(t2_final)
+                if local_rank == 0:
+                    print(
+                        "[LAYERWISE T2 CALIBRATION] "
+                        f"epoch={epoch + 1}, mode={t2_calibration}, "
+                        f"scale={t2_scale}, "
+                        f"metaq_duty_cycle=1/"
+                        f"{max(1, int(entropy_every)) if entropy_coeff > 0 else 1}, "
+                        f"schedule_sums={_l1_schedule_sums(epoch)}, "
+                        f"targets={layerwise_t2_targets}, "
+                        f"abs_weight_quantiles={layerwise_t2_quantiles}, "
+                        f"T2_dual_rule={layerwise_t2_dual}, "
+                        f"T2_final={layerwise_t2_final}",
+                        flush=True,
+                    )
+
+        if layerwise_t2_final is not None:
+            layerwise_t2_current = [
+                value * metaq_ramp_fraction for value in layerwise_t2_final
+            ]
+        else:
+            layerwise_t2_current = [
+                float(sparsity_coeff) * metaq_ramp_fraction
+            ] * num_param_tensors
 
         # entropy_coeff schedule: no entropy during warmup, then a gentle exponential ramp
         # from entropy_coeff/8 to entropy_coeff.  This avoids abruptly injecting a large custom
@@ -2173,7 +2199,11 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, p
             or any(float(t) > 0.0 for t in layerwise_t2_current)
         )
 
-        if local_rank == 0 and phase_schedule_enabled:
+        # Print it under the ordinary cosine too: with the phase schedule off but
+        # T2/T3 live this line is the only per-epoch record of the dose actually
+        # applied, and a run whose coefficients are wrong should be visible on
+        # epoch one rather than at the post-mortem.
+        if local_rank == 0 and (phase_schedule_enabled or metaq_couples_to_scale):
             scale_lr_now = (
                 scale_optimizer.param_groups[0]["lr"]
                 if scale_optimizer is not None

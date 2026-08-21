@@ -1115,7 +1115,13 @@ def main():
             "test_228 over-dosed by a factor of ten through a scale-inflation "
             "channel none of them contained). Read it off the ramp of a "
             "deliberately over-dosed run: the ramp fraction at the last "
-            "acceptable frontier point IS this number."
+            "acceptable frontier point IS this number. What transfers between "
+            "runs is not the scale but the CUMULATIVE EXPOSURE T2*S_linear: two "
+            "runs with different epoch counts, learning-rate shapes or T3 duty "
+            "cycles need different scales to reach the same sparsity. The "
+            "schedule sums already carry all three, so equal exposure means "
+            "equal displacement; test_229 measured 42.4% sparsity at exposure "
+            "31.4 in units of its own T2."
         ),
     )
     parser.add_argument(
