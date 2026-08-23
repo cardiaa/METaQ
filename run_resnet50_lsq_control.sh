@@ -6,12 +6,13 @@
 #SBATCH --ntasks=4
 #SBATCH --gres=gpu:4
 #SBATCH --cpus-per-task=32
-#SBATCH --time=03:00:00
+#SBATCH --time=05:00:00
 #SBATCH --output=/dev/null
 #SBATCH --error=/dev/null
 
-# test_243: ResNet-50, LSQ-only control at twenty epochs. Same script as the
-# METaQ run with the three coefficients set to zero and nothing else changed.
+# test_242: ResNet-50, LSQ-only at twenty epochs. First run on this network,
+# and it goes alone: the METaQ run follows once this one has landed and has
+# told us what the learning rate does here.
 #
 # THIS RUN DOES TWO JOBS AT ONCE, which is why it is worth its own slot rather
 # than being skipped.
@@ -35,7 +36,12 @@
 # headroom to spend on compression, and the published rows above, which all sit
 # 1.6 points below their baseline, are beatable on both axes.
 #
-# COST: no dual solver, estimated near 320s per epoch, so under two hours.
+# COST: never measured on this model. ResNet-50 carries 2.18x the quantized
+# weights of ResNet-18 across 2.57x the tensors and its forward pass is about
+# 2.3x heavier, so the estimate is near 320s per epoch, under two hours for
+# twenty. The five-hour wall is slack on an estimate, not a prediction: the
+# number this run produces is what sizes the METaQ run that follows, which
+# adds the dual solver on top.
 
 LOG_DIR=$WORK/acardia0/LeonardoTests
 mkdir -p "$LOG_DIR"
