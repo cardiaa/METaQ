@@ -55,16 +55,9 @@
 LOG_DIR=$WORK/acardia0/LeonardoTests
 mkdir -p "$LOG_DIR"
 
-# Log number fixed by agreement so that this run and its control can be
-# submitted together: the auto-numbering reads the directory at start-up, and
-# two jobs dispatched in the same instant would both claim the same number and
-# one would overwrite the other.
-LOG_ID=239
-LOG_FILE=$LOG_DIR/Leonardo_test_${LOG_ID}.log
-if [ -e "$LOG_FILE" ]; then
-    echo "refusing to overwrite $LOG_FILE" >&2
-    exit 1
-fi
+LAST=$(find "$LOG_DIR" -maxdepth 1 -type f -name 'Leonardo_test_*.log' -printf '%f\n' | grep -oE '^Leonardo_test_[0-9]+\.log$' | grep -oE '[0-9]+' | sort -n | tail -1)
+NEXT=$(( ${LAST:-0} + 1 ))
+LOG_FILE=$LOG_DIR/Leonardo_test_${NEXT}.log
 export LOG_FILE
 
 module load profile/deeplrn
