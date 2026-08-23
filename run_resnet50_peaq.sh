@@ -6,47 +6,54 @@
 #SBATCH --ntasks=4
 #SBATCH --gres=gpu:4
 #SBATCH --cpus-per-task=32
-#SBATCH --time=09:00:00
+#SBATCH --time=07:00:00
 #SBATCH --output=/dev/null
 #SBATCH --error=/dev/null
 
-# test_242: ResNet-50, first METaQ run. The ResNet-18 recipe transferred with the
-# model name changed and the budget cut to twenty epochs for a first pass.
+# test_243: ResNet-50, first METaQ run. The ResNet-18 recipe with the model name
+# changed, twenty epochs, and the three coefficients on.
 #
-# WHY THIS CELL. ResNet-50 is the only network where two published methods report
-# size after lossless coding, our own metric, and both pay for it:
+# WHAT test_242 ESTABLISHED, and it is all good news:
 #
-#   DeepCABAC \citep{wiedemann2019deepcabac}   74.51   10.14%   -1.62 from 76.13
-#   HEMP \citep{tartaglione2021hemp}           74.52    8.88%   -1.61
-#   Deep Compression \citep{han2016deep}       68.95    6.15%   -7.18
+#   FP32 checkpoint            76.122
+#   LSQ only, 20 epochs        76.554   +0.432   9.78%   10.22x
 #
-# On ResNet-18 METaQ halves the packet of its own LSQ control and stays above the
-# full-precision checkpoint. If that transfers even partially, this row beats both
-# on both axes at once, which no other cell of the paper can claim.
+# The learning rate transferred: the first percentile of the latent weights moved
+# -3.55% over the run, against -7.76% on ResNet-18 and +0.01% on the broken
+# EfficientNet run where the network was frozen. Four-bit LSQ finishes ABOVE the
+# checkpoint here as it does on ResNet-18, so there are 0.432 points of headroom
+# to spend on compression. And the packet grew from 8.83% to 9.78% over those
+# twenty epochs, +10.8%, the same "training decompresses" effect measured at
+# +13.6% on ResNet-18: the regularizer has a trend to reverse, not just improve.
 #
-# WHAT TRANSFERS AND WHAT DOES NOT. The learning rate, the schedule and the batch
-# come from ResNet-18 unchanged: same family, same torchvision recipe, and the
-# from-scratch rate divided by forty gives the same 1e-2 at global batch 1024.
-# The launcher's own defaults for this model, lr 1e-5 and batch 32, are the
-# pre-diagnosis values and are overridden here.
+# The cost estimate was wrong in the useful direction: 143s per epoch measured
+# against 320s predicted. ResNet-50 is heavier than ResNet-18 per image but the
+# pipeline is data-bound at this batch, so the base epoch costs the same 140s.
+# The dual solver is pure compute and will scale with 2.18x the weights over
+# 2.57x the tensors, so expect roughly 700-850s per epoch here, four to five
+# hours for twenty epochs.
 #
-# --dual_step 1.3e-2 relative transfers exactly: in relative mode the dual
-# convergence rate is dual_step * (1/C) * N_dual * calls_per_epoch, and ResNet-50
-# has the same 1251 steps and entropy_every 4, hence the same 313 calls, as
-# ResNet-18.
+# WHAT THIS CELL IS WORTH. ResNet-50 is the only network where two published
+# methods report size after lossless coding, and both pay 1.6 points for it:
 #
-# T3 = 6e-8 IS A GUESS, and it is the one thing in this script that may be wrong.
-# It is ResNet-18's headline dose, carried over because the two networks share a
-# family and a weight distribution, but absolute coefficients have not
-# transferred between distant architectures before. Twenty epochs make this a
-# scouting run: if it lands past the knee, the dose comes down; if it lands short,
-# it goes up, and the frontier is traced from there.
+#   DeepCABAC \citep{wiedemann2019deepcabac}   74.51  (-1.62)  10.14%   9.86x
+#   HEMP \citep{tartaglione2021hemp}           74.52  (-1.61)   8.88%  11.26x
+#   Deep Compression \citep{han2016deep}       68.95  (-7.18)   6.15%  16.26x
 #
-# COST: estimated near 1000s per epoch. ResNet-50 carries 2.18x the quantized
-# weights of ResNet-18 across 2.57x the tensors, and its forward pass is about
-# 2.3x heavier, so both the training and the dual solver scale. Roughly five and
-# a half hours for twenty epochs; the nine-hour wall is slack on an estimate that
-# has never been measured on this model.
+# Our LSQ control alone already beats DeepCABAC on both axes. If METaQ takes the
+# packet to sixty per cent of the control, as it does on ResNet-18 at this
+# budget, this row lands near 6% at or above the checkpoint: about 16x against
+# their 10x and 11x, and at parity where they are 1.6 points down.
+#
+# T3 = 3e-8 AND NOT 6e-8, which is what this script asked for before test_242.
+# The headroom here is 0.432 points at twenty epochs. On ResNet-18 the same
+# budget and the same converged dual cost 0.220 points at 3e-8, and 6e-8 at
+# sixty epochs cost 0.554: carried over, 6e-8 would land on or just below the
+# checkpoint. 3e-8 is the dose that produced the lossless ResNet-18 row, and a
+# first pass on a new network is worth spending on a usable point rather than on
+# a coin flip. If it lands with margin to spare, the dose goes up next.
+#
+# COST: seven-hour wall on an estimate of four to five.
 
 LOG_DIR=$WORK/acardia0/LeonardoTests
 mkdir -p "$LOG_DIR"
@@ -100,7 +107,7 @@ srun --ntasks=$SLURM_NTASKS --ntasks-per-node=1 bash -lc '
     --lr 1e-2 \
     --optimizer_weight_decay 1e-4 \
     --perspective_coeff 1e-5 \
-    --entropy_coeff 6e-8 \
+    --entropy_coeff 3e-8 \
     --sparsity_coeff 1e-7 \
     --perspective Y \
     --flat_schedule N \
