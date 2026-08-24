@@ -108,7 +108,7 @@ srun --ntasks=$SLURM_NTASKS --ntasks-per-node=1 bash -lc '
     --val_workers 2 \
     --batch_size 64 \
     --n_epochs 20 \
-    --lr 5e-5 \
+    --lr 1e-4 \
     --optimizer_weight_decay 0 \
     --perspective_coeff 0 \
     --entropy_coeff 0 \
