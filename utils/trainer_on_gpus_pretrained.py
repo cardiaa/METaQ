@@ -499,10 +499,20 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, p
     # more than one dimension. The distinction is essential for transformers:
     # DeiT's positional embedding and class token are learned tensors but are not
     # matrix weights and must remain in floating point.
+    #
+    # The ".weight" suffix is not enough on torchvision's ViT. Its attention
+    # blocks are nn.MultiheadAttention, which keeps the packed query/key/value
+    # projection in a bare Parameter called in_proj_weight rather than in a
+    # Linear submodule, so the suffix test skipped it: test_250 to test_254
+    # quantized 65.06M of ViT-B/16's 86.57M parameters and reported ratios
+    # against that subset alone, 75.15% of the model. Every other network we run
+    # was above 99%, which is why this went unnoticed. DeiT is unaffected because
+    # timm writes its own Attention with qkv as an nn.Linear.
     quant_param_indices = [
         idx
         for idx, (name, param) in enumerate(all_named_params)
-        if name.endswith(".weight") and param.ndim in (2, 4)
+        if (name.endswith(".weight") or name.endswith("in_proj_weight"))
+        and param.ndim in (2, 4)
     ]
     params_for_quant = [all_params[idx] for idx in quant_param_indices]
     quant_param_names = [all_named_params[idx][0] for idx in quant_param_indices]

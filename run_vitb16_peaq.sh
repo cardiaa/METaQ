@@ -10,32 +10,48 @@
 #SBATCH --output=/dev/null
 #SBATCH --error=/dev/null
 
-# Test 203 ablation: twice the dual iterations used in test 199.
-
-# test_251: ViT-B/16, METaQ. Same script as the control with the three
-# coefficients on, to be launched only after test_250 has confirmed the recipe.
+# test_256: ViT-B/16, METaQ on the test_251 recipe, twenty epochs. Its matched
+# control is test_255, which is the same script with the three coefficients set
+# to zero; the two are launched together because runs 250 to 254 have already
+# established that the recipe trains this network.
 #
-# COEFFICIENTS FROM DeiT-Small, which is the closest network we have calibrated:
-# T1 1e-5, T2 5e-8, T3 1.5e-8, the knee of that frontier. They are a transfer
-# guess and absolute coefficients have not transferred between distant
-# architectures before, so this is a scouting run and its dose will move.
+# READ THE HEADER LINE FIRST. This is the first ViT run on the corrected tensor
+# set. torchvision keeps the packed query/key/value projection of
+# nn.MultiheadAttention in a bare Parameter called in_proj_weight, which the old
+# ".weight" predicate skipped, so tests 250 to 254 quantized and measured only
+# 75.15 per cent of the model. Expect
+#   [QUANTIZED TENSORS] count=50, parameters=86292480, fraction_of_model=99.68%
+# and stop the run if it still says 38 and 75 per cent: it means the cluster
+# checkout has not pulled the fix.
+#
+# COEFFICIENTS FROM DeiT-Small, the closest network we have calibrated: T1 1e-5,
+# T2 5e-8, T3 1.5e-8, the knee of the test_194 frontier. A transfer guess, and
+# absolute coefficients have not transferred between distant architectures
+# before, so treat the dose as provisional and read the frontier, not the point.
+#
+# WHERE THE ROOM IS. The control finishes with the package split as mask 2.19
+# per cent and values 8.11 per cent, and the surviving weights still carry 3.37
+# bits each out of the four the codebook allows. That is more slack than
+# EfficientNet-B0 had at 2.41 and far more than AlexNet at 1.12, where T2 had
+# already done T3's work. T3 is the term with room here, as on both ResNets.
 #
 # --dual_step 1.3e-2 relative, and this part does transfer exactly: in relative
 # mode the convergence rate is dual_step * (1/C) * N_dual * calls_per_epoch, and
 # at batch 64 this network has 1251 steps and entropy_every 4, hence the same 313
 # calls as ResNet-18 and ResNet-50.
 #
-# COST: the dual solver is dominated by per-tensor overhead rather than by weight
-# count, measured at 0.93s per call on ResNet-18 with 21 tensors and 2.69s with
-# ResNet-50's 54. ViT-B/16 has about 50 quantized tensors, so expect a per-call
-# cost near ResNet-50's and roughly 1400-1600s per epoch in total. Ten epochs is
-# then four to five hours; the eight-hour wall is slack on an estimate that has
-# never been measured on a transformer of this size.
+# COST: the control measured 198s per epoch at 75 per cent coverage, so the base
+# epoch here should be 210-230s. The dual is the rest: it is dominated by
+# per-tensor overhead, 0.93s per call on ResNet-18's 21 tensors and 2.7s on
+# ResNet-50's 54, and this network now has 50, so budget roughly 800s of dual on
+# top and 1000-1100s per epoch. Twenty epochs is about six hours and the
+# twelve-hour wall is slack.
 #
-# WHAT TO COMPARE AGAINST. NNCodec reports ViT-B/16 at 32.87MB of 346.27MB, that
-# is 9.49 per cent or 10.5x, with the full-precision accuracy given as 81.07. The
-# accuracy at the compressed size has to be taken from their paper before it goes
-# in our table; do not quote a compression figure of theirs without it.
+# WHAT TO COMPARE AGAINST. NNCodec, Table 1 and Figure 7 of the ICML 2023
+# workshop paper: ViT-B/16 at 346.27MB and 81.07 top-1, with a Pareto frontier
+# of 80.92 at 14.94 per cent, 80.81 at 12.10, 80.41 at 10.44, 79.95 at 9.49,
+# 78.26 at 8.24 and 76.93 at 5.97. Their numbers cover the whole model, which is
+# exactly why the accounting above had to be fixed before this run.
 
 LOG_DIR=$WORK/acardia0/LeonardoTests
 mkdir -p "$LOG_DIR"

@@ -10,48 +10,56 @@
 #SBATCH --output=/dev/null
 #SBATCH --error=/dev/null
 
-# Test 203 ablation: twice the dual iterations used in test 199.
-
-# test_250: ViT-B/16, LSQ-only control at ten epochs. First run on this network,
-# and it goes alone: the METaQ run follows once this one has said whether the
-# recipe trains here at all.
+# test_255: ViT-B/16, LSQ-only control at twenty epochs, rerun of test_251 on
+# the corrected tensor set. Nothing about the recipe changes; what changes is
+# what the recipe is applied to.
 #
-# WHY ViT-B/16. It is the only architecture besides ResNet-50 on which a method
-# that measures size after lossless coding publishes numbers: NNCodec, the
-# reference implementation of the ISO/IEC 15938-17 standard, reports it at
-# 346.27MB full precision and 81.07 top-1, compressed down to 32.87MB in its
-# best configuration. That is 9.49 per cent, or 10.5x. Their accuracy AT that
-# size is not in the material we could retrieve and must be read off the paper
-# before it goes into any table of ours.
+# WHY IT HAS TO BE RERUN. torchvision builds ViT attention out of
+# nn.MultiheadAttention, which keeps the packed query/key/value projection in a
+# bare Parameter named in_proj_weight instead of a Linear submodule. The
+# selection rule in the trainer required a ".weight" suffix, so those twelve
+# tensors, 21.2M parameters, were never quantized and never counted. Runs 250 to
+# 254 all print
+#   [QUANTIZED TENSORS] count=38, parameters=65058816, fraction_of_model=75.15%
+# and every ratio in them is taken against that subset, not against the model.
+# Every other network we have run is above 99 per cent, which is why this went
+# unnoticed for five runs. The predicate now also accepts in_proj_weight and the
+# header should read count=50, parameters=86292480, fraction_of_model=99.68%.
+# Check that line before reading anything else in the log.
 #
-# THE RECIPE IS THE DeiT-Small ONE, halved. Transformers do not take the ResNet
-# recipe: they use ADAM, a much smaller rate and distillation from the
-# full-precision teacher. This script is test_194 with the model changed, the
-# batch halved to 64 per GPU because ViT-B/16 carries four times DeiT-Small's
-# parameters and the teacher has to fit beside the student, and the rate halved
-# with it, from 1e-4 to 5e-5, by linear scaling.
+# WHAT THE FIVE CONTROLS SAID, on the 75 per cent accounting. FP32 is 81.056.
+#   250  10ep lr 5e-5  80.814 @ 10.13%
+#   251  20ep lr 5e-5  80.914 @ 10.26%   best 80.975 at epoch 18
+#   252  20ep lr 1e-4  80.830 @ 10.28%
+#   253  20ep lr 3e-5  80.874 @ 10.24%
+#   254  30ep lr 5e-5  80.833 @ 10.35%   best 80.921 at epoch 28
+# The rate is not the binding constraint: three rates within a factor of three
+# land within 0.09 of each other, and thirty epochs are worse than twenty. Nor
+# is the network frozen, level_change runs 10.5% down to 1.1%. Four-bit LSQ
+# simply sits about a tenth of a point under the checkpoint on this network and
+# stays there, so 251 is the recipe and twenty epochs is the budget.
 #
-# THE RATE IS THE GUESS, and this control is what tests it. Watch
-# weight_percentiles: on the networks where the recipe worked the first
-# percentile of the latent weights moved a few per cent over the run (-7.76 on
-# ResNet-18, -3.55 on ResNet-50), and on the one where it did not it moved
-# +0.01. Near zero means the network is frozen and the rate is too low, whatever
-# the accuracy says.
+# THE HEADROOM IS THE THING TO WATCH. On both ResNets the LSQ control finishes
+# ABOVE full precision, +0.756 and +0.432, and METaQ spends that. Here it
+# finishes at -0.14, so ViT-B/16 belongs with DeiT-Small: report the frontier
+# against the budget-matched control, not a lossless claim against FP32.
 #
-# WHAT WOULD MAKE THE CELL WORTH OPENING. On both ResNets four-bit LSQ finishes
-# ABOVE the full-precision checkpoint, which is the headroom METaQ then spends.
-# On EfficientNet-B0 it finished 0.98 below and nothing could be spent. If this
-# control lands above 81.07 there is a cell here; if it lands a point below,
-# ViT-B/16 is EfficientNet again and we should say so and stop.
+# WHAT WE ARE SHOOTING AT. NNCodec, Table 1 of the ICML 2023 workshop paper,
+# reports ViT-B/16 at 346.27MB and 81.07 top-1, coded to 32.87MB at -1.12, that
+# is 9.49 per cent of the model. Their Figure 7 gives the whole grid; the
+# Pareto-best rows are 80.92 at 14.94%, 80.81 at 12.10%, 80.41 at 10.44% and
+# 79.95 at 9.49%. On honest full-model accounting test_251 would already be
+# near that curve, which is why the accounting has to be right before any of
+# this goes in a table.
 #
-# THE CHECKPOINT MUST BE STAGED FIRST. ResNet-50 failed on its first launch for
-# this reason. From a login node:
+# THE CHECKPOINT MUST BE STAGED FIRST. From a login node:
 #   wget -P /leonardo_work/IscrC_ObCTDoNN/acardia0/imagenet_checkpoints \
 #        https://download.pytorch.org/models/vit_b_16-c867db91.pth
 #
-# COST: never measured. ViT-B/16 has about 3.6 times DeiT-Small's compute per
-# image, so expect roughly 450-550s per epoch without the dual, under two hours
-# for ten. The four-hour wall is slack on an estimate.
+# COST: measured at 198s per epoch on runs 250-254 at 75 per cent coverage.
+# The extra 21M parameters are quantization work, not forward work, so expect
+# 210-230s and about eighty minutes for twenty epochs. The five-hour wall is
+# slack.
 
 LOG_DIR=$WORK/acardia0/LeonardoTests
 mkdir -p "$LOG_DIR"
@@ -107,7 +115,7 @@ srun --ntasks=$SLURM_NTASKS --ntasks-per-node=1 bash -lc '
     --train_workers 4 \
     --val_workers 2 \
     --batch_size 64 \
-    --n_epochs 30 \
+    --n_epochs 20 \
     --lr 5e-5 \
     --optimizer_weight_decay 0 \
     --perspective_coeff 0 \
