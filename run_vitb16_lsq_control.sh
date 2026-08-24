@@ -6,7 +6,7 @@
 #SBATCH --ntasks=4
 #SBATCH --gres=gpu:4
 #SBATCH --cpus-per-task=32
-#SBATCH --time=04:00:00
+#SBATCH --time=06:00:00
 #SBATCH --output=/dev/null
 #SBATCH --error=/dev/null
 
@@ -107,7 +107,7 @@ srun --ntasks=$SLURM_NTASKS --ntasks-per-node=1 bash -lc '
     --train_workers 4 \
     --val_workers 2 \
     --batch_size 64 \
-    --n_epochs 10 \
+    --n_epochs 20 \
     --lr 5e-5 \
     --optimizer_weight_decay 0 \
     --perspective_coeff 0 \
