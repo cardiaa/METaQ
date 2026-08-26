@@ -10,7 +10,7 @@
 #SBATCH --output=/dev/null
 #SBATCH --error=/dev/null
 
-# test_261: EfficientNet-B0, LSQ-only control with the sixteen depthwise
+# test_260: EfficientNet-B0, LSQ-only control with the sixteen depthwise
 # convolutions and the input convolution at eight bits. ONE flag differs from
 # test_258: --layer_C.
 #
