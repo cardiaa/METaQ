@@ -10,7 +10,7 @@
 #SBATCH --output=/dev/null
 #SBATCH --error=/dev/null
 
-# test_262: ResNet-18 at T3=2.6e-7 with one hundred epochs. ONE flag differs
+# test_263: ResNet-18 at T3=2.6e-7 with one hundred epochs. ONE flag differs
 # from test_257: --entropy_coeff 1e-7 -> 2.6e-7.
 #
 # WHY THIS RUN EXISTS. Our ResNet-18 frontier stops at 23.6x and the literature
