@@ -10,7 +10,7 @@
 #SBATCH --output=/dev/null
 #SBATCH --error=/dev/null
 
-# test_XXX: DeiT-Small, CONTROLLO LSQ + distillazione rifatto con --min_lr 5e-6.
+# test_265: DeiT-Small, CONTROLLO LSQ + distillazione rifatto con --min_lr 5e-6.
 # Sostituisce il test_189 come riga di controllo del capitolo DeiT.
 #
 # PERCHE' VA RIFATTO, ed e' un difetto di controllo non di dose. Il test_189
@@ -41,15 +41,14 @@
 LOG_DIR=$WORK/acardia0/LeonardoTests
 mkdir -p "$LOG_DIR"
 
-LAST=$(find "$LOG_DIR" -maxdepth 1 -type f -name 'Leonardo_test_*.log' -printf '%f\n' | grep -oE '^Leonardo_test_[0-9]+\.log$' | grep -oE '[0-9]+' | sort -n | tail -1)
-
-if [ -z "$LAST" ]; then
-    NEXT=1
-else
-    NEXT=$((LAST+1))
-fi
-
+# NUMERAZIONE FISSA. Gli script di questo blocco partono insieme e
+# l'auto-incremento li farebbe collidere sullo stesso file di log.
+NEXT=265
 LOG_FILE=$LOG_DIR/Leonardo_test_${NEXT}.log
+if [ -e "$LOG_FILE" ]; then
+    echo "Leonardo_test_265.log esiste gia': rifiuto di sovrascriverlo." >&2
+    exit 1
+fi
 export LOG_FILE
 
 module load profile/deeplrn

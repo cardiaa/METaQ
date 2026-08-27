@@ -10,7 +10,7 @@
 #SBATCH --output=/dev/null
 #SBATCH --error=/dev/null
 
-# test_272: ViT-B/16, la riga di punta del paper rifatta con --max_iterations 3.
+# test_269: ViT-B/16, la riga di punta del paper rifatta con --max_iterations 3.
 # UN SOLO FLAG diverso dal test_256: 6 -> 3.
 #
 # PERCHE'. test_256 e test_259 sono gli unici due run del paper con N_dual = 6;
@@ -47,15 +47,14 @@
 LOG_DIR=$WORK/acardia0/LeonardoTests
 mkdir -p "$LOG_DIR"
 
-LAST=$(find "$LOG_DIR" -maxdepth 1 -type f -name 'Leonardo_test_*.log' -printf '%f\n' | grep -oE '^Leonardo_test_[0-9]+\.log$' | grep -oE '[0-9]+' | sort -n | tail -1)
-
-if [ -z "$LAST" ]; then
-    NEXT=1
-else
-    NEXT=$((LAST+1))
-fi
-
+# NUMERAZIONE FISSA. Gli script di questo blocco partono insieme e
+# l'auto-incremento li farebbe collidere sullo stesso file di log.
+NEXT=269
 LOG_FILE=$LOG_DIR/Leonardo_test_${NEXT}.log
+if [ -e "$LOG_FILE" ]; then
+    echo "Leonardo_test_269.log esiste gia': rifiuto di sovrascriverlo." >&2
+    exit 1
+fi
 export LOG_FILE
 
 module load profile/deeplrn

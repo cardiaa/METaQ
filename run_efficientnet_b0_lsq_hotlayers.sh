@@ -10,7 +10,7 @@
 #SBATCH --output=/dev/null
 #SBATCH --error=/dev/null
 
-# EfficientNet-B0, controllo LSQ con i nove layer piu' saturi a otto bit.
+# test_268: EfficientNet-B0, controllo LSQ con i nove layer piu' saturi a otto bit.
 #
 # ULTIMA LEVA RIMASTA SU QUESTA RETE, E VA IN FONDO ALLA LISTA. Il test_260 ha
 # alzato il tetto di 0.36 punti portando a otto bit i sedici depthwise. Nel suo
@@ -41,9 +41,14 @@
 
 LOG_DIR=$WORK/acardia0/LeonardoTests
 mkdir -p "$LOG_DIR"
-LAST=$(find "$LOG_DIR" -maxdepth 1 -type f -name 'Leonardo_test_*.log' -printf '%f\n' | grep -oE '^Leonardo_test_[0-9]+\.log$' | grep -oE '[0-9]+' | sort -n | tail -1)
-NEXT=$(( ${LAST:-0} + 1 ))
+# NUMERAZIONE FISSA. Gli script di questo blocco partono insieme e
+# l'auto-incremento li farebbe collidere sullo stesso file di log.
+NEXT=268
 LOG_FILE=$LOG_DIR/Leonardo_test_${NEXT}.log
+if [ -e "$LOG_FILE" ]; then
+    echo "Leonardo_test_268.log esiste gia': rifiuto di sovrascriverlo." >&2
+    exit 1
+fi
 export LOG_FILE
 
 module load profile/deeplrn

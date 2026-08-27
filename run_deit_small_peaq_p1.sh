@@ -10,7 +10,7 @@
 #SBATCH --output=/dev/null
 #SBATCH --error=/dev/null
 
-# test_265: DeiT-Small, METaQ con duale relativo, punto 1 (un quinto della dose).
+# test_266: DeiT-Small, METaQ con duale relativo, punto 1 (un quinto della dose).
 #
 # COSA CAMBIA DAI RUN 189/191/192/194 CHE SONO NEL PAPER. Solo il duale, ma e'
 # la parte che conta: quei quattro run portano --dual_step 3e-9 ASSOLUTO. Il
@@ -50,15 +50,14 @@
 LOG_DIR=$WORK/acardia0/LeonardoTests
 mkdir -p "$LOG_DIR"
 
-LAST=$(find "$LOG_DIR" -maxdepth 1 -type f -name 'Leonardo_test_*.log' -printf '%f\n' | grep -oE '^Leonardo_test_[0-9]+\.log$' | grep -oE '[0-9]+' | sort -n | tail -1)
-
-if [ -z "$LAST" ]; then
-    NEXT=1
-else
-    NEXT=$((LAST+1))
-fi
-
+# NUMERAZIONE FISSA. Gli script di questo blocco partono insieme e
+# l'auto-incremento li farebbe collidere sullo stesso file di log.
+NEXT=266
 LOG_FILE=$LOG_DIR/Leonardo_test_${NEXT}.log
+if [ -e "$LOG_FILE" ]; then
+    echo "Leonardo_test_266.log esiste gia': rifiuto di sovrascriverlo." >&2
+    exit 1
+fi
 export LOG_FILE
 
 module load profile/deeplrn
