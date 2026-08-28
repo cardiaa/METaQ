@@ -14,6 +14,24 @@
 # Coefficienti (T1,T2,T3) = (1e-5,3e-7,6e-8). Ogni altro flag e' identico negli
 # altri quattro bracci: la sola differenza fra i cinque run e' questa terna.
 #
+# PAVIMENTO DEL LEARNING RATE ALL'1 PER CENTO, non al 5, e la ragione e'
+# diagnostica. Con --min_lr 2e-5 questo braccio differisce dal test_225 in UN
+# SOLO flag, --lsq_per_channel, quindi il confronto fra i due isola esattamente
+# il costo del passaggio a per-tensore su una rete di otto tensori enormi. Con
+# 1e-4 le differenze sarebbero state due e non avremmo saputo a chi attribuire
+# un eventuale calo. La cautela storica sul pavimento all'1 per cento (test_225
+# misurava level_change 0.115 per cento per epoca, rete congelata) riguardava la
+# FASE PIATTA del phase schedule con T2 a piena forza; qui metaq_ramp_epochs e'
+# zero, il coseno copre tutte le sessanta epoche e il pavimento viene sfiorato
+# solo alla fine. ResNet-18 gira l'intera sua frontiera con T3 acceso a questo
+# stesso pavimento dell'1 per cento.
+#
+# IL BRACCIO (0,0,0) NON VIENE ESEGUITO. Su ResNet-18 l'ablazione mostra che il
+# solo ridge non fa nulla, 9.79 contro 9.88 per cento del controllo, e quel
+# risultato non ha bisogno di essere ripetuto. Il controllo di questa ablazione
+# e' quindi il braccio solo-T1, che e' anche l'unico direttamente confrontabile
+# con il test_225.
+#
 # PERCHE' L'ABLAZIONE ALEXNET VA RIFATTA DA ZERO. Frangioni ha chiesto quanto
 # contribuisce il termine di potatura. Su ResNet-18 l'ablazione a cinque bracci
 # esiste e risponde. Su AlexNet quello che avevamo NON e' confrontabile, per
@@ -98,7 +116,7 @@ srun --ntasks=$SLURM_NTASKS --ntasks-per-node=1 bash -lc '
         --batch_size 64 \
         --n_epochs 60 \
         --lr 2e-3 \
-    --min_lr 1e-4 \
+    --min_lr 2e-5 \
         --lr_warmup_epochs 1 \
         --optimizer_weight_decay 1e-4 \
         --perspective_coeff 1e-5 \
