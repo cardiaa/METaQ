@@ -10,7 +10,7 @@
 #SBATCH --output=/dev/null
 #SBATCH --error=/dev/null
 
-# test_268: AlexNet, ablazione dei termini -- solo ridge T1.
+# test_277: AlexNet, ablazione dei termini -- solo ridge T1.
 # Coefficienti (T1,T2,T3) = (1e-5,0,0). Ogni altro flag e' identico negli
 # altri quattro bracci: la sola differenza fra i cinque run e' questa terna.
 #
@@ -75,9 +75,14 @@
 
 LOG_DIR=$WORK/acardia0/LeonardoTests
 mkdir -p "$LOG_DIR"
-LAST=$(find "$LOG_DIR" -maxdepth 1 -type f -name 'Leonardo_test_*.log' -printf '%f\n' | grep -oE '^Leonardo_test_[0-9]+\.log$' | grep -oE '[0-9]+' | sort -n | tail -1)
-NEXT=$(( ${LAST:-0} + 1 ))
+# NUMERAZIONE FISSA. I bracci partono a coppie e l'auto-incremento
+# li farebbe collidere sullo stesso file di log.
+NEXT=277
 LOG_FILE=$LOG_DIR/Leonardo_test_${NEXT}.log
+if [ -e "$LOG_FILE" ]; then
+    echo "Leonardo_test_277.log esiste gia': rifiuto di sovrascriverlo." >&2
+    exit 1
+fi
 export LOG_FILE
 
 module load profile/deeplrn
