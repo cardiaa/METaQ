@@ -10,9 +10,9 @@
 #SBATCH --output=/dev/null
 #SBATCH --error=/dev/null
 
-# test_273: ResNet-18, pipeline contro congiunta -- direzione A stadio 2, solo entropia.
+# test_275: ResNet-18, pipeline contro congiunta -- direzione A stadio 2, solo entropia.
 # Coefficienti (T1,T2,T3) = (1e-5, 0, 3e-8) su venti epoche.
-# Parte dal checkpoint del test_272. Il confronto e' contro il test_235.
+# Parte dal checkpoint del test_273. Il confronto e' contro il test_235.
 #
 # IL DISEGNO, e perche' venti epoche e non trenta. Il riferimento congiunto deve
 # esistere gia' e deve avere ESATTAMENTE questi coefficienti: e' il test_235,
@@ -57,15 +57,14 @@
 LOG_DIR=$WORK/acardia0/LeonardoTests
 mkdir -p "$LOG_DIR"
 
-LAST=$(find "$LOG_DIR" -maxdepth 1 -type f -name 'Leonardo_test_*.log' -printf '%f\n' | grep -oE '^Leonardo_test_[0-9]+\.log$' | grep -oE '[0-9]+' | sort -n | tail -1)
-
-if [ -z "$LAST" ]; then
-    NEXT=1
-else
-    NEXT=$((LAST+1))
-fi
-
+# NUMERAZIONE FISSA. Gli stadi del blocco partono a coppie e
+# l'auto-incremento li farebbe collidere sullo stesso file di log.
+NEXT=275
 LOG_FILE=$LOG_DIR/Leonardo_test_${NEXT}.log
+if [ -e "$LOG_FILE" ]; then
+    echo "Leonardo_test_275.log esiste gia': rifiuto di sovrascriverlo." >&2
+    exit 1
+fi
 export LOG_FILE
 
 module load profile/deeplrn
