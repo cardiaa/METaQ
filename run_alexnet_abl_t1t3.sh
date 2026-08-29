@@ -6,11 +6,11 @@
 #SBATCH --ntasks=4
 #SBATCH --gres=gpu:4
 #SBATCH --cpus-per-task=32
-#SBATCH --time=10:00:00
+#SBATCH --time=14:00:00
 #SBATCH --output=/dev/null
 #SBATCH --error=/dev/null
 
-# test_279: AlexNet, ablazione dei termini -- T1+T3, niente sparsita'.
+# test_281: AlexNet, ablazione dei termini -- T1+T3, niente sparsita'.
 # Coefficienti (T1,T2,T3) = (1e-5,0,6e-8). Ogni altro flag e' identico negli
 # altri quattro bracci: la sola differenza fra i cinque run e' questa terna.
 #
@@ -31,6 +31,34 @@
 # risultato non ha bisogno di essere ripetuto. Il controllo di questa ablazione
 # e' quindi il braccio solo-T1, che e' anche l'unico direttamente confrontabile
 # con il test_225.
+#
+# T3 RIDOSATO DA 6e-8 A 2.3e-8 (28 agosto). La dose trasferita da ResNet-18 e'
+# risultata pesantemente sovradosata su AlexNet, cosa che l'aspettativa non
+# prevedeva: pensavamo che dopo T2 non restasse spazio per l'entropia, e invece
+# T3 da SOLO comprime piu' di T2 da solo. Il test_279 all'epoca 25 stava gia' a
+# 2.55 per cento del modello, 39.3x, ma a -1.96 di accuratezza, contro il 3.04
+# per cento e -0.754 che il braccio T2 raggiunge in sessanta epoche complete.
+# Comprime di piu' e costa il doppio.
+#
+# LA NUOVA DOSE VIENE DALLA TRAIETTORIA DEL test_279, non da un modello. Quel run
+# e' di fatto la curva dose-risposta di T3 su AlexNet letta un'epoca alla volta,
+# che e' il metodo che questo progetto usa da quando tre modelli analitici di
+# fila hanno sbagliato. La somma di schedule entropica su sessanta epoche vale
+# 30.29 e all'epoca 13, dove il pacchetto tocca 2.96 per cento, ne sono state
+# accumulate 11.65: frazione 0.385, quindi la dose fissa di pari esposizione e'
+# 6e-8 x 0.385 = 2.3e-8. A quella dose il pacchetto atteso e' vicino ai 3 per
+# cento del braccio T2, il che mette i due termini a confronto ALLA STESSA
+# DIMENSIONE, che e' l'asse su cui l'ablazione deve pronunciarsi.
+#
+# WALL DA 10 A 14 ORE. La stima di 400s per epoca veniva da run AlexNet storici
+# di un'altra fase del progetto. Il costo misurato e' 682s per il braccio
+# entropico e 670 per il completo, cioe' 533s di duale sopra i 149 di base:
+# sessanta epoche sono 11.2 ore e i due run precedenti sarebbero morti intorno
+# all'epoca 53. Quattordici ore lasciano margine anche se il cluster rallenta.
+#
+# COSA NON CAMBIA: T2 resta a 3e-7 nel braccio completo, quindi i test_277 e
+# test_278 restano validi come bracci dell'ablazione, perche' in entrambi T3 e'
+# zero e il ridosaggio non li tocca.
 #
 # PERCHE' L'ABLAZIONE ALEXNET VA RIFATTA DA ZERO. Frangioni ha chiesto quanto
 # contribuisce il termine di potatura. Su ResNet-18 l'ablazione a cinque bracci
@@ -77,10 +105,10 @@ LOG_DIR=$WORK/acardia0/LeonardoTests
 mkdir -p "$LOG_DIR"
 # NUMERAZIONE FISSA. I bracci partono a coppie e l'auto-incremento
 # li farebbe collidere sullo stesso file di log.
-NEXT=279
+NEXT=281
 LOG_FILE=$LOG_DIR/Leonardo_test_${NEXT}.log
 if [ -e "$LOG_FILE" ]; then
-    echo "Leonardo_test_279.log esiste gia': rifiuto di sovrascriverlo." >&2
+    echo "Leonardo_test_281.log esiste gia': rifiuto di sovrascriverlo." >&2
     exit 1
 fi
 export LOG_FILE
@@ -125,7 +153,7 @@ srun --ntasks=$SLURM_NTASKS --ntasks-per-node=1 bash -lc '
         --lr_warmup_epochs 1 \
         --optimizer_weight_decay 1e-4 \
         --perspective_coeff 1e-5 \
-        --entropy_coeff 6e-8 \
+        --entropy_coeff 2.3e-8 \
         --sparsity_coeff 0 \
         --perspective Y \
         --flat_schedule N \
