@@ -10,7 +10,7 @@
 #SBATCH --output=/dev/null
 #SBATCH --error=/dev/null
 
-# First untuned METaQ sweep point for pretrained ImageNet AlexNet.
+# First untuned PRESTO sweep point for pretrained ImageNet AlexNet.
 # It deliberately reuses the cross-architecture regularizer recipe (C=16,
 # T1/T2/T3 = 1e-5/1e-7/3e-8) but keeps AlexNet's pretrained fine-tuning LR.
 # Arguments 17--19 split the run into diagnostic, common-ramp, and common-flat
@@ -21,7 +21,7 @@
 # Test_219 configuration: A=30, B=1, C=24, D=5, with targets at 90% of the
 # test_218 values.
 # Argument 22 explicitly controls optimizer weight decay; use 0 to isolate the
-# METaQ T1 ridge from the optimizer's independent ridge term.
+# PRESTO T1 ridge from the optimizer's independent ridge term.
 
 N_EPOCHS=${1:-20}
 ENTROPY_COEFF=${2:-5e-8}

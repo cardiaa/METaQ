@@ -10,7 +10,7 @@
 #SBATCH --output=/dev/null
 #SBATCH --error=/dev/null
 
-# test_249: AlexNet, METaQ complete with the entropy dual allowed to converge.
+# test_249: AlexNet, PRESTO complete with the entropy dual allowed to converge.
 # The parked test_229bis script with one flag added: --dual_step_mode relative,
 # and --dual_step rescaled from 3e-9 absolute to 1.3e-2 relative.
 #
@@ -29,7 +29,7 @@
 # +0.028).
 #
 # THE T2 DOSE IS UNCHANGED at --t2_scale 0.050, and it stays correct: the
-# calibration weights the schedule sums by the duty cycle of the METaQ gradient,
+# calibration weights the schedule sums by the duty cycle of the PRESTO gradient,
 # which depends on entropy_every and not on how the dual step is expressed.
 #
 # COST: this is the expensive one. About 2.1s per dual call measured on AlexNet,

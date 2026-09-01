@@ -187,7 +187,7 @@ def FISTA(xi, v, w, C, upper_c, lower_c, delta, subgradient_step, device, max_it
 
 def FISTA_leonardo(xi, v, w, C, upper_c, lower_c, delta, subgradient_step, device, max_iterations, pruning):
     """
-    Sparse-aware FISTA for the METaQ entropy dual.
+    Sparse-aware FISTA for the PRESTO entropy dual.
 
     If pruning == "Y" and xi has length C + 1:
         xi[0]  = multiplier for the explicit zero/pruning symbol

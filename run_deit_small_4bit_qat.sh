@@ -10,14 +10,14 @@
 #SBATCH --output=/dev/null
 #SBATCH --error=/dev/null
 
-# DeiT-Small / ImageNet transfer test for the complete joint LSQ-METaQ method.
+# DeiT-Small / ImageNet transfer test for the complete joint LSQ-PRESTO method.
 # Four 4-GPU nodes give a global batch size of 2048.
 #
 # test_176 keeps the whole test_171 recipe and changes only the granularity of
 # the learned step sizes: one per output channel instead of one per tensor.
 #
 # The controls have located the missing accuracy exactly. Against an FP32
-# baseline of 79.742, plain LSQ converges to 79.04 (test_173) and METaQ on top
+# baseline of 79.742, plain LSQ converges to 79.04 (test_173) and PRESTO on top
 # reaches 78.844 (test_171), so the gap splits into 0.70 charged to the
 # quantizer and 0.21 charged to the regularizer. On ResNet-18 plain LSQ instead
 # reaches 69.888, ABOVE its own 69.734 checkpoint (test_174): per-tensor step
@@ -26,7 +26,7 @@
 # patch embedding and the head bought only 0.10 of the 0.70 while costing 0.16
 # of compression ratio. What remains is the granularity of the step size itself.
 #
-# The METaQ solver is unchanged in cost. Scaling the abscissa by a positive
+# The PRESTO solver is unchanged in cost. Scaling the abscissa by a positive
 # constant leaves the lower convex envelope's vertex set untouched, and the
 # facet intercept s does not depend on the step size at all, so the envelope is
 # built once on the integer codebook and only the slope is rescaled per weight.

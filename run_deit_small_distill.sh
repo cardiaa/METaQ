@@ -60,11 +60,11 @@
 # entropy_warmup_epochs alone would NOT have been enough, since it postpones the
 # entropy coefficient only and leaves the other two terms active, which is why
 # the first epoch of tests 169 to 171 was not a plain-LSQ measurement. The
-# perspective flag itself stays Y because joint LSQ-METaQ requires it and
+# perspective flag itself stays Y because joint LSQ-PRESTO requires it and
 # because turning it off would enable the legacy non-perspective dual instead.
 #
 # Reading against the 78.844 that test_171 reached at epoch 18: a plain-LSQ
-# result near 79.7 means the missing accuracy is the METaQ dose and the fix is
+# result near 79.7 means the missing accuracy is the PRESTO dose and the fix is
 # to retune it, whereas a plain-LSQ result also near 78.8 means the limit is in
 # the quantization setup and per-channel step sizes become the way forward.
 #

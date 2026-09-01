@@ -12,12 +12,12 @@
 
 # ResNet-18 / ImageNet plain-LSQ control for test_168, the run behind the main
 # result of the paper. Every setting is copied from that run except the three
-# METaQ coefficients, which are zero here, so the difference between the two
+# PRESTO coefficients, which are zero here, so the difference between the two
 # logs is attributable to the regularizer alone.
 #
 # The matching DeiT-Small pair has already shown how much this control is worth:
 # plain LSQ settled at 79.04 with the compressed size drifting UP from 10.67% to
-# 10.96% over twenty epochs, whereas the same recipe with METaQ reached 78.84
+# 10.96% over twenty epochs, whereas the same recipe with PRESTO reached 78.84
 # with the size going DOWN to 8.86%. Opposite directions on compressibility at
 # equal budget, for a cost of 0.21 accuracy points. This run supplies the same
 # comparison for ResNet-18, where test_168 delivered 69.722 at 5.88%.
@@ -27,7 +27,7 @@
 # requires one of them to be nonzero, and the entropy branch requires a positive
 # entropy coefficient. Setting entropy_warmup_epochs alone would NOT suffice,
 # because it postpones the entropy coefficient only and leaves the other two
-# terms active. The perspective flag stays Y because joint LSQ-METaQ requires it
+# terms active. The perspective flag stays Y because joint LSQ-PRESTO requires it
 # and because turning it off would enable the legacy non-perspective dual.
 #
 # Without the entropy solver an epoch costs roughly 139s instead of 390s, so the

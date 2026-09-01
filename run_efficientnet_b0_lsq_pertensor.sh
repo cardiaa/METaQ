@@ -54,7 +54,7 @@
 #
 # THE STOPPING RULE, fixed before the run. Per-tensor buys 0.597 points of packet.
 # If it costs less than about 0.15 accuracy points the cell is winnable and the
-# METaQ run goes on this recipe. If it costs more than 0.3, stop: EfficientNet-B0
+# PRESTO run goes on this recipe. If it costs more than 0.3, stop: EfficientNet-B0
 # is at parity with NNCodec and the paper says so, with the clipping table and
 # the exchange rates as the explanation. That is a publishable result and a more
 # interesting one than a narrow win.

@@ -10,7 +10,7 @@
 #SBATCH --output=/dev/null
 #SBATCH --error=/dev/null
 
-# test_264: EfficientNet-B0, full METaQ on the test_261 recipe. ONE flag differs
+# test_264: EfficientNet-B0, full PRESTO on the test_261 recipe. ONE flag differs
 # from test_262: --lsq_per_channel Y -> N.
 #
 # WHY. test_261 came back better than its own stopping rule asked for. Dropping

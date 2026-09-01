@@ -10,7 +10,7 @@
 #SBATCH --output=/dev/null
 #SBATCH --error=/dev/null
 
-# test_266: DeiT-Small, METaQ con duale relativo, punto 1 (un quinto della dose).
+# test_266: DeiT-Small, PRESTO con duale relativo, punto 1 (un quinto della dose).
 #
 # COSA CAMBIA DAI RUN 189/191/192/194 CHE SONO NEL PAPER. Solo il duale, ma e'
 # la parte che conta: quei quattro run portano --dual_step 3e-9 ASSOLUTO. Il
@@ -30,7 +30,7 @@
 #
 # IL CONTROLLO NON VA RIFATTO. test_189, LSQ + distillazione, ha i tre
 # coefficienti a zero, quindi il duale non viene mai invocato e il suo 79.832 a
-# 11.98 per cento del modello resta valido. Servono solo i due punti METaQ.
+# 11.98 per cento del modello resta valido. Servono solo i due punti PRESTO.
 #
 # LA DOSE SCENDE, E DI MOLTO. Con il duale relativo il termine entropico diventa
 # molto piu' forte a parita' di coefficiente: su ResNet-18 il solo passaggio da
@@ -40,7 +40,7 @@
 # che ha centrato il ginocchio su ViT-B/16 al primo colpo (test_259: previsto
 # 6.8-7.0 per cento a -0.30/-0.45, misurato 6.84 a -0.374).
 #
-# PERCHE' DUE E NON TRE. Controllo piu' due punti METaQ e' lo standard della
+# PERCHE' DUE E NON TRE. Controllo piu' due punti PRESTO e' lo standard della
 # casa su ResNet-50, ViT-B/16 ed EfficientNet-B0. Vanno lanciati insieme, non in
 # sequenza: bracchettano invece di inseguire.
 #

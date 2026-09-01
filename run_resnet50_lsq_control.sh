@@ -11,7 +11,7 @@
 #SBATCH --error=/dev/null
 
 # test_242: ResNet-50, LSQ-only at twenty epochs. First run on this network,
-# and it goes alone: the METaQ run follows once this one has landed and has
+# and it goes alone: the PRESTO run follows once this one has landed and has
 # told us what the learning rate does here.
 #
 # THIS RUN DOES TWO JOBS AT ONCE, which is why it is worth its own slot rather
@@ -40,7 +40,7 @@
 # weights of ResNet-18 across 2.57x the tensors and its forward pass is about
 # 2.3x heavier, so the estimate is near 320s per epoch, under two hours for
 # twenty. The five-hour wall is slack on an estimate, not a prediction: the
-# number this run produces is what sizes the METaQ run that follows, which
+# number this run produces is what sizes the PRESTO run that follows, which
 # adds the dual solver on top.
 
 LOG_DIR=$WORK/acardia0/LeonardoTests

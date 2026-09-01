@@ -10,7 +10,7 @@
 #SBATCH --output=/dev/null
 #SBATCH --error=/dev/null
 
-# test_271: DeiT-Small, METaQ con duale relativo, punto 4, dose doppia.
+# test_271: DeiT-Small, PRESTO con duale relativo, punto 4, dose doppia.
 #
 # PERCHE' SERVONO DUE PUNTI IN PIU'. Il blocco 265-267 ha mostrato che la
 # frontiera DeiT col duale relativo e' molto piu' piatta di quanto la dose

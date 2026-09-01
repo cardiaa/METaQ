@@ -3,7 +3,7 @@
 Runs on CPU in a couple of seconds. Verifies:
   1. the MSE step-size search now spends its candidates on the range that
      matters instead of on the +0.5 activation margin;
-  2. with T2=T3=0 the METaQ perspective term is a plain ridge on the weights
+  2. with T2=T3=0 the PRESTO perspective term is a plain ridge on the weights
      and produces a strictly one-signed push on the step sizes, which is what
      the new gate suppresses;
   3. 'relative' step-size rates give a uniform relative displacement, while

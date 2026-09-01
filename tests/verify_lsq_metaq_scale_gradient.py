@@ -1,4 +1,4 @@
-"""Finite-difference check for the LSQ-METaQ scale envelope derivative.
+"""Finite-difference check for the LSQ-PRESTO scale envelope derivative.
 
 This script intentionally uses only the Python standard library so it can run
 on the local development machine as well as on Leonardo. It verifies regular
@@ -119,7 +119,7 @@ def main():
 
     for _ in range(500):
         # Arbitrary dual costs are intentional: lower_hull removes dominated
-        # buckets exactly as the METaQ inner solver does.
+        # buckets exactly as the PRESTO inner solver does.
         xi = [random.uniform(-0.3, 0.8) for _ in q]
         scale = random.uniform(0.08, 0.4)
         w = random.uniform(-0.75, 0.75) * scale * 7.0
@@ -156,7 +156,7 @@ def main():
     if checked_representation_boundaries == 0:
         raise AssertionError("no representability-boundary case was verified")
     print(
-        "LSQ-METaQ scale gradient verified: "
+        "LSQ-PRESTO scale gradient verified: "
         f"regular_cases={checked}, "
         f"representability_boundaries={checked_representation_boundaries}, "
         f"nonsmooth_kinks_skipped={skipped_kinks}, "

@@ -23,9 +23,9 @@
 # WHERE THE THREE RESNET-18 RUNS STAND, all against 69.734 FP32:
 #
 #   test_174   LSQ only,          20 ep   69.888  +0.154   9.34%   10.71x
-#   test_196   METaQ, slow dual,  20 ep   69.840  +0.106   6.08%   16.45x
-#   test_235   METaQ, fast dual,  20 ep   69.668  -0.066   5.74%   17.42x
-#   test_197   METaQ, slow dual,  40 ep   69.578  -0.156   5.21%   19.19x
+#   test_196   PRESTO, slow dual,  20 ep   69.840  +0.106   6.08%   16.45x
+#   test_235   PRESTO, fast dual,  20 ep   69.668  -0.066   5.74%   17.42x
+#   test_197   PRESTO, slow dual,  40 ep   69.578  -0.156   5.21%   19.19x
 #
 # test_235 bought 5.6% of relative size over test_196 for 0.172 accuracy points,
 # which is smaller than the 0.338 that separates the two runs at epoch one, where

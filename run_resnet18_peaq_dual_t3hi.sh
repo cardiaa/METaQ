@@ -16,10 +16,10 @@
 # WHY. test_236 is the best row of the project and it left money on the table:
 #
 #   test_174   LSQ only,          20 ep   69.888  +0.154   9.34%   10.71x
-#   test_196   METaQ, slow dual,  20 ep   69.840  +0.106   6.08%   16.45x
-#   test_235   METaQ, fast dual,  20 ep   69.668  -0.066   5.74%   17.42x
-#   test_236   METaQ, fast dual,  40 ep   70.080  +0.346   5.73%   17.45x
-#   test_197   METaQ, slow dual,  40 ep   69.578  -0.156   5.21%   19.19x
+#   test_196   PRESTO, slow dual,  20 ep   69.840  +0.106   6.08%   16.45x
+#   test_235   PRESTO, fast dual,  20 ep   69.668  -0.066   5.74%   17.42x
+#   test_236   PRESTO, fast dual,  40 ep   70.080  +0.346   5.73%   17.45x
+#   test_197   PRESTO, slow dual,  40 ep   69.578  -0.156   5.21%   19.19x
 #
 # test_236 finished 0.346 points ABOVE the full-precision checkpoint. That is
 # headroom the compression never spent. This run spends it: 3.3 times the
@@ -34,7 +34,7 @@
 # Whether the accuracy holds is exactly what is unknown.
 #
 # WHAT WOULD MAKE THIS THE HEADLINE. Below 5.34% of packet at 69.76 or above
-# puts METaQ strictly ahead of HEMP+LOBSTER \citep{tartaglione2021hemp} on both
+# puts PRESTO strictly ahead of HEMP+LOBSTER \citep{tartaglione2021hemp} on both
 # axes, with one method where they stack two. test_236 already clears their
 # accuracy by 0.38 but is 0.18MB larger; this run is aimed at the size.
 #

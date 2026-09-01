@@ -34,7 +34,7 @@
 # Zeroing all three coefficients is what disables the regularizer: the
 # closed-form branch carrying the perspective ridge and the sparsity term
 # requires one of them to be nonzero, and the entropy branch requires a positive
-# entropy coefficient. --perspective stays Y because joint LSQ-METaQ requires it
+# entropy coefficient. --perspective stays Y because joint LSQ-PRESTO requires it
 # and because turning it off would select the legacy non-perspective dual.
 #
 # COST: no dual solver, about 140s per epoch, so roughly two hours and twenty.

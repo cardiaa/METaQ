@@ -10,7 +10,7 @@
 #SBATCH --output=/dev/null
 #SBATCH --error=/dev/null
 
-# test_229bis: AlexNet, METaQ complete (T1 + T2 + T3) on the frozen test_225
+# test_229bis: AlexNet, PRESTO complete (T1 + T2 + T3) on the frozen test_225
 # recipe. NOT LAUNCHED. Parked here as the next AlexNet run, correctly dosed, so
 # that the choice to spend fourteen hours on it stays a choice and not a
 # rebuild. Andrea suspended AlexNet after test_229 to look at EfficientNet-B0
@@ -52,7 +52,7 @@
 #     ramped one. A short run delivers MORE integrated force at equal
 #     coefficient, not less: the ramp throws away the early exposure and the
 #     flat tail runs at lr/20.
-#   - with T3 on, the whole METaQ gradient moves into the FISTA branch and is
+#   - with T3 on, the whole PRESTO gradient moves into the FISTA branch and is
 #     applied one step in entropy_every. _l1_schedule_sums now weights by that
 #     duty cycle, so --t2_scale means the same thing with T3 on and off. Change
 #     --entropy_every and the calibration follows on its own; change it against

@@ -1,6 +1,6 @@
 """End-to-end shape/consistency check of the per-channel wiring, on CPU.
 
-Runs the two METaQ gradient paths (closed-form ridge and the entropy FISTA) on
+Runs the two PRESTO gradient paths (closed-form ridge and the entropy FISTA) on
 a small DeiT-like stack of tensors, per-tensor and per-channel, and checks that
 every produced object has the right shape and that per-channel with a CONSTANT
 step size reproduces the per-tensor result. Also prices the extra step sizes.
@@ -64,7 +64,7 @@ for idx, (w, g) in enumerate(zip(tensors, grads)):
     assert gt.dim() == 0 and gc.shape == (O,)
     assert mt.shape == (w.numel(),) and mc.shape == w.shape
 
-    # --- METaQ: constant per-channel scale must match per-tensor
+    # --- PRESTO: constant per-channel scale must match per-tensor
     a_flat = expand_scale_flat(torch.full((O,), float(s_t)), w)
     assert a_flat.shape == (w.numel(),)
     qn, qp = Q_FULL[0], Q_FULL[-1]
@@ -91,7 +91,7 @@ for idx, (w, g) in enumerate(zip(tensors, grads)):
     frac_bad = float((rel > 1e-3).float().mean())
     assert frac_bad < 0.10, f"tensore {idx}: {frac_bad:.1%} di beta* discordi"
 
-    # --- METaQ scale gradient: the reduction identity, at IDENTICAL inputs.
+    # --- PRESTO scale gradient: the reduction identity, at IDENTICAL inputs.
     # sum_c [ -sum_{i in c} mu_i w_i / a ] must equal -sum_i mu_i w_i / a.
     mg_t = metaq_scale_gradient(bc_t, mw_t, s_t)
     mg_same = metaq_scale_gradient(bc_t, mw_t, torch.full((O,), float(s_t)))

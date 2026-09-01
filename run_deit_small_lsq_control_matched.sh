@@ -15,7 +15,7 @@
 #
 # PERCHE' VA RIFATTO, ed e' un difetto di controllo non di dose. Il test_189
 # porta min_lr=None, cioe' il pavimento di default all'1 per cento del rate,
-# mentre i tre run METaQ che gli sono confrontati (191, 192, 194) portano
+# mentre i tre run PRESTO che gli sono confrontati (191, 192, 194) portano
 # min_lr=5e-6, cioe' il 5 per cento. Il controllo ricuoce quindi a un learning
 # rate cinque volte piu' basso dei run che dovrebbe controllare, e la coda di un
 # coseno e' esattamente dove si guadagnano gli ultimi decimi di accuratezza. Il
@@ -24,16 +24,16 @@
 #
 # IL VERSO DEL BIAS E' A NOSTRO SFAVORE, il che e' l'unica buona notizia: un
 # pavimento piu' basso di solito regala accuratezza finale, quindi il test_189 e'
-# lusingato e il costo di METaQ che il paper riporta, 0.34 punti, e' semmai una
+# lusingato e il costo di PRESTO che il paper riporta, 0.34 punti, e' semmai una
 # sovrastima. Ma resta un confronto non appaiato e va sistemato, non spiegato.
 #
 # LO SI RIFA' ADESSO PERCHE' COSTA NIENTE. Con i tre coefficienti a zero il duale
 # non viene mai invocato e l'epoca costa 133s misurati sul test_189: venticinque
 # epoche sono cinquantasei minuti. E' il run piu' economico di tutto il
-# programma, e senza di esso i due punti METaQ nuovi non hanno un controllo
+# programma, e senza di esso i due punti PRESTO nuovi non hanno un controllo
 # appaiato contro cui essere letti.
 #
-# ALLINEATO ALLA RICETTA COMUNE come i due punti METaQ: max_iterations 3, duale
+# ALLINEATO ALLA RICETTA COMUNE come i due punti PRESTO: max_iterations 3, duale
 # 1.3e-2 relativo (inerte qui ma identico), entropy_warmup 1 che fissa la forma
 # del coseno, per-tensore, mse, C=16, distillazione 0.9 dal teacher a piena
 # precisione, batch globale 2048, lr 1e-4, min_lr 5e-6.

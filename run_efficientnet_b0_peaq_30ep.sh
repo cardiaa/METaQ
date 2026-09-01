@@ -10,7 +10,7 @@
 #SBATCH --output=/dev/null
 #SBATCH --error=/dev/null
 
-# test_261: EfficientNet-B0, full METaQ at thirty epochs, against the matched
+# test_261: EfficientNet-B0, full PRESTO at thirty epochs, against the matched
 # control test_258. This run has one target and it is a published number.
 #
 # LAUNCHED ALONGSIDE test_260, NOT AFTER IT. test_258 showed the accuracy gap on
@@ -18,7 +18,7 @@
 # test_260 probes that ceiling by putting the depthwise convolutions at eight
 # bits. If it moves, this run's baseline is superseded and the dose has to be
 # recomputed against it. It is launched anyway because the pair (test_258,
-# test_261) is the only matched control-and-METaQ comparison at equal budget we
+# test_261) is the only matched control-and-PRESTO comparison at equal budget we
 # have on this architecture, and the paper makes that comparison for every other
 # network. Whatever test_260 says, this row is worth its three hours.
 #

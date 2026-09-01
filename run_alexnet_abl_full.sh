@@ -10,7 +10,7 @@
 #SBATCH --output=/dev/null
 #SBATCH --error=/dev/null
 
-# test_282: AlexNet, ablazione dei termini -- METaQ completo.
+# test_282: AlexNet, ablazione dei termini -- PRESTO completo.
 # Coefficienti (T1,T2,T3) = (1e-5,3e-7,6e-8). Ogni altro flag e' identico negli
 # altri quattro bracci: la sola differenza fra i cinque run e' questa terna.
 #

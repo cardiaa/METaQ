@@ -10,7 +10,7 @@
 #SBATCH --output=/dev/null
 #SBATCH --error=/dev/null
 
-# ResNet-18 / ImageNet joint LSQ-METaQ 4-bit training with conservative perspective_coeff/entropy_coeff/sparsity_coeff.
+# ResNet-18 / ImageNet joint LSQ-PRESTO 4-bit training with conservative perspective_coeff/entropy_coeff/sparsity_coeff.
 # Four 4-GPU nodes with batch 64/GPU use the validated global-batch-1024 regime.
 
 LOG_DIR=$WORK/acardia0/LeonardoTests

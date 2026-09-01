@@ -32,7 +32,7 @@ def channel_view(scale: torch.Tensor, weight: torch.Tensor) -> torch.Tensor:
 def expand_scale_flat(scale: torch.Tensor, weight: torch.Tensor) -> torch.Tensor:
     """Return one step size per weight, matching ``weight.reshape(-1)``.
 
-    Several call sites flatten the tensor before handing it to the METaQ
+    Several call sites flatten the tensor before handing it to the PRESTO
     solver. Since output channels are the leading dimension, the flat layout
     repeats each channel step size ``weight.numel() // O`` times.
     """

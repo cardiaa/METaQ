@@ -23,7 +23,7 @@
 #   test_231 T2 ramp  -1.335   +0.343   +4.99       -0.3272
 #   test_232 T3 ramp  -0.089   +0.025   +0.36       -0.0217
 #
-# i.e. indistinguishable from the run with every METaQ coefficient at zero, and
+# i.e. indistinguishable from the run with every PRESTO coefficient at zero, and
 # marginally BELOW it. Not a malfunction: xi_pinned_frac went 0.0128 -> 0, xi grew
 # smoothly, beta_commonmode sat at 0.077-0.107 inside test_168's 0.035-0.138 band.
 # The dual is healthy and the dose is inert.

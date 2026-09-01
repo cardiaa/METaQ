@@ -240,7 +240,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, p
                         raise ValueError(f"Unsupported entropy optimizer: {entropy_optimizer}")
 
                     # Add the entropy gradient to the already-computed loss
-                    # gradient.  The sign convention follows the existing METaQ
+                    # gradient.  The sign convention follows the existing PRESTO
                     # formulation: the beta multipliers enter with a minus sign.
                     idx = 0
                     for param in model.parameters():

@@ -1,0 +1,2194 @@
+\documentclass{article}
+\usepackage{iclr2027_conference,times}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[english]{babel}
+\usepackage{amsmath,amssymb,mathrsfs}
+\usepackage{enumitem}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{graphicx}
+\usepackage{tikz}
+\usepackage{xcolor}
+\usepackage{placeins}
+\usepackage{float}
+\usepackage[hidelinks]{hyperref}
+\usepackage{url}
+\usepackage{comment}
+
+\newcommand{\pendingnumber}{\textcolor{red}{[...]}}
+\newcommand{\pendingcell}{\textcolor{red}{-}}
+
+\title{METaQ: Entropy- and Sparsity-Aware QAT}
+% The ICLR submission style hides this field during double-blind review.
+\author{Anonymous authors}
+
+\begin{document}
+\raggedbottom
+\maketitle
+
+\begin{abstract}
+%\textcolor{red}{VEDI BOZZA NEL .tex}
+
+%\textcolor{red}{...........................................................................................................................
+%...........................................................................................................................
+%...........................................................................................................................
+%...........................................................................................................................
+%...........................................................................................................................
+%...........................................................................................................................
+%...........................................................................................................................
+%...........................................................................................................................
+%...........................................................................................................................
+%...........................................................................................................................
+%...........................................................................................................................}
+
+%\begin{comment}
+Pruning and quantization are widely used to compress neural networks, yet the
+role of entropy in their compressed representations remains comparatively
+underexplored. We introduce METaQ, a quantization-aware training (QAT) method
+that jointly optimizes predictive accuracy and the compressibility of the
+weight representation.
+
+METaQ employs learned-step uniform quantization and introduces an inner problem
+in perspective form. The mass assigned to the zero symbol controls sparsity,
+whereas relaxed counts of the remaining symbols induce an entropy-based term.
+Envelope derivatives of the inner problem provide gradient contributions for
+both the latent weights and the quantization step sizes. METaQ therefore learns
+the network weights, the locations of the quantization levels, and the symbol
+distribution used by the downstream lossless encoder within a unified training
+objective. \textcolor{red}{[...]}
+%\end{comment}
+\end{abstract}
+
+\section{Introduction}
+%\textcolor{red}{VEDI BOZZA NEL .tex}
+
+%\textcolor{red}{..............................................................................................................................................................
+%..............................................................................................................................................................
+%..............................................................................................................................................................
+%..............................................................................................................................................................
+%..............................................................................................................................................................
+%..............................................................................................................................................................
+%..............................................................................................................................................................
+%..............................................................................................................................................................
+%..............................................................................................................................................................
+%..............................................................................................................................................................
+%..............................................................................................................................................................
+%..............................................................................................................................................................
+%..............................................................................................................................................................
+%..............................................................................................................................................................
+%..............................................................................................................................................................
+%..............................................................................................................................................................
+%..............................................................................................................................................................
+%..............................................................................................................................................................
+%..............................................................................................................................................................
+%..............................................................................................................................................................
+%..............................................................................................................................................................
+%..............................................................................................................................................................
+%..............................................................................................................................................................
+%..............................................................................................................................................................
+%..............................................................................................................................................................
+%..............................................................................................................................................................
+%..............................................................................................................................................................
+%..............................................................................................................................................................
+%..............................................................................................................................................................
+%..............................................................................................................................................................}
+%\begin{comment}
+\label{sec:introduction}
+
+Modern neural networks attain strong predictive performance at the cost of
+large parameter counts, substantial storage requirements, and expensive data
+movement. Model compression addresses these limitations through complementary
+mechanisms. Pruning removes parameters or larger architectural structures,
+quantization represents the surviving values with a finite codebook, and
+lossless coding eliminates statistical redundancy from the resulting symbol
+stream. The classical Deep Compression pipeline combines these stages
+sequentially \citep{han2016deep}. Its success also exposes a central design
+question: should a network merely be compressed after training, or should
+compressibility itself shape the training objective?
+
+Quantization-aware training (QAT) follows the latter principle by simulating
+low-precision arithmetic during optimization. PACT learns clipping parameters
+for activations \citep{choi2018pact}, while Learned Step Size Quantization
+(LSQ) directly optimizes quantization scales and provides accurate low-bit
+models across multiple architectures \citep{esser2020lsq}. Complementary
+post-training quantization methods avoid end-to-end retraining through local
+reconstruction or sensitivity information, as exemplified by HAWQ
+\citep{dong2019hawq} and BRECQ \citep{li2021brecq}. These approaches primarily
+control distortion or hardware precision. A low-bit representation, however,
+need not have low entropy: two models with the same codebook cardinality can
+produce symbol streams with markedly different lossless compressed sizes.
+
+Entropy-aware model compression addresses this distinction explicitly.
+Entropy-constrained training casts model size as part of the learning objective
+\citep{wiedemann2018entropy}, whereas DeepCABAC couples rate-distortion
+quantization with context-adaptive lossless coding
+\citep{wiedemann2019deepcabac}. These methods establish that code length is a
+meaningful optimization target rather than a by-product of nominal bit width.
+Nevertheless, jointly learning task accuracy, sparsity, quantization levels,
+and the empirical symbol distribution remains challenging because symbol
+counts couple all weights assigned to the same codebook.
+
+METaQ approaches this coupling using perspective optimization. Perspective
+reformulations have previously yielded effective regularizers for structured
+neural-network pruning \citep{cacciola2023deep}. We extend this viewpoint from
+a binary keep-or-remove decision to a relaxed assignment over quantization
+symbols. The resulting inner problem jointly represents each latent weight,
+controls its nonzero mass, and aggregates global symbol counts. A Lagrangian
+relaxation of the count constraints decomposes the tensor-level problem into
+parallel per-symbol and per-weight subproblems, while envelope derivatives make
+the resulting value function compatible with gradient-based QAT.
+
+Our contributions are threefold. First, we formulate a perspective,
+entropy-aware regularizer that couples sparsity and the symbol distribution within
+learned-step quantization. Second, we derive an efficient Lagrangian
+decomposition and explicit gradient contributions for both latent weights and
+quantization step sizes. Third, we evaluate METaQ on ImageNet using ResNet--18,
+DeiT-Small, AlexNet, RegNetX-600MF, MNasNet-1.0, MobileNetV2,
+EfficientNet-B0, RegNetX-3.2GF, and ViT-B/16, thereby covering classical,
+residual, grouped- and depthwise-convolutional networks as well as vision
+transformers. Under a
+common evaluation protocol, we report predictive accuracy, symbol statistics,
+entropy, and realized losslessly compressed size, together with controlled LSQ
+baselines and ablations that isolate the contributions of the perspective,
+sparsity, and entropy terms. \textcolor{red}{[...]}
+%\end{comment}
+\section{METaQ Method}
+\label{sec:method}
+
+\subsection{Problem Setting and Notation}
+\label{sec:setting}
+
+Let
+\[
+  \mathcal D=\{(x_j,t_j)\}_{j=1}^{N}
+\]
+be a training set of $N$ examples. For the example indexed by $j$,
+$x_j\in\mathcal X$ denotes the input, $\mathcal X$ is the input space,
+$t_j\in\mathcal Y$ denotes the target, and $\mathcal Y$ is the target space.
+For classification with $K$ classes, we set
+$\mathcal Y=\{1,\ldots,K\}$.
+
+We denote the neural network by
+\[
+  f(\,\cdot\,;\theta):\mathcal X\longrightarrow\mathbb R^K
+\]
+where $f(x;\theta)$ is the vector of $K$ logits produced for input $x$,
+$\mathbb R$ is the set of real numbers, and $\theta$ collects all network
+parameters. We partition $\theta$ as
+\[
+  \theta=\bigl(w,\theta_{\mathrm{fp}}\bigr).
+\]
+Here, $w$ is the collection of weight tensors to be quantized, while
+$\theta_{\mathrm{fp}}$ collects the parameters retained in floating-point
+precision, such as biases and normalization parameters.
+
+Let $M$ be the number of quantized tensors and let
+$\Lambda=\{1,\ldots,M\}$ be their index set. Throughout the paper,
+$\ell$ denotes an element of $\Lambda$, i.e., a quantized tensor. For
+$\ell\in\Lambda$, we write
+\[
+  w^{(\ell)}
+  =\bigl(w^{(\ell)}_1,\ldots,w^{(\ell)}_{n_\ell}\bigr)
+  \in\mathbb R^{n_\ell},
+\]
+where $n_\ell$ is the number of weights in the tensor and
+$i\in\mathcal I_\ell:=\{1,\ldots,n_\ell\}$ indexes an individual weight within
+that tensor. The complete collection is
+$w=\{w^{(\ell)}\}_{\ell\in\Lambda}$.
+
+Let
+\[
+  \ell_{\mathrm{task}}:\mathbb R^K\times\mathcal Y\longrightarrow\mathbb R
+\]
+be the per-example task loss. The symbol $\ell_{\mathrm{task}}$ denotes a loss
+function and should not be confused with the tensor index $\ell$. The empirical
+task loss is
+\begin{equation}
+  \mathcal L_{\mathrm{task}}(\widehat w,\theta_{\mathrm{fp}})
+  :=
+  \frac{1}{N}\sum_{j=1}^{N}
+  \ell_{\mathrm{task}}\!\left(
+    f(x_j;\widehat w,\theta_{\mathrm{fp}}),t_j
+  \right),
+  \label{eq:task-loss}
+\end{equation}
+where $\widehat w$ is the collection of quantized weights used in the forward
+pass.
+
+\subsection{Learned-Step Quantization}
+\label{sec:quantizer}
+
+Let $Q_n<0<Q_p$ be two integers denoting the minimum and maximum integer codes,
+respectively. The integer codebook is
+\[
+  \mathcal Q:=\{q\in\mathbb Z:Q_n\leq q\leq Q_p\},
+  \qquad
+  C:=|\mathcal Q|=Q_p-Q_n+1,
+\]
+where $\mathbb Z$ is the set of integers and $C$ is the number of symbols. We
+associate each tensor $\ell$ with a quantization step size
+$a_\ell\in\mathbb R_{>0}$. The collection of step sizes is
+$a=\{a_\ell\}_{\ell\in\Lambda}$.
+
+For $\alpha,\beta,u\in\mathbb R$ with $\alpha\leq\beta$, define
+\[
+  \operatorname{clip}(u;\alpha,\beta)
+  :=\min\{\beta,\max\{\alpha,u\}\}.
+\]
+Moreover, let $\operatorname{round}(u)$ denote the integer nearest to $u$,
+with ties resolved toward the even integer. For weight
+$w_i^{(\ell)}$, we set
+\begin{align}
+  r_i^{(\ell)}
+  &:=\frac{w_i^{(\ell)}}{a_\ell},
+  \label{eq:normalized-weight}\\
+  \bar w_i^{(\ell)}(a_\ell)
+  &:=
+  a_\ell\,
+  \operatorname{clip}\!\left(
+    r_i^{(\ell)};Q_n,Q_p
+  \right),
+  \label{eq:clipped-latent}\\
+  \widehat w_i^{(\ell)}
+  &:=
+  a_\ell\,
+  \operatorname{round}\!\left(
+    \frac{\bar w_i^{(\ell)}(a_\ell)}{a_\ell}
+  \right).
+  \label{eq:quantizer}
+\end{align}
+$r_i^{(\ell)}$ is the weight normalized by the step size. The clipped latent
+weight $\bar w_i^{(\ell)}(a_\ell)$ remains real-valued but is restricted to the
+representable interval $[a_\ell Q_n,a_\ell Q_p]$. Rounding its normalized value
+then produces $\widehat w_i^{(\ell)}$, which belongs to the real-valued codebook
+$a_\ell\mathcal Q$ and is used in the forward pass.
+The quantized weights of the entire network are
+$\widehat w(a)=\{\widehat w^{(\ell)}\}_{\ell\in\Lambda}$.
+
+METaQ uses Learned Step Size Quantization (LSQ) \citep{esser2020lsq} to
+propagate a surrogate gradient through the rounding operation. The METaQ inner
+problem operates on $\bar w_i^{(\ell)}$, ensuring that the quantizer and the
+regularizer share the same representable domain.
+
+\subsection{Perspective and Entropy-Based Regularizer}
+\label{sec:metaq-value}
+
+Define the set of nonzero symbols as
+\[
+  \mathcal B:=\mathcal Q\setminus\{0\},
+  \qquad B:=|\mathcal B|=C-1.
+\]
+The letter $b$ indexes an element of $\mathcal B$, and $q_b$ is the
+corresponding integer code. In tensor $\ell$, the real-valued level associated
+with symbol $b$ is
+\begin{equation}
+  v_b^{(\ell)}(a_\ell):=a_\ell q_b.
+  \label{eq:real-level}
+\end{equation}
+
+For every pair $(i,b)\in\mathcal I_\ell\times\mathcal B$, we introduce a
+nonnegative assignment mass $x_{i,b}^{(\ell)}$. We further define:
+
+\begin{itemize}[leftmargin=1.4em,nosep]
+  \item $y_i^{(\ell)}\in[0,1]$, the total mass with which weight $i$ is
+        represented by nonzero symbols;
+  \item $z_i^{(\ell)}:=1-y_i^{(\ell)}$, the mass assigned to the zero symbol;
+  \item $c_b^{(\ell)}\geq0$, the relaxed count of nonzero symbol $b$.
+\end{itemize}
+
+To streamline notation, in the following definition the step size $a_\ell$ and
+the vector $\bar w^{(\ell)}(a_\ell)$ are function arguments, whereas
+$x^{(\ell)}$, $y^{(\ell)}$, and $c^{(\ell)}$ are the variables of the inner
+minimization. Let $T_1,T_2,T_3\in\mathbb R_{\geq0}$ be three regularization
+coefficients. We define\footnote{We use the continuous
+extension $0\log_2 0:=\lim_{x\to0^+}x\log_2x=0$.}
+\begin{align}
+ \Phi_\ell(\bar w^{(\ell)},a_\ell)
+ :=\min_{x^{(\ell)},y^{(\ell)},c^{(\ell)}}\quad&
+ T_1\sum_{i\in\mathcal I_\ell}
+      \frac{(\bar w_i^{(\ell)})^2}{y_i^{(\ell)}}
+ +T_2\sum_{i\in\mathcal I_\ell}y_i^{(\ell)}
+ +T_3\sum_{b\in\mathcal B}
+      c_b^{(\ell)}\log_2 c_b^{(\ell)}
+ \label{eq:metaq-value}\\
+ \text{s.t.}\quad&
+ \sum_{b\in\mathcal B}
+ v_b^{(\ell)}(a_\ell)x_{i,b}^{(\ell)}
+ =\bar w_i^{(\ell)},
+ &&\hspace{-3em} i\in\mathcal I_\ell,
+ \label{eq:representation}\\
+ &
+ \sum_{b\in\mathcal B}x_{i,b}^{(\ell)}
+ =y_i^{(\ell)},
+ &&\hspace{-3em} i\in\mathcal I_\ell,
+ \label{eq:mass}\\
+ &
+ c_b^{(\ell)}
+ =\sum_{i\in\mathcal I_\ell}x_{i,b}^{(\ell)},
+ &&\hspace{-3em} b\in\mathcal B,
+ \label{eq:counts}\\
+ &
+ x_{i,b}^{(\ell)}\geq0,
+ \quad 0\leq y_i^{(\ell)}\leq1,
+ &&\hspace{-3em} i\in\mathcal I_\ell,\; b\in\mathcal B.
+ \label{eq:domain}
+\end{align}
+The perspective term weighted by $T_1$ in Eq.~\eqref{eq:metaq-value} is
+interpreted through its closed extension:
+\[
+  \frac{u^2}{y}
+  :=
+  \begin{cases}
+    u^2/y, & y>0,\\
+    0, & (u,y)=(0,0),\\
+    +\infty, & y=0\ \text{e}\ u\neq0.
+  \end{cases}
+\]
+In this definition, $u$ is a generic scalar and $y$ is a mass. This convention
+makes explicit that a weight can have zero mass only when the weight itself is
+zero.
+
+$T_1$ weights the perspective ridge term; $T_2$ penalizes mass assigned to
+nonzero symbols; and $T_3$ weights the entropy-related term constructed from
+the relaxed symbol counts.
+The coefficient values are not part of the method definition and will be specified
+only in the experimental protocol.
+
+The zero symbol is excluded from $\mathcal B$ and is represented exclusively
+by $z_i^{(\ell)}$. This choice prevents two distinct representations of the
+same zero value.
+
+In the gradient-based training procedure,
+$z_i^{(\ell)*}$ is a relaxed inner-problem variable rather than a hard pruning
+decision: it contributes to the selected METaQ subgradient but does not directly
+overwrite the latent weight $w_i^{(\ell)}$ with zero. Instead, METaQ reshapes the
+latent-weight distribution toward the zero-quantization region, while LSQ
+materializes the zero symbols used in the forward pass and in the deployed
+model. In particular, Eq.~\eqref{eq:quantizer} gives
+\begin{equation}
+  \widehat w_i^{(\ell)}=0
+  \quad\Longleftrightarrow\quad
+  \operatorname{round}\!\left(
+    \frac{\bar w_i^{(\ell)}(a_\ell)}{a_\ell}
+  \right)=0
+  \quad\Longleftrightarrow\quad
+  \frac{\bar w_i^{(\ell)}(a_\ell)}{a_\ell}
+  \in\left[-\frac{1}{2},\frac{1}{2}\right],
+  \label{eq:lsq-zero-symbol}
+\end{equation}
+where the closed endpoints follow from the tie-to-even rounding convention.
+Thus, a quantized weight can be exactly zero even when its corresponding latent
+weight is nonzero.
+
+The outer METaQ objective is
+\begin{equation}
+  \min_{w,a,\theta_{\mathrm{fp}}}
+  \mathcal J(w,a,\theta_{\mathrm{fp}}),
+  \label{eq:outer-objective-problem}
+\end{equation}
+
+where
+
+\begin{equation}
+  \mathcal J(w,a,\theta_{\mathrm{fp}})
+  :=
+  \mathcal L_{\mathrm{task}}\!
+  \left(\widehat w(a),\theta_{\mathrm{fp}}\right)
+  +\mathcal R_{\mathrm{METaQ}}(w,a),
+  \label{eq:outer-objective}
+\end{equation}
+and
+\[
+  \mathcal R_{\mathrm{METaQ}}(w,a)
+  :=
+  \sum_{\ell\in\Lambda}
+  \Phi_\ell\!\left(\bar w^{(\ell)}(a_\ell),a_\ell\right)
+\]
+denotes the complete METaQ regularizer.
+
+Training requires the contribution of each term in
+Eq.~\eqref{eq:outer-objective}. The task-loss contribution is the gradient
+\begin{align}
+  \nabla_{(w,a,\theta_{\mathrm{fp}})}
+  \mathcal L_{\mathrm{task}}
+  =
+  \left(
+    \nabla_w\mathcal L_{\mathrm{task}},
+    \nabla_a\mathcal L_{\mathrm{task}},
+    \nabla_{\theta_{\mathrm{fp}}}\mathcal L_{\mathrm{task}}
+  \right),
+  \label{eq:task-gradient}\\
+  \nabla_{\mathrm{METaQ}}
+  \in
+  \partial_{(w,a,\theta_{\mathrm{fp}})}
+  \mathcal R_{\mathrm{METaQ}}
+  =
+  \partial_{(w,a)}\mathcal R_{\mathrm{METaQ}}
+  \times\{0\},
+  \label{eq:metaq-subgradient}
+\end{align}
+where $\partial$ denotes the subdifferential and
+$\nabla_{\mathrm{METaQ}}$ denotes the particular METaQ subgradient selected by
+the optimization procedure. The zero in
+Eq.~\eqref{eq:metaq-subgradient} follows because
+$\mathcal R_{\mathrm{METaQ}}$ does not depend on the floating-point parameters.
+Consequently, the update direction used for training satisfies
+\[
+  \nabla\mathcal L_{\mathrm{task}}
+  +\nabla_{\mathrm{METaQ}}
+  \in
+  \partial\mathcal J,
+\]
+with $\nabla_{\theta_{\mathrm{fp}}}\mathcal J
+=\nabla_{\theta_{\mathrm{fp}}}\mathcal L_{\mathrm{task}}$. The purpose of
+Section~\ref{sec:optimization} is to derive the latent-weight and step-size
+components of the two objects in
+Eqs.~\eqref{eq:task-gradient}--\eqref{eq:metaq-subgradient}.
+
+\section{Optimization}
+\label{sec:optimization}
+
+\subsection{Lagrangian Relaxation and Decomposition}
+\label{sec:lagrangian-decomposition}
+
+The inner problem in Eq.~\eqref{eq:metaq-value} contains one set of variables
+for every weight and a second set of variables shared across the tensor. In
+particular, the representation and mass constraints in
+Eqs.~\eqref{eq:representation} and \eqref{eq:mass} involve only a single weight
+index $i$. By contrast, each count constraint in Eq.~\eqref{eq:counts} couples
+all weights through the sum
+$c_b^{(\ell)}=\sum_{i\in\mathcal I_\ell}x_{i,b}^{(\ell)}$. Directly solving the
+inner problem would therefore require handling all assignment masses of a
+tensor simultaneously. Lagrangian relaxation removes precisely this global
+coupling.
+
+Fix a tensor $\ell\in\Lambda$, a clipped latent-weight vector
+$\bar w^{(\ell)}$, and a step size $a_\ell$. For each count constraint, let
+$\xi_b^{(\ell)}\in\mathbb R$ be an unrestricted Lagrange multiplier, and let
+$\xi^{(\ell)}=(\xi_b^{(\ell)})_{b\in\mathcal B}$ collect these multipliers. 
+For the Lagrangian relaxation of each count constraint, we use the sign convention
+\[
+  \xi_b^{(\ell)}
+  \left(
+    \sum_{i\in\mathcal I_\ell}x_{i,b}^{(\ell)}-c_b^{(\ell)}
+  \right).
+\]
+The partial Lagrangian of tensor $\ell$, obtained by dualizing only the count constraints, is
+\begin{align}
+ \mathscr L_\ell(x^{(\ell)},y^{(\ell)},c^{(\ell)};
+                  \xi^{(\ell)})
+ :=\;&
+ T_1\sum_{i\in\mathcal I_\ell}
+      \frac{(\bar w_i^{(\ell)})^2}{y_i^{(\ell)}}
+ +T_2\sum_{i\in\mathcal I_\ell}y_i^{(\ell)}
+ \notag\\
+ &+T_3\sum_{b\in\mathcal B}
+      c_b^{(\ell)}\log_2 c_b^{(\ell)}
+ +\sum_{b\in\mathcal B}\xi_b^{(\ell)}
+   \left(
+     \sum_{i\in\mathcal I_\ell}x_{i,b}^{(\ell)}-c_b^{(\ell)}
+   \right).
+ \label{eq:partial-lagrangian}
+\end{align}
+The variables $x^{(\ell)}$ and $y^{(\ell)}$ retain the domain constraints in
+Eq.~\eqref{eq:domain} and the representation and mass constraints in
+Eqs.~\eqref{eq:representation} and \eqref{eq:mass}, while
+$c_b^{(\ell)}\geq 0$ for every $b\in\mathcal B$. The count constraints
+themselves are no longer imposed explicitly, because their violation is priced
+by $\xi^{(\ell)}$.
+
+Let $\varphi_{\bar w^{(\ell)},a_\ell}^{(\ell)}(\xi^{(\ell)})$ denote the minimum of
+$\mathscr L_\ell$ over these remaining feasible variables. The function
+$\varphi_{\bar w^{(\ell)},a_\ell}^{(\ell)}$ is the Lagrangian dual function and is concave in
+$\xi^{(\ell)}$, because it is the pointwise infimum of affine functions of the
+multipliers. Rearranging Eq.~\eqref{eq:partial-lagrangian} yields
+\begin{align}
+ \varphi_{\bar w^{(\ell)},a_\ell}^{(\ell)}(\xi^{(\ell)})
+ :={}&
+ \min_{\substack{
+       (x_i^{(\ell)},y_i^{(\ell)})\in\mathcal F_i^{(\ell)}
+       \ \forall i\in\mathcal I_\ell,\\
+       c_b^{(\ell)}\geq0\ \forall b\in\mathcal B}}
+ \mathscr L_\ell
+ \bigl(x^{(\ell)},y^{(\ell)},c^{(\ell)};\xi^{(\ell)}\bigr)
+ \notag\\
+ ={}&
+ \sum_{b\in\mathcal B}
+ \min_{c_b^{(\ell)}\geq0}
+ \left\{
+   T_3c_b^{(\ell)}\log_2c_b^{(\ell)}
+   -\xi_b^{(\ell)}c_b^{(\ell)}
+ \right\}
+ \notag\\
+ &+\sum_{i\in\mathcal I_\ell}
+ \min_{(x_i^{(\ell)},y_i^{(\ell)})\in
+       \mathcal F_i^{(\ell)}}
+ \left\{
+   T_1\frac{(\bar w_i^{(\ell)})^2}{y_i^{(\ell)}}
+   +T_2y_i^{(\ell)}
+   +\sum_{b\in\mathcal B}
+      \xi_b^{(\ell)}x_{i,b}^{(\ell)}
+ \right\},
+ \label{eq:dual-decomposition}
+\end{align}
+where $x_i^{(\ell)}=(x_{i,b}^{(\ell)})_{b\in\mathcal B}$, and
+$\mathcal F_i^{(\ell)}$ is the local feasible set
+\begin{equation}
+ \mathcal F_i^{(\ell)}
+ :=
+ \left\{
+ (x_i^{(\ell)},y_i^{(\ell)}):
+ \begin{array}{l}
+ x_{i,b}^{(\ell)}\geq0\quad \text{for every }b\in\mathcal B,\\
+ 0\leq y_i^{(\ell)}\leq1,\\
+ \sum_{b\in\mathcal B}v_b^{(\ell)}(a_\ell)x_{i,b}^{(\ell)}
+     =\bar w_i^{(\ell)},\\
+ \sum_{b\in\mathcal B}x_{i,b}^{(\ell)}=y_i^{(\ell)}
+ \end{array}
+ \right\}.
+ \label{eq:local-feasible-set}
+\end{equation}
+The symbol $\mathcal F_i^{(\ell)}$ therefore denotes all assignment masses and
+nonzero mass values that represent weight $i$ while satisfying its local
+constraints.
+
+Equation~\eqref{eq:dual-decomposition} is the desired decomposition. Its first
+line contains $B$ independent one-dimensional count subproblems, one for each
+nonzero symbol. Its second line contains $n_\ell$ independent per-weight
+subproblems, all sharing the same multiplier vector but no optimization
+variables. Thus, once $\xi^{(\ell)}$ is fixed, the original tensor-level
+problem can be solved in parallel across symbols and weights.
+
+The Lagrangian dual problem is
+\begin{equation}
+  \max_{\xi^{(\ell)}\in\mathbb R^B}
+  \varphi_{\bar w^{(\ell)},a_\ell}^{(\ell)}(\xi^{(\ell)}).
+  \label{eq:lagrangian-dual}
+\end{equation}
+For fixed $\bar w^{(\ell)}$ and $a_\ell$, the inner minimization problem in
+Eq.~\eqref{eq:metaq-value} is convex: its objective is the sum of closed
+perspective functions, linear terms, and functions
+$c\mapsto c\log_2 c$, all of which are convex on their respective domains,
+while its feasible set is defined by affine constraints. Consequently, whenever
+the problem is feasible and the standard
+relative-interior constraint qualification holds, strong duality applies and
+the optimum of Eq.~\eqref{eq:lagrangian-dual} equals
+$\Phi_\ell(\bar w^{(\ell)},a_\ell)$. Under these conditions, Lagrangian
+relaxation changes how the inner problem is solved, but not its optimal value.
+
+For a fixed multiplier vector, the difference between the counts reconstructed
+from the per-weight solutions and those returned by the count subproblems is a
+supergradient of $\varphi_{\bar w^{(\ell)},a_\ell}^{(\ell)}$. This observation leads to the dual iteration in
+Section~\ref{sec:optimization-order}. The next section derives an efficient
+solution of the per-weight component in
+Eq.~\eqref{eq:dual-decomposition}.
+
+\subsection{Solving the Per-Weight Subproblem}
+\label{sec:per-weight-subproblem}
+
+Fix a tensor $\ell\in\Lambda$. Throughout this section, we temporarily omit
+the superscript $(\ell)$, with the understanding that all quantities refer to
+the same tensor. Accordingly, $\xi=(\xi_b)_{b\in\mathcal B}$ denotes the
+multiplier vector introduced in Section~\ref{sec:lagrangian-decomposition}
+with its tensor superscript omitted.
+
+For fixed $\xi$, the problem separates over the weight index $i$. Given a
+weight $\bar w_i$ and a fixed mass $y_i\in[0,1]$, define
+\begin{align}
+ K_i(y_i;\bar w_i,\xi,v)
+ :=\min_{x_i}\quad&
+ \sum_{b\in\mathcal B}\xi_bx_{i,b}
+ \label{eq:knapsack-objective}\\
+ \text{s.t.}\quad&
+ \left\{
+ \begin{aligned}
+  \sum_{b\in\mathcal B}v_bx_{i,b}&=\bar w_i,
+  &\qquad \sum_{b\in\mathcal B}x_{i,b}&=y_i,\\
+  x_{i,b}&\geq0,
+  && b\in\mathcal B.
+ \end{aligned}
+ \right.
+ \label{eq:knapsack-constraints}
+\end{align}
+The letter $K$ denotes the optimal value of this linear knapsack-type
+subproblem, and the subscript $i$ identifies the corresponding weight. Here,
+$x_i=(x_{i,b})_{b\in\mathcal B}$ is the vector of assignment masses for weight
+$i$, and $v=(v_b)_{b\in\mathcal B}$ is the vector of real-valued levels.
+
+For $y_i>0$, let
+\[
+  u_{i,b}:=\frac{x_{i,b}}{y_i},
+  \qquad
+  \widetilde w_i:=\frac{\bar w_i}{y_i}.
+\]
+The vector $u_i=(u_{i,b})_{b\in\mathcal B}$ has nonnegative entries summing to
+one, while $\widetilde w_i$ is the rescaled target. It follows that
+\begin{equation}
+  K_i(y_i;\bar w_i,\xi,v)
+  =
+  y_i\,K_i(1;\widetilde w_i,\xi,v).
+  \label{eq:perspective-scaling}
+\end{equation}
+
+To evaluate $K_i(1;\widetilde w_i,\xi,v)$, we associate each symbol $b$ with the
+point $P_b:=(v_b,\xi_b)\in\mathbb R^2$. The optimal value is the ordinate of
+the lower convex hull of the points $P_b$ at the abscissa
+$v=\widetilde w_i$. Let~$E_{\mathrm l}$ and $E_{\mathrm r}$ denote,
+respectively, the leftmost and rightmost vertices of the lower hull, as shown
+in Figure~\ref{fig:lower-hull}. Suppose first that
+$v_{b_-}<\widetilde w_i<v_{b_+}$, where $P_{b_-}$ and $P_{b_+}$ are the
+endpoints of the lower-hull facet containing this abscissa. We call these
+points active because they determine the facet and are the only symbols assigned
+positive mass in the corresponding two-point optimal representation. 
+If $\widetilde w_i$ coincides with a lower-hull
+vertex $v_b$, the optimal representation assigns unit mass to symbol $b$.
+If $P_b$ is an interior vertex of the lower hull, either of its two incident
+facets may be used in the formulas below. If $P_b$ is one of the two extreme
+vertices $E_{\mathrm l}$ and $E_{\mathrm r}$, only one incident facet exists.
+In both cases, the formulas yield unit mass for symbol $b$ and zero mass for
+the other vertex of the selected facet.
+
+\begin{figure}[ht]
+\centering
+\begin{tikzpicture}[scale=1.15,>=latex]
+  \draw[->] (-2.6,0) -- (3.9,0) node[right] {$v$};
+  \draw[->] (0,-0.15) -- (0,4.7) node[above] {$\xi$};
+  \node[below left] at (0,0) {\small $0$};
+
+  \coordinate (A) at (-2.2,3.2);
+  \coordinate (B) at (-1.0,1.4);
+  \coordinate (C) at (0.4,0.6);
+  \coordinate (D) at (1.6,1.0);
+  \coordinate (E) at (2.6,2.6);
+  \coordinate (F) at (3.4,4.2);
+
+  \draw[gray!65,dashed] (A)--(B)--(C)--(D)--(E)--(F);
+  \foreach \p in {A,B,E,F} \fill[gray!70] (\p) circle (1.7pt);
+  \node[above left] at (A) {\small $E_{\mathrm l}$};
+  \node[above right] at (F) {\small $E_{\mathrm r}$};
+  \draw[very thick] (C)--(D);
+  \fill (C) circle (2.2pt);
+  \fill (D) circle (2.2pt);
+  \node[below right] at (C) {\small $P_{b_-}$};
+  \node[above right] at (D) {\small $P_{b_+}$};
+
+  \draw[thin,dashed] (0,0.4667)--(C);
+  \fill (0,0.4667) circle (1.9pt);
+  \node[left] at (0,0.4667) {\small $s_i$};
+
+  \draw[dotted] (1.1,0)--(1.1,0.83);
+  \fill (1.1,0.83) circle (1.7pt);
+  \node[below] at (1.1,0) {\small $\widetilde w_i$};
+  \node[right] at (1.05,0.70)
+    {\small $K_i(1;\widetilde w_i,\xi,v)$};
+  %\node[above left] at (1.30,0.93) {\small slope $\mu_i$};
+\end{tikzpicture}
+\caption{Geometric solution of the normalized per-weight subproblem.}
+\label{fig:lower-hull}
+\end{figure}
+
+Consider the two-point optimal representation associated with the selected
+facet. All masses outside its endpoints are set to zero, while the endpoint
+masses satisfy
+\[
+  u_{i,b_-}+u_{i,b_+}=1,
+  \qquad
+  v_{b_-}u_{i,b_-}+v_{b_+}u_{i,b_+}=\widetilde w_i.
+\]
+Solving this two-equation linear system yields
+\begin{align}
+  u_{i,b_-}
+  &=
+  \frac{v_{b_+}-\widetilde w_i}{v_{b_+}-v_{b_-}},
+  &
+  u_{i,b_+}
+  &=
+  \frac{\widetilde w_i-v_{b_-}}{v_{b_+}-v_{b_-}}.
+  \label{eq:active-masses}
+\end{align}
+Both masses are strictly positive when $\widetilde w_i$ lies in the interior
+of the facet; if it coincides with an endpoint, the corresponding masses are
+$1$ and $0$.
+
+The line containing the active facet can be written as
+$\xi=\mu_i v+s_i$. Requiring this line to pass through $P_{b_-}$ and
+$P_{b_+}$ yields
+\begin{align}
+  \mu_i
+  &:=
+  \frac{\xi_{b_+}-\xi_{b_-}}{v_{b_+}-v_{b_-}},
+  &
+  s_i
+  &:=
+  \frac{\xi_{b_-}v_{b_+}-\xi_{b_+}v_{b_-}}
+       {v_{b_+}-v_{b_-}}.
+  \label{eq:slope-intercept}
+\end{align}
+Therefore,
+\begin{equation}
+  K_i(1;\widetilde w_i,\xi,v)
+  =\mu_i\widetilde w_i+s_i.
+  \label{eq:lower-hull}
+\end{equation}
+
+\textcolor{red}{-----------------------------------------------------------------------------}
+
+\textcolor{red}{How to calculate breakpoints?}
+
+\textcolor{red}{Can we add a brief discussion about the complexity of the comparison algorithm}
+
+To characterize the feasible interval of $y_i$, define
+\[
+  V_i^{\max}
+  :=
+  \max\{|v_b|:b\in\mathcal B,\ \bar w_i v_b\geq0\}.
+\]
+If $\bar w_i=0$, define $y_i^{\min}:=0$; otherwise, define
+\[
+  y_i^{\min}:=\frac{|\bar w_i|}{V_i^{\max}}.
+\]
+$V_i^{\max}$ is the largest representable magnitude having the same sign as
+$\bar w_i$, whereas $y_i^{\min}$ is the smallest mass that can represent
+$\bar w_i$.
+
+It remains to minimize the scalar function
+\begin{equation}
+  G_i(y_i)
+  :=
+  K_i(y_i;\bar w_i,\xi,v)
+  +T_1\frac{\bar w_i^2}{y_i}
+  +T_2y_i,
+  \qquad
+  y_i\in[y_i^{\min},1],
+  \label{eq:scalar-problem}
+\end{equation}
+where $G_i$ is the value of the subproblem associated with weight $i$. On an
+interval over which the active facet remains unchanged,
+$K_i(y_i;\bar w_i,\xi,v)=\mu_i\bar w_i+s_i y_i$. If $s_i+T_2>0$, the unique
+stationary candidate in the interior of that interval is
+\begin{equation}
+  y_i^{\mathrm{cand}}
+  :=
+  |\bar w_i|
+  \sqrt{\frac{T_1}{s_i+T_2}}.
+  \label{eq:y-candidate}
+\end{equation}
+Here, $s_i$ is not an optimized quantity. For each candidate interval, it is
+computed from the lower-hull facet that remains active throughout that
+interval, using Eq.~\eqref{eq:slope-intercept}, before
+$y_i^{\mathrm{cand}}$ is evaluated. The candidates obtained from all active
+facets are compared only afterward to select $y_i^*$. 
+The algorithm compares every candidate $y_i^{\mathrm{cand}}$ lying within its
+corresponding interval against the interval endpoints and the endpoints of
+$[y_i^{\min},1]$. We denote the resulting minimizer by $y_i^*$. The optimal
+mass assigned to the zero symbol is $z_i^*:=1-y_i^*$.
+
+\textcolor{red}{-----------------------------------------------------------------------------}
+
+\subsection{Joint Gradients for Weights and Step Sizes}
+\label{sec:joint-gradients}
+
+\subsubsection{Regularizer Subgradient with Respect to the Weights}
+\label{sec:regularizer-weight-subgradient}
+
+We now restore the tensor superscript $\ell$. Let $\mu_i^{(\ell)}$ be an
+optimal Lagrange multiplier associated with the representation constraint in
+Eq.~\eqref{eq:representation} for weight $i$, under the sign convention
+\[
+  \bar w_i^{(\ell)}
+  -\sum_{b\in\mathcal B}
+   a_\ell q_bx_{i,b}^{(\ell)}
+  =0.
+\]
+The full inner Lagrangian, obtained by adding the representation constraints
+to the partial Lagrangian in Eq.~\eqref{eq:partial-lagrangian}, is
+\[
+  \mathscr L_\ell^{\mathrm{full}}
+  :=
+  \mathscr L_\ell
+  +
+  \sum_{i\in\mathcal I_\ell}
+  \mu_i^{(\ell)}
+  \left(
+    \bar w_i^{(\ell)}
+    -
+    \sum_{b\in\mathcal B}
+    a_\ell q_bx_{i,b}^{(\ell)}
+  \right).
+\]
+For a convex parametric optimization problem, optimal Lagrange multipliers
+describe the sensitivity of its optimal-value function to perturbations of the
+constraints. If the parameter also appears explicitly in the objective, its
+direct contribution must be added to the multiplier contribution
+\citep{bonnans2000perturbation}.
+
+The connection with the per-weight function $G_i$ in
+Eq.~\eqref{eq:scalar-problem} can be seen directly. Temporarily omitting the
+tensor superscript, Eqs.~\eqref{eq:perspective-scaling} and
+\eqref{eq:lower-hull} give, on the selected facet,
+\[
+  K_i(y_i;\bar w_i,\xi,v)
+  =
+  \mu_i\bar w_i+s_i y_i.
+\]
+Consequently,
+\[
+  \mu_i
+  \in
+  \partial_{\bar w_i}
+  K_i(y_i;\bar w_i,\xi,v),
+\]
+where the inclusion accounts for a possible lower-hull breakpoint. From Eq.~\eqref{eq:scalar-problem}
+we obtain, for fixed $y_i$,
+\[
+  \mu_i+2T_1\frac{\bar w_i}{y_i}
+  \in
+  \partial_{\bar w_i}G_i(y_i).
+\]
+
+To make the minimization over $y_i$ explicit, define the optimized per-weight
+value
+\[
+  G_i^*(\bar w_i;\xi,v)
+  :=
+  \min_{y_i\in[y_i^{\min},1]}
+  G_i(y_i;\bar w_i,\xi,v),
+  \qquad
+  y_i^*\in\arg\min_{y_i\in[y_i^{\min},1]}
+  G_i(y_i;\bar w_i,\xi,v),
+\]
+Thus, $G_i^*$ denotes the optimal value, whereas $y_i^*$ denotes a selected
+minimizer.
+The dependence of $G_i$ on $\bar w_i$, $\xi$, and $v$ was suppressed in
+Eq.~\eqref{eq:scalar-problem}. At a differentiability point where $y_i^*$ is
+an interior minimizer, formally applying the chain rule to
+$G_i^*(\bar w_i;\xi,v)=G_i(y_i^*(\bar w_i);\bar w_i,\xi,v)$ gives
+\[
+  \frac{dG_i^*}{d\bar w_i}
+  =
+  \frac{\partial G_i}{\partial\bar w_i}
+  +
+  \frac{\partial G_i}{\partial y_i}
+  \frac{dy_i^*}{d\bar w_i}
+  =
+  \frac{\partial G_i}{\partial\bar w_i},
+\]
+because $\left.\frac{\partial G_i}{\partial y_i}\right|_{y_i=y_i^*}=0$
+at the interior optimum. Danskin's
+theorem and the sensitivity theory of convex value functions extend this
+conclusion to lower-hull breakpoints and boundary minimizers: a compatible
+subgradient is obtained from a selected optimal primal--dual solution while
+holding $y_i^*$ fixed \citep{danskin1966maxmin,bonnans2000perturbation}.
+Therefore, no derivative of $y_i^*$ is required, and
+\[
+  \mu_i+2T_1\frac{\bar w_i}{y_i^*}
+  \in
+  \partial_{\bar w_i}G_i^*(\bar w_i;\xi,v).
+\]
+
+Restoring the tensor superscript, and observing that the count subproblems
+contain no explicit dependence on $\bar w_i^{(\ell)}$, yields
+\begin{equation}
+  \beta_i^{(\ell)*}
+  :=
+  \mu_i^{(\ell)}
+  +2T_1
+   \frac{\bar w_i^{(\ell)}}{y_i^{(\ell)*}}
+  \in
+  \left.
+  \partial_{\bar w_i^{(\ell)}}
+  \Phi_\ell\!\left(\bar w^{(\ell)},a_\ell\right)
+  \right|_{a_\ell}.
+  \label{eq:weight-envelope}
+\end{equation}
+Thus, $\mu_i^{(\ell)}$ is the contribution induced by the representation
+constraint, whereas the second term is the direct contribution of the
+perspective penalty. If $\Phi_\ell$ is differentiable with respect to
+$\bar w_i^{(\ell)}$, the subgradient is unique and
+\[
+  \beta_i^{(\ell)*}
+  =
+  \left.
+  \frac{\partial\Phi_\ell}
+       {\partial\bar w_i^{(\ell)}}
+  \right|_{a_\ell}.
+\]
+
+At points where the active facet changes, $\Phi_\ell$ may be nondifferentiable;
+the preceding quantities should then be interpreted as subgradients 
+associated with either adjacent active facet. 
+If the optimal normalized value reaches the extreme level
+$v_e^{(\ell)}$, namely
+$\bar w_i^{(\ell)}/y_i^{(\ell)*}=v_e^{(\ell)}$, representability forces all
+nonzero mass onto the corresponding extreme symbol $e\in\mathcal B$. The KKT
+conditions then yield
+\begin{equation}
+  \mu_i^{(\ell)}
+  =
+  \frac{\xi_e^{(\ell)}+T_2}{v_e^{(\ell)}}
+  -T_1v_e^{(\ell)}.
+  \label{eq:boundary-kkt}
+\end{equation}
+when $y_i^{(\ell)*}=y_i^{(\ell),\min}<1$. If the weight itself coincides with
+the extreme level, so that $y_i^{(\ell)*}=1$, Eq.~\eqref{eq:boundary-kkt}
+selects the limiting multiplier obtained by approaching the endpoint from the
+interior of the representable interval. Here, $\xi_e^{(\ell)}$ is the dual
+multiplier associated with the count-defining constraint for symbol $e$ in
+Eq.~\eqref{eq:counts}. Appendix~\ref{app:boundary-kkt-derivation} derives
+Eq.~\eqref{eq:boundary-kkt} and explains the endpoint selection.
+
+\subsubsection{Regularizer Gradient with Respect to the Step Sizes}
+\label{sec:regularizer-step-gradient}
+
+Holding $\bar w^{(\ell)}$ fixed, the step size $a_\ell$ appears explicitly in
+the full inner Lagrangian $\mathscr L_\ell^{\mathrm{full}}$ only through the
+representation-constraint term
+\[
+  -\sum_{i\in\mathcal I_\ell}
+   \mu_i^{(\ell)}
+   \sum_{b\in\mathcal B}
+   a_\ell q_bx_{i,b}^{(\ell)},
+\]
+because $v_b^{(\ell)}(a_\ell)=a_\ell q_b$. The envelope theorem therefore
+computes the derivative of the optimal-value function by differentiating this
+explicit dependence at an optimal primal--dual solution; derivatives of the
+optimal assignments $x_{i,b}^{(\ell)*}$ with respect to $a_\ell$ are not
+required \citep{bonnans2000perturbation}. Since
+$\partial v_b^{(\ell)}/\partial a_\ell=q_b$, this gives
+\begin{equation}
+  \left.
+  \frac{\partial\Phi_\ell}{\partial a_\ell}
+  \right|_{\bar w^{(\ell)}}
+  =
+  -\sum_{i\in\mathcal I_\ell}
+   \mu_i^{(\ell)}
+   \sum_{b\in\mathcal B}
+   q_bx_{i,b}^{(\ell)*}
+  =
+  -\frac{1}{a_\ell}
+   \sum_{i\in\mathcal I_\ell}
+   \mu_i^{(\ell)}\bar w_i^{(\ell)}.
+  \label{eq:scale-envelope}
+\end{equation}
+Thus, the first equality follows from the envelope theorem. The second follows
+from the representation constraint in Eq.~\eqref{eq:representation}, together
+with $v_b^{(\ell)}=a_\ell q_b$.
+
+\subsubsection{Total Training Gradients}
+\label{sec:total-training-gradients}
+
+Let's define the gradient of the task loss with respect to the quantized weight as
+\[
+  \delta_i^{(\ell)}
+  :=
+  \frac{\partial\mathcal L_{\mathrm{task}}}
+       {\partial\widehat w_i^{(\ell)}}.
+\]
+$\delta_i^{(\ell)}$ is the upstream gradient returned by backpropagation. The
+LSQ straight-through estimator (STE) approximates\footnote{The quantizer contains a
+nondifferentiable rounding operation. During QAT, the STE leaves the quantized
+forward pass unchanged but replaces the derivative of the quantizer in the
+backward pass with a surrogate derivative, thereby enabling gradient-based
+optimization; see \citet{bengio2013estimating,esser2020lsq}.} 
+\begin{equation}
+  \frac{\partial\widehat w_i^{(\ell)}}
+       {\partial w_i^{(\ell)}}
+  \simeq
+  \mathbf 1\{Q_n\leq r_i^{(\ell)}\leq Q_p\},
+  \label{eq:weight-ste}
+\end{equation}
+where $\mathbf 1\{\cdot\}$ is the indicator function, equal to one when its
+argument is true and zero otherwise, and $r_i^{(\ell)}$ is defined in Eq.~\eqref{eq:normalized-weight}. 
+Under this estimator, the latent-weight component of the task-loss gradient is
+\begin{equation}
+  \nabla_{w_i^{(\ell)}}\mathcal L_{\mathrm{task}}
+  \simeq
+  \delta_i^{(\ell)}
+  \mathbf 1\{Q_n\leq r_i^{(\ell)}\leq Q_p\}.
+  \label{eq:task-weight-gradient}
+\end{equation}
+
+We next derive the LSQ gradient with respect to the step size. If
+$r_i^{(\ell)}<Q_n$ or $r_i^{(\ell)}>Q_p$, clipping gives respectively
+$\widehat w_i^{(\ell)}=a_\ell Q_n$ or
+$\widehat w_i^{(\ell)}=a_\ell Q_p$; the corresponding derivatives with
+respect to $a_\ell$ are therefore $Q_n$ and $Q_p$. Inside the representable
+interval,
+\[
+  \widehat w_i^{(\ell)}
+  =a_\ell\operatorname{round}(r_i^{(\ell)}).
+\]
+Using the STE surrogate
+$\partial\operatorname{round}(r)/\partial r\simeq1$ gives
+\[
+  \frac{\partial\widehat w_i^{(\ell)}}{\partial a_\ell}
+  \simeq
+  \operatorname{round}(r_i^{(\ell)})
+  +a_\ell\frac{\partial r_i^{(\ell)}}{\partial a_\ell}
+  =\operatorname{round}(r_i^{(\ell)})-r_i^{(\ell)}.
+\]
+These three cases are collected in the function
+\begin{equation}
+  h(r)
+  :=
+  \begin{cases}
+    Q_n, & r<Q_n,\\
+    \operatorname{round}(r)-r, & Q_n\leq r\leq Q_p,\\
+    Q_p, & r>Q_p,
+  \end{cases}
+  \label{eq:lsq-h}
+\end{equation}
+where $r\in\mathbb R$ is a scalar argument. Applying the chain rule and the
+definition of $\delta_i^{(\ell)}$ gives
+\[
+  \frac{\partial\mathcal L_{\mathrm{task}}}{\partial a_\ell}
+  \simeq
+  \sum_{i\in\mathcal I_\ell}
+  \frac{\partial\mathcal L_{\mathrm{task}}}
+       {\partial\widehat w_i^{(\ell)}}
+  \frac{\partial\widehat w_i^{(\ell)}}{\partial a_\ell}
+  =
+  \sum_{i\in\mathcal I_\ell}
+  \delta_i^{(\ell)}h(r_i^{(\ell)}).
+\]
+Accordingly, the step-size component of the task-loss gradient is
+\begin{equation}
+  \nabla_{a_\ell}\mathcal L_{\mathrm{task}}
+  \simeq
+  \sum_{i\in\mathcal I_\ell}
+  \delta_i^{(\ell)}h(r_i^{(\ell)}).
+  \label{eq:task-scale-gradient}
+\end{equation}
+
+We must additionally account for the dependence of
+$\bar w_i^{(\ell)}(a_\ell)$ on the step size through the clipping operation in
+Eq.~\eqref{eq:clipped-latent}. Selected latent-weight and step-size components
+of the METaQ subdifferential are
+\begin{align}
+  \left(\nabla_{\mathrm{METaQ}}\right)_{w_i^{(\ell)}}
+  &:={}
+  \beta_i^{(\ell)*}
+  \mathbf 1\{Q_n\leq r_i^{(\ell)}\leq Q_p\},
+  \label{eq:metaq-weight-gradient}\\
+  \left(\nabla_{\mathrm{METaQ}}\right)_{a_\ell}
+  &:={}
+  -\frac{1}{a_\ell}
+   \sum_{i\in\mathcal I_\ell}
+   \mu_i^{(\ell)}\bar w_i^{(\ell)}
+  +\sum_{\substack{i\in\mathcal I_\ell\\r_i^{(\ell)}<Q_n}}
+   \beta_i^{(\ell)*}Q_n
+  +\sum_{\substack{i\in\mathcal I_\ell\\r_i^{(\ell)}>Q_p}}
+   \beta_i^{(\ell)*}Q_p.
+  \label{eq:metaq-scale-gradient}
+\end{align}
+The first term in Eq.~\eqref{eq:metaq-scale-gradient} is the direct dependence
+of $\Phi_\ell$ on $a_\ell$ at fixed $\bar w^{(\ell)}$, given by
+Eq.~\eqref{eq:scale-envelope}. There is also an indirect dependence through
+the clipped weights $\bar w_i^{(\ell)}(a_\ell)$. Holding the latent weight
+$w_i^{(\ell)}$ fixed, Eq.~\eqref{eq:clipped-latent} gives
+\[
+  \frac{\partial\bar w_i^{(\ell)}}{\partial a_\ell}
+  =
+  \begin{cases}
+    Q_n, & r_i^{(\ell)}<Q_n,\\
+    0, & Q_n\leq r_i^{(\ell)}\leq Q_p,\\
+    Q_p, & r_i^{(\ell)}>Q_p.
+  \end{cases}
+\]
+Indeed, inside the representable interval
+$\bar w_i^{(\ell)}=w_i^{(\ell)}$ and hence does not vary with $a_\ell$;
+outside it, the clipped weight equals respectively $a_\ell Q_n$ or
+$a_\ell Q_p$. Since $\beta_i^{(\ell)*}$ is the selected subgradient of
+$\Phi_\ell$ with respect to $\bar w_i^{(\ell)}$ at fixed $a_\ell$, the
+subgradient chain rule contributes
+\[
+  \sum_{i\in\mathcal I_\ell}
+  \beta_i^{(\ell)*}
+  \frac{\partial\bar w_i^{(\ell)}}{\partial a_\ell}.
+\]
+Substituting the preceding piecewise derivative produces the final two sums in
+Eq.~\eqref{eq:metaq-scale-gradient}.
+
+Equations~\eqref{eq:task-weight-gradient} and
+\eqref{eq:task-scale-gradient} provide the latent-weight and step-size
+components of the task-loss gradient introduced in
+Eq.~\eqref{eq:task-gradient}. Collecting these components gives
+\begin{equation}
+  \nabla_{(w,a,\theta_{\mathrm{fp}})}\mathcal L_{\mathrm{task}}
+  =
+  \left(
+    \bigl(\nabla_{w_i^{(\ell)}}\mathcal L_{\mathrm{task}}\bigr)_{
+      \substack{\ell\in\Lambda,\ i\in\mathcal I_\ell}},
+    \bigl(\nabla_{a_\ell}\mathcal L_{\mathrm{task}}\bigr)_{\ell\in\Lambda},
+    \nabla_{\theta_{\mathrm{fp}}}\mathcal L_{\mathrm{task}}
+  \right).
+  \label{eq:assembled-task-gradient}
+\end{equation}
+Likewise, Eqs.~\eqref{eq:metaq-weight-gradient} and
+\eqref{eq:metaq-scale-gradient} provide the corresponding components of the
+selected METaQ subgradient introduced in Eq.~\eqref{eq:metaq-subgradient}, so
+\begin{equation}
+  \nabla_{\mathrm{METaQ}}
+  =
+  \left(
+    \bigl((\nabla_{\mathrm{METaQ}})_{w_i^{(\ell)}}\bigr)_{
+      \substack{\ell\in\Lambda,\ i\in\mathcal I_\ell}},
+    \bigl((\nabla_{\mathrm{METaQ}})_{a_\ell}\bigr)_{\ell\in\Lambda},
+    0
+  \right).
+  \label{eq:assembled-metaq-subgradient}
+\end{equation}
+Finally, combining Eqs.~\eqref{eq:assembled-task-gradient} and
+\eqref{eq:assembled-metaq-subgradient}, the selected (sub)gradient of the
+complete objective passed to the optimizers during training is
+\begin{equation}
+  \nabla_{\mathrm{train}}\mathcal J
+  :=
+  \nabla_{(w,a,\theta_{\mathrm{fp}})}\mathcal L_{\mathrm{task}}
+  +\nabla_{\mathrm{METaQ}}
+  \in
+  \partial_{(w,a,\theta_{\mathrm{fp}})}\mathcal J.
+  \label{eq:training-subgradient}
+\end{equation}
+
+\subsection{Dual Update and Optimization Order}
+\label{sec:optimization-order}
+
+\textcolor{red}{[...] (Su tutto il Paragrafo~\ref{sec:optimization-order})}
+
+The Lagrangian decomposition in Eq.~\eqref{eq:dual-decomposition} replaces the
+coupling constraint
+$c_b^{(\ell)}=\sum_{i\in\mathcal I_\ell}x_{i,b}^{(\ell)}$ with the multiplier
+$\xi_b^{(\ell)}$. The dual solver must therefore adjust the multiplier vector
+$\xi^{(\ell)}=(\xi_b^{(\ell)})_{b\in\mathcal B}$ until the two sides of the
+relaxed constraint agree. We first derive the two quantities compared by this
+update and then specify how the resulting inner solution is used by the outer
+optimizer.
+
+\subsubsection{Count Solutions and Dual Residuals}
+
+Fix a tensor $\ell\in\Lambda$ and a multiplier vector $\xi^{(\ell)}$. For each
+symbol $b\in\mathcal B$, the solutions of the per-weight subproblems determine
+the reconstructed count
+\begin{equation}
+  \widehat c_b^{(\ell)}
+  :=
+  \sum_{i\in\mathcal I_\ell}x_{i,b}^{(\ell)*}.
+  \label{eq:reconstructed-count}
+\end{equation}
+The hat distinguishes this quantity, which is reconstructed by summing the
+optimal assignment masses, from the independent variable $c_b^{(\ell)}$ in
+the count subproblem.
+
+For $T_3>0$, the count subproblem appearing in the first line of
+Eq.~\eqref{eq:dual-decomposition} is
+\[
+  \min_{c_b^{(\ell)}\geq0}
+  \left\{
+    T_3c_b^{(\ell)}\log_2c_b^{(\ell)}
+    -\xi_b^{(\ell)}c_b^{(\ell)}
+  \right\}.
+\]
+Its objective is strictly convex for $c_b^{(\ell)}>0$ and its derivative on this interval is
+\[
+  \frac{T_3}{\ln(2)}\bigl(\ln c_b^{(\ell)}+1\bigr)
+  -\xi_b^{(\ell)}.
+\]
+Setting this derivative to zero and solving for $c_b^{(\ell)}$ gives the
+unconstrained stationary value
+\begin{equation}
+  c_{b,\mathrm{unc}}^{(\ell)}
+  =
+  \exp\!\left(
+    \frac{\ln(2)\,\xi_b^{(\ell)}}{T_3}-1
+  \right).
+  \label{eq:unconstrained-count-solution}
+\end{equation}
+For numerical stability, the implementation restricts the count to
+$[c_{\min},n_\ell]$, where $c_{\min}>0$ is a fixed numerical lower bound and
+$n_\ell$ is the number of weights in tensor $\ell$. The value actually used by
+the dual solver is therefore
+\begin{equation}
+  c_b^{(\ell)*}
+  :=
+  \operatorname{clip}\!\left(
+    c_{b,\mathrm{unc}}^{(\ell)};
+    c_{\min},n_\ell
+  \right).
+  \label{eq:count-solution}
+\end{equation}
+When $T_3=0$, the entropic count component is disabled and
+Eqs.~\eqref{eq:unconstrained-count-solution} and
+\eqref{eq:count-solution} are not used.
+
+The two count values in Eqs.~\eqref{eq:reconstructed-count} and
+\eqref{eq:count-solution} solve different subproblems and need not agree for an
+arbitrary multiplier vector. Their difference
+\begin{equation}
+  s_b^{(\ell)}
+  :=
+  \widehat c_b^{(\ell)}-c_b^{(\ell)*}
+  \label{eq:dual-supergradient}
+\end{equation}
+is precisely the residual of the relaxed count constraint. It is also a
+supergradient of the concave dual function
+$\varphi_{\bar w^{(\ell)},a_\ell}^{(\ell)}$ with respect to
+$\xi_b^{(\ell)}$\footnote{The coefficient of $\xi_b^{(\ell)}$ in the partial 
+Lagrangian is $\sum_i x_{i,b}^{(\ell)}-c_b^{(\ell)}$, and evaluating this coefficient at
+selected minimizers gives Eq.~\eqref{eq:dual-supergradient}.}. Thus,
+$s_b^{(\ell)}=0$ means that the relaxed constraint is satisfied for symbol
+$b$. If a subproblem has multiple minimizers, any consistent selection yields
+a valid supergradient.
+
+\subsubsection{Inner Dual Iteration}
+
+Let $N_{\mathrm{dual}}$ be the positive integer specifying the number of dual
+iterations performed per solver call, let
+$t\in\{0,\ldots,N_{\mathrm{dual}}-1\}$ index those iterations, and let
+$\eta_\xi>0$ be the dual step size. At the multiplier vector
+$\xi^{(\ell,t)}$, the implementation
+first solves the per-weight and count subproblems and forms the normalized
+supergradient
+\begin{equation}
+  g_b^{(\ell,t)}
+  :=
+  \frac{
+    \widehat c_b^{(\ell,t)}
+    -c_b^{(\ell,t)*}
+  }{n_\ell},
+  \qquad b\in\mathcal B.
+  \label{eq:normalized-dual-supergradient}
+\end{equation}
+If the per-weight subproblems assign more mass to symbol $b$ than the count subproblem
+does, then $g_b^{(\ell,t)}>0$ and the corresponding multiplier is pushed
+upwards by dual ascent. Division by
+$n_\ell=|\mathcal I_\ell|$ normalizes the residual by the number of weights in
+the tensor, preventing the scale of the update from growing merely because a
+tensor contains more weights.
+
+The dual solver used in our experiments applies a FISTA-style momentum
+extrapolation \citep{beck2009fista}; it is not an optional alternative to the
+update above. To state the implemented iteration precisely, let $\tau_0=1$ and
+initialize $\xi^{(\ell,-1)}=\xi^{(\ell,0)}$. At iteration $t$, the momentum
+parameter and extrapolated multiplier vector are
+\begin{align}
+  \tau_{t+1}
+  &:={1+\sqrt{1+4\tau_t^2}\over2},
+  \label{eq:fista-momentum-parameter}\\
+  \widetilde\xi^{(\ell,t)}
+  &:={}
+  \xi^{(\ell,t)}
+  +{\tau_t-1\over\tau_{t+1}}
+  \left(\xi^{(\ell,t)}-\xi^{(\ell,t-1)}\right).
+  \label{eq:fista-extrapolated-multiplier}
+\end{align}
+The normalized supergradient in
+Eq.~\eqref{eq:normalized-dual-supergradient} is then applied to the
+extrapolated point\footnote{The plus sign follows from the fact that
+Eq.~\eqref{eq:lagrangian-dual} is a maximization problem, so the update performs
+supergradient ascent.}:
+\begin{equation}
+  z_b^{(\ell,t+1)}
+  :=
+  \widetilde\xi_b^{(\ell,t)}
+  +\eta_\xi g_b^{(\ell,t)},
+  \qquad b\in\mathcal B.
+  \label{eq:fista-unconstrained-update}
+\end{equation}
+
+The count bounds in Eq.~\eqref{eq:count-solution}, together with
+Eq.~\eqref{eq:unconstrained-count-solution}, correspond to the
+multiplier bounds
+\begin{equation}
+  \xi_{\min}^{(\ell)}
+  :=
+  {T_3\over\ln(2)}\bigl(\ln c_{\min}+1\bigr),
+  \qquad
+  \xi_{\max}^{(\ell)}
+  :=
+  {T_3\over\ln(2)}\bigl(\ln n_\ell+1\bigr).
+  \label{eq:dual-multiplier-bounds}
+\end{equation}
+After Eq.~\eqref{eq:fista-unconstrained-update}, every component is clipped to
+this interval:
+\begin{equation}
+  \xi^{(\ell,t+1)}
+  :=
+  \operatorname{clip}\!\left(
+    z^{(\ell,t+1)};
+    \xi_{\min}^{(\ell)},\xi_{\max}^{(\ell)}
+  \right).
+  \label{eq:fista-projected-update}
+\end{equation}
+Here, $\operatorname{clip}$ acts componentwise. Each $\xi_b^{(\ell)}$ remains
+The per-weight subproblems, the count solution, the residual, the extrapolation,
+and the final clipping are repeated for the prescribed number of dual iterations
+$N_{\mathrm{dual}}$.
+
+This is a FISTA-style rather than a literal canonical FISTA iteration: the
+supergradient $g^{(\ell,t)}$ is evaluated at $\xi^{(\ell,t)}$, whereas its
+correction is applied to the extrapolated vector
+$\widetilde\xi^{(\ell,t)}$. Stating both evaluation points is necessary to
+reproduce the implemented update unambiguously.
+
+Once the $N_{\mathrm{dual}}$ dual iterations are completed, the per-weight
+solutions $x^*$ and $y^*$, together with the associated quantities $\mu$ and
+$\beta^*$, computed during the last iteration are used in the METaQ-gradient
+formulas of Section~\ref{sec:joint-gradients}.\footnote{A finite
+$N_{\mathrm{dual}}$ does not, in general, produce the exact maximizer of the
+dual problem in Eq.~\eqref{eq:lagrangian-dual}. It is a computational budget
+that trades the quality of the approximate dual solution against the cost of
+each training update, and is therefore an important hyperparameter. To mitigate
+the use of a small budget, each dual-solver call is warm-started from the
+multiplier vector returned by the preceding call rather than from a new
+initialization. This allows progressive refinement across calls, although the
+underlying weights and codebook may change between them. The dependence on
+$N_{\mathrm{dual}}$ and the effect of warm starting are analyzed in
+Appendix~\ref{app:dual-budget-analysis}.}
+
+\subsubsection{Order of the Outer Update}
+
+Let $k$ index the steps of the outer optimizer. At the beginning of step $k$,
+$w_k$ denotes the collection of latent quantized weights, $a_k$ the collection
+of learned step sizes, and $\theta_{\mathrm{fp},k}$ the parameters retained in
+full precision. All quantities entering the gradients at step $k$ must be
+evaluated from this same parameter state, in the following order:
+
+\begin{enumerate}[label=(\arabic*),leftmargin=1.6em,nosep]
+  \item construct the levels
+        $v_{b,k}^{(\ell)}=a_{\ell,k}q_b$;
+  \item perform the forward pass using
+        $\widehat w(w_k,a_k)$ and compute the task-loss gradients;
+  \item solve the inner problem using
+        $\bar w_k$, $a_k$, and the levels $v_k$, obtaining
+        $x_k^*$, $y_k^*$, $\mu_k$, and $\beta_k^*$;
+  \item form the selected training (sub)gradient in
+        Eq.~\eqref{eq:training-subgradient} from the task-loss components in
+        Eqs.~\eqref{eq:task-weight-gradient} and
+        \eqref{eq:task-scale-gradient} and the selected METaQ components in
+        Eqs.~\eqref{eq:metaq-weight-gradient} and
+        \eqref{eq:metaq-scale-gradient};
+  \item update $w_k$, $a_k$, and $\theta_{\mathrm{fp},k}$ with their
+        respective optimizers, producing the state indexed by $k+1$.
+\end{enumerate}
+
+In this list, $v_k$ collects all real-valued levels, $\bar w_k$ collects all
+clipped latent weights, and $x_k^*$, $y_k^*$, $\mu_k$, and $\beta_k^*$ collect
+the corresponding solutions or derivatives across all tensors and weights.
+In particular, the dual solver at step $k$ must use the levels generated by
+$a_k$, because those same levels produced the quantized weights in the forward
+pass. Updating $a_k$ before solving the inner problem would instead combine the
+clipped weights and task gradients associated with one codebook with METaQ
+gradients associated with another. The resulting quantity would therefore not
+be a gradient of the single parameter state appearing in
+Eq.~\eqref{eq:outer-objective}.
+
+\section{Training Implementation}
+\label{sec:training-implementation}
+
+\textcolor{red}{[...] (Su tutto il Paragrafo~\ref{sec:training-implementation})}
+
+This section specifies the training machinery used in the current ImageNet
+experiments. It is separate from the mathematical definition of METaQ because
+the schedules and the teacher loss are implementation choices, not additional
+terms in the regularizer.
+
+\paragraph{Quantization-aware optimization.}
+We quantize convolutional and linear weight tensors with a signed uniform
+LSQ codebook, leaving biases and normalization parameters in FP32. Step sizes
+are initialized by a per-tensor mean-squared-error grid search. The latent
+weights are optimized by SGD, while the positive LSQ step sizes have a separate
+Adam optimizer. After initialization, each forward pass temporarily uses the
+fake-quantized weights; the floating-point latent weights are restored before
+the optimizers step. The METaQ inner solver is warm-started from the preceding
+dual multipliers, starts after one warm-up epoch, and is called every four
+outer steps in the present sweep.
+
+\paragraph{Cosine and step-size schedules.}
+For the perspective runs, the weight learning rate follows a cosine descent
+from its base value to an explicit floor. If the descent length is $K$, the
+cosine reaches the floor after $K$ epochs and is then held there, allowing a
+low-rate healing tail without changing the compression phase. When enabled,
+the LSQ-scale Adam learning rate follows exactly the same multiplier: a
+constant step-size rate would otherwise continue moving the quantization grid
+after the weights have largely converged. This coupled schedule is used for
+the DeiT-Small experiments. The ResNet--18 control showed that it is not
+universally beneficial, so its current frontier run instead keeps the scale
+rate constant and uses a 19-epoch cosine descent followed by a floor tail.
+
+\paragraph{Knowledge distillation for transformers.}
+The DeiT-Small runs use a frozen FP32 copy of the pretrained checkpoint as a
+teacher. With student logits $s$, teacher logits $t$, temperature $\tau$, and
+cross-entropy $\mathcal L_{\mathrm{CE}}$, the optimized task loss is
+\[
+ (1-\alpha)\mathcal L_{\mathrm{CE}}
+ +\alpha\tau^2\operatorname{KL}\!\left(
+ \operatorname{softmax}(t/\tau)\,\middle\|\,
+ \operatorname{softmax}(s/\tau)\right).
+\]
+The factor $\tau^2$ preserves the scale of the distillation gradient. The
+current DeiT recipe uses $\alpha=0.9$ and $\tau=1$. Distillation is not used
+for ResNet--18: its LSQ control already recovers the FP32 accuracy, whereas a
+strong teacher anchor degraded its frontier. Batch-normalization statistics
+are recalibrated for CNNs before evaluation; this step is inapplicable to the
+transformer models.
+
+\section{Experiments}
+\label{sec:experiments}
+
+\textcolor{red}{[...] (Su tutto il Paragrafo~\ref{sec:experiments})}
+
+\subsection{Evaluation Protocol}
+
+We evaluate whether METaQ improves the lossless compressibility of quantized
+weights without sacrificing predictive accuracy. The target suite comprises
+ResNet--18, DeiT-Small, AlexNet, RegNetX-600MF, MNasNet-1.0, MobileNetV2,
+EfficientNet-B0, RegNetX-3.2GF, and ViT-B/16 on ImageNet. These architectures
+cover classical, residual, grouped- and depthwise-convolutional networks and
+vision transformers, over more than one order of magnitude in parameter count.
+Unless stated otherwise, each experiment
+starts from a public full-precision checkpoint, quantizes all weight tensors
+with a uniform 16-symbol codebook, and retains activations in floating-point
+precision. We report full-precision and quantized top-1 accuracy, their
+difference, symbol-stream entropy, sparsity, and the final lossless compressed
+size.
+
+All compression ratios in this section are defined as compressed bytes divided
+by the bytes required by the corresponding FP32 weights; lower values are
+better. The dense Zstandard ratio encodes the quantized symbol stream, whereas
+the sparse-package ratio includes the sparse support, nonzero values, and
+metadata used by the current serializer. The final paper will additionally
+report means and standard deviations over \pendingnumber{} independent seeds,
+the exact checkpoint identifiers, and wall-clock training cost.
+
+\subsection{Preliminary Cross-Architecture Results}
+\label{sec:preliminary-cross-architecture-results}
+
+The completed ResNet--18 exploratory run uses ImageNet, a 16-level weight
+codebook, and 20 fine-tuning epochs. All 21 weight tensors are quantized,
+corresponding to $99.909\%$ of the model parameters. Training uses distributed
+SGD with a global batch size of 1024 on 16 NVIDIA A100 GPUs. Quantization step
+sizes are initialized by mean-squared-error grid search and optimized jointly
+with the latent weights. No additional magnitude-pruning rule is applied: the
+reported zero symbols are those produced by the LSQ rule in
+Eq.~\eqref{eq:lsq-zero-symbol} after METaQ has shaped the latent-weight
+distribution.
+
+Table~\ref{tab:main-results} records the first cross-architecture sweep. The
+ResNet--18 and DeiT-Small rows are completed exploratory runs; the RegNetX-600MF
+row is a timed-out run and is retained only to document the transfer of the
+initial recipe. The remaining architectures will first receive one untuned
+exploratory run before selecting points for hyperparameter optimization.
+Here, $\Delta_{\mathrm{pp}}$ is quantized minus FP32 top-1 accuracy in
+percentage points, $\Delta_{\mathrm{rel}}=100(A_{Q}-A_{FP32})/A_{FP32}$, and
+CR is the reciprocal of the sparse-package size relative to FP32 storage.
+
+\begin{table}[H]
+  \caption{Preliminary ImageNet cross-architecture sweep. ``--'' denotes a
+  quantity that depends on a METaQ run not yet performed. $^\dagger$ marks a
+  run stopped by the wall-time limit; it is not a final comparison point.}
+  \label{tab:main-results}
+  \centering
+  \scriptsize
+  \setlength{\tabcolsep}{2.4pt}
+  \resizebox{\textwidth}{!}{%
+  \begin{tabular}{llclclll}
+    \toprule
+    Architecture & Params. & Architecture paper & METaQ $\Delta_{\mathrm{pp}}$ ($\Delta_{\mathrm{rel}}$) & METaQ CR & Comparison target & Target $\Delta_{\mathrm{pp}}$ ($\Delta_{\mathrm{rel}}$) & Target CR \\
+    \midrule
+    ResNet--18 & 11.69M & \citet{he2016resnet} & $+0.106$ ($+0.15\%$) & $16.45\times$ & CERWU/NNCodec \citep{conzelmann2025rate} & \pendingcell & \pendingcell \\
+    DeiT-Small & 22.06M & \citet{touvron2021deit} & $-0.252$ ($-0.32\%$) & $11.06\times$ & Q-ViT \citep{li2022qvit} & \pendingcell & \pendingcell \\
+    RegNetX-600MF$^\dagger$ & 6.20M & \citet{radosavovic2020regnet} & $-0.788$ ($-1.07\%$) & $11.38\times$ & L$^2$ \citep{shi2023l2} & \pendingcell & \pendingcell \\
+    AlexNet & 61.10M & \citet{krizhevsky2012alexnet} & $-2.50$ ($-4.42\%$) & $30.77\times$ & Deep Compression \citep{han2016deep} & \pendingcell & \pendingcell \\
+    MNasNet-1.0 & 4.38M & \citet{tan2019mnasnet} & \pendingcell & \pendingcell & \pendingcell & \pendingcell & \pendingcell \\
+    MobileNetV2 & 3.50M & \citet{sandler2018mobilenetv2} & \pendingcell & \pendingcell & CERWU/NNCodec \citep{conzelmann2025rate} & \pendingcell & \pendingcell \\
+    EfficientNet-B0 & 5.29M & \citet{tan2019efficientnet} & \pendingcell & \pendingcell & \pendingcell & \pendingcell & \pendingcell \\
+    RegNetX-3.2GF & 15.30M & \citet{radosavovic2020regnet} & \pendingcell & \pendingcell & \pendingcell & \pendingcell & \pendingcell \\
+    ViT-B/16 & 86.57M & \citet{dosovitskiy2021vit} & \pendingcell & \pendingcell & Q-ViT \citep{li2022qvit} & \pendingcell & \pendingcell \\
+    \bottomrule
+  \end{tabular}
+  }
+\end{table}
+
+\FloatBarrier
+
+For AlexNet, the LSQ-only control ($T_2=0$, test~213) retained a quantized
+top-1 accuracy of $56.16\%$ and produced approximately $15\%$ natural
+sparsity through the LSQ zero bin. Activating the METaQ zero-mass rule
+$z_i>0.5$ with $(T_1,T_2,T_3)=(10^{-5},7.7\times10^{-9},10^{-7})$
+(test~216) yielded a stable $80.01\%$ sparsity and a sparse-package ratio of
+$3.25\%$, corresponding to a $30.77\times$ reduction relative to FP32.
+The delivered sparse accuracy was $53.99\%$, i.e., $2.50$ percentage points
+below the $56.48\%$ FP32 baseline. These runs validate $T_2$ as a quantitative
+sparsity control, but are an ablation rather than a final lossless operating
+point.
+
+The implementation distinguishes two sources of zeros. LSQ creates a zero
+symbol whenever the latent weight falls in the interval mapped to the LSQ
+zero code. METaQ can additionally apply the hard deployment rule
+$z_i>0.5$, where $z_i=1-y_i$ is the relaxed mass assigned to the zero symbol.
+The mask used by this rule is shared by the training forward pass, evaluation,
+and serialization. The experiments therefore isolate the sparsity mechanism
+implemented by the relaxed zero-symbol mass and its deployment threshold.
+
+\subsection{Controlled Baseline Comparison}
+
+The final comparison will rerun each baseline from the same pretrained
+checkpoint, using the same quantized tensors, codebook size, validation set,
+and byte-level accounting. This controlled protocol is necessary because a
+nominal bit width does not include entropy-coding gains or metadata overhead.
+Table~\ref{tab:controlled-comparison} is reserved for the ResNet--18 comparison;
+the discussion of statistical significance and state-of-the-art positioning
+will be added once all rows are available: \pendingnumber{}.
+
+\begin{table}[t]
+  \caption{Planned controlled comparison on ResNet--18/ImageNet. ``Size'' is
+  the final serialized size relative to FP32 weight storage.}
+  \label{tab:controlled-comparison}
+  \centering
+  \small
+  \setlength{\tabcolsep}{5pt}
+  \begin{tabular}{lcccc}
+    \toprule
+    Method & Weight bits & Top-1 & $\Delta$ FP32 & Size \\
+    \midrule
+    FP32 checkpoint & 32 & 69.734 & 0.000 & 100.00\% \\
+    LSQ & 4 & \pendingcell & \pendingcell & \pendingcell \\
+    Entropy-constrained QAT & 4 & \pendingcell & \pendingcell & \pendingcell \\
+    DeepCABAC-style coding & 4 & \pendingcell & \pendingcell & \pendingcell \\
+    METaQ (test 196) & 4 & 69.840 & $+0.106$ & 6.08\% \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\subsection{Ablation Studies}
+
+We will isolate the contribution of the perspective penalty, the relaxed
+symbol-count term, and the gradient acting on learned step sizes. All variants
+will share the ResNet--18 checkpoint and training budget. The principal
+ablation, shown in Table~\ref{tab:ablation}, separates ordinary LSQ from the
+complete method. Additional studies will vary $T_1,T_2,T_3$, the number of dual
+iterations, and the frequency of the entropy update. The expected conclusion
+will be inserted here after the runs complete: \pendingnumber{}.
+
+\begin{table}[ht]
+  \caption{Planned METaQ ablation on ResNet--18/ImageNet.}
+  \label{tab:ablation}
+  \centering
+  \small
+  \setlength{\tabcolsep}{4.5pt}
+  \begin{tabular}{lccccc}
+    \toprule
+    Variant & Perspective & Counts & Step grad. & Top-1 & Zstd \\
+    \midrule
+    LSQ & no & no & task only & \pendingcell & \pendingcell \\
+    METaQ without counts & yes & no & joint & \pendingcell & \pendingcell \\
+    METaQ without perspective & no & yes & joint & \pendingcell & \pendingcell \\
+    METaQ, weights only & yes & yes & task only & \pendingcell & \pendingcell \\
+    Full METaQ & yes & yes & joint & 69.722 & 5.88\% \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\FloatBarrier
+
+\subsection{Additional Analyses}
+
+The completed paper will report the accuracy--size Pareto frontier, convergence
+of the dual residual, per-layer symbol distributions, learned step sizes, and
+the sensitivity of the result to all three regularization coefficients. We will
+also distinguish the entropy proxy optimized during training from the realized
+byte size produced by the serializer. The corresponding figures and numerical
+discussion remain to be added: \pendingnumber{}.
+
+\section{Conclusions and Future Work}
+\label{sec:conclusions}
+
+\subsection{Conclusions}
+
+\textcolor{red}{[...]}
+
+\subsection{Future Work}
+
+\textcolor{red}{[...]}
+
+\section*{Acknowledgments}
+
+We acknowledge ISCRA for awarding this project access to the LEONARDO
+supercomputer, owned by the EuroHPC Joint Undertaking, hosted by CINECA
+(Italy). The computations were performed under the ISCRA-C allocation
+\texttt{IscrC\_ObCTDoNN}.
+
+\newpage
+
+{\small
+\begin{thebibliography}{99}
+
+\bibitem[Beck and Teboulle(2009)]{beck2009fista}
+A.~Beck and M.~Teboulle.
+\newblock A fast iterative shrinkage-thresholding algorithm for linear inverse
+problems.
+\newblock \emph{SIAM Journal on Imaging Sciences}, 2(1):183--202, 2009.
+
+\bibitem[Bengio et~al.(2013)Bengio, L\'eonard, and
+  Courville]{bengio2013estimating}
+Y.~Bengio, N.~L\'eonard, and A.~Courville.
+\newblock Estimating or propagating gradients through stochastic neurons for
+conditional computation.
+\newblock \emph{arXiv preprint arXiv:1308.3432}, 2013.
+
+\bibitem[Bonnans and Shapiro(2000)]{bonnans2000perturbation}
+J.~F. Bonnans and A.~Shapiro.
+\newblock \emph{Perturbation Analysis of Optimization Problems}.
+\newblock Springer, 2000.
+
+\bibitem[Choi et~al.(2018)Choi, Wang, Venkataramani, Chuang, Srinivasan, and
+  Gopalakrishnan]{choi2018pact}
+J.~Choi, Z.~Wang, S.~Venkataramani, P.~I.-J. Chuang, V.~Srinivasan, and
+K.~Gopalakrishnan.
+\newblock PACT: Parameterized clipping activation for quantized neural networks.
+\newblock In \emph{International Conference on Learning Representations}, 2018.
+
+\bibitem[Cacciola et~al.(2023)Cacciola, Frangioni, Li, and
+  Lodi]{cacciola2023deep}
+M.~Cacciola, A.~Frangioni, X.~Li, and A.~Lodi.
+\newblock Deep neural networks pruning via the structured perspective regularization.
+\newblock {\em SIAM Journal on Mathematics of Data Science}, 5(4):1051--1077, 2023.
+
+\bibitem[Danskin(1966)]{danskin1966maxmin}
+J.~M. Danskin.
+\newblock The theory of max-min, with applications.
+\newblock \emph{SIAM Journal on Applied Mathematics}, 14(4):641--664, 1966.
+
+\bibitem[Dong et~al.(2019)Dong, Yao, Gholami, Mahoney, and
+  Keutzer]{dong2019hawq}
+Z.~Dong, Z.~Yao, A.~Gholami, M.~W. Mahoney, and K.~Keutzer.
+\newblock HAWQ: Hessian aware quantization of neural networks with mixed precision.
+\newblock In \emph{IEEE/CVF International Conference on Computer Vision}, 2019.
+
+\bibitem[Esser et~al.(2020)Esser, McKinstry, Bablani, Appuswamy, and
+  Modha]{esser2020lsq}
+S.~K. Esser, J.~L. McKinstry, D.~Bablani, R.~Appuswamy, and D.~S. Modha.
+\newblock Learned step size quantization.
+\newblock In \emph{International Conference on Learning Representations}, 2020.
+
+\bibitem[Dosovitskiy et~al.(2021)Dosovitskiy, Beyer, Kolesnikov, Weissenborn,
+  Zhai, Unterthiner, Dehghani, Minderer, Heigold, Gelly, Uszkoreit, and
+  Houlsby]{dosovitskiy2021vit}
+A.~Dosovitskiy et~al.
+\newblock An image is worth 16x16 words: Transformers for image recognition at
+  scale.
+\newblock In \emph{International Conference on Learning Representations}, 2021.
+
+\bibitem[He et~al.(2016)He, Zhang, Ren, and Sun]{he2016resnet}
+K.~He, X.~Zhang, S.~Ren, and J.~Sun.
+\newblock Deep residual learning for image recognition.
+\newblock In \emph{IEEE Conference on Computer Vision and Pattern Recognition},
+  2016.
+
+\bibitem[Han et~al.(2016)Han, Mao, and Dally]{han2016deep}
+S.~Han, H.~Mao, and W.~J. Dally.
+\newblock Deep compression: Compressing deep neural networks with pruning,
+trained quantization and Huffman coding.
+\newblock In \emph{International Conference on Learning Representations}, 2016.
+
+\bibitem[Krizhevsky et~al.(2012)Krizhevsky, Sutskever, and Hinton]{krizhevsky2012alexnet}
+A.~Krizhevsky, I.~Sutskever, and G.~E. Hinton.
+\newblock ImageNet classification with deep convolutional neural networks.
+\newblock In \emph{Advances in Neural Information Processing Systems}, 2012.
+
+\bibitem[Li et~al.(2022)Li, Xu, Zhang, Cao, Gao, and Guo]{li2022qvit}
+Y.~Li, S.~Xu, B.~Zhang, X.~Cao, P.~Gao, and G.~Guo.
+\newblock Q-ViT: Accurate and fully quantized low-bit vision transformer.
+\newblock In \emph{Advances in Neural Information Processing Systems}, 2022.
+
+\bibitem[Li et~al.(2021)Li, Gong, Tan, Yang, Hu, Zhang, Yu, and
+  Gu]{li2021brecq}
+Y.~Li, R.~Gong, X.~Tan, Y.~Yang, P.~Hu, Q.~Zhang, F.~Yu, and S.~Gu.
+\newblock BRECQ: Pushing the limit of post-training quantization by block
+reconstruction.
+\newblock In \emph{International Conference on Learning Representations}, 2021.
+
+\bibitem[Radosavovic et~al.(2020)Radosavovic, Kosaraju, Girshick, He, and
+  Doll{\'a}r]{radosavovic2020regnet}
+I.~Radosavovic, R.~P. Kosaraju, R.~Girshick, K.~He, and P.~Doll{\'a}r.
+\newblock Designing network design spaces.
+\newblock In \emph{IEEE/CVF Conference on Computer Vision and Pattern Recognition},
+  2020.
+
+\bibitem[Sandler et~al.(2018)Sandler, Howard, Zhu, Zhmoginov, and Chen]{sandler2018mobilenetv2}
+M.~Sandler, A.~Howard, M.~Zhu, A.~Zhmoginov, and L.-C. Chen.
+\newblock MobileNetV2: Inverted residuals and linear bottlenecks.
+\newblock In \emph{IEEE/CVF Conference on Computer Vision and Pattern Recognition},
+  2018.
+
+\bibitem[Shi et~al.(2023)Shi, Bai, Wei, Gong, and Yang]{shi2023l2}
+Y.~Shi, S.~Bai, X.~Wei, R.~Gong, and J.~Yang.
+\newblock Lossy and lossless (L$^2$) post-training model size compression.
+\newblock \emph{arXiv preprint arXiv:2308.04269}, 2023.
+
+\bibitem[Tan et~al.(2019)Tan, Chen, Pang, Vasudevan, Sandler, Howard, and
+  Le]{tan2019mnasnet}
+M.~Tan, B.~Chen, R.~Pang, V.~Vasudevan, M.~Sandler, A.~Howard, and Q.~V. Le.
+\newblock MnasNet: Platform-aware neural architecture search for mobile.
+\newblock In \emph{IEEE/CVF Conference on Computer Vision and Pattern Recognition},
+  2019.
+
+\bibitem[Tan and Le(2019)]{tan2019efficientnet}
+M.~Tan and Q.~V. Le.
+\newblock EfficientNet: Rethinking model scaling for convolutional neural
+  networks.
+\newblock In \emph{International Conference on Machine Learning}, 2019.
+
+\bibitem[Touvron et~al.(2021)Touvron, Cord, Douze, Massa, Sablayrolles, and
+  J{\'e}gou]{touvron2021deit}
+H.~Touvron, M.~Cord, M.~Douze, M.~Massa, A.~Sablayrolles, and H.~J{\'e}gou.
+\newblock Training data-efficient image transformers \& distillation through
+  attention.
+\newblock In \emph{International Conference on Machine Learning}, 2021.
+
+\bibitem[Conzelmann and Bamler(2025)]{conzelmann2025rate}
+A.~Conzelmann and R.~Bamler.
+\newblock Reducing storage of pretrained neural networks by rate-constrained
+  quantization and entropy coding.
+\newblock \emph{arXiv preprint arXiv:2505.18758}, 2025.
+
+\bibitem[Wiedemann et~al.(2018)Wiedemann, Marban, M{\"u}ller, and
+  Samek]{wiedemann2018entropy}
+S.~Wiedemann, A.~Marban, K.-R. M{\"u}ller, and W.~Samek.
+\newblock Entropy-constrained training of deep neural networks.
+\newblock \emph{arXiv preprint arXiv:1812.07520}, 2018.
+
+\bibitem[Wiedemann et~al.(2019)Wiedemann, Kirchhoffer, Matlage, et
+  al.]{wiedemann2019deepcabac}
+S.~Wiedemann, H.~Kirchhoffer, S.~Matlage, et al.
+\newblock DeepCABAC: Context-adaptive binary arithmetic coding for deep neural
+network compression.
+\newblock \emph{arXiv preprint arXiv:1905.08318}, 2019.
+
+\end{thebibliography}
+}
+
+\appendix
+
+\section{Best-Run Configurations and Reproducibility Details}
+\label{app:experimental-details}
+\label{app:best-compression-hyperparameters}
+
+\begin{comment}
+Table~\ref{tab:best-compression-hyperparameters} records, for each target
+architecture, the hyperparameter configuration of the run attaining the best
+compression result retained for the final comparison. Each column must refer
+to one specific run: when a better run replaces the current best result, its
+entire column must be updated from the corresponding log rather than combining
+values from different experiments. The ResNet--18 column is populated from the
+completed run underlying the preliminary result in
+Section~\ref{sec:preliminary-cross-architecture-results}; the remaining columns will be completed when the
+corresponding experiments become available.
+\end{comment}
+
+\begin{table}[ht]
+  \caption{Current sweep configurations. $^\dagger$ denotes the RegNetX-600MF
+  run stopped by the wall-time limit after 15 of the planned 20 epochs.
+  Dashes denote architectures not yet run with METaQ.}
+  \label{tab:best-compression-hyperparameters}
+  \centering
+  \scriptsize
+  \setlength{\tabcolsep}{2.6pt}
+  \renewcommand{\arraystretch}{1.10}
+  \resizebox{\textwidth}{!}{%
+  \begin{tabular}{lclllllll}
+    \toprule
+    Architecture & Run & $C$ & Epochs & Weight LR and schedule & LSQ-scale LR & Distillation $(\alpha,\tau)$ & $(T_1,T_2,T_3)$ & Batch \\
+    \midrule
+    ResNet--18 (quality) & test 196 & 16 & 20 & $10^{-2}$, cosine to $10^{-4}$ & $10^{-5}$, coupled cosine & no & $(10^{-5},10^{-7},3\!\times\!10^{-8})$ & 1024 \\
+    ResNet--18 (frontier) & test 197 & 16 & 40 & $10^{-2}$, cosine 19 ep. then $10^{-4}$ floor & $10^{-5}$, constant & no & $(10^{-5},10^{-7},6\!\times\!10^{-8})$ & 1024 \\
+    DeiT-Small & test 194 & 16 & 25 & $10^{-4}$, cosine to $5\!\times\!10^{-6}$ & $10^{-5}$, coupled cosine & yes $(0.9,1)$ & $(10^{-5},5\!\times\!10^{-8},1.5\!\times\!10^{-8})$ & 2048 \\
+    RegNetX-600MF$^\dagger$ & test 198 & 16 & 15/20 & $10^{-2}$, cosine & $10^{-5}$, constant & no & $(10^{-5},10^{-7},3\!\times\!10^{-8})$ & 1024 \\
+    AlexNet & test 216 & 32 & 80 & $10^{-4}$, cosine & $10^{-5}$ & yes $(0.5,1)$ & $(10^{-5},7.7\times10^{-9},10^{-7})$ & 4096 \\
+    MNasNet-1.0 & -- & -- & -- & -- & -- & -- & -- & -- \\
+    MobileNetV2 & -- & -- & -- & -- & -- & -- & -- & -- \\
+    EfficientNet-B0 & -- & -- & -- & -- & -- & -- & -- & -- \\
+    RegNetX-3.2GF & -- & -- & -- & -- & -- & -- & -- & -- \\
+    ViT-B/16 & -- & -- & -- & -- & -- & -- & -- & -- \\
+    \bottomrule
+  \end{tabular}
+  }
+\end{table}
+
+\begin{comment}
+The symbolic coefficients in the table follow the paper notation introduced
+in Section~\ref{sec:metaq-value}: $T_1$ is the perspective coefficient, $T_2$
+is the sparsity coefficient, and $T_3$ is the entropy coefficient. This is the
+post-renaming convention; the archived ResNet--18 log predates that naming
+change and prints the sparsity and entropy coefficients in the opposite
+positions. The values reported above have been mapped to the notation used in
+this paper. For ResNet--18, batch-normalization statistics are recalibrated for
+50 local batches before validation. The dual problem is updated every four
+training steps, using $N_{\mathrm{dual}}=3$ iterations per update, while the
+learned LSQ step sizes use a separate learning rate of $10^{-5}$.
+
+In the final version, every retained run will additionally be documented by
+its data preprocessing and augmentation pipeline, learning-rate and coefficient
+schedules, checkpoint hash, software versions, random seed, and exact
+serialization command. \textcolor{red}{[For every future best run, add the log
+identifier, checkpoint hash, random seed, and the precise learning-rate and
+coefficient schedules associated with the selected column. Add the complete
+preprocessing recipe, software environment, and serialization command extracted
+from the archived run configuration.]}
+\end{comment}
+
+\section{Supplementary Derivations}
+\label{app:supplementary}
+
+\subsection{KKT Multiplier at a Representability Boundary}
+\label{app:boundary-kkt-derivation}
+
+Here we derive the representation multiplier reported in
+Eq.~\eqref{eq:boundary-kkt}. Fix a tensor $\ell$ and a weight
+$i\in\mathcal I_\ell$, and suppose that its optimal mass attains the
+representability lower bound
+\[
+  y_i^{(\ell)*}
+  =y_i^{(\ell),\min}
+  =\frac{|\bar w_i^{(\ell)}|}{|v_e^{(\ell)}|},
+\]
+where $v_e^{(\ell)}$ is the extreme codebook level having the same sign as
+$\bar w_i^{(\ell)}$. Equivalently,
+\[
+  \frac{\bar w_i^{(\ell)}}{y_i^{(\ell)*}}
+  =v_e^{(\ell)}.
+\]
+Because no codebook level extends beyond $v_e^{(\ell)}$ in that direction, the
+representation and mass constraints can hold only if all nonzero mass is
+assigned to symbol $e$:
+\[
+  x_{i,e}^{(\ell)*}=y_i^{(\ell)*},
+  \qquad
+  x_{i,b}^{(\ell)*}=0
+  \quad\text{for every }b\neq e.
+\]
+
+Let $\rho_i^{(\ell)}\in\mathbb R$ be the Lagrange multiplier associated with
+the mass constraint
+\[
+  \sum_{b\in\mathcal B}x_{i,b}^{(\ell)}-y_i^{(\ell)}=0.
+\]
+For every $b\in\mathcal B$, let $\gamma_{i,b}^{(\ell)}\geq0$ be the multiplier
+associated with the nonnegativity constraint written as
+$-x_{i,b}^{(\ell)}\leq0$.
+Using for the representation constraint the sign convention introduced in
+Section~\ref{sec:regularizer-weight-subgradient}, define the per-weight KKT
+Lagrangian relevant to the derivation as
+\begin{align*}
+  \mathscr L_{i,\ell}^{\mathrm{KKT}}
+  :={}&T_1\frac{(\bar w_i^{(\ell)})^2}{y_i^{(\ell)}}
+  +T_2y_i^{(\ell)}
+  +\sum_{b\in\mathcal B}\xi_b^{(\ell)}x_{i,b}^{(\ell)} \\
+  &\quad
+  +\mu_i^{(\ell)}
+   \left(
+     \bar w_i^{(\ell)}
+     -\sum_{b\in\mathcal B}v_b^{(\ell)}x_{i,b}^{(\ell)}
+   \right)
+  +\rho_i^{(\ell)}
+   \left(
+     \sum_{b\in\mathcal B}x_{i,b}^{(\ell)}-y_i^{(\ell)}
+   \right)
+  -\sum_{b\in\mathcal B}\gamma_{i,b}^{(\ell)}x_{i,b}^{(\ell)}.
+\end{align*}
+Complementary slackness requires
+$\gamma_{i,e}^{(\ell)}x_{i,e}^{(\ell)*}=0$; since
+$x_{i,e}^{(\ell)*}>0$, it follows that
+$\gamma_{i,e}^{(\ell)}=0$.\footnote{For an inequality written as
+$-x_{i,e}^{(\ell)}\leq0$, the KKT complementary-slackness condition is
+$\gamma_{i,e}^{(\ell)}x_{i,e}^{(\ell)*}=0$. Thus, strict positivity of the
+primal variable forces the associated nonnegativity multiplier to vanish; see
+\citet{bonnans2000perturbation}.} Stationarity with respect to the active mass,
+evaluated at the selected optimum, therefore gives
+\begin{equation}
+  \left.
+  \frac{\partial\mathscr L_{i,\ell}^{\mathrm{KKT}}}
+       {\partial x_{i,e}^{(\ell)}}
+  \right|_{\substack{x_i^{(\ell)}=x_i^{(\ell)*}\\
+                     y_i^{(\ell)}=y_i^{(\ell)*}}}
+  =\xi_e^{(\ell)}
+  -\mu_i^{(\ell)}v_e^{(\ell)}
+  +\rho_i^{(\ell)}
+  -\gamma_{i,e}^{(\ell)}
+  =\xi_e^{(\ell)}
+  -\mu_i^{(\ell)}v_e^{(\ell)}
+  +\rho_i^{(\ell)}
+  =0.
+  \label{eq:boundary-kkt-x-stationarity}
+\end{equation}
+When $y_i^{(\ell)*}<1$, the upper bound $y_i^{(\ell)}\leq1$ is inactive.
+Stationarity with respect to $y_i^{(\ell)}$ then yields
+\begin{equation}
+  -T_1
+   \frac{(\bar w_i^{(\ell)})^2}{(y_i^{(\ell)*})^2}
+  +T_2
+  -\rho_i^{(\ell)}
+  =0.
+  \label{eq:boundary-kkt-y-stationarity}
+\end{equation}
+Using
+$\bar w_i^{(\ell)}/y_i^{(\ell)*}=v_e^{(\ell)}$ in
+Eq.~\eqref{eq:boundary-kkt-y-stationarity} gives
+\[
+  \rho_i^{(\ell)}
+  =T_2-T_1(v_e^{(\ell)})^2.
+\]
+Substitution into Eq.~\eqref{eq:boundary-kkt-x-stationarity} produces
+\[
+  \mu_i^{(\ell)}
+  =
+  \frac{\xi_e^{(\ell)}+T_2}{v_e^{(\ell)}}
+  -T_1v_e^{(\ell)},
+\]
+which is Eq.~\eqref{eq:boundary-kkt}.
+
+It remains to clarify the endpoint case. If
+$\bar w_i^{(\ell)}=v_e^{(\ell)}$, representability forces
+$y_i^{(\ell)*}=1$, and the upper-bound multiplier for
+$y_i^{(\ell)}\leq1$ may be nonzero. The representation multiplier is then not
+necessarily unique. Equation~\eqref{eq:boundary-kkt} specifies the multiplier
+obtained by setting that upper-bound multiplier to zero, equivalently the limit
+of the preceding expression as $\bar w_i^{(\ell)}$ approaches
+$v_e^{(\ell)}$ from the interior of the representable interval. This is the
+subgradient selection used in the optimization procedure.
+
+\textcolor{red}{[Add a formal statement of the constraint qualification used
+for strong duality and any further proofs required by the final theoretical
+presentation.]}
+
+\section{Supplementary Algorithms and Diagnostics}
+\label{app:algorithms-diagnostics}
+\label{app:dual-budget-analysis}
+
+\subsection{Dual-Solver Budget and Warm-Start Analysis}
+
+\textcolor{red}{[Evaluate the quality--cost trade-off controlled by
+$N_{\mathrm{dual}}$. For each target architecture, repeat the same training
+configuration with several dual-iteration budgets while holding all remaining
+hyperparameters fixed. At each dual-solver call, record the dual objective, the
+normalized count-constraint residual, and the solver execution time. Report
+both their trajectories within a call and their evolution across successive
+training updates.]}
+
+\textcolor{red}{[Compare the warm-start strategy used by METaQ, which initializes
+each call with the multiplier vector returned by the preceding call, against a
+cold-start control that reinitializes the multipliers at every call. The
+comparison must determine whether repeated warm-started calls compensate for a
+small $N_{\mathrm{dual}}$, while making clear that the dual problem itself
+changes as the network weights and LSQ step sizes are updated.]}
+
+\begin{table}[ht]
+  \caption{\textcolor{red}{Planned analysis of the dual-iteration budget and
+  initialization strategy. All entries are pending.}}
+  \label{tab:dual-budget-analysis}
+  \centering
+  \small
+  \setlength{\tabcolsep}{3.5pt}
+  \begin{tabular}{lcccccc}
+    \toprule
+    Model & $N_{\mathrm{dual}}$ & Initialization & Residual & Dual value
+          & Time/call & Compression \\
+    \midrule
+    ResNet--18 & \pendingcell & \pendingcell & \pendingcell & \pendingcell & \pendingcell & \pendingcell \\
+    ResNet--50 & \pendingcell & \pendingcell & \pendingcell & \pendingcell & \pendingcell & \pendingcell \\
+    DeiT-Small & \pendingcell & \pendingcell & \pendingcell & \pendingcell & \pendingcell & \pendingcell \\
+    AlexNet & \pendingcell & \pendingcell & \pendingcell & \pendingcell & \pendingcell & \pendingcell \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\textcolor{red}{[Add convergence plots versus the dual-iteration index and a
+runtime breakdown. State the value of $N_{\mathrm{dual}}$ selected for each
+final experiment and justify it from the measured quality--cost trade-off.]}
+
+\subsection{Algorithms and Additional Diagnostics}
+
+\textcolor{red}{[Add pseudocode for the lower-hull solver and the complete METaQ
+training loop. Include per-tensor codebook histograms and a breakdown of
+compressed bytes into support, values, codebooks, scales, and remaining
+metadata. Insert the corresponding diagnostic figures and complete
+byte-accounting tables.]}
+
+\clearpage
+\section{Glossary of Notation and Acronyms}
+\label{app:glossary}
+
+Table~\ref{tab:notation-glossary} collects the mathematical objects and the
+principal acronyms used throughout the paper. Superscript $(\ell)$ identifies
+a quantized tensor, subscript $i$ identifies a weight within that tensor,
+subscript $b$ identifies a nonzero codebook symbol, superscript $*$ denotes a
+selected optimal value, and superscript $t$ or subscript $k$ denotes an
+algorithmic iteration as specified below.
+
+\footnotesize
+\setlength{\LTpre}{0.5em}
+\setlength{\LTpost}{0.5em}
+\renewcommand{\arraystretch}{1.10}
+\begin{longtable}{>{\raggedright\arraybackslash}p{0.25\textwidth}
+                  >{\raggedright\arraybackslash}p{0.67\textwidth}}
+  \caption{Glossary of the notation and acronyms used in the paper.}
+  \label{tab:notation-glossary}\\
+  \toprule
+  Symbol or acronym & Meaning \\
+  \midrule
+  \endfirsthead
+  \multicolumn{2}{c}{\tablename~\thetable\ continued}\\
+  \toprule
+  Symbol or acronym & Meaning \\
+  \midrule
+  \endhead
+  \midrule
+  \multicolumn{2}{r}{Continued on the next page}\\
+  \endfoot
+  \bottomrule
+  \endlastfoot
+
+  \multicolumn{2}{l}{\textit{Data, network, and indexing}}\\*
+  $\mathcal D$ & Training dataset $\{(x_j,t_j)\}_{j=1}^{N}$. \\
+  $N$ & Number of examples in the training dataset. \\
+  $j$ & Index of a training example. \\
+  $x_j$ & Input of training example $j$; distinct from the assignment variables $x_{i,b}^{(\ell)}$. \\
+  $t_j$ & Target associated with input $x_j$. \\
+  $\mathcal X,\mathcal Y$ & Input space and target space, respectively. \\
+  $K$ & Number of classification classes; distinct from the per-weight value function $K_i$. \\
+  $f(\,\cdot\,;\theta)$ & Neural network parameterized by $\theta$ and returning $K$ logits. \\
+  $\theta$ & Collection of all network parameters, partitioned as $(w,\theta_{\mathrm{fp}})$. \\
+  $w$ & Collection of latent weight tensors selected for quantization. \\
+  $\theta_{\mathrm{fp}}$ & Biases, normalization parameters, and other parameters retained in floating-point precision. \\
+  $M$ & Number of quantized weight tensors. \\
+  $\Lambda$ & Tensor-index set $\{1,\ldots,M\}$. \\
+  $\ell$ & Index of a quantized tensor, with $\ell\in\Lambda$. \\
+  $w^{(\ell)}$ & Latent weight vector of tensor $\ell$. \\
+  $n_\ell$ & Number of scalar weights in tensor $\ell$. \\
+  $\mathcal I_\ell$ & Weight-index set $\{1,\ldots,n_\ell\}$. \\
+  $i$ & Index of a scalar weight within tensor $\ell$. \\
+  $\ell_{\mathrm{task}}$ & Per-example task-loss function; distinct from the tensor index $\ell$. \\
+  $\mathcal L_{\mathrm{task}}$ & Empirical task loss over $\mathcal D$. \\
+  $\mathcal R_{\mathrm{METaQ}}$ & Complete METaQ regularizer $\sum_{\ell\in\Lambda}\Phi_\ell$. \\
+  $\mathcal J$ & Complete outer training objective. \\
+
+  \addlinespace
+  \multicolumn{2}{l}{\textit{Learned-step quantization (LSQ)}}\\*
+  $Q_n,Q_p$ & Minimum and maximum integer quantization codes. \\
+  $\mathcal Q$ & Integer codebook $\{q\in\mathbb Z:Q_n\leq q\leq Q_p\}$. \\
+  $q$ & Generic integer code in $\mathcal Q$. \\
+  $C$ & Total number of symbols, $C=|\mathcal Q|$. \\
+  $a_\ell$ & Learned quantization step size of tensor $\ell$. \\
+  $a$ & Collection $\{a_\ell\}_{\ell\in\Lambda}$ of all step sizes. \\
+  $r_i^{(\ell)}$ & Normalized latent weight $w_i^{(\ell)}/a_\ell$. \\
+  $\bar w_i^{(\ell)}(a_\ell)$ & Latent weight clipped to the representable interval of tensor $\ell$. \\
+  $\bar w^{(\ell)}$ & Vector of clipped latent weights in tensor $\ell$. \\
+  $\widehat w_i^{(\ell)}$ & Quantized weight used in the forward pass. \\
+  $\widehat w$ & Collection of all quantized weight tensors. \\
+
+  \addlinespace
+  \multicolumn{2}{l}{\textit{METaQ inner problem}}\\*
+  $\mathcal B$ & Set $\mathcal Q\setminus\{0\}$ of nonzero symbols. \\
+  $B$ & Number of nonzero symbols, $B=|\mathcal B|=C-1$. \\
+  $b$ & Index of a nonzero symbol in $\mathcal B$. \\
+  $q_b$ & Integer code associated with nonzero symbol $b$. \\
+  $v_b^{(\ell)}(a_\ell)$ & Real-valued level $a_\ell q_b$ of symbol $b$ in tensor $\ell$. \\
+  $v^{(\ell)},v$ & Vector of real-valued nonzero levels, with the tensor superscript suppressed locally when unambiguous. \\
+  $x_{i,b}^{(\ell)}$ & Nonnegative mass assigning weight $i$ of tensor $\ell$ to nonzero symbol $b$. \\
+  $x_i^{(\ell)},x^{(\ell)}$ & Assignment masses for one weight and for the complete tensor, respectively. \\
+  $y_i^{(\ell)}$ & Total mass representing weight $i$ through nonzero symbols. \\
+  $z_i^{(\ell)}$ & Mass $1-y_i^{(\ell)}$ assigned to the zero symbol; distinct from the temporary dual-update vector $z_b^{(\ell,t+1)}$. \\
+  $c_b^{(\ell)}$ & Relaxed count of nonzero symbol $b$ in tensor $\ell$. \\
+  $T_1$ & Coefficient of the perspective ridge term. \\
+  $T_2$ & Coefficient penalizing mass assigned to nonzero symbols. \\
+  $T_3$ & Coefficient of the entropy-related count term. \\
+  $\Phi_\ell(\bar w^{(\ell)},a_\ell)$ & Optimal value of the tensor-level METaQ inner problem. \\
+
+  \addlinespace
+  \multicolumn{2}{l}{\textit{Lagrangian relaxation and decomposition}}\\*
+  $\xi_b^{(\ell)}$ & Unrestricted Lagrange multiplier of the count-defining constraint for symbol $b$. \\
+  $\xi^{(\ell)}$ & Vector in $\mathbb R^B$ collecting the nonzero-symbol count multipliers of tensor $\ell$. \\
+  $\mathscr L_\ell$ & Partial Lagrangian obtained by dualizing the count constraints
+  $c_b^{(\ell)}=\sum_{i\in\mathcal I_\ell}x_{i,b}^{(\ell)}$ for every
+  $b\in\mathcal B$. \\
+  $\varphi_{\bar w^{(\ell)},a_\ell}^{(\ell)}$ & Concave Lagrangian dual function obtained by minimizing $\mathscr L_\ell$ over the retained primal constraints. \\
+  $\mathcal F_i^{(\ell)}$ & Feasible set of the per-weight assignment and mass variables. \\
+  $\mathscr L_\ell^{\mathrm{full}}$ & Inner Lagrangian including both the count and representation multipliers. \\
+
+  \addlinespace
+  \multicolumn{2}{l}{\textit{Per-weight solution}}\\*
+  $K_i(y_i;\bar w_i,\xi,v)$ & Optimal value of the linear assignment subproblem for weight $i$ at fixed nonzero mass $y_i$. \\
+  $u_{i,b}$ & Normalized assignment mass $x_{i,b}/y_i$; distinct from the generic scalar $u$ in the perspective definition. \\
+  $\widetilde w_i$ & Rescaled target $\bar w_i/y_i$. \\
+  $P_b$ & Point $(v_b,\xi_b)$ used to construct the lower convex hull. \\
+  $E_{\mathrm l},E_{\mathrm r}$ & Leftmost and rightmost vertices of the lower convex hull. \\
+  $b_-,b_+$ & Indices of the endpoints of the active lower-hull facet. \\
+  $\mu_i$ & Slope of the active lower-hull facet and representation-constraint multiplier under the paper's sign convention. \\
+  $s_i$ & Intercept of the active lower-hull facet; distinct from the dual residual $s_b^{(\ell)}$. \\
+  $V_i^{\max}$ & Largest representable magnitude having the same sign as $\bar w_i$. \\
+  $y_i^{\min}$ & Smallest nonzero mass capable of representing $\bar w_i$. \\
+  $G_i(y_i)$ & Scalar per-weight objective after eliminating the assignment variables. \\
+  $y_i^{\mathrm{cand}}$ & Interior stationary candidate for minimizing $G_i$. \\
+  $y_i^*$ & Selected minimizer of the scalar per-weight problem. \\
+  $z_i^*$ & Optimal zero-symbol mass $1-y_i^*$. \\
+  $G_i^*$ & Optimized per-weight value obtained after minimizing $G_i$ over $y_i$. \\
+  $e,v_e^{(\ell)}$ & Index and real-valued level of an active extreme codebook symbol. \\
+
+  \addlinespace
+  \multicolumn{2}{l}{\textit{Sensitivity and training gradients}}\\*
+  $\mu_i^{(\ell)}$ & Multiplier of the representation constraint for weight $i$ in tensor $\ell$. \\
+  $\beta_i^{(\ell)*}$ & Selected METaQ subgradient with respect to the clipped latent weight $\bar w_i^{(\ell)}$ at fixed $a_\ell$. \\
+  $\delta_i^{(\ell)}$ & Upstream task-loss gradient $\partial\mathcal L_{\mathrm{task}}/\partial\widehat w_i^{(\ell)}$. \\
+  $h(r)$ & Piecewise LSQ surrogate derivative of a quantized weight with respect to its step size. \\
+  $\nabla_{w_i^{(\ell)}}\mathcal L_{\mathrm{task}},\nabla_{a_\ell}\mathcal L_{\mathrm{task}}$ & Task-loss components with respect to a latent weight and a step size. \\
+  $\nabla_{\mathrm{METaQ}}$ & Particular element of $\partial\mathcal R_{\mathrm{METaQ}}$ selected by the optimization procedure and used for training. \\
+  $\left(\nabla_{\mathrm{METaQ}}\right)_{w_i^{(\ell)}}$ & Latent-weight component of the selected METaQ subgradient. \\
+  $\left(\nabla_{\mathrm{METaQ}}\right)_{a_\ell}$ & Step-size component of the selected METaQ subgradient. \\
+  $\nabla_{\mathrm{train}}\mathcal J$ & Selected (sub)gradient of the complete objective passed to the network optimizers. \\
+
+  \addlinespace
+  \multicolumn{2}{l}{\textit{Dual solver and optimization order}}\\*
+  $\widehat c_b^{(\ell)}$ & Count reconstructed by summing the optimal per-weight assignment masses. \\
+  $c_{b,\mathrm{unc}}^{(\ell)}$ & Unconstrained stationary count returned by the exponential relation. \\
+  $c_b^{(\ell)*}$ & Count used by the dual solver after clipping $c_{b,\mathrm{unc}}^{(\ell)}$. \\
+  $c_{\min}$ & Numerical lower bound imposed on the count solution. \\
+  $s_b^{(\ell)}$ & Unnormalized residual $\widehat c_b^{(\ell)}-c_b^{(\ell)*}$ of the relaxed count constraint; distinct from the facet intercept $s_i$. \\
+  $N_{\mathrm{dual}}$ & Number of dual iterations performed per solver call. \\
+  $t$ & Iteration index of the dual solver, $t\in\{0,\ldots,N_{\mathrm{dual}}-1\}$. \\
+  $\eta_\xi$ & Dual supergradient-ascent step size. \\
+  $g_b^{(\ell,t)}$ & Tensor-size-normalized dual supergradient at iteration $t$. \\
+  $\tau_t$ & FISTA-style momentum parameter. \\
+  $\widetilde\xi^{(\ell,t)}$ & Momentum-extrapolated multiplier vector. \\
+  $z_b^{(\ell,t+1)}$ & Unclipped multiplier update before componentwise clipping; distinct from the zero-symbol mass $z_i^{(\ell)}$. \\
+  $\xi_{\min}^{(\ell)},\xi_{\max}^{(\ell)}$ & Lower and upper numerical bounds imposed on the dual multipliers. \\
+  $k$ & Iteration index of the outer network optimizer. \\
+  $w_k,a_k,\theta_{\mathrm{fp},k}$ & Weight, step-size, and floating-point parameter collections at the start of outer step $k$. \\
+  $v_k,\bar w_k$ & Collections of real-valued levels and clipped latent weights at outer step $k$. \\
+  $x_k^*,y_k^*,\mu_k,\beta_k^*$ & Per-weight solutions and sensitivity quantities used at outer step $k$. \\
+
+  \addlinespace
+  \multicolumn{2}{l}{\textit{Appendix-only KKT notation}}\\*
+  $\rho_i^{(\ell)}$ & Multiplier of the per-weight mass constraint in the boundary KKT derivation. \\
+  $\gamma_{i,b}^{(\ell)}$ & Nonnegative multiplier of the constraint $-x_{i,b}^{(\ell)}\leq0$. \\
+  $\mathscr L_{i,\ell}^{\mathrm{KKT}}$ & Per-weight KKT Lagrangian used in the boundary derivation. \\
+
+  \addlinespace
+  \multicolumn{2}{l}{\textit{Principal acronyms and reporting terms}}\\*
+  METaQ & Minimizing Entropy with Training and Quantization (working name). \\
+  QAT & Quantization-aware training. \\
+  LSQ & Learned Step Size Quantization. \\
+  STE & Straight-through estimator. \\
+  FISTA & Fast Iterative Shrinkage--Thresholding Algorithm; the implementation uses a FISTA-style dual update. \\
+  KKT & Karush--Kuhn--Tucker optimality conditions. \\
+  FP32 & 32-bit floating-point representation. \\
+  W4A32 & 4-bit weights and 32-bit floating-point activations. \\
+  BN & Batch normalization. \\
+  Zstd & Zstandard lossless compression. \\
+  $\Delta$ & Difference between quantized and FP32 top-1 accuracy, measured in percentage points. \\
+\end{longtable}
+\normalsize
+
+\end{document}

@@ -1,15 +1,15 @@
-# Joint LSQ-METaQ gradient
+# Joint LSQ-PRESTO gradient
 
 ## Objective
 
 For one quantized tensor, let the signed integer LSQ codebook be `q` and let
-the current step size be `s > 0`. The non-zero METaQ bucket values are
+the current step size be `s > 0`. The non-zero PRESTO bucket values are
 
 \[
 v_b(s)=s q_b.
 \]
 
-For fixed network weights `w`, define the perspective METaQ value function
+For fixed network weights `w`, define the perspective PRESTO value function
 
 \[
 \phi(w,s)=\min_{x,y,c}
@@ -27,7 +27,7 @@ c_b=\sum_i x_{i,b},\qquad 0\le y_i\le1.
 \]
 
 The zero output of the signed int4 quantizer is represented by the missing
-mass `z_i = 1-y_i`, rather than by a second zero-valued METaQ bucket. Thus an
+mass `z_i = 1-y_i`, rather than by a second zero-valued PRESTO bucket. Thus an
 int4 tensor has 15 non-zero bucket values and one zero symbol.
 
 ## Envelope derivatives
@@ -74,7 +74,7 @@ For optimizer step `k`, all quantities must be evaluated at the same state:
 
 1. form `v_k = s_k q`;
 2. run the LSQ fake-quantized forward with `(w_k, s_k)`;
-3. solve the METaQ inner/dual problem using `(w_k, v_k)`;
+3. solve the PRESTO inner/dual problem using `(w_k, v_k)`;
 4. form
    \[
    g_w=\nabla_wL_{\rm QAT}+\partial_w\phi,
@@ -83,7 +83,7 @@ For optimizer step `k`, all quantities must be evaluated at the same state:
    \]
 5. update `w` and `s`; the resulting `v_{k+1}` is used by the next step.
 
-Updating `s` before computing the METaQ multiplier in the same step would mix
+Updating `s` before computing the PRESTO multiplier in the same step would mix
 two different codebooks and would not be a gradient of the stated objective.
 
 ## Non-smooth and boundary cases
@@ -107,7 +107,7 @@ segment slope. This also makes the scale envelope derivative agree with finite
 differences at the LSQ clipping boundary. Hull kinks remain non-smooth and admit
 a set of valid subgradients.
 
-LSQ clips latent weights outside `[s*Qn, s*Qp]`. To keep the METaQ inner
+LSQ clips latent weights outside `[s*Qn, s*Qp]`. To keep the PRESTO inner
 problem feasible, the joint objective is defined on the same clipped weight:
 
 \[
@@ -115,14 +115,14 @@ problem feasible, the joint objective is defined on the same clipped weight:
 \]
 
 For an out-of-range coordinate, the scale derivative therefore contains the
-additional chain-rule term `(dphi/dw_clipped) * q_edge`, while its METaQ weight
+additional chain-rule term `(dphi/dw_clipped) * q_edge`, while its PRESTO weight
 gradient is zero. This is separate from the direct envelope derivative above.
 
 ## Relation to the LSQ gradient
 
 LSQ already supplies a surrogate task-loss gradient for `s`, including its
-gradient normalization. The joint update adds the METaQ scale derivative to
+gradient normalization. The joint update adds the PRESTO scale derivative to
 that task gradient. The two components must be logged separately and scaled by
-their objective coefficients; normalizing the METaQ component merely to match
+their objective coefficients; normalizing the PRESTO component merely to match
 the task-gradient norm would change the stated objective and should be treated
 as a separate heuristic experiment.

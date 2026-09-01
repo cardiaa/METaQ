@@ -10,7 +10,7 @@
 #SBATCH --output=/dev/null
 #SBATCH --error=/dev/null
 
-# test_259: ViT-B/16, METaQ at one fifth of the test_256 dose. This run exists
+# test_259: ViT-B/16, PRESTO at one fifth of the test_256 dose. This run exists
 # to put a second point on the ViT-B/16 curve, and specifically the one at the
 # near-lossless end, which is the half of the frontier we do not have.
 #

@@ -1008,9 +1008,9 @@ def main():
     parser.add_argument("--train_workers", type=int, default=1, help="Number of DataLoader workers for training")
     parser.add_argument("--val_workers", type=int, default=2, help="Number of DataLoader workers for validation")
     parser.add_argument("--n_epochs", type=int, default=None, help="Override number of epochs (if set)")
-    parser.add_argument("--diagnostic_epochs", type=int, default=0, help="Initial epochs with METaQ coefficients disabled")
-    parser.add_argument("--metaq_ramp_epochs", type=int, default=0, help="Epochs of METaQ ramp")
-    parser.add_argument("--metaq_flat_epochs", type=int, default=0, help="Final epochs at constant METaQ target")
+    parser.add_argument("--diagnostic_epochs", type=int, default=0, help="Initial epochs with PRESTO coefficients disabled")
+    parser.add_argument("--metaq_ramp_epochs", type=int, default=0, help="Epochs of PRESTO ramp")
+    parser.add_argument("--metaq_flat_epochs", type=int, default=0, help="Final epochs at constant PRESTO target")
     parser.add_argument(
         "--layerwise_t2_targets",
         type=str,
@@ -1028,7 +1028,7 @@ def main():
         type=float,
         default=None,
         help=(
-            "Optimizer weight decay, independent of the METaQ perspective_coeff term. "
+            "Optimizer weight decay, independent of the PRESTO perspective_coeff term. "
             "If omitted, preserve the legacy perspective_coeff-dependent behavior."
         ),
     )
@@ -1212,7 +1212,7 @@ def main():
         choices=["Y", "N"],
         help=(
             "Learn one LSQ step size per output channel instead of one per "
-            "tensor. The METaQ envelope is built once on the integer codebook "
+            "tensor. The PRESTO envelope is built once on the integer codebook "
             "and rescaled per weight, so the solver cost is unchanged."
         ),
     )
@@ -1228,7 +1228,7 @@ def main():
         default="N",
         choices=["Y", "N"],
         help=(
-            "Add the exact METaQ envelope gradient to both weights and LSQ "
+            "Add the exact PRESTO envelope gradient to both weights and LSQ "
             "scales. Requires --quantizer lsq and --perspective Y."
         ),
     )

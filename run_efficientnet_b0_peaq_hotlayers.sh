@@ -10,7 +10,7 @@
 #SBATCH --output=/dev/null
 #SBATCH --error=/dev/null
 
-# test_272: EfficientNet-B0, METaQ sulla ricetta del test_268, i nove layer
+# test_272: EfficientNet-B0, PRESTO sulla ricetta del test_268, i nove layer
 # piu' saturi a otto bit oltre ai sedici depthwise. Punta a dominare NNCodec al
 # suo punto di Tabella 1, 2.41MB = 11.25 per cento del modello a 76.78.
 #

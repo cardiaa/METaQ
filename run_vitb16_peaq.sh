@@ -10,7 +10,7 @@
 #SBATCH --output=/dev/null
 #SBATCH --error=/dev/null
 
-# test_256: ViT-B/16, METaQ on the test_251 recipe, twenty epochs. Its matched
+# test_256: ViT-B/16, PRESTO on the test_251 recipe, twenty epochs. Its matched
 # control is test_255, which is the same script with the three coefficients set
 # to zero; the two are launched together because runs 250 to 254 have already
 # established that the recipe trains this network.

@@ -1,0 +1,115 @@
+[loader] shards val: 50 file da /leonardo_work/IscrC_ObCTDoNN/acardia0/datasets/imagenet/shards/val-*.tar
+==============================================================================
+baseline (dense, no pruning): 56.48%   [42s per evaluation]
+==============================================================================
+
+--- [0] features.0.weight  (23,232 pesi, 0.04% del totale)   tasso DC = 0.16
+    rate 0.10:  acc  56.51%   caduta  -0.03
+    rate 0.20:  acc  56.25%   caduta   0.24  <-- tasso DC
+    rate 0.30:  acc  55.93%   caduta   0.55
+    rate 0.40:  acc  53.73%   caduta   2.75
+    rate 0.50:  acc  46.09%   caduta  10.39
+    rate 0.60:  acc  31.78%   caduta  24.70
+    rate 0.70:  acc  14.04%   caduta  42.44
+    rate 0.80:  acc   3.06%   caduta  53.43
+    rate 0.90:  acc   0.45%   caduta  56.03
+    rate 0.95:  acc   0.16%   caduta  56.32
+
+--- [1] features.3.weight  (307,200 pesi, 0.50% del totale)   tasso DC = 0.62
+    rate 0.10:  acc  56.49%   caduta  -0.01
+    rate 0.20:  acc  56.38%   caduta   0.11
+    rate 0.30:  acc  56.25%   caduta   0.23
+    rate 0.40:  acc  55.84%   caduta   0.65
+    rate 0.50:  acc  55.12%   caduta   1.36
+    rate 0.60:  acc  53.16%   caduta   3.32  <-- tasso DC
+    rate 0.70:  acc  47.94%   caduta   8.55
+    rate 0.80:  acc  36.73%   caduta  19.76
+    rate 0.90:  acc  13.16%   caduta  43.32
+    rate 0.95:  acc   4.20%   caduta  52.28
+
+--- [2] features.6.weight  (663,552 pesi, 1.09% del totale)   tasso DC = 0.65
+    rate 0.10:  acc  56.47%   caduta   0.01
+    rate 0.20:  acc  56.44%   caduta   0.04
+    rate 0.30:  acc  56.30%   caduta   0.19
+    rate 0.40:  acc  55.98%   caduta   0.50
+    rate 0.50:  acc  55.43%   caduta   1.05
+    rate 0.60:  acc  54.31%   caduta   2.17  <-- tasso DC
+    rate 0.70:  acc  51.14%   caduta   5.34  <-- tasso DC
+    rate 0.80:  acc  43.66%   caduta  12.82
+    rate 0.90:  acc  27.89%   caduta  28.59
+    rate 0.95:  acc  11.10%   caduta  45.38
+
+--- [3] features.8.weight  (884,736 pesi, 1.45% del totale)   tasso DC = 0.63
+    rate 0.10:  acc  56.49%   caduta  -0.00
+    rate 0.20:  acc  56.45%   caduta   0.03
+    rate 0.30:  acc  56.34%   caduta   0.14
+    rate 0.40:  acc  56.21%   caduta   0.28
+    rate 0.50:  acc  55.89%   caduta   0.59
+    rate 0.60:  acc  55.26%   caduta   1.23  <-- tasso DC
+    rate 0.70:  acc  53.80%   caduta   2.68
+    rate 0.80:  acc  50.86%   caduta   5.62
+    rate 0.90:  acc  40.02%   caduta  16.46
+    rate 0.95:  acc  26.28%   caduta  30.20
+
+--- [4] features.10.weight  (589,824 pesi, 0.97% del totale)   tasso DC = 0.63
+    rate 0.10:  acc  56.51%   caduta  -0.02
+    rate 0.20:  acc  56.52%   caduta  -0.03
+    rate 0.30:  acc  56.51%   caduta  -0.03
+    rate 0.40:  acc  56.41%   caduta   0.08
+    rate 0.50:  acc  56.17%   caduta   0.31
+    rate 0.60:  acc  55.78%   caduta   0.71  <-- tasso DC
+    rate 0.70:  acc  54.86%   caduta   1.62
+    rate 0.80:  acc  52.14%   caduta   4.35
+    rate 0.90:  acc  39.56%   caduta  16.93
+    rate 0.95:  acc  21.65%   caduta  34.83
+
+--- [5] classifier.1.weight  (37,748,736 pesi, 61.79% del totale)   tasso DC = 0.91
+    rate 0.10:  acc  56.49%   caduta  -0.00
+    rate 0.20:  acc  56.50%   caduta  -0.01
+    rate 0.30:  acc  56.48%   caduta   0.00
+    rate 0.40:  acc  56.39%   caduta   0.09
+    rate 0.50:  acc  56.38%   caduta   0.11
+    rate 0.60:  acc  56.31%   caduta   0.17
+    rate 0.70:  acc  56.04%   caduta   0.45
+    rate 0.80:  acc  55.27%   caduta   1.21
+    rate 0.90:  acc  53.02%   caduta   3.46  <-- tasso DC
+    rate 0.95:  acc  48.38%   caduta   8.10  <-- tasso DC
+
+--- [6] classifier.4.weight  (16,777,216 pesi, 27.46% del totale)   tasso DC = 0.91
+    rate 0.10:  acc  56.50%   caduta  -0.01
+    rate 0.20:  acc  56.52%   caduta  -0.03
+    rate 0.30:  acc  56.56%   caduta  -0.08
+    rate 0.40:  acc  56.53%   caduta  -0.04
+    rate 0.50:  acc  56.61%   caduta  -0.12
+    rate 0.60:  acc  56.37%   caduta   0.12
+    rate 0.70:  acc  55.94%   caduta   0.55
+    rate 0.80:  acc  54.60%   caduta   1.89
+    rate 0.90:  acc  50.24%   caduta   6.24  <-- tasso DC
+    rate 0.95:  acc  41.85%   caduta  14.64  <-- tasso DC
+
+--- [7] classifier.6.weight  (4,096,000 pesi, 6.70% del totale)   tasso DC = 0.75
+    rate 0.10:  acc  56.49%   caduta  -0.01
+    rate 0.20:  acc  56.51%   caduta  -0.03
+    rate 0.30:  acc  56.42%   caduta   0.07
+    rate 0.40:  acc  56.20%   caduta   0.28
+    rate 0.50:  acc  55.95%   caduta   0.54
+    rate 0.60:  acc  55.51%   caduta   0.98
+    rate 0.70:  acc  54.55%   caduta   1.93  <-- tasso DC
+    rate 0.80:  acc  52.51%   caduta   3.98  <-- tasso DC
+    rate 0.90:  acc  47.44%   caduta   9.05
+    rate 0.95:  acc  40.32%   caduta  16.17
+
+==============================================================================
+RIASSUNTO: massimo tasso di potatura entro una data caduta di accuratezza
+==============================================================================
+                 layer     DC    <1pt    <2pt    <5pt
+     features.0.weight   0.16    0.30    0.30    0.40
+     features.3.weight   0.62    0.40    0.50    0.60
+     features.6.weight   0.65    0.40    0.50    0.60
+     features.8.weight   0.63    0.50    0.60    0.70
+    features.10.weight   0.63    0.60    0.70    0.80
+   classifier.1.weight   0.91    0.70    0.80    0.90
+   classifier.4.weight   0.91    0.70    0.80    0.80
+   classifier.6.weight   0.75    0.60    0.70    0.80
+
+scritto /leonardo_work/IscrC_ObCTDoNN/acardia0/LeonardoTests/sensitivity.csv

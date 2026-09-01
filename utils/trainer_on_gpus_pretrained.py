@@ -557,7 +557,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, p
     if lsq_enabled and not use_perspective:
         raise ValueError(
             "The LSQ implementation currently requires --perspective Y so zero "
-            "is represented consistently as METaQ missing mass."
+            "is represented consistently as PRESTO missing mass."
         )
     if lsq_enabled and use_prox:
         raise ValueError(
@@ -569,9 +569,9 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, p
     if bn_recalibration_batches < 0:
         raise ValueError("bn_recalibration_batches must be >= 0.")
     if joint_lsq_metaq and not lsq_enabled:
-        raise ValueError("Joint LSQ-METaQ requires the LSQ quantizer.")
+        raise ValueError("Joint LSQ-PRESTO requires the LSQ quantizer.")
     if joint_lsq_metaq and not use_perspective:
-        raise ValueError("Joint LSQ-METaQ requires --perspective Y.")
+        raise ValueError("Joint LSQ-PRESTO requires --perspective Y.")
     if lsq_per_channel and not lsq_enabled:
         raise ValueError("--lsq_per_channel Y requires --quantizer lsq.")
     if lsq_per_channel and (
@@ -596,7 +596,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, p
         )
     if joint_lsq_metaq and use_prox:
         raise ValueError(
-            "Joint LSQ-METaQ scale gradients are defined for the gradient path, "
+            "Joint LSQ-PRESTO scale gradients are defined for the gradient path, "
             "not the proximal path."
         )
 
@@ -704,7 +704,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, p
         )
 
     # C_by_layer is the deployment alphabet size (including zero under LSQ).
-    # METaQ treats zero as missing mass z=1-y, so its bucket problem receives
+    # PRESTO treats zero as missing mass z=1-y, so its bucket problem receives
     # only the C-1 non-zero integer levels.
     metaq_C_by_layer = (
         [c - 1 for c in C_by_layer] if lsq_enabled else list(C_by_layer)
@@ -1073,7 +1073,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, p
             for q_state in range(num_param_tensors):
                 if lsq_per_channel:
                     # There is no single level vector any more: each output
-                    # channel has its own. The METaQ solver instead receives the
+                    # channel has its own. The PRESTO solver instead receives the
                     # INTEGER codebook plus a per-weight step size, which is
                     # exact because the lower convex envelope is invariant under
                     # positive rescaling of the abscissa.
@@ -1085,7 +1085,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, p
                     )
 
     def _metaq_scale_flat(p_idx, param):
-        """Per-weight step sizes for the METaQ solver, or None per-tensor.
+        """Per-weight step sizes for the PRESTO solver, or None per-tensor.
 
         Output channels are the leading dimension, so the flat layout repeats
         each channel's step size ``numel // O`` times.
@@ -1298,7 +1298,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, p
         return batches
 
     def _l1_schedule_sums(from_epoch: int) -> tuple[float, float]:
-        """Schedule weights of the two components of the METaQ push to zero.
+        """Schedule weights of the two components of the PRESTO push to zero.
 
         With T2 > 0 the perspective term applies a force of CONSTANT magnitude to
         every latent weight, but which constant depends on whether the
@@ -1328,7 +1328,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, p
 
             D = T2/(q_edge*a) * S_linear + T1*(q_edge*a) * S_constant
 
-        Both sums are weighted by the DUTY CYCLE of the METaQ gradient, i.e. by
+        Both sums are weighted by the DUTY CYCLE of the PRESTO gradient, i.e. by
         the fraction of optimizer steps on which the force is actually applied
         (see below). With T3 off that is every step; with T3 on it is one step in
         entropy_every, because the two live in different branches of the update.
@@ -1337,7 +1337,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, p
             return 0.0, 0.0
         momentum = 0.9 if train_optimizer == "SGD" else 1.0
         damping = max(1.0 - momentum, 1e-6)
-        # DUTY CYCLE. The sums count the steps on which the METaQ force is
+        # DUTY CYCLE. The sums count the steps on which the PRESTO force is
         # ACTUALLY applied, which is not always every step. With T3 off, the
         # ridge/T2 gradient goes through the cheap per-step path; with T3 on that
         # path is excluded by its own guard (entropy_coeff_current == 0) and the
@@ -1659,7 +1659,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, p
         and WHICH weights are pruned come from the optimization, not a magnitude
         threshold.
         """
-        # Under the perspective path, z must come from the actual METaQ
+        # Under the perspective path, z must come from the actual PRESTO
         # per-weight mass y*(w), not from the legacy knapsack dead-zone
         # controlled by ``delta``.  This is the path used by the T1/T2
         # ablations: z_i = 1-y_i and the hard deployment rule is z_i>0.5.
@@ -2183,7 +2183,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, p
         else:
             entropy_coeff_current = 0.0
 
-        # Does METaQ still couple to the LSQ step sizes this epoch?
+        # Does PRESTO still couple to the LSQ step sizes this epoch?
         #
         # With T2 (sparsity_coeff) and T3 (entropy_coeff) both zero the inner
         # problem degenerates: y*=1 everywhere and phi reduces to the plain
@@ -2255,7 +2255,7 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, p
         # stale at each epoch start, the forward mask shifted, and the net
         # collapsed.
         codebook_initialized_now = False
-        # LSQ already owns a valid learned codebook, so expose it to METaQ from
+        # LSQ already owns a valid learned codebook, so expose it to PRESTO from
         # epoch 1 independently of the entropy_coeff warm-up. The warm-up controls only the
         # entropy term; delaying this initialization also delayed perspective_coeff/sparsity_coeff and made
         # test_165's first epoch incomparable with the entropy_coeff=0 baseline. Fixed grids
@@ -2580,13 +2580,13 @@ def train_and_evaluate(model, model_name, criterion, C, lr, lambda_reg, alpha, p
                 last_loss_grad_norm = _grad_norm_from_current_grads()
 
             # Perspective ridge/sparsity gradient (test_113). For legacy fixed-grid
-            # runs retain the closed-form weight gradient. In joint LSQ-METaQ runs
+            # runs retain the closed-form weight gradient. In joint LSQ-PRESTO runs
             # solve the xi=0 inner problem explicitly: its constraint multiplier is
             # also needed for the exact envelope gradient with respect to the LSQ
             # scale, including the representability boundary.
             # perspective_coeff/sparsity_coeff are active as soon as the codebook exists. In particular,
             # entropy_warmup_epochs postpones entropy_coeff only; it must not silently
-            # disable the other METaQ terms during the warm-up (test_166).
+            # disable the other PRESTO terms during the warm-up (test_166).
             if (use_perspective and entropy_coeff_current == 0
                     and (perspective_coeff != 0.0 or sparsity_coeff != 0.0)
                     and grid_reset_done):

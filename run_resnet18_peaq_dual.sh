@@ -16,8 +16,8 @@
 #
 # WHAT test_196 DELIVERED, and its matched control:
 #
-#   test_174   LSQ alone, every METaQ coefficient zero   69.888   9.34%   10.7x
-#   test_196   METaQ, T1 1e-5, T2 1e-7, T3 3e-8          69.840   6.08%   16.4x
+#   test_174   LSQ alone, every PRESTO coefficient zero   69.888   9.34%   10.7x
+#   test_196   PRESTO, T1 1e-5, T2 1e-7, T3 3e-8          69.840   6.08%   16.4x
 #   test_197   the same at forty epochs                  69.578   5.21%   19.2x
 #
 # against 69.734 FP32, so the twenty-epoch pair is lossless on BOTH rows and the

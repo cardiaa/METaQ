@@ -10,14 +10,14 @@
 #SBATCH --output=/dev/null
 #SBATCH --error=/dev/null
 
-# test_262: EfficientNet-B0, full METaQ at thirty epochs on the test_260 recipe.
+# test_262: EfficientNet-B0, full PRESTO at thirty epochs on the test_260 recipe.
 # Two flags differ from the run this replaces: --layer_C is now set, putting the
 # sixteen depthwise convolutions and the input convolution at eight bits.
 #
 # WHY THE RECIPE CHANGED. This run was written against test_258, the four-bit
 # control. test_260 then showed that the eight-bit depthwise recipe is strictly
 # better at matched size: projected to NNCodec's 11.25 per cent of the model, the
-# four-bit branch lands at -1.19 and this one at -1.03. Running METaQ on the
+# four-bit branch lands at -1.19 and this one at -1.03. Running PRESTO on the
 # weaker of the two branches would have wasted the three hours.
 #
 # THE TARGET, unchanged. NNCodec codes EfficientNet-B0 to 2.41MB of 21.45MB at
@@ -42,7 +42,7 @@
 # test_234 dose, with the relative dual step that made the channel open at all.
 #
 # WHY IT RUNS EVEN THOUGH A TIE IS THE EXPECTATION. The pair (test_260,
-# test_262) is the only matched control-and-METaQ comparison at equal budget we
+# test_262) is the only matched control-and-PRESTO comparison at equal budget we
 # will have on this architecture, and the paper makes that comparison for every
 # other network. It is also the row that shows the regularizer working on a
 # network with no accuracy headroom, which is a different claim from the ResNet

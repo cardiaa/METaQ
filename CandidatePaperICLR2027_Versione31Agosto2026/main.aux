@@ -1,0 +1,312 @@
+\relax 
+\providecommand \babel@aux [2]{\global \let \babel@toc \@gobbletwo }
+\@nameuse{bbl@beforestart}
+\providecommand\hyper@newdestlabel[2]{}
+\providecommand\HyField@AuxAddToFields[1]{}
+\providecommand\HyField@AuxAddToCoFields[2]{}
+\citation{han2016deep}
+\citation{choi2018pact}
+\citation{esser2020lsq}
+\citation{dong2019hawq}
+\citation{li2021brecq}
+\citation{shi2023l2}
+\citation{wiedemann2018entropy}
+\citation{wiedemann2019deepcabac}
+\citation{becking2023nncodec}
+\citation{conzelmann2025rate}
+\babel@aux{english}{}
+\@writefile{toc}{\contentsline {section}{\numberline {1}Introduction}{1}{section.1}\protected@file@percent }
+\newlabel{sec:introduction}{{1}{1}{Introduction}{section.1}{}}
+\citation{oktay2020epr}
+\citation{girish2023lilnetx}
+\citation{tartaglione2021hemp}
+\citation{wenshoj2025codeq}
+\citation{cacciola2023deep}
+\@writefile{toc}{\contentsline {paragraph}{Outline.}{2}{section*.1}\protected@file@percent }
+\citation{esser2020lsq}
+\@writefile{toc}{\contentsline {section}{\numberline {2}PRESTO Method}{3}{section.2}\protected@file@percent }
+\newlabel{sec:method}{{2}{3}{PRESTO Method}{section.2}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.1}Setting, Notation and the Quantizer}{3}{subsection.2.1}\protected@file@percent }
+\newlabel{sec:setting}{{2.1}{3}{Setting, Notation and the Quantizer}{subsection.2.1}{}}
+\newlabel{sec:lsq}{{2.1}{3}{Setting, Notation and the Quantizer}{subsection.2.1}{}}
+\newlabel{eq:lsq-zero-symbol}{{1}{3}{Setting, Notation and the Quantizer}{equation.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.2}Perspective and Entropy-Based Regularizer}{3}{subsection.2.2}\protected@file@percent }
+\newlabel{sec:metaq-value}{{2.2}{3}{Perspective and Entropy-Based Regularizer}{subsection.2.2}{}}
+\newlabel{eq:real-level}{{2}{3}{Perspective and Entropy-Based Regularizer}{equation.2}{}}
+\newlabel{eq:metaq-value}{{3}{3}{Perspective and Entropy-Based Regularizer}{equation.3}{}}
+\newlabel{eq:representation}{{4}{3}{Perspective and Entropy-Based Regularizer}{equation.4}{}}
+\newlabel{eq:mass}{{5}{3}{Perspective and Entropy-Based Regularizer}{equation.5}{}}
+\newlabel{eq:counts}{{6}{3}{Perspective and Entropy-Based Regularizer}{equation.6}{}}
+\newlabel{eq:domain}{{7}{3}{Perspective and Entropy-Based Regularizer}{equation.7}{}}
+\newlabel{eq:outer-objective}{{8}{4}{Perspective and Entropy-Based Regularizer}{equation.8}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {3}Optimization}{4}{section.3}\protected@file@percent }
+\newlabel{sec:optimization}{{3}{4}{Optimization}{section.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.1}Lagrangian Relaxation and Decomposition}{4}{subsection.3.1}\protected@file@percent }
+\newlabel{sec:lagrangian-decomposition}{{3.1}{4}{Lagrangian Relaxation and Decomposition}{subsection.3.1}{}}
+\newlabel{eq:dual-decomposition}{{9}{4}{Lagrangian Relaxation and Decomposition}{equation.9}{}}
+\newlabel{eq:local-feasible-set}{{10}{5}{Lagrangian Relaxation and Decomposition}{equation.10}{}}
+\newlabel{eq:lagrangian-dual}{{11}{5}{Lagrangian Relaxation and Decomposition}{equation.11}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.2}Per-Weight Solution, Gradients and Dual Update}{5}{subsection.3.2}\protected@file@percent }
+\newlabel{sec:per-weight-subproblem}{{3.2}{5}{Per-Weight Solution, Gradients and Dual Update}{subsection.3.2}{}}
+\newlabel{sec:joint-gradients}{{3.2}{5}{Per-Weight Solution, Gradients and Dual Update}{subsection.3.2}{}}
+\newlabel{sec:optimization-order}{{3.2}{5}{Per-Weight Solution, Gradients and Dual Update}{subsection.3.2}{}}
+\newlabel{eq:beta-star}{{12}{5}{Per-Weight Solution, Gradients and Dual Update}{equation.12}{}}
+\citation{oktay2020epr}
+\citation{tartaglione2021hemp}
+\citation{oktay2020epr}
+\citation{tartaglione2021hemp}
+\citation{becking2023nncodec}
+\citation{li2022qvit}
+\citation{rucinski2026ftervit}
+\citation{becking2023nncodec}
+\citation{becking2023nncodec}
+\citation{becking2023nncodec}
+\@writefile{toc}{\contentsline {section}{\numberline {4}Experiments}{6}{section.4}\protected@file@percent }
+\newlabel{sec:experiments}{{4}{6}{Experiments}{section.4}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.1}Evaluation Protocol}{6}{subsection.4.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Size is measured rather than nominal, and over the whole checkpoint.}{6}{section*.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Accuracies are compared raw rather than as drops.}{6}{section*.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.2}Controlled Comparison on ResNet--18}{6}{subsection.4.2}\protected@file@percent }
+\newlabel{sec:controlled-comparison}{{4.2}{6}{Controlled Comparison on ResNet--18}{subsection.4.2}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {1}{\ignorespaces ImageNet. \emph  {Size} is the serialized packet over the whole checkpoint, \emph  {Top-1} is raw accuracy. Our rows within a block differ only in $(T_1,T_2,T_3)$ and, where stated, the budget; published rows are converted from the megabytes they report, with their own measurement of the same checkpoint in brackets where it differs from ours. More points in Table~\ref {tab:extra}. $^{*}$nominal size, no entropy coding. $^{\ddagger }$reconstructs a dense full-precision network at deployment. $^{\S  }$a different checkpoint, so only the drop is comparable.}}{7}{table.1}\protected@file@percent }
+\newlabel{tab:main}{{1}{7}{ImageNet. \emph {Size} is the serialized packet over the whole checkpoint, \emph {Top-1} is raw accuracy. Our rows within a block differ only in $(T_1,T_2,T_3)$ and, where stated, the budget; published rows are converted from the megabytes they report, with their own measurement of the same checkpoint in brackets where it differs from ours. More points in Table~\ref {tab:extra}. $^{*}$nominal size, no entropy coding. $^{\ddagger }$reconstructs a dense full-precision network at deployment. $^{\S }$a different checkpoint, so only the drop is comparable}{table.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.3}Term Ablation: What Each Term Contributes}{7}{subsection.4.3}\protected@file@percent }
+\newlabel{sec:term-ablation}{{4.3}{7}{Term Ablation: What Each Term Contributes}{subsection.4.3}{}}
+\citation{han2016deep}
+\citation{hu2021opq}
+\citation{oktay2020epr}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.4}AlexNet, an Architecture Where Pruning-First Methods Win}{8}{subsection.4.4}\protected@file@percent }
+\newlabel{sec:alexnet-pruning}{{4.4}{8}{AlexNet, an Architecture Where Pruning-First Methods Win}{subsection.4.4}{}}
+\@writefile{toc}{\contentsline {paragraph}{The gap is the mask rather than the coder.}{8}{section*.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{What the deficit is and is not.}{8}{section*.5}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.5}Comparison with Published Work}{8}{subsection.4.5}\protected@file@percent }
+\newlabel{sec:comparison}{{4.5}{8}{Comparison with Published Work}{subsection.4.5}{}}
+\@writefile{toc}{\contentsline {paragraph}{The ResNets.}{8}{section*.6}\protected@file@percent }
+\citation{li2022qvit}
+\citation{rucinski2026ftervit}
+\@writefile{toc}{\contentsline {paragraph}{DeiT-Small.}{9}{section*.7}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{ViT-B/16.}{9}{section*.8}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{EfficientNet-B0.}{9}{section*.9}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {5}Conclusions and Future Work}{9}{section.5}\protected@file@percent }
+\newlabel{sec:conclusions}{{5}{9}{Conclusions and Future Work}{section.5}{}}
+\bibcite{beck2009fista}{{1}{2009}{{Beck and Teboulle}}{{}}}
+\bibcite{becking2023nncodec}{{2}{2023}{{Becking et~al.}}{{Becking, Haase, M{\"u}ller, Kirchhoffer, Samek, and Marpe}}}
+\bibcite{bengio2013estimating}{{3}{2013}{{Bengio et~al.}}{{Bengio, L\'eonard, and Courville}}}
+\bibcite{bonnans2000perturbation}{{4}{2000}{{Bonnans and Shapiro}}{{}}}
+\bibcite{cacciola2023deep}{{5}{2023}{{Cacciola et~al.}}{{Cacciola, Frangioni, Li, and Lodi}}}
+\bibcite{choi2018pact}{{6}{2018}{{Choi et~al.}}{{Choi, Wang, Venkataramani, Chuang, Srinivasan, and Gopalakrishnan}}}
+\bibcite{conzelmann2025rate}{{7}{2025}{{Conzelmann and Bamler}}{{}}}
+\bibcite{danskin1966maxmin}{{8}{1966}{{Danskin}}{{}}}
+\bibcite{dong2019hawq}{{9}{2019}{{Dong et~al.}}{{Dong, Yao, Gholami, Mahoney, and Keutzer}}}
+\bibcite{dosovitskiy2021vit}{{10}{2021}{{Dosovitskiy et~al.}}{{Dosovitskiy, Beyer, Kolesnikov, Weissenborn, Zhai, Unterthiner, Dehghani, Minderer, Heigold, Gelly, Uszkoreit, and Houlsby}}}
+\bibcite{esser2020lsq}{{11}{2020}{{Esser et~al.}}{{Esser, McKinstry, Bablani, Appuswamy, and Modha}}}
+\bibcite{girish2023lilnetx}{{12}{2023}{{Girish et~al.}}{{Girish, Gupta, Singh, and Shrivastava}}}
+\bibcite{han2016deep}{{13}{2016}{{Han et~al.}}{{Han, Mao, and Dally}}}
+\bibcite{he2016resnet}{{14}{2016}{{He et~al.}}{{He, Zhang, Ren, and Sun}}}
+\bibcite{hu2021opq}{{15}{2021}{{Hu et~al.}}{{Hu, Peng, Zhu, Sabry~Aly, and Lin}}}
+\bibcite{krizhevsky2012alexnet}{{16}{2012}{{Krizhevsky et~al.}}{{Krizhevsky, Sutskever, and Hinton}}}
+\bibcite{li2021brecq}{{17}{2021}{{Li et~al.}}{{Li, Gong, Tan, Yang, Hu, Zhang, Yu, and Gu}}}
+\bibcite{li2022qvit}{{18}{2022}{{Li et~al.}}{{Li, Xu, Zhang, Cao, Gao, and Guo}}}
+\bibcite{metz2024ans}{{19}{2024}{{Metz et~al.}}{{Metz, Bichler, and Dupret}}}
+\bibcite{oktay2020epr}{{20}{2020}{{Oktay et~al.}}{{Oktay, Ball{\'e}, Singh, and Shrivastava}}}
+\bibcite{rockafellar1970convex}{{21}{1970}{{Rockafellar}}{{}}}
+\bibcite{rucinski2026ftervit}{{22}{2026}{{Rucin{\'s}ki et~al.}}{{Rucin{\'s}ki, Bonazzi, T{\"u}retken, Narduzzi, Magno, and Maamari}}}
+\bibcite{shi2023l2}{{23}{2023}{{Shi et~al.}}{{Shi, Bai, Wei, Gong, and Yang}}}
+\bibcite{tan2019efficientnet}{{24}{2019}{{Tan and Le}}{{}}}
+\bibcite{tartaglione2021hemp}{{25}{2021}{{Tartaglione et~al.}}{{Tartaglione, Bragagnolo, Odierna, Fiandrotti, and Grangetto}}}
+\bibcite{touvron2021deit}{{26}{2021}{{Touvron et~al.}}{{Touvron, Cord, Douze, Massa, Sablayrolles, and J{\'e}gou}}}
+\bibcite{wenshoj2025codeq}{{27}{2025}{{Wensh{\o }j et~al.}}{{Wensh{\o }j, Chen, Pepin, and Selvan}}}
+\bibcite{wiedemann2018entropy}{{28}{2018}{{Wiedemann et~al.}}{{Wiedemann, Marban, M{\"u}ller, and Samek}}}
+\bibcite{wiedemann2019deepcabac}{{29}{2019}{{Wiedemann et~al.}}{{Wiedemann, Kirchhoffer, Matlage, et al.}}}
+\@writefile{toc}{\contentsline {section}{\numberline {A}Best-Run Configurations and Reproducibility Details}{11}{appendix.A}\protected@file@percent }
+\newlabel{app:experimental-details}{{A}{11}{Best-Run Configurations and Reproducibility Details}{appendix.A}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {A.1}Training Implementation}{11}{subsection.A.1}\protected@file@percent }
+\newlabel{sec:training-implementation}{{A.1}{11}{Training Implementation}{subsection.A.1}{}}
+\newlabel{app:training-implementation}{{A.1}{11}{Training Implementation}{subsection.A.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {A.2}Configurations, Checkpoints and Serialization}{11}{subsection.A.2}\protected@file@percent }
+\newlabel{app:configurations}{{A.2}{11}{Configurations, Checkpoints and Serialization}{subsection.A.2}{}}
+\newlabel{app:best-compression-hyperparameters}{{A.2}{11}{Configurations, Checkpoints and Serialization}{subsection.A.2}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {2}{\ignorespaces Configuration of every run reported in the paper. Rows within a block differ only in the coefficient triple and, where stated, the budget. ``rel.'' is the step-size rate expressed as a fraction of each tensor's own initial step; ``abs.'' is a single absolute value.}}{11}{table.2}\protected@file@percent }
+\newlabel{tab:best-compression-hyperparameters}{{2}{11}{Configuration of every run reported in the paper. Rows within a block differ only in the coefficient triple and, where stated, the budget. ``rel.'' is the step-size rate expressed as a fraction of each tensor's own initial step; ``abs.'' is a single absolute value}{table.2}{}}
+\citation{he2016resnet}
+\citation{krizhevsky2012alexnet}
+\citation{touvron2021deit}
+\citation{dosovitskiy2021vit}
+\citation{tan2019efficientnet}
+\@writefile{lot}{\contentsline {table}{\numberline {3}{\ignorespaces Quantized fraction $f$ of each checkpoint, the number of tensors it covers, and the residue $1-f$ that stays in floating point and is charged at full cost in every ratio we report.}}{12}{table.3}\protected@file@percent }
+\newlabel{tab:quantized-fraction}{{3}{12}{Quantized fraction $f$ of each checkpoint, the number of tensors it covers, and the residue $1-f$ that stays in floating point and is charged at full cost in every ratio we report}{table.3}{}}
+\@writefile{toc}{\contentsline {paragraph}{Reproducibility.}{12}{section*.11}\protected@file@percent }
+\citation{han2016deep}
+\citation{metz2024ans}
+\citation{girish2023lilnetx}
+\citation{wiedemann2019deepcabac}
+\citation{becking2023nncodec}
+\citation{becking2023nncodec}
+\citation{li2022qvit}
+\@writefile{lot}{\contentsline {table}{\numberline {4}{\ignorespaces Additional architectures, on the same whole-checkpoint accounting as Table~\ref {tab:main}. These are superseded recipes kept as evidence of transfer: the ``LSQ'' rows carry no sparsity and no entropy term, the AlexNet one keeping the ridge at $10^{-5}$, and both networks use per-channel step sizes here, which Appendix~\ref {sec:per-channel-twice} shows is paid for twice. The runs of Tables~\ref {tab:main}--\ref {tab:extra} supersede every row.}}{13}{table.4}\protected@file@percent }
+\newlabel{tab:cross-architecture}{{4}{13}{Additional architectures, on the same whole-checkpoint accounting as Table~\ref {tab:main}. These are superseded recipes kept as evidence of transfer: the ``LSQ'' rows carry no sparsity and no entropy term, the AlexNet one keeping the ridge at $10^{-5}$, and both networks use per-channel step sizes here, which Appendix~\ref {sec:per-channel-twice} shows is paid for twice. The runs of Tables~\ref {tab:main}--\ref {tab:extra} supersede every row}{table.4}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {A.3}Term Ablations}{13}{subsection.A.3}\protected@file@percent }
+\newlabel{app:ablation}{{A.3}{13}{Term Ablations}{subsection.A.3}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {5}{\ignorespaces Term ablation. ResNet--18 at sixty epochs against $69.734$; AlexNet at sixty epochs against $56.524$. \emph  {Rate} is points of size bought per point of accuracy spent, measured from the LSQ control of the block: the $(0,0,0)$ arm on ResNet--18, the ridge-only arm on AlexNet, which is that block's control. $H$ is the entropy of the non-zero symbols at the end of the run. The rates are secants to a concave frontier between arms that do not end at the same size, and Section~\ref {sec:term-ablation} explains why we do not rank the terms by them. The sparsity each arm reaches is quoted in Section~\ref {sec:term-ablation}.}}{13}{table.5}\protected@file@percent }
+\newlabel{tab:ablation}{{5}{13}{Term ablation. ResNet--18 at sixty epochs against $69.734$; AlexNet at sixty epochs against $56.524$. \emph {Rate} is points of size bought per point of accuracy spent, measured from the LSQ control of the block: the $(0,0,0)$ arm on ResNet--18, the ridge-only arm on AlexNet, which is that block's control. $H$ is the entropy of the non-zero symbols at the end of the run. The rates are secants to a concave frontier between arms that do not end at the same size, and Section~\ref {sec:term-ablation} explains why we do not rank the terms by them. The sparsity each arm reaches is quoted in Section~\ref {sec:term-ablation}}{table.5}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {6}{\ignorespaces Additional rows: published points that Table~\ref {tab:main} does not need in order to place our frontier, and the intermediate doses of the two transformer rays. Same conventions as Table~\ref {tab:main}.}}{14}{table.6}\protected@file@percent }
+\newlabel{tab:extra}{{6}{14}{Additional rows: published points that Table~\ref {tab:main} does not need in order to place our frontier, and the intermediate doses of the two transformer rays. Same conventions as Table~\ref {tab:main}}{table.6}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {A.4}Mask Cost and Sparsity}{14}{subsection.A.4}\protected@file@percent }
+\newlabel{app:mask-cost}{{A.4}{14}{Mask Cost and Sparsity}{subsection.A.4}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {A.5}Notes on the Transfer Architectures}{14}{subsection.A.5}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {7}{\ignorespaces Change from the first to the last epoch, EfficientNet-B0. ``Step size'' is the median over tensors of the ratio between the final and initial LSQ step size; ``latent $p_1$'' is the relative change of the first percentile of the latent weights; ``entropy'' is the entropy of the nonzero symbols in bits per surviving weight.}}{14}{table.7}\protected@file@percent }
+\newlabel{tab:mechanism}{{7}{14}{Change from the first to the last epoch, EfficientNet-B0. ``Step size'' is the median over tensors of the ratio between the final and initial LSQ step size; ``latent $p_1$'' is the relative change of the first percentile of the latent weights; ``entropy'' is the entropy of the nonzero symbols in bits per surviving weight}{table.7}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {A.6}Hardware and Wall-Clock Cost}{14}{subsection.A.6}\protected@file@percent }
+\newlabel{app:cost2}{{A.6}{14}{Hardware and Wall-Clock Cost}{subsection.A.6}{}}
+\newlabel{app:cost}{{A.6}{14}{Hardware and Wall-Clock Cost}{subsection.A.6}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {8}{\ignorespaces Per-epoch training time, excluding metrics. Sixteen A100 GPUs; the global batch is the one reported for each architecture in Table~\ref {tab:best-compression-hyperparameters}.}}{15}{table.8}\protected@file@percent }
+\newlabel{tab:cost}{{8}{15}{Per-epoch training time, excluding metrics. Sixteen A100 GPUs; the global batch is the one reported for each architecture in Table~\ref {tab:best-compression-hyperparameters}}{table.8}{}}
+\@writefile{toc}{\contentsline {paragraph}{The overhead in context, and the one run that uses a different solver setting.}{15}{section*.12}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {A.7}Learning and Compression Curves}{16}{subsection.A.7}\protected@file@percent }
+\newlabel{app:curves}{{A.7}{16}{Learning and Compression Curves}{subsection.A.7}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces ResNet--18, the headline configuration $(T_1,T_2,T_3)=(10^{-5},10^{-7},6\times 10^{-8})$ over sixty epochs. Blue, left axis: top-1 accuracy. Red, right axis: the serialized packet as a percentage of the FP32 checkpoint. The two phases are visible: the compression is delivered early, in the first ten epochs, while the accuracy recovers over the whole cosine and crosses the full-precision checkpoint at epoch fifty-four. The curve is one of the three repeats; it ends at $4.89\%$ of the checkpoint, which is also the mean of the three to the second decimal. Reference lines are the FP32 checkpoint, the LSQ control at the same budget, and the closest published point.}}{16}{figure.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {B}Further Experimental Results}{16}{appendix.B}\protected@file@percent }
+\newlabel{app:more-experiments}{{B}{16}{Further Experimental Results}{appendix.B}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {B.1}Quantization-Aware Training Alone Makes Models Larger}{16}{subsection.B.1}\protected@file@percent }
+\newlabel{sec:qat-fattens}{{B.1}{16}{Quantization-Aware Training Alone Makes Models Larger}{subsection.B.1}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {9}{\ignorespaces Quantization-aware training on its own, with no regularizer, makes the quantized model \emph  {harder} to compress while it gains accuracy. Four architectures, five controls, no exception. Sizes here are the packet over the FP32 bytes of the \emph  {quantized tensors}, the accounting in which the relative change is read; over the whole checkpoint each row is larger by $1-f$, so the last ResNet--18 control reads $9.84\%$ in Table~\ref {tab:main}.}}{16}{table.9}\protected@file@percent }
+\newlabel{tab:fatten}{{9}{16}{Quantization-aware training on its own, with no regularizer, makes the quantized model \emph {harder} to compress while it gains accuracy. Four architectures, five controls, no exception. Sizes here are the packet over the FP32 bytes of the \emph {quantized tensors}, the accounting in which the relative change is read; over the whole checkpoint each row is larger by $1-f$, so the last ResNet--18 control reads $9.84\%$ in Table~\ref {tab:main}}{table.9}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces Accuracy against size after lossless coding, as reported by each method for the checkpoint it uses. Accuracy is the difference from each method's own full-precision measurement, the only way to put five architectures on one panel; the raw accuracies behind every head-to-head claim are in Table~\ref {tab:main}. Crosses are single published points; LilNetX, at $2.16\%$ and $-1.2$, falls to the left of the panel.}}{17}{figure.2}\protected@file@percent }
+\newlabel{fig:frontier}{{2}{17}{Accuracy against size after lossless coding, as reported by each method for the checkpoint it uses. Accuracy is the difference from each method's own full-precision measurement, the only way to put five architectures on one panel; the raw accuracies behind every head-to-head claim are in Table~\ref {tab:main}. Crosses are single published points; LilNetX, at $2.16\%$ and $-1.2$, falls to the left of the panel}{figure.2}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {B.2}Budget Against Dose on ResNet--18}{17}{subsection.B.2}\protected@file@percent }
+\newlabel{app:budget}{{B.2}{17}{Budget Against Dose on ResNet--18}{subsection.B.2}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {B.3}Joint Optimization Beats the Same Objective Decomposed}{17}{subsection.B.3}\protected@file@percent }
+\newlabel{sec:pipeline}{{B.3}{17}{Joint Optimization Beats the Same Objective Decomposed}{subsection.B.3}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {10}{\ignorespaces Decomposing the objective, ResNet--18, $(T_1,T_2,T_3)=(10^{-5},10^{-7}, 3\cdot 10^{-8})$ throughout. At matched budget the three accuracies agree to within $0.034$, well inside the $0.083$ spread between repeats, so the comparison is purely on size.}}{17}{table.10}\protected@file@percent }
+\newlabel{tab:pipeline}{{10}{17}{Decomposing the objective, ResNet--18, $(T_1,T_2,T_3)=(10^{-5},10^{-7}, 3\cdot 10^{-8})$ throughout. At matched budget the three accuracies agree to within $0.034$, well inside the $0.083$ spread between repeats, so the comparison is purely on size}{table.10}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {B.4}Accuracy--Size Frontier on Vision Transformers}{18}{subsection.B.4}\protected@file@percent }
+\newlabel{sec:transformers}{{B.4}{18}{Accuracy--Size Frontier on Vision Transformers}{subsection.B.4}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {B.5}The Two Terms Act Through Different Mechanisms}{18}{subsection.B.5}\protected@file@percent }
+\newlabel{sec:mechanism-ablation}{{B.5}{18}{The Two Terms Act Through Different Mechanisms}{subsection.B.5}{}}
+\@writefile{toc}{\contentsline {paragraph}{Why they do not add.}{19}{section*.13}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {B.6}The AlexNet Deficit: What It Is Not, and What We Think It Is}{19}{subsection.B.6}\protected@file@percent }
+\newlabel{app:alexnet-deficit}{{B.6}{19}{The AlexNet Deficit: What It Is Not, and What We Think It Is}{subsection.B.6}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {B.7}Per-Channel Quantization Is Paid For Twice}{19}{subsection.B.7}\protected@file@percent }
+\newlabel{sec:per-channel-twice}{{B.7}{19}{Per-Channel Quantization Is Paid For Twice}{subsection.B.7}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {B.8}Negative Results}{19}{subsection.B.8}\protected@file@percent }
+\newlabel{sec:negative}{{B.8}{19}{Negative Results}{subsection.B.8}{}}
+\citation{esser2020lsq}
+\@writefile{toc}{\contentsline {section}{\numberline {C}Supplementary Derivations}{20}{appendix.C}\protected@file@percent }
+\newlabel{app:derivations}{{C}{20}{Supplementary Derivations}{appendix.C}{}}
+\newlabel{app:supplementary}{{C}{20}{Supplementary Derivations}{appendix.C}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {C.1}Learned-Step Quantization: Full Statement}{20}{subsection.C.1}\protected@file@percent }
+\newlabel{app:lsq-details}{{C.1}{20}{Learned-Step Quantization: Full Statement}{subsection.C.1}{}}
+\newlabel{sec:quantizer}{{C.1}{20}{Learned-Step Quantization: Full Statement}{subsection.C.1}{}}
+\newlabel{eq:normalized-weight}{{13}{20}{Learned-Step Quantization: Full Statement}{equation.13}{}}
+\newlabel{eq:clipped-latent}{{14}{20}{Learned-Step Quantization: Full Statement}{equation.14}{}}
+\newlabel{eq:quantizer}{{15}{20}{Learned-Step Quantization: Full Statement}{equation.15}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {C.2}Derivation of the Decomposed Dual}{20}{subsection.C.2}\protected@file@percent }
+\newlabel{app:decomposition}{{C.2}{20}{Derivation of the Decomposed Dual}{subsection.C.2}{}}
+\newlabel{eq:partial-lagrangian}{{16}{21}{Derivation of the Decomposed Dual}{equation.16}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {C.3}Solving the Per-Weight Subproblem}{21}{subsection.C.3}\protected@file@percent }
+\newlabel{app:subproblem}{{C.3}{21}{Solving the Per-Weight Subproblem}{subsection.C.3}{}}
+\newlabel{app:per-weight-derivation}{{C.3}{21}{Solving the Per-Weight Subproblem}{subsection.C.3}{}}
+\newlabel{eq:knapsack-objective}{{18}{21}{Solving the Per-Weight Subproblem}{equation.18}{}}
+\newlabel{eq:knapsack-constraints}{{19}{21}{Solving the Per-Weight Subproblem}{equation.19}{}}
+\newlabel{eq:perspective-scaling}{{20}{21}{Solving the Per-Weight Subproblem}{equation.20}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces Geometric solution of the normalized per-weight subproblem.}}{22}{figure.3}\protected@file@percent }
+\newlabel{fig:lower-hull}{{3}{22}{Geometric solution of the normalized per-weight subproblem}{figure.3}{}}
+\newlabel{eq:active-masses}{{21}{22}{Solving the Per-Weight Subproblem}{equation.21}{}}
+\newlabel{eq:slope-intercept}{{22}{22}{Solving the Per-Weight Subproblem}{equation.22}{}}
+\newlabel{eq:lower-hull}{{23}{22}{Solving the Per-Weight Subproblem}{equation.23}{}}
+\@writefile{toc}{\contentsline {paragraph}{Breakpoints of the active facet.}{22}{section*.14}\protected@file@percent }
+\newlabel{eq:app-breakpoints}{{24}{22}{Breakpoints of the active facet}{equation.24}{}}
+\citation{bonnans2000perturbation}
+\@writefile{toc}{\contentsline {paragraph}{Cost of the comparison.}{23}{section*.15}\protected@file@percent }
+\newlabel{eq:app-scalar-problem}{{25}{23}{Cost of the comparison}{equation.25}{}}
+\newlabel{eq:app-y-candidate}{{26}{23}{Cost of the comparison}{equation.26}{}}
+\@writefile{toc}{\contentsline {paragraph}{The zero weight.}{23}{section*.16}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {C.4}Regularizer Subgradient with Respect to the Weights}{23}{subsection.C.4}\protected@file@percent }
+\newlabel{app:weight-grad}{{C.4}{23}{Regularizer Subgradient with Respect to the Weights}{subsection.C.4}{}}
+\newlabel{app:weight-gradient}{{C.4}{23}{Regularizer Subgradient with Respect to the Weights}{subsection.C.4}{}}
+\newlabel{sec:regularizer-weight-subgradient}{{C.4}{23}{Regularizer Subgradient with Respect to the Weights}{subsection.C.4}{}}
+\citation{danskin1966maxmin,bonnans2000perturbation}
+\newlabel{eq:app-weight-envelope}{{27}{24}{Regularizer Subgradient with Respect to the Weights}{equation.27}{}}
+\newlabel{eq:boundary-kkt}{{28}{24}{Regularizer Subgradient with Respect to the Weights}{equation.28}{}}
+\citation{bonnans2000perturbation}
+\citation{bonnans2000perturbation}
+\@writefile{toc}{\contentsline {subsection}{\numberline {C.5}Regularizer Gradient with Respect to the Step Sizes}{25}{subsection.C.5}\protected@file@percent }
+\newlabel{app:scale-grad}{{C.5}{25}{Regularizer Gradient with Respect to the Step Sizes}{subsection.C.5}{}}
+\newlabel{app:scale-gradient}{{C.5}{25}{Regularizer Gradient with Respect to the Step Sizes}{subsection.C.5}{}}
+\newlabel{sec:regularizer-step-gradient}{{C.5}{25}{Regularizer Gradient with Respect to the Step Sizes}{subsection.C.5}{}}
+\newlabel{eq:app-scale-envelope}{{29}{25}{Regularizer Gradient with Respect to the Step Sizes}{equation.29}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {C.6}KKT Multiplier at a Representability Boundary}{25}{subsection.C.6}\protected@file@percent }
+\newlabel{app:boundary-kkt-derivation}{{C.6}{25}{KKT Multiplier at a Representability Boundary}{subsection.C.6}{}}
+\newlabel{eq:boundary-kkt-x-stationarity}{{30}{25}{KKT Multiplier at a Representability Boundary}{equation.30}{}}
+\newlabel{eq:boundary-kkt-y-stationarity}{{31}{26}{KKT Multiplier at a Representability Boundary}{equation.31}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {C.7}Count Solutions and Dual Residuals}{26}{subsection.C.7}\protected@file@percent }
+\newlabel{app:count-solutions}{{C.7}{26}{Count Solutions and Dual Residuals}{subsection.C.7}{}}
+\newlabel{eq:app-reconstructed-count}{{32}{26}{Count Solutions and Dual Residuals}{equation.32}{}}
+\newlabel{eq:app-unconstrained-count-solution}{{33}{26}{Count Solutions and Dual Residuals}{equation.33}{}}
+\newlabel{eq:count-solution}{{34}{26}{Count Solutions and Dual Residuals}{equation.34}{}}
+\newlabel{eq:dual-supergradient}{{35}{26}{Count Solutions and Dual Residuals}{equation.35}{}}
+\citation{beck2009fista}
+\@writefile{toc}{\contentsline {subsection}{\numberline {C.8}Inner Dual Iteration}{27}{subsection.C.8}\protected@file@percent }
+\newlabel{app:dual-iteration}{{C.8}{27}{Inner Dual Iteration}{subsection.C.8}{}}
+\newlabel{eq:app-normalized-dual-supergradient}{{36}{27}{Inner Dual Iteration}{equation.36}{}}
+\newlabel{eq:fista-momentum-parameter}{{37}{27}{Inner Dual Iteration}{equation.37}{}}
+\newlabel{eq:fista-extrapolated-multiplier}{{38}{27}{Inner Dual Iteration}{equation.38}{}}
+\newlabel{eq:fista-unconstrained-update}{{39}{27}{Inner Dual Iteration}{equation.39}{}}
+\newlabel{eq:dual-multiplier-bounds}{{40}{27}{Inner Dual Iteration}{equation.40}{}}
+\newlabel{eq:fista-projected-update}{{41}{27}{Inner Dual Iteration}{equation.41}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {C.9}Dual Step Size and Convergence Rate}{28}{subsection.C.9}\protected@file@percent }
+\newlabel{app:dual-rate}{{C.9}{28}{Dual Step Size and Convergence Rate}{subsection.C.9}{}}
+\newlabel{app:dual-budget-analysis}{{C.9}{28}{Dual Step Size and Convergence Rate}{subsection.C.9}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {11}{\ignorespaces Traversals of the dual interval per epoch. The first four rows are computed at a fixed absolute dual step of $3\times 10^{-9}$, the setting under which the failure was found; they are the diagnostic that motivated the relative step and not the setting of the runs reported in Section~\ref {sec:experiments}, every one of which uses the relative step, as the last row does.}}{28}{table.11}\protected@file@percent }
+\newlabel{tab:dual-traversals}{{11}{28}{Traversals of the dual interval per epoch. The first four rows are computed at a fixed absolute dual step of $3\times 10^{-9}$, the setting under which the failure was found; they are the diagnostic that motivated the relative step and not the setting of the runs reported in Section~\ref {sec:experiments}, every one of which uses the relative step, as the last row does}{table.11}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {C.10}Strong Duality of the Relaxation}{28}{subsection.C.10}\protected@file@percent }
+\newlabel{app:strong-duality}{{C.10}{28}{Strong Duality of the Relaxation}{subsection.C.10}{}}
+\newlabel{prop:strong-duality}{{1}{28}{No duality gap, attained multipliers}{proposition.1}{}}
+\citation{rockafellar1970convex}
+\citation{danskin1966maxmin}
+\@writefile{toc}{\contentsline {subsection}{\numberline {C.11}What the Entropy Term Does}{29}{subsection.C.11}\protected@file@percent }
+\newlabel{app:count-penalty}{{C.11}{29}{What the Entropy Term Does}{subsection.C.11}{}}
+\newlabel{eq:size-decomposition}{{42}{29}{What the Entropy Term Does}{equation.42}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {C.12}The Problem the Solver Poses, and What the Direction Is Exact For}{30}{subsection.C.12}\protected@file@percent }
+\newlabel{app:boxed}{{C.12}{30}{The Problem the Solver Poses, and What the Direction Is Exact For}{subsection.C.12}{}}
+\@writefile{toc}{\contentsline {paragraph}{What the training direction is exact for.}{30}{section*.17}\protected@file@percent }
+\citation{bengio2013estimating,esser2020lsq}
+\@writefile{toc}{\contentsline {subsection}{\numberline {C.13}Total Training Gradients}{31}{subsection.C.13}\protected@file@percent }
+\newlabel{app:total-grad}{{C.13}{31}{Total Training Gradients}{subsection.C.13}{}}
+\newlabel{app:total-gradients}{{C.13}{31}{Total Training Gradients}{subsection.C.13}{}}
+\newlabel{eq:weight-ste}{{43}{31}{Total Training Gradients}{equation.43}{}}
+\newlabel{eq:task-weight-gradient}{{44}{31}{Total Training Gradients}{equation.44}{}}
+\newlabel{eq:lsq-h}{{45}{32}{Total Training Gradients}{equation.45}{}}
+\newlabel{eq:task-scale-gradient}{{46}{32}{Total Training Gradients}{equation.46}{}}
+\newlabel{eq:metaq-weight-gradient}{{47}{32}{Total Training Gradients}{equation.47}{}}
+\newlabel{eq:metaq-scale-gradient}{{48}{32}{Total Training Gradients}{equation.48}{}}
+\newlabel{eq:assembled-task-gradient}{{49}{32}{Total Training Gradients}{equation.49}{}}
+\newlabel{eq:assembled-metaq-subgradient}{{50}{32}{Total Training Gradients}{equation.50}{}}
+\newlabel{eq:app-training-subgradient}{{51}{32}{Total Training Gradients}{equation.51}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {C.14}Order of the Outer Update}{33}{subsection.C.14}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {C.15}Algorithms and Additional Diagnostics}{33}{subsection.C.15}\protected@file@percent }
+\newlabel{app:algorithms}{{C.15}{33}{Algorithms and Additional Diagnostics}{subsection.C.15}{}}
+\@writefile{loa}{\contentsline {algorithm}{\numberline {1}{\ignorespaces Exact inner solve for one tensor at a fixed multiplier. Cost $O(C+n_\ell C)$; no iteration.}}{33}{algorithm.1}\protected@file@percent }
+\newlabel{alg:hull}{{1}{33}{Algorithms and Additional Diagnostics}{algorithm.1}{}}
+\@writefile{loa}{\contentsline {algorithm}{\numberline {2}{\ignorespaces One PRESTO optimizer step. The regularizer enters the same backward pass as the task loss, so weights, step sizes and symbol distribution move together.}}{34}{algorithm.2}\protected@file@percent }
+\newlabel{alg:metaq}{{2}{34}{Algorithms and Additional Diagnostics}{algorithm.2}{}}
+\@writefile{toc}{\contentsline {paragraph}{Byte breakdown.}{34}{section*.18}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {D}Calibrating the Coefficients}{34}{appendix.D}\protected@file@percent }
+\newlabel{app:hyper}{{D}{34}{Calibrating the Coefficients}{appendix.D}{}}
+\@writefile{toc}{\contentsline {paragraph}{The dose is measured, then transported by its integral.}{34}{section*.19}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Exposure, not the coefficient, is what transfers.}{34}{section*.20}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{The entropy coefficient extrapolates on a log scale, until it does not.}{35}{section*.21}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{What each coefficient is for.}{35}{section*.22}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {E}What Is Held Identical Across Architectures}{35}{appendix.E}\protected@file@percent }
+\newlabel{app:consistency}{{E}{35}{What Is Held Identical Across Architectures}{appendix.E}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {12}{\ignorespaces Left: held identical on every run reported. Right: varied per architecture, with the reason. Nothing else differs.}}{35}{table.12}\protected@file@percent }
+\newlabel{tab:identical}{{12}{35}{Left: held identical on every run reported. Right: varied per architecture, with the reason. Nothing else differs}{table.12}{}}
+\gdef \LT@i {\LT@entry 
+    {1}{111.37125pt}\LT@entry 
+    {1}{278.31421pt}}
+\@writefile{toc}{\contentsline {section}{\numberline {F}Glossary of Notation and Acronyms}{36}{appendix.F}\protected@file@percent }
+\newlabel{app:notation}{{F}{36}{Glossary of Notation and Acronyms}{appendix.F}{}}
+\newlabel{app:glossary}{{F}{36}{Glossary of Notation and Acronyms}{appendix.F}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {13}{Glossary of the notation and acronyms used in the paper.}}{36}{table.13}\protected@file@percent }
+\newlabel{tab:notation-glossary}{{13}{36}{Glossary of the notation and acronyms used in the paper}{table.13}{}}
+\gdef \@abspage@last{38}

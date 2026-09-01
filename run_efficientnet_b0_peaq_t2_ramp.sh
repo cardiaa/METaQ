@@ -17,7 +17,7 @@
 # were wrong on AlexNet (test_226 inert, test_227 runaway by 3600x, test_228
 # over-dosed by ten) and the number that finally worked was READ OFF a ramp.
 #
-# BASELINE: test_230, same recipe with every METaQ coefficient at zero. A_Q
+# BASELINE: test_230, same recipe with every PRESTO coefficient at zero. A_Q
 # 76.590 against 77.566 FP32 (-0.976), packet 11.55%, 16.19% sparsity emerging
 # from the LSQ zero bin alone, clipping mean 2.70%, step sizes within 2% of
 # their init on 75 of 82 layers. Every row this run produces is to be read

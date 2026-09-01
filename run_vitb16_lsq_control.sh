@@ -40,7 +40,7 @@
 # stays there, so 251 is the recipe and twenty epochs is the budget.
 #
 # THE HEADROOM IS THE THING TO WATCH. On both ResNets the LSQ control finishes
-# ABOVE full precision, +0.756 and +0.432, and METaQ spends that. Here it
+# ABOVE full precision, +0.756 and +0.432, and PRESTO spends that. Here it
 # finishes at -0.14, so ViT-B/16 belongs with DeiT-Small: report the frontier
 # against the budget-matched control, not a lossless claim against FP32.
 #

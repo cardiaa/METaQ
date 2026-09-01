@@ -10,7 +10,7 @@
 #SBATCH --output=/dev/null
 #SBATCH --error=/dev/null
 
-# test_243: ResNet-50, first METaQ run. The ResNet-18 recipe with the model name
+# test_243: ResNet-50, first PRESTO run. The ResNet-18 recipe with the model name
 # changed, twenty epochs, and the three coefficients on.
 #
 # WHAT test_242 ESTABLISHED, and it is all good news:
@@ -40,7 +40,7 @@
 #   HEMP \citep{tartaglione2021hemp}           74.52  (-1.61)   8.88%  11.26x
 #   Deep Compression \citep{han2016deep}       68.95  (-7.18)   6.15%  16.26x
 #
-# Our LSQ control alone already beats DeepCABAC on both axes. If METaQ takes the
+# Our LSQ control alone already beats DeepCABAC on both axes. If PRESTO takes the
 # packet to sixty per cent of the control, as it does on ResNet-18 at this
 # budget, this row lands near 6% at or above the checkpoint: about 16x against
 # their 10x and 11x, and at parity where they are 1.6 points down.

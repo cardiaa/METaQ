@@ -69,7 +69,7 @@
 # at test_223. Falling off a cliff at epoch 3 and not recovering by epoch 5: the
 # rate is too hot, drop to 8e-3 and rerun, still under an hour of nodes.
 #
-# T1 IS OFF, on purpose. This is a pure LSQ baseline: T1=T2=T3=0, so the METaQ
+# T1 IS OFF, on purpose. This is a pure LSQ baseline: T1=T2=T3=0, so the PRESTO
 # gradient block never runs and what comes out is the quantizer alone. Two
 # reasons rather than one. It is the control the paper is missing, and on THIS
 # network T1 is not free: with T2=T3=0 the boundary multiplier contributes
